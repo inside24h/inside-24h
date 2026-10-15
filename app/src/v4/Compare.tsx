@@ -1,6 +1,6 @@
 // Compare two foods side by side for the same person — full screen, both sides chosen freely, popular pairs in
 // one tap. Shows both sugar curves on one chart, the day's traffic lights and the quick answers.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Profile } from '../science/profile';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { SmartSearch } from './SmartSearch';
@@ -55,11 +55,13 @@ function SugarChart({ a, b }: { a: Analysis; b: Analysis }) {
   );
 }
 
-export function Compare({ current, profile, initial, onClose, onVideo, short, setShort }: {
+export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, onRight }: {
   current: Part[]; profile: Profile; initial?: Part[]; onClose: () => void; onVideo?: (a: Analysis, b: Analysis) => void; short?: boolean; setShort?: (v: boolean) => void;
+  onRight?: (right: Part[] | null) => void; // the partner goes into the link (#vs=…)
 }) {
   const [left, setLeft] = useState<Part[]>(current);
   const [right, setRight] = useState<Part[] | null>(initial ?? null);
+  useEffect(() => { onRight?.(right); }, [right]); // eslint-disable-line react-hooks/exhaustive-deps
   const a = useMemo(() => analyze(left, profile), [left, profile]);
   const b = useMemo(() => (right ? analyze(right, profile) : null), [right, profile]);
   const pick = ([l, r]: [string, string]) => { setLeft(parseMeal(l)); setRight(parseMeal(r)); };

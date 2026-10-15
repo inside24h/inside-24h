@@ -52,6 +52,9 @@ import { SafeCanvas } from './perf/SafeCanvas';
 import { isTouch } from './perf/device';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
+import { CURATED_Q, formatTime, isCuratedServing, mealText, readLink, writeLink } from './deeplink';
+import { drawMomentCard } from './shareCard';
+import { MomentShare, type Moment } from './MomentShare';
 
 
 import { SmartSearch } from './SmartSearch';
@@ -83,12 +86,18 @@ const sinceText = (m: number, name: string) => {
   return `${h} h${mm ? ` ${mm} min` : ''} after your ${name}`;
 };
 
-// Deep link for screenshots and posts: #p=<product>&t=<minutes>&organ=<key>&dose=<mg>. A given t starts paused.
+// Deep link for every moment (deeplink.ts): #q=<food>&n=<½·1·2·3>&t=<45m>&view=<full|detailed>&vs=<partner>,
+// plus older keys (#p=<product>, #t=<minutes>, #compare=, organ, dose, city). A given t opens paused at that minute.
 const HASH = new URLSearchParams(window.location.hash.slice(1));
-const HASH_T = HASH.has('t') ? Math.max(0, Math.min(MAX_MIN, Number(HASH.get('t')) || 0)) : null;
+const LINK = readLink(window.location.hash);
+const HASH_T = LINK.t;
 const HASH_DOSE = Math.max(20, Math.min(330, Number(HASH.get('dose')) || 63));
-const HASH_Q = HASH.get('q') ? parseMeal(HASH.get('q')!) : [];
-const HASH_P = HASH_Q.length ? 'food' : PRODUCTS[HASH.get('p') ?? ''] ? HASH.get('p')! : 'espresso';
+const scaleParts = (base: Part[], f: number) => (f === 1 ? base : base.map((p) => ({ ...p, grams: p.grams * f, amountLabel: `${f === 0.5 ? '½ ×' : `${f} ×`} ${p.amountLabel}` })));
+// curated products (#q=cola) reopen in their own detailed model, like picking them in the app
+const LINK_BASE: Part[] = LINK.q ? parseMeal(LINK.q) : LINK.p && CURATED_Q[LINK.p] && LINK.n !== 1 ? parseMeal(CURATED_Q[LINK.p]) : [];
+const LINK_FOOD = LINK_BASE.length > 0 || !!(LINK.p && PRODUCTS[LINK.p]); // the link names a food: open it, skip the start screen
+const HASH_Q = LINK_BASE.length && !(LINK.n === 1 && isCuratedServing(LINK_BASE)) ? scaleParts(LINK_BASE, LINK.n) : [];
+const HASH_P = HASH_Q.length ? 'food' : LINK_BASE.length && isCuratedServing(LINK_BASE) ? LINK_BASE[0].food.id : PRODUCTS[LINK.p ?? ''] ? LINK.p! : 'espresso';
 
 interface Evidence { title: string; claims: string[] }
 
@@ -126,8 +135,8 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
 
 export default function AppV4() {
   const [u, setU] = useState(HASH_T === null ? 0 : uFromMinutes(HASH_T));
-  const [playing, setPlaying] = useState(false);
-  const [started, setStarted] = useState(HASH_T !== null); // false = show the "what did you have?" start screen
+  const [playing, setPlaying] = useState(HASH_T === null && LINK_FOOD); // a link with a minute opens paused there
+  const [started, setStarted] = useState(HASH_T !== null || LINK_FOOD); // false = show the "what did you have?" start screen
   const [notice, setNotice] = useState<CatalogItem | null>(null);
   const [dose, setDose] = useState(HASH_DOSE);
   const [profile, setProfile] = useState<Profile>(() => {
@@ -147,7 +156,7 @@ export default function AppV4() {
   const [touched, setTouched] = useState(false);
   const [productId, setProductId] = useState(HASH_P);
   const [mode, setMode] = useState<'simple' | 'detailed'>(HASH.get('view') === 'detailed' ? 'detailed' : 'simple');
-  const [bodyAsked, setBodyAsked] = useState(() => { if (HASH_T !== null) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
+  const [bodyAsked, setBodyAsked] = useState(() => { if (HASH_T !== null || LINK_FOOD) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
   const [habits, setHabits] = useState<Habits>({});
   const [foodParts, setFoodParts] = useState<Part[]>(HASH_Q);
   const def = useMemo(() => (productId === 'food' && foodParts.length ? makeFoodProduct(foodParts, 'food') : PRODUCTS[productId] ?? PRODUCTS.espresso), [productId, foodParts]);
@@ -221,18 +230,18 @@ export default function AppV4() {
   }, [built, productId, foodParts]);
   const swap = useSwap(currentParts, profile, peakNow);
   // portion: ½ · 1 · 2 · 3 of what was chosen (scales the parts; 1 returns to the original, incl. curated models)
-  const [portion, setPortion] = useState(1);
-  const [portionBase, setPortionBase] = useState<Part[] | null>(null);
+  const [portion, setPortion] = useState(LINK_BASE.length ? LINK.n : 1);
+  const [portionBase, setPortionBase] = useState<Part[] | null>(LINK_BASE.length && LINK.n !== 1 ? LINK_BASE : null);
   const applyPortion = (f: number) => {
     const base = portionBase ?? currentParts;
     setPortionBase(base); setPortion(f);
     const one = base.length === 1 ? base[0] : null;
     if (f === 1 && one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { setProductId(one.food.id); return; }
-    const tag = f === 0.5 ? '½ ×' : `${f} ×`;
-    setFoodParts(f === 1 ? base : base.map((p) => ({ ...p, grams: p.grams * f, amountLabel: `${tag} ${p.amountLabel}` })));
+    setFoodParts(scaleParts(base, f));
     setProductId('food');
   };
-  const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (HASH.get('compare') ? { with: parseMeal(HASH.get('compare')!) } : null));
+  const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (LINK.vs ? { with: parseMeal(LINK.vs) } : null));
+  const [vsParts, setVsParts] = useState<Part[] | null>(null); // the partner currently chosen inside Compare
   const answersBlock = (<>
     <Answers list={answers} onHow={() => setPanel('method')} />
     {swap && peakNow !== null && <SwapCard swap={swap} peakNow={peakNow} onCompare={() => setCompare({ with: swap.parts })} />}
@@ -456,6 +465,39 @@ export default function AppV4() {
   };
   const fileName = `inside24h-${PRODUCT.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
 
+  // ---- deep link: the address bar always describes what is on screen (replaceState, so no history spam).
+  // The minute goes in only while paused / after scrubbing, never every frame.
+  const linkHash = (t: number | null) => writeLink({
+    q: mealText(portion !== 1 && portionBase ? portionBase : currentParts), n: portion, t,
+    view: mode === 'detailed' ? 'detailed' : calm ? 'simple' : 'full',
+    vs: compare && vsParts?.length ? mealText(vsParts) : undefined,
+  }, window.location.hash);
+  const hashNow = started && share?.state !== 'rec' && !cmpRec ? linkHash(playing ? null : minute) : null;
+  useEffect(() => {
+    if (hashNow === null || hashNow === window.location.hash) return;
+    const id = setTimeout(() => { try { history.replaceState(null, '', hashNow || window.location.pathname + window.location.search); } catch { /* sandboxed */ } }, 400);
+    return () => clearTimeout(id);
+  }, [hashNow]);
+  // ---- "Share this moment": a 4:5 picture of this minute + the link that reopens it ----
+  const makeMoment = async (): Promise<Moment | null> => {
+    const o = overlayRef.current;
+    if (!o) return null;
+    const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
+    if (canvas && r3f.current) r3f.current.gl.render(r3f.current.scene, r3f.current.camera); // draw now, read in the same task
+    const h = linkHash(minute);
+    try { history.replaceState(null, '', h); } catch { /* sandboxed */ }
+    const link = `${window.location.origin}${window.location.pathname}${window.location.search}${h}`;
+    const stamp = stampFor(minute);
+    const card = drawMomentCard(canvas, {
+      name: PRODUCT.name, amount: productId === 'food' && foodParts.length === 1 ? foodParts[0].amountLabel : hookWhat,
+      stamp, clock: hhmm(profile.drinkAtMin + minute), step: chapter.title, caption: captionOf(chapter.text, 150),
+      pop: o.pop, where: o.where, color: story.color, link,
+    });
+    const blob = await new Promise<Blob | null>((r) => card.toBlob(r, 'image/png'));
+    return blob && { blob, link, fileName: `${fileName}-${formatTime(minute)}.png`, title: `${PRODUCT.name} · ${stamp.toLowerCase()}`,
+      text: `What ${hookWhat} is doing inside you, ${stamp.toLowerCase()} 👀 #Inside24h` };
+  };
+
   // A drag on the canvas must not count as "clicked empty space".
   const down = useRef<[number, number] | null>(null);
 
@@ -475,7 +517,7 @@ export default function AppV4() {
             <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
           </div>
           {started && <button className="ghost hdr" onClick={() => setCompare({})}>⇄ Compare</button>}
-          {started && <button className="ghost sharebtn" onClick={() => setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' })} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share video'}</button>}
+          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
           <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>soon</small></button>
           <button className="ghost hdr support" onClick={() => setPanel('support')}>♥ Support</button>
@@ -642,12 +684,13 @@ export default function AppV4() {
         </div>
       )}
 
-      {compare && <Compare current={currentParts} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} />}
+      {compare && <Compare current={currentParts} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
       {share?.state === 'rec' && <div className="recbadge" role="status">● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</div>}
       {share && share.state !== 'rec' && (
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setShare(null); }}>
-          <div className="noticebox sharebox" role="dialog" aria-label="Share video">
+          <div className="noticebox sharebox" role="dialog" aria-label="Share">
+            {share.state !== 'ready' && <MomentShare make={makeMoment} label="Share this moment" />}
             {share.state === 'choose' && (<>
               <h2>Make a video</h2>
               <p className="note">The whole 24 hours with a hook title, a pause at each key moment, captions for silent viewing, the liquid moving through the body, and a summary at the end.</p>

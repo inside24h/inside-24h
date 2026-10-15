@@ -321,7 +321,7 @@ export function composeFrame(source: HTMLCanvasElement, format: Format, o: Overl
 }
 
 // ---------- drawing ----------
-function bg(ctx: CanvasRenderingContext2D, W: number, H: number) {
+export function bg(ctx: CanvasRenderingContext2D, W: number, H: number) {
   const g = ctx.createRadialGradient(W / 2, H * 0.42, 60, W / 2, H * 0.42, H * 0.8);
   g.addColorStop(0, '#0c1b2c'); g.addColorStop(1, '#04070c');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -450,12 +450,12 @@ function fadeEdge(ctx: CanvasRenderingContext2D, W: number, y: number, h: number
   g.addColorStop(0, 'rgba(4,7,12,1)'); g.addColorStop(1, 'rgba(4,7,12,0)');
   ctx.fillStyle = g; ctx.fillRect(0, up ? y - h : y, W, h);
 }
-function fit(ctx: CanvasRenderingContext2D, t: string, w: number) {
+export function fit(ctx: CanvasRenderingContext2D, t: string, w: number) {
   if (ctx.measureText(t).width <= w) return t;
   let s = t; while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
   return `${s}…`;
 }
-function wrap(ctx: CanvasRenderingContext2D, text: string, w: number, max: number): string[] {
+export function wrap(ctx: CanvasRenderingContext2D, text: string, w: number, max: number): string[] {
   const words = text.split(/\s+/), lines: string[] = [];
   let cur = '';
   for (const word of words) {
@@ -466,7 +466,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, w: number, max: numbe
   if (lines.length > max) { lines.length = max; lines[max - 1] = fit(ctx, `${lines[max - 1]}…`, w); }
   return lines;
 }
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 
