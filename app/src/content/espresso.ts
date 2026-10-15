@@ -1,0 +1,91 @@
+// Mirrors research/espresso.md. Claim IDs must match that file.
+import type { Claim, Product } from './types';
+
+const c = (id: string, level: Claim['level'], text: string, sources: string[], extra: Partial<Claim> = {}): Claim =>
+  ({ id, level, text, sources, verified: true, ...extra });
+
+const claims: Claim[] = [
+  c('P1', 'A', 'A restaurant espresso has 212 mg caffeine per 100 g. A 1 fl oz shot (29.6 g) carries about 63 mg.', ['usda171891']),
+  c('P2', 'A', 'About 3 kcal per shot. Coffee is mostly water with a little potassium and magnesium.', ['usda171891']),
+  c('P3', 'A', 'Real espressos vary 6-fold. In 20 high-street coffee shops one espresso held 322 mg and three more had over 200 mg. The main reason is how much coffee the barista uses.', ['crozier2012']),
+  c('G1', 'A', 'Water leaves an empty stomach fast: half of it within 13 minutes, all of it within about 45 minutes (MRI study).', ['mudie2014']),
+  c('G2', 'B', 'A small 20 ml drink empties at almost the same relative speed as a full glass.', ['grimm2023']),
+  c('G3', 'C', 'Because the caffeine has to leave the stomach first, our model puts the blood peak at about 65–70 minutes.', [], { method: 'Stomach emptying t½ 13 min (G1), intestinal absorption t½ 5 min (fast, assumed), elimination t½ 6 h. This sits inside the published 30–120 min range. A faster peak would need absorption through the stomach wall, which we have not yet confirmed. It also conflicts with the older figure of 99% absorbed by 45 min (D3), so both are shown.' }),
+  c('D1', 'A', 'Caffeine is absorbed rapidly and completely, and the liver removes almost none of it on the first pass.', ['grzegorzewski2021', 'blanchard1983']),
+  c('D2', 'A', 'Blood levels peak 30 to 120 minutes after drinking.', ['socias2026']),
+  c('D3', 'A', 'About 99% is absorbed within 45 minutes.', ['iom2001'], { verified: false }),
+  c('D4', 'A', 'It spreads through all the water in the body and barely binds to blood proteins.', ['grzegorzewski2021']),
+  c('D5', 'A', 'Volume of distribution is about 0.7 L per kg of body weight.', ['socias2026', 'parsons1978']),
+  c('W1', 'A', 'Your total body water is estimated from sex, age, height and weight with the Watson equations.', ['watson1980']),
+  c('W2', 'C', 'We scale the caffeine’s spread with your body water, so smaller and older bodies reach higher blood levels from the same shot.', [], { method: 'Vd = total body water × 1.098, which gives 0.65 L/kg for a 70 kg reference man (41.45 L body water).' }),
+  c('A1', 'A', 'Age alone barely changes how caffeine is handled: young and elderly men absorbed it the same way; the elderly had a smaller volume of distribution.', ['blanchard1983']),
+  c('D7', 'A', 'Caffeine dissolves in both fat and water, so it passes easily into the brain and brain levels follow blood levels.', ['merighi2023']),
+  c('F1', 'A', 'In the brain it blocks adenosine receptors (A1, A2A and others), most strongly A2A. Adenosine is the signal that builds up tiredness.', ['merighi2023']),
+  c('F2', 'A', 'EFSA accepts that caffeine increases alertness and attention from 75 mg per portion. A standard espresso (≈ 63 mg) is just under that line.', ['efsa2011']),
+  c('F3', 'B', 'Effects on reaction time and mood have been measured from as little as 12.5 mg. These tests followed a night without caffeine, so part of the effect may be relief from mild withdrawal.', ['smit2000']),
+  c('F4', 'B', 'Coffee raises stomach acid secretion. In one study a dark roast stimulated less acid than a medium roast.', ['rubach2014']),
+  c('F5', 'B', 'About 29% of young adults say coffee makes them need the toilet. In those people the lower colon starts contracting within 4 minutes, with decaf too, and keeps going for at least 30 minutes.', ['brown1990']),
+  c('F6', 'B', 'A full cup of caffeinated coffee stimulated the colon as strongly as a 1000 kcal meal: 60% more than water and 23% more than decaf.', ['rao1998']),
+  c('F7', '?', 'Nobody has measured this for a 30 ml espresso.', [], { method: 'Because decaf triggers it within 4 minutes, the trigger is likely a reflex to coffee itself rather than absorbed caffeine. We expect the same kind of response in people who react, of unknown size.' }),
+  c('F8', 'A', 'In people with high blood pressure, 200–300 mg caffeine raised blood pressure by about 8/6 mmHg, starting within an hour and lasting at least 3 hours. Regular coffee drinking over weeks did not raise it.', ['mesas2011']),
+  c('V1', 'B', 'At 1.5–3 mg per kg, caffeine did not change resting heart rate.', ['mcclaran2007']),
+  c('V2', 'B', '3 mg per kg raised resting systolic pressure from 116 to 123 mmHg in young men who rarely drink coffee.', ['mcclaran2007']),
+  c('F9', 'C', 'For one 63 mg espresso in a 70 kg adult the model gives about +2 mmHg systolic at the peak.', [], { method: 'Rise scaled linearly with blood caffeine: +7 mmHg at the peak of a 3 mg/kg dose (V2). Diastolic = systolic × 5.7/8.1 (F8). Habitual drinkers likely respond less.' }),
+  c('V3', 'C', 'An espresso has about 0.5 g carbohydrate and no sugar, so blood glucose should not move.', ['usda171891']),
+  c('V4', 'A', 'Caffeine makes the body respond less to insulin for a while. That matters if you eat something sweet with your coffee.', ['shi2016']),
+  c('V5', '?', 'No data or mechanism suggests one espresso changes blood oxygen.', []),
+  c('R1', 'A', 'Normal resting heart rate is 60–100 beats per minute; normal blood pressure is below 120/80.', ['aha']),
+  c('R2', 'A', 'Normal fasting glucose is below 100 mg/dL (5.6 mmol/L); normal oxygen saturation is 95–100% at sea level.', ['ada'], { verified: false }),
+  c('M1', 'A', 'The liver handles almost all of it. One enzyme, CYP1A2, does about 95% of the work.', ['grzegorzewski2021']),
+  c('M2', 'A', 'It becomes paraxanthine (84%), theobromine (12%) and theophylline (4%), which are themselves mildly active.', ['socias2026']),
+  c('X1', 'A', 'Those breakdown products leave the blood with half-lives of 3.1 h (paraxanthine), 6.2 h (theophylline) and 7.2 h (theobromine).', ['lelo1986']),
+  c('M3', 'A', '3% or less leaves the body unchanged in urine.', ['grzegorzewski2021']),
+  c('M4', 'A', 'Half-life in healthy adults ranges from 2.5 to 10 hours.', ['socias2026']),
+  c('M6', 'A', 'Smokers clear caffeine faster: half-life 3.5 h versus 6.0 h in non-smokers.', ['parsons1978']),
+  c('M7', 'A', 'The contraceptive pill slows it down: 10.7 h versus 6.2 h.', ['patwardhan1980']),
+  c('M8', 'A', 'In the last weeks of pregnancy clearance drops to 39% of normal, then recovers after birth.', ['parsons1982', 'yu2016']),
+  c('M9', 'C', 'That makes the late-pregnancy half-life about 2.6 times longer, roughly 15 hours.', [], { method: 't½ = ln2 · Vd / CL. With Vd unchanged, t½ scales with 1/0.39 ≈ 2.6.' }),
+  // natural 24 h rhythm (research/vitals-circadian.md)
+  c('VH1', 'A', 'On 24-hour ECG a healthy heart beats about 15 bpm slower at night than by day. Sleep, the body clock and simply lying still all contribute.', ['persson2024', 'carrington2003']),
+  c('VH2', 'B', 'The body clock alone moves resting pulse by about ±4 bpm, highest in the late afternoon (around 16:30).', ['vandewalle2007', 'bowman2021']),
+  c('VH3', 'C', 'We model sleep itself as lowering your resting pulse by about 6 bpm.', [], { method: 'Of the ~15 bpm day–night difference (VH1), about 4 bpm is the body clock (VH2); the rest is sleep plus lack of daytime activity. Plausible range for sleep alone: 4–8 bpm.' }),
+  c('VC1', 'B', 'Studies of caffeine and resting pulse disagree: several found a small fall, one a rise only at 360 mg. So we show no change.', ['robertson1978', 'passmore1987', 'crooks2019', 'baur2024']),
+  c('VB1', 'A', 'Blood pressure normally drops 10–20% during sleep and climbs back after waking.', ['parati2025']),
+  c('VB2', 'B', 'The body clock itself moves blood pressure by only about 4 mmHg, lowest around 01:40.', ['parati2025', 'brito2026']),
+  c('VG1', 'A', 'In healthy people blood sugar stays flat overnight, with no early-morning rise.', ['kruszynska1988']),
+  c('VG2', 'B', 'In a 14-day trial, days with coffee had the same average glucose as days without (95 vs 96 mg/dL).', ['marcus2023']),
+  c('VO1', 'A', 'Blood oxygen averages about 96.2% by day and 95.4% at night, lowest around midnight.', ['shapiro2023']),
+  c('VS1', 'A', 'A meta-analysis found caffeine cuts sleep by 45 minutes on average, and that a 107 mg coffee should be drunk at least 8.8 hours before bed.', ['gardiner2023']),
+  c('VS2', 'B', '100 mg taken 4, 8 or 12 hours before bed had no measurable effect. 400 mg four hours before bed added 14 minutes to falling asleep and cut sleep by 51 minutes.', ['gardiner2025']),
+  c('VS3', 'C', 'Your extra time to fall asleep is estimated from your blood caffeine at bedtime, placed between those two results.', [], { method: 'Linear interpolation on blood caffeine at bedtime: 0 min at the level left by 100 mg after 4 h, +14.2 min at the level left by 400 mg after 4 h (VS2). Below the first level we show no effect.' }),
+  c('S1', 'A', 'EFSA: 100 mg close to bedtime can make it harder to fall asleep and shorten sleep in some adults.', ['efsa2015']),
+  c('S2', 'A', '400 mg taken even 6 hours before bed disrupted sleep compared with placebo.', ['drake2013']),
+  c('S3', 'A', 'For healthy adults, up to 200 mg at once and 400 mg a day raise no safety concerns. In pregnancy the limit is 200 mg a day.', ['efsa2015']),
+];
+
+export const ESPRESSO: Product = {
+  id: 'espresso',
+  name: 'Espresso',
+  serving: 'single shot · 30 ml · ≈ 63 mg caffeine',
+  claims: Object.fromEntries(claims.map((x) => [x.id, x])),
+  stages: [
+    { min: 0, title: 'One shot', organs: ['tongue', 'esophagus'], claims: ['P1', 'P2', 'P3'] },
+    { min: 1, title: 'In the stomach', organs: ['stomach'], claims: ['G1', 'G2', 'F4'] },
+    { min: 4, title: 'The colon reacts', organs: ['colon_desc', 'rectum', 'colon_trans'], claims: ['F5', 'F6', 'F7'] },
+    { min: 10, title: 'Into the blood', organs: ['duodenum', 'jejunum', 'portal_vein'], claims: ['D1', 'D2', 'G3', 'D3', 'D4'] },
+    { min: 30, title: 'Reaching the brain', organs: ['brain'], claims: ['D7', 'F1', 'F2', 'F3'] },
+    { min: 60, title: 'Peak and blood pressure', organs: ['heart', 'aorta'], claims: ['V1', 'V2', 'F9', 'F8'] },
+    { min: 180, title: 'The liver takes it apart', organs: ['liver'], claims: ['M1', 'M2', 'X1', 'M4', 'M6', 'M7', 'M8', 'M9'] },
+    { min: 420, title: 'Still there at bedtime', organs: ['brain'], claims: ['VS1', 'VS2', 'VS3', 'S1', 'S2', 'S3'] },
+    { min: 720, title: 'Out through the kidneys', organs: ['kidney_l', 'kidney_r', 'bladder'], claims: ['M3', 'X1'] },
+  ],
+};
+
+/** Claims behind each vital sign row. */
+export const VITAL_CLAIMS = {
+  caffeine: ['D5', 'W1', 'W2', 'A1'],
+  hr: ['VH1', 'VH2', 'VH3', 'VC1', 'V1', 'R1'],
+  bp: ['VB1', 'VB2', 'V2', 'F9', 'F8', 'R1'],
+  glucose: ['VG1', 'VG2', 'V3', 'V4', 'R2'],
+  spo2: ['VO1', 'V5', 'R2'],
+};

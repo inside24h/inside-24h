@@ -1,0 +1,679 @@
+
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.4 20241031//EN" "JATS-archivearticle1-4-mathml3.dtd">
+<article xml:lang="EN" article-type="research-article" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">J Agric Food Chem</journal-id><journal-id journal-id-type="iso-abbrev">J Agric Food Chem</journal-id><journal-id journal-id-type="pmc-domain-id">822</journal-id><journal-id journal-id-type="pmc-domain">acssd</journal-id><journal-id journal-id-type="nlm-id">0374755</journal-id><journal-id journal-id-type="publisher-id">jf</journal-id><journal-title-group><journal-title>Journal of Agricultural and Food Chemistry</journal-title></journal-title-group><issn pub-type="ppub">0021-8561</issn><issn pub-type="epub">1520-5118</issn><?publisher_abbrev acs?><custom-meta-group><custom-meta><meta-name>pmc-is-collection-domain</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-collection-title</meta-name><meta-value>ACS AuthorChoice</meta-value></custom-meta></custom-meta-group></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC11660246</article-id><article-id pub-id-type="pmcid-ver">PMC11660246.1</article-id><article-id pub-id-type="pmcaid">11660246</article-id><article-id pub-id-type="pmcaiid">11660246</article-id><article-id pub-id-type="pmid">39630117</article-id><article-id pub-id-type="doi">10.1021/acs.jafc.4c06411</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group><subject>Article</subject></subj-group></article-categories><title-group><article-title>Bioaccessibility
+of Cafestol from Coffee Brew: A Metabolic
+Study Employing an <italic toggle="yes">In Vitro</italic> Digestion Model and LC-HRMS</article-title></title-group><contrib-group><contrib contrib-type="author" id="ath1"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0009-0003-4963-6376</contrib-id><name name-style="western"><surname>Brand</surname><given-names initials="A">Ana</given-names></name><xref rid="aff1" ref-type="aff">a</xref></contrib><contrib contrib-type="author" id="ath2"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0001-9456-7056</contrib-id><name name-style="western"><surname>Silva</surname><given-names initials="A">Ana</given-names></name><xref rid="aff1" ref-type="aff">a</xref></contrib><contrib contrib-type="author" id="ath3"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0002-8789-4128</contrib-id><name name-style="western"><surname>Andriolo</surname><given-names initials="C">Cyrus</given-names></name><xref rid="aff2" ref-type="aff">b</xref></contrib><contrib contrib-type="author" id="ath4"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0003-4623-0170</contrib-id><name name-style="western"><surname>Mellinger</surname><given-names initials="C">Caroline</given-names></name><xref rid="aff3" ref-type="aff">c</xref></contrib><contrib contrib-type="author" id="ath5"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0001-7239-9274</contrib-id><name name-style="western"><surname>Uekane</surname><given-names initials="T">Thaís</given-names></name><xref rid="aff4" ref-type="aff">d</xref></contrib><contrib contrib-type="author" id="ath6"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0002-5823-311X</contrib-id><name name-style="western"><surname>Garrett</surname><given-names initials="R">Rafael</given-names></name><xref rid="aff1" ref-type="aff">a</xref></contrib><contrib contrib-type="author" corresp="yes" id="ath7"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0003-2710-5702</contrib-id><name name-style="western"><surname>Rezende</surname><given-names initials="C">Claudia</given-names></name><xref rid="cor1" ref-type="other">*</xref><xref rid="aff1" ref-type="aff">a</xref></contrib><aff id="aff1"><label>a</label>Instituto
+de Química, <institution>Universidade Federal
+do Rio de Janeiro</institution>, Rio de
+Janeiro 21941-909, <country>Brasil</country></aff><aff id="aff2"><label>b</label><institution>L’Oréal
+Brazil</institution>, Rio de Janeiro 21044-020, <country>Brasil</country></aff><aff id="aff3"><label>c</label><institution>EMBRAPA
+Agroindustria de Alimentos</institution>, Rio
+de Janeiro 23020-470, <country>Brasil</country></aff><aff id="aff4"><label>d</label>Departamento
+de Bromatologia, Escola de Farmácia, <institution>Universidade Federal Fluminense, Niterói</institution>, Rio de Janeiro 24241-002, <country>Brasil</country></aff></contrib-group><author-notes><corresp id="cor1"><label>*</label>Email: <email>claudia.rezendeufrj@gmail.com</email>.</corresp></author-notes><pub-date pub-type="epub"><day>04</day><month>12</month><year>2024</year></pub-date><pub-date pub-type="collection"><day>18</day><month>12</month><year>2024</year></pub-date><volume>72</volume><issue>50</issue><issue-id pub-id-type="pmc-issue-id">477451</issue-id><fpage>27876</fpage><lpage>27883</lpage><history><date date-type="received"><day>17</day><month>07</month><year>2024</year></date><date date-type="accepted"><day>30</day><month>10</month><year>2024</year></date><date date-type="rev-recd"><day>27</day><month>10</month><year>2024</year></date></history><pub-history><event event-type="pmc-release"><date><day>20</day><month>12</month><year>2024</year></date></event><event event-type="pmc-live"><date><day>21</day><month>12</month><year>2024</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2026-03-18 15:25:12.957"><day>18</day><month>03</month><year>2026</year></date></event></pub-history><permissions><copyright-statement>© 2024 The Authors. Published by American Chemical Society</copyright-statement><copyright-year>2024</copyright-year><copyright-holder>The Authors</copyright-holder><license><ali:license_ref xmlns:ali="http://www.niso.org/schemas/ali/1.0/" specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p>Permits the broadest form of re-use including for commercial purposes, provided that author attribution and integrity are maintained (<ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://creativecommons.org/licenses/by/4.0/">https://creativecommons.org/licenses/by/4.0/</ext-link>).</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="jf4c06411.pdf"><?pdf-name jf4c06411.pdf?><?pdf-size 2811601?><?pdf-md5 328e3eb20016c30a13de32505163bda6?><?pdf-image-server-status NEVER_LOAD?><?pdf-cloudpmc-urn urn:app:103c/11660246/328e3eb20016/jf4c06411.pdf?></self-uri><abstract><p content-type="toc-graphic"><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="ab-tgr1" position="float" orientation="portrait" xlink:href="jf4c06411_0006.jpg"><?image-name jf4c06411_0006.jpg?><?image-size 46833?><?image-md5 e944454a10a0d82fa60a8a418fec15fc?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 482?><?image-original-width 1000?><?image-scaled-height 321?><?image-scaled-width 666?><?image-cloudpmc-urn urn:cdn:blobs/103c/11660246/e944454a10a0/jf4c06411_0006.jpg?><?thumb-name jf4c06411_0006.gif?><?thumb-size 10989?><?thumb-md5 13fe30aa6afce05bb27e7a16d9126628?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 165?><?thumb-cloudpmc-urn urn:cdn:blobs/103c/11660246/13fe30aa6afc/jf4c06411_0006.gif?></graphic></p><p>Cafestol is an <italic toggle="yes">ent</italic>-kaurene skeleton
+diterpene
+that is present in coffee beans and brews. Although several biological
+activities have been described in the literature for cafestol, such
+as hypercholesterolemic, anti-inflammatory, anticerous, and antidiabetic
+effects, its metabolism within the human body remains poorly understood.
+Therefore, this study aimed to quantify cafestol in boiled coffee
+brew, assess its bioaccessibility using a static <italic toggle="yes">in vitro</italic> digestion model, and investigate the metabolites formed during the
+digestion process using liquid chromatography coupled to high-resolution
+mass spectrometry. Cafestol content in the boiled coffee brew ranged
+from 127.47 to 132.65 mg L<sup>–1</sup>. The bioaccessibility
+of cafestol from boiled coffee brew using the <italic toggle="yes">in vitro</italic> digestion model was 93.65%; additionally, in the intestinal phase,
+cafestol was mainly found in its alcohol form. Additionally, a novel
+carboxylic acid derivative metabolite from cafestol with <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 331.1909 [M + H]<sup>+</sup> formed in the oral
+digestion phase is proposed. This metabolite was also detected in
+other digestion phases. Thus, this is the first article to investigate
+the metabolism of cafestol during digestion using an <italic toggle="yes">in vitro</italic> digestion model. The results indicate that cafestol is bioaccessible,
+is available to absorption, in its alcohol form, and suffers an oxidation
+reaction during the oral phase of digestion.</p></abstract><kwd-group><kwd>coffee</kwd><kwd>diterpenes</kwd><kwd>bioaccessibility</kwd><kwd>static <italic toggle="yes">in vitro</italic> digestion</kwd><kwd>metabolism</kwd><kwd>high-resolution mass spectrometry</kwd></kwd-group><funding-group><award-group><funding-source><institution-wrap><institution>CoordenaÃ§Ã£o de AperfeiÃ§oamento de Pessoal de NÃ­vel Superior</institution><institution-id institution-id-type="doi">10.13039/501100002322</institution-id></institution-wrap></funding-source><award-id>NA</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>Embrapa cafÃ©</institution><institution-id institution-id-type="doi">NA</institution-id></institution-wrap></funding-source><award-id>NA</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>FundaÃ§Ã£o Carlos Chagas Filho de Amparo Ã  Pesquisa do Estado do Rio de Janeiro</institution><institution-id institution-id-type="doi">10.13039/501100004586</institution-id></institution-wrap></funding-source><award-id>E-26/211.375/2021</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>FundaÃ§Ã£o Carlos Chagas Filho de Amparo Ã  Pesquisa do Estado do Rio de Janeiro</institution><institution-id institution-id-type="doi">10.13039/501100004586</institution-id></institution-wrap></funding-source><award-id>E-26/202.941/2017</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>FundaÃ§Ã£o Carlos Chagas Filho de Amparo Ã  Pesquisa do Estado do Rio de Janeiro</institution><institution-id institution-id-type="doi">10.13039/501100004586</institution-id></institution-wrap></funding-source><award-id>E-26/200.862/2021</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>Conselho Nacional de Desenvolvimento CientÃ­fico e TecnolÃ³gico</institution><institution-id institution-id-type="doi">10.13039/501100003593</institution-id></institution-wrap></funding-source><award-id>401749/2019-3</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>Conselho Nacional de Desenvolvimento CientÃ­fico e TecnolÃ³gico</institution><institution-id institution-id-type="doi">10.13039/501100003593</institution-id></institution-wrap></funding-source><award-id>309212/2021-9</award-id></award-group></funding-group><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-license-ref</meta-name><meta-value>CC BY</meta-value></custom-meta><custom-meta><meta-name>document-id-old-9</meta-name><meta-value>jf4c06411</meta-value></custom-meta><custom-meta><meta-name>document-id-new-14</meta-name><meta-value>jf4c06411</meta-value></custom-meta><custom-meta><meta-name>ccc-price</meta-name><meta-value/></custom-meta></custom-meta-group></article-meta></front><body><sec id="sec1"><label>1</label><title>Introduction</title><p>Coffee brew is one of
+the most consumed beverages in the world
+due to its desirable flavor and aroma.<sup><xref ref-type="bibr" rid="ref1">1</xref></sup> According to the International Coffee Organization, 170.3 million
+60 kg bags of coffee were consumed in 2022 (ICO, 2024). Brewed coffee
+is prepared using roasted coffee beans and hot water and is usually
+consumed as a hot beverage, although cold variations such as cold
+brewed coffee are becoming more popular.<sup><xref ref-type="bibr" rid="ref2">2</xref></sup> Coffee brew is rich in bioactive compounds such as caffeine, chlorogenic
+acids, trigonelline, and diterpenes.<sup><xref ref-type="bibr" rid="ref3">3</xref>,<xref ref-type="bibr" rid="ref4">4</xref></sup></p><p>Cafestol
+is an <italic toggle="yes">ent</italic>-kaurene diterpene found in
+the lipid fraction of coffee beans.<sup><xref ref-type="bibr" rid="ref5">5</xref></sup> The
+majority of cafestol is esterified with acyl moieties, mainly palmitoyl
+and linoleoyl units; only a small fraction occurs as free diterpene
+alcohols (<xref rid="fig1" ref-type="fig">Figure <xref rid="fig1" ref-type="fig">1</xref></xref>).<sup><xref ref-type="bibr" rid="ref6">6</xref></sup> Total cafestol content in coffee brews varies
+greatly according to the brewing method because of its low solubility
+in water and the use (or not) of a filter to prepare the beverages.<sup><xref ref-type="bibr" rid="ref7">7</xref>,<xref ref-type="bibr" rid="ref8">8</xref></sup> Boiled coffee brews have the highest cafestol content (692 mg L<sup>–1</sup>), while filtered coffee brews have the lowest (3.5
+mg L<sup>–1</sup>).<sup><xref ref-type="bibr" rid="ref9">9</xref></sup> The boiled
+coffee brew is an adaptation of the Turkish coffee preparation; it
+consists of boiling coarsely ground roasted coffee beans in water
+for 10 min and waiting 2–5 min before consumption. This type
+of coffee brew is mostly consumed in Scandinavian countries.<sup><xref ref-type="bibr" rid="ref8">8</xref></sup></p><fig id="fig1" position="float" orientation="portrait"><label>Figure 1</label><caption><p>Chemical structure of (A) cafestol ester—R corresponds,
+mainly, to palmitoyl and linoleoyl moieties—and (B) cafestol
+alcohol (free).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr1" position="float" orientation="portrait" xlink:href="jf4c06411_0001.jpg"><?image-name jf4c06411_0001.jpg?><?image-size 35695?><?image-md5 c3834e356353cfe53cefdb29e679f0b5?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 747?><?image-original-width 2400?><?image-scaled-height 257?><?image-scaled-width 825?><?image-cloudpmc-urn urn:cdn:blobs/103c/11660246/c3834e356353/jf4c06411_0001.jpg?><?thumb-name jf4c06411_0001.gif?><?thumb-size 3304?><?thumb-md5 419defe466b1257f6591b9bd8b81338f?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 62?><?thumb-scaled-width 200?><?thumb-cloudpmc-urn urn:cdn:blobs/103c/11660246/419defe466b1/jf4c06411_0001.gif?></graphic></fig><p>Cafestol exhibits diverse beneficial biological
+activities, including
+anti-inflammatory, antioxidant, antidiabetic, and anticarcinogenic
+effects. However, it also has a pronounced hypercholesterolemic effect.<sup><xref ref-type="bibr" rid="ref3">3</xref>,<xref ref-type="bibr" rid="ref10">10</xref></sup></p><p>Despite the popularity of coffee brews and the many biological
+activities described for cafestol, a few studies have been conducted
+on the metabolism of this diterpene in humans. The first study describing
+the pharmacokinetics of cafestol was published in 1998.<sup><xref ref-type="bibr" rid="ref11">11</xref></sup> The authors studied the absorption and excretion
+of cafestol after the ingestion of a boiled coffee brew by ileostomy
+volunteers. Upon analysis of the contents of the ileostomy bags, the
+researchers determined that 67% of administered cafestol was absorbed
+into the duodenum. Additionally, 24% was lost in the stomach, and
+only 1.2% was excreted in the urine as sulfate or glucuronide conjugates
+8 h after ingestion. While the authors observed a decrease in the
+amount of cafestol during the digestion process, they did not further
+investigate the metabolites formed. Another study from 2019, investigated
+the bioaccessibility of cafestol from spent coffee grounds using and
+an <italic toggle="yes">in vitro</italic> digestion model.<sup><xref ref-type="bibr" rid="ref12">12</xref></sup> The authors found that cafestol has a low bioaccessibility of 13.39%.
+This is the only work in the literature investigating cafestol metabolism
+employing an <italic toggle="yes">in vitro</italic> digestion model. Other studies
+focused on the biotransformation and distribution of cafestol and
+explored the metabolism of cafestol in mice through intravenous administration
+of cafestol through the portal vein; bile excretion aliquots were
+collected and analyzed. The researchers identified a possible cafestol
+metabolite identified as a hydroxy-cafestol conjugated to glutathione.<sup><xref ref-type="bibr" rid="ref13">13</xref></sup> Subsequently, using the same methodology, the
+authors investigated the absorption and distribution of deuterated
+[3H]-cafestol via autoradiographic analysis in mice.<sup><xref ref-type="bibr" rid="ref14">14</xref></sup> They found that deuterated [3H]-cafestol was absorbed into
+the duodenum. This study also highlighted the liver as a site of cafestol
+metabolism with subsequent elimination through bile. Furthermore,
+four cafestol metabolite candidates were observed in bile; however,
+the only identified metabolite was a cafestol glucuronide conjugate.
+Recently, we studied the biotransformation of cafestol using a zebrafish
+(<italic toggle="yes">Danio rerio</italic>) water tank model.<sup><xref ref-type="bibr" rid="ref15">15</xref></sup> Five possible cafestol metabolites were suggested
+using liquid chromatography coupled to high-resolution mass spectrometry:
+6-hydroxy-cafestol, 6,12-dihydroxy-cafestol, 2-oxo-cafestol, 6-oxo-cafestol,
+and one isomer whose position of the carbonyl group was not determined.
+Although these studies accounted for the hepatic metabolism of cafestol,
+none of them focused on the possible transformations that can occur
+in the gastrointestinal tract, as observed by De Roos et al.<sup><xref ref-type="bibr" rid="ref11">11</xref></sup> Most of the studies regarding cafestol metabolism
+employ a standard instead of the coffee brew due to the chemical complexity
+of the coffee brew.<sup><xref ref-type="bibr" rid="ref13">13</xref>−<xref ref-type="bibr" rid="ref15">15</xref></sup></p><p>Oral bioavailability is essential to the activity
+of food-bioactive
+compounds. It is usually evaluated based on three main factors: bioaccessibility,
+absorption, and transformation of biomolecules.<sup><xref ref-type="bibr" rid="ref16">16</xref></sup> Bioaccessibility is the amount of ingested components available
+for absorption across the intestinal epithelia.<sup><xref ref-type="bibr" rid="ref17">17</xref></sup> This term encompasses the transformations undergone by
+the substance during digestion, absorption, and assimilation by the
+intestinal epithelium, as well as presystemic, intestinal, and hepatic
+metabolism.<sup><xref ref-type="bibr" rid="ref18">18</xref></sup> Bioaccessibility is typically
+assessed through <italic toggle="yes">in vitro</italic> digestion protocols that
+simulate digestion phases (oral, gastric, and intestinal duodenal).
+These protocols may or may not be followed by a study of absorption
+evaluation such as an assay using Caco-2 cells. Bioaccessibility assays
+are extremely relevant, as they investigate the interaction between
+nutrients and the food matrix while examining the effect of pH and
+digestive enzymes on potential nutrients.<sup><xref ref-type="bibr" rid="ref19">19</xref></sup> Moreover, the elucidation of cafestol degradation along the gastrointestinal
+tract and its digestion products is an important step in characterizing
+this diterpene metabolism, as these substances can reach the bloodstream,
+organs, and tissues after intestinal absorption and exert potential
+effects.</p><p>Thus, this study aimed to evaluate the bioaccessibility
+of cafestol
+from coffee brew and investigate its metabolism in an <italic toggle="yes">in vitro</italic> digestion model using liquid chromatography coupled to high-resolution
+mass spectrometry.</p></sec><sec id="sec2"><label>2</label><title>Materials and Method</title><sec id="sec2.1"><label>2.1</label><title>Chemicals and Reagents</title><p>Acetonitrile,
+methanol, methyl-<italic toggle="yes">tert</italic>-butyl ether (LC-MS grade),
+and ethyl ether were obtained from BioGrade (Durham, USA). Formic
+acid and ammonium formate (LC-MS grade) were purchased from Tedia
+(Fairfield, USA). Ultrapure water with a resistivity of 18.2 M Ω/cm
+was obtained using a Millipore Milli-Q water purification system (Billerica,
+MA, USA). Hydrochloric acid (HCl), dimethyl sulfoxide (DMSO), sodium
+hydroxide (NaOH), potassium hydroxide (KOH), sodium chloride (NaCl),
+and sodium Bicarbonate (NaHCO<sub>3</sub>), as well as the enzymes
+and bile acid mixture from ovine and bovine, were purchased from Sigma-Aldrich
+(St. Louis, MO, USA). Raw coffee beans (<italic toggle="yes">Coffee arabica</italic> L.) from the 2018–2019 harvest year were obtained from a
+farm in the city of São José do Vale do Rio Preto, Brazil
+(22°11′35,2″ S, 42°59′08,6″
+W).</p><p>Cafestol (&gt;99% purity) was isolated from raw coffee beans
+(<italic toggle="yes">Coffea arabica</italic> L.) according to a
+protocol developed by our group.<sup><xref ref-type="bibr" rid="ref20">20</xref></sup> MS, <sup>1</sup>H- and <sup>13</sup>C NMR, and melting point data are shown
+in the <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://pubs.acs.org/doi/suppl/10.1021/acs.jafc.4c06411/suppl_file/jf4c06411_si_001.pdf">Supporting Information</ext-link>.</p></sec><sec id="sec2.2"><label>2.2</label><title>Preparation of the Boiled Coffee Brew</title><p>The bioaccessibility studies were performed using boiled coffee since
+this type of brew has the highest amount of cafestol.<sup><xref ref-type="bibr" rid="ref8">8</xref>,<xref ref-type="bibr" rid="ref21">21</xref>,<xref ref-type="bibr" rid="ref22">22</xref></sup> The boiled coffee brew was prepared
+according to the International Agency for Research on Cancer.<sup><xref ref-type="bibr" rid="ref23">23</xref></sup> Thus, 100 g of green coffee beans were roasted
+using a CBR-101 roaster (Gene Café), following the manufacturer’s
+instructions for a light roast (12 min at 230 °C). Beans were
+weighed before and after roasting to assess the mass loss, and difference
+of up to 14% indicates a light roast.<sup><xref ref-type="bibr" rid="ref24">24</xref></sup> Subsequently, the beans were grounded using an analytical mill (IKA
+A11 basic), and particle size was determined using fixed-size sieves
+ranging from 850 to 1000 mm (Bertel). Seven grams of roasted and ground
+coffee were boiled with 100 mL of filtered water for 10 min, followed
+by a 2 min resting period, to allow the ground particles to settle
+at the bottom of the container. The prepared beverage was carefully
+transferred to a 100 mL amber glass bottle and frozen at −20
+°C until analysis.</p></sec><sec id="sec2.3"><label>2.3</label><title>Quantification of Cafestol in the Boiled Coffee
+Brew</title><p>Cafestol was quantified in the boiled coffee brew according
+to the protocol described by Moeenfard et al.<sup><xref ref-type="bibr" rid="ref9">9</xref></sup> Initially, 2.5 mL of the beverage were saponified at high temperature
+with 3 g of potassium hydroxide in 4 mL Teflon-capped vials. The reaction
+was carried out at 80 °C for 60 min on a silica carbide plate
+with stirring on a heating plate. After the vials were cooled, four
+liquid–liquid extractions were performed using 2 mL of ethyl
+ether. The ether fraction was collected and washed with 5 mL of a
+2 M sodium chloride solution. Subsequently, the solvent was evaporated
+under nitrogen flow, and the resulting solid was dissolved in methanol
+(4 mL). The sample was filtered through a 0.2 μm pore size PVDF
+filter and then subjected to analysis by high-resolution liquid chromatography
+coupled to a diode array detector (HPLC-DAD) (a Shimadzu 20A LC system
+equipped with a diode array detector SPD-M20A). The chromatographic
+conditions used were a reverse-phase column (Eclipse XDB C<sub>18</sub> 150 × 4.6 mm; 5 μm) with acetonitrile and water (55:45)
+at 0.7 mL min<sup>–1</sup> as the mobile phase. The sample
+injection volume was 20 μL, and the wavelength used was 220
+nm.<sup><xref ref-type="bibr" rid="ref25">25</xref></sup> Cafestol was identified in the samples
+by comparing the retention time and UV spectra to those of the isolated
+cafestol standard. All analyses were performed in triplicate, and
+only results with a coefficient of variation equal to or less than
+5% were accepted.</p><p>Quantification was performed using an external
+analytical curve of cafestol (10, 40, 70, 100, 130, 160, and 190 μg
+mL<sup>–1</sup>). The method was validated according to the
+FDA guidelines (Food and Drug Administration). The evaluated parameters
+were linearity, limits of detection (LOD) and quantification (LOQ),
+accuracy and precision, recovery, and selectivity.</p></sec><sec id="sec2.4"><label>2.4</label><title><italic toggle="yes">In Vitro</italic> Digestion of the
+Boiled Coffee Brew</title><p><italic toggle="yes">In vitro</italic> gastrointestinal
+digestion of the boiled coffee brew followed an adaptation of the
+harmonized protocol for digestion set out by INFOGEST.<sup><xref ref-type="bibr" rid="ref19">19</xref></sup> The activities of all of the enzymes used in
+the experiment were dosed according to the established protocols.</p><p>Two and a half milliliters of the beverage were mixed in a flask
+with 2.5 mL of fresh human saliva obtained from a volunteer for 2
+min. The saliva donation followed the appropriate protocols to protect
+the rights and privacy of the donor, who consented to participate
+in the research. The saliva was obtained from a donor with a fast
+period of at least 2 h and without oral hygiene with toothpaste for
+at least the same amount of time. The collection was performed during
+the period necessary to collect the amount of saliva used in the study.
+No stimulation was used.</p><p>Subsequently, 2.5 mL of pepsin solution
+(423 U mg<sup>–1</sup>, Sigma-Aldrich, St. Louis, MO, USA)
+at a concentration of 2000 U
+mL<sup>–1</sup> was added, and the pH was adjusted to 2 with
+a 0.1 M HCl solution. This solution was incubated in a Dubnoff bath
+(Thermo Fisher) at 37 °C for 120 min. After this gastric phase,
+5 mL of a solution of porcine pancreatin (7.05 U mg<sup>–1</sup>, Sigma-Aldrich, St. Louis, MO,USA) and bile (1.00 mmol.g<sup>–1</sup>, Sigma-Aldrich, St. Louis, MO, USA) were added, and the pH was adjusted
+to 7 with a 0.1 M NaHCO<sub>3</sub> solution. The solution was then
+incubated for 120 min at 37 °C. At the end of intestinal digestion,
+the samples were frozen at −20 °C until analysis. All
+analyses were performed in triplicate.</p></sec><sec id="sec2.5"><label>2.5</label><title>Determination of the Bioaccessibility of Cafestol
+after Digestion of the Boiled Coffee Brew</title><p>For the determination
+of cafestol bioaccessibility in boiled coffee brew after digestion,
+samples were centrifuged at 4500 rpm for 30 min and the supernatant
+was collected and considered the bioaccessible fraction of the intestinal
+phase. Subsequently, a liquid–liquid extraction of 2.5 mL from
+the intestinal phase was performed with 2 mL of ethyl ether. The solvent
+was evaporated under nitrogen flow, and the resulting solid was dissolved
+in methanol (1 mL). Chromatographic analysis followed the procedure
+established for cafestol analysis in the beverage (<xref rid="sec2.3" ref-type="other">Section <xref rid="sec2.3" ref-type="other">2.3</xref></xref>). Although only the intestinal
+phase was used to calculate the bioaccessibility fraction, the oral
+and gastric phase samples were also analyzed to monitor this molecule
+during the <italic toggle="yes">in vitro</italic> digestion process. All analyses
+were performed in triplicate, and only results with a coefficient
+of variation equal to or less than 5% were accepted.</p></sec><sec id="sec2.6"><label>2.6</label><title><italic toggle="yes">In Vitro</italic> Digestion of Cafestol</title><p>For the analysis of the metabolites formed during the digestion
+of cafestol, an <italic toggle="yes">in vitro</italic> digestion protocol was performed
+using 1 mg of cafestol isolated from raw coffee beans previously dissolved
+in 100 μL of DMSO instead of the boiled coffee brew. The same
+procedures as those described in items 2.4 and 2.5 were used. The
+samples obtained from the oral, gastric, and intestinal phases were
+analyzed by liquid chromatography coupled with high-resolution mass
+spectrometry (LC-HRMS) to investigate cafestol metabolites (<xref rid="sec2.7" ref-type="other">Section <xref rid="sec2.7" ref-type="other">2.7</xref></xref>).</p></sec><sec id="sec2.7"><label>2.7</label><title>Liquid Chromatography–High-Resolution
+Mass Spectrometry (LC-HRMS) for Cafestol Metabolites</title><p>LC experiments
+were performed on Thermo Scientific Dionex Ultimate 3000 equipment
+(Thermo Fisher Scientific, USA) in a reversed-phase column (Syncronis
+C<sub>18</sub> 50 mm × 2,1 mm × 1,7 μm). The mobile
+phase consisted of Milli-Q water with 0.1% formic acid and 5 mM ammonium
+formate (mobile phase A), and methanol containing 0.1% formic acid
+(mobile phase B) in a gradient of 15% B (0 min), 15–50% B (1–6
+min), 50–95% B (6–9 min), 95% B (9–12 min), and
+15% B (12.1–16 min). The flow was at 0.35 mL min<sup>–1</sup>, the injection volume was 5 μL, and the column oven temperature
+was 40 °C.</p><p>Mass spectrometry analysis was performed using
+a Q-Exactive Hybrid Quadrupole-Orbitrap mass spectrometer (Thermo
+Fisher Scientific, USA) equipped with an ESI source, spray voltage
+±3.9 kV, ion transfer capillary 400 °C, sheath, and auxiliary
+gases at 50 and 15 arbitrary units.</p><p>The metabolites were investigated
+in positive ion mode using full
+scan (Full-MS) over the range of <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 100–1000 at 70.000 resolution, followed by a ddMS2 Top 3
+experiment at a resolution of 17.500. The collision energy (CE) ramp
+was (20–60 eV). In addition, Parallel Reaction Monitoring (PRM)
+of the protonated cafestol ion [M + H]<sup>+</sup><italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 317.2111 was used to monitor the substance in
+the samples with a mass tolerance of 6 ppm.</p><p>The equipment was
+calibrated in positive mode with the manufacturer’s
+calibration solution (Thermo Fisher Scientific, Germany) of dodecyl
+sodium sulfate (<italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 265.1479), sodium
+taurocholate (<italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 514.2842), and
+ultra mark polymer 1621 (<italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 1279.9973,
+1379.9905, 1479.9849, 1579.9778, 1679.9723, and 1779.9648).</p></sec><sec id="sec2.8"><label>2.8</label><title>Data Analyses</title><p>Data analyses were
+performed using Thermo Scientific Xcalibur 4.3 software (Thermo Fisher
+Scientific, USA).</p><p>A metabolite database was created using cafestol
+metabolites described in the literature<sup><xref ref-type="bibr" rid="ref13">13</xref>−<xref ref-type="bibr" rid="ref15">15</xref></sup> and metabolites suggested
+by the <italic toggle="yes">in silico</italic> metabolism prediction software Way2Drug
+(created by multidisciplinary research from Way2Drug portal, 2010)<sup><xref ref-type="bibr" rid="ref26">26</xref></sup> and SMARTCyp 2.3 (Cambridge University, Cambridge,
+UK, 2013).<sup><xref ref-type="bibr" rid="ref27">27</xref></sup></p></sec></sec><sec id="sec3"><label>3</label><title>Results and Discussion</title><sec id="sec3.1"><label>3.1</label><title>Quantification of Cafestol in the Boiled Coffee
+Brew</title><p>Cafestol was quantified in the boiled coffee brew prior
+to its application in <italic toggle="yes">in vitro</italic> digestion assays to
+calculate its bioaccessibility. An external calibration curve was
+constructed using isolated cafestol in methanol at concentrations
+ranging from 10 to 190 μg mL<sup>–1</sup> (<italic toggle="yes">R</italic> = 0.9965). Further information on the validation parameters is provided
+in the <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://pubs.acs.org/doi/suppl/10.1021/acs.jafc.4c06411/suppl_file/jf4c06411_si_001.pdf">Supporting Information</ext-link>.</p><p>The
+extraction protocol employed involved a saponification step at the
+beginning of the procedure.<sup><xref ref-type="bibr" rid="ref9">9</xref></sup> This step
+is necessary because cafestol occurs in coffee brews mainly as esters
+of fatty acids (up to 95%, <xref rid="fig1" ref-type="fig">Figure <xref rid="fig1" ref-type="fig">1</xref></xref>A).<sup><xref ref-type="bibr" rid="ref6">6</xref></sup> Thus, saponification
+is used to convert the many cafestol esters into cafestol alcohol
+and simplify the analysis. This strategy has been widely used in the
+literature.<sup><xref ref-type="bibr" rid="ref7">7</xref>,<xref ref-type="bibr" rid="ref9">9</xref>,<xref ref-type="bibr" rid="ref21">21</xref>,<xref ref-type="bibr" rid="ref28">28</xref>−<xref ref-type="bibr" rid="ref30">30</xref></sup></p><p>Cafestol content was 130.06
+± 3.66 mg L<sup>–1</sup> in a boiled coffee brew. In the
+literature, the cafestol content
+in boiled coffee brews varies widely from 5.2 to 128.8 mg L<sup>–1</sup>.<sup><xref ref-type="bibr" rid="ref9">9</xref>,<xref ref-type="bibr" rid="ref21">21</xref>,<xref ref-type="bibr" rid="ref22">22</xref>,<xref ref-type="bibr" rid="ref28">28</xref>,<xref ref-type="bibr" rid="ref29">29</xref>,<xref ref-type="bibr" rid="ref31">31</xref></sup> This variability can be explained by the lack of standardization
+in brew preparation as well as different degrees of roasting, granulometry,
+boiling time, and a grain/water ratio used in the different studies.<sup><xref ref-type="bibr" rid="ref32">32</xref></sup> Furthermore, different aspects related to edaphoclimatic
+conditions and postharvest methods are also known to affect coffee
+diterpene content.<sup><xref ref-type="bibr" rid="ref33">33</xref></sup></p></sec><sec id="sec3.2"><label>3.2</label><title>Bioaccessibility of Cafestol after <italic toggle="yes">In Vitro</italic> Digestion of the Boiled Coffee Brew</title><p>To
+evaluate the bioaccessibility of cafestol, the <italic toggle="yes">in vitro</italic> digestion protocol was carried out using boiled coffee brew. The
+brew was used without the saponification protocol as we hypothesized
+that the lipases present in the intestinal digestion phase would hydrolyze
+the cafestol esters releasing free cafestol (alcohol form) into the
+intestinal fluid.</p><p>Lipases (E.C. 3.1.1.3) are acyl hydrolases
+present in most organisms such as microorganisms, plants, and animals.
+In the gastrointestinal tract, these enzymes are responsible for the
+hydrolysis of triglycerides (TAGs), diglycerides (DAGs), and monoglycerides
+(MAGs) into free fatty acids (FFAs), facilitating lipid absorption.<sup><xref ref-type="bibr" rid="ref34">34</xref></sup> However, these lipases are also capable of cleaving
+the ester bonds in other exogenous molecules.<sup><xref ref-type="bibr" rid="ref35">35</xref></sup></p><p>Thus, we evaluated the presence of cafestol in all phases
+of the <italic toggle="yes">in vitro</italic> digestion model. As shown in <xref rid="fig2" ref-type="fig">Figure <xref rid="fig2" ref-type="fig">2</xref></xref>, free cafestol was
+found only in the intestinal
+digestion phase (duodenal). This was accepted because the <italic toggle="yes">in vitro</italic> digestion protocol used in this study only contained
+lipase in the intestinal phase.<sup><xref ref-type="bibr" rid="ref19">19</xref></sup> Our results
+show that, although cafestol is found mainly in the form of esters
+in coffee brew, the lipases in the intestinal fluid can also cleave
+the ester bond, releasing free cafestol for absorption. Thus, the
+bioaccessible cafestol form is the cafestol alcohol. These results
+are interesting, as most studies investigating the biological activities
+of coffee diterpenes employ cafestol rather than cafestol esters.<sup><xref ref-type="bibr" rid="ref3">3</xref>,<xref ref-type="bibr" rid="ref10">10</xref>,<xref ref-type="bibr" rid="ref36">36</xref></sup> This is the first study to investigate
+the bioaccessibility of cafestol and indicates that this diterpene
+is absorbed mainly in its alcohol form.</p><fig id="fig2" position="float" orientation="portrait"><label>Figure 2</label><caption><p>Chromatograms obtained
+by HPLC-DAD analysis of (A) oral, (B) gastric,
+and (C) intestinal phases of the <italic toggle="yes">in vitro</italic> digestion
+of boiled coffee brew; (D) UV spectra of the substance of a retention
+time of 8.68 min, corresponding to cafestol.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr2" position="float" orientation="portrait" xlink:href="jf4c06411_0002.jpg"><?image-name jf4c06411_0002.jpg?><?image-size 46764?><?image-md5 262f7820961a6f5765decdc341ce93aa?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1288?><?image-original-width 2500?><?image-scaled-height 368?><?image-scaled-width 714?><?image-cloudpmc-urn urn:cdn:blobs/103c/11660246/262f7820961a/jf4c06411_0002.jpg?><?thumb-name jf4c06411_0002.gif?><?thumb-size 8083?><?thumb-md5 5693bc233985aa36fd5f8ed8a9fa87c2?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 155?><?thumb-cloudpmc-urn urn:cdn:blobs/103c/11660246/5693bc233985/jf4c06411_0002.gif?></graphic></fig><p>In addition, the bioaccessibility of cafestol was
+calculated by
+comparing the amount of cafestol in the boiled coffee brew before
+digestion and in the intestinal phase after the digestion protocol
+was completed. The bioaccessibility of free cafestol in the boiled
+coffee brew was 93.65%.<sup><xref ref-type="bibr" rid="ref18">18</xref></sup></p><p>The bioaccessibility
+of a substance can be influenced by several
+factors, such as the chemical nature of the compound and the matrix
+in which it is present. The integrity of the matrix also interferes
+with the release of phytochemicals into the intestinal lumen because
+bioaccessibility depends on the release of compounds from the food
+matrix. Thus, food processing can also affect the bioaccessibility
+of many compounds.<sup><xref ref-type="bibr" rid="ref42">42</xref></sup></p><p>The bioaccessibility
+of cafestol has already been studied in spent
+coffee grounds through <italic toggle="yes">in vitro</italic> digestion and was
+described as 13.39%.<sup><xref ref-type="bibr" rid="ref12">12</xref></sup> The coffee bean,
+even when ground, is a much more complex chemical matrix than the
+brew.<sup><xref ref-type="bibr" rid="ref43">43</xref>,<xref ref-type="bibr" rid="ref44">44</xref></sup> For example, green coffee beans have approximately
+5 g 100 g<sup>–1</sup> of insoluble fiber and 10–15
+g 100 g<sup>–1</sup> of proteins, whereas this type of fiber
+is not found in beverages and the amount of protein is significantly
+reduced.<sup><xref ref-type="bibr" rid="ref45">45</xref></sup></p><p>Some studies have indicated
+that the bioaccessibility of lipid
+compounds is reduced when the food matrix contains insoluble fibers,
+as these types of fibers interfere with the formation of micelles
+necessary for the solubilization of lipids in the intestinal lumen.<sup><xref ref-type="bibr" rid="ref42">42</xref>,<xref ref-type="bibr" rid="ref46">46</xref></sup> Therefore, the greater bioaccessibility of cafestol from the coffee
+brew than from the spent grounds could be explained by the absence
+of these compounds in the brew.</p><p>Another study investigated the
+bioaccessibility of cafestol from
+boiled coffee brew in ileostomized volunteers.<sup><xref ref-type="bibr" rid="ref11">11</xref></sup> After the beverage was drank, the fluid from the ileostomy
+bags was collected for 14 h and saponified, and free cafestol was
+quantified by HPLC-DAD to give a bioaccessibility of 70%. Although
+this result is closer to that obtained in this study (93.65%), the
+study of digestion in human volunteers is complicated and costly and
+the results can vary widely from person to person. Furthermore, human
+volunteers should be subjected to severe ethical considerations.<sup><xref ref-type="bibr" rid="ref47">47</xref></sup> Thus, <italic toggle="yes">in vitro</italic> digestion protocols
+have been developed and are preferred for food, nutrition, and medical
+studies. <italic toggle="yes">In</italic><italic toggle="yes">vitro</italic> models are quicker,
+cheaper, and have higher reproductivity than <italic toggle="yes">in vivo</italic> studies.<sup><xref ref-type="bibr" rid="ref17">17</xref>,<xref ref-type="bibr" rid="ref48">48</xref></sup></p></sec><sec id="sec3.3"><label>3.3</label><title>Cafestol Metabolite Formed during <italic toggle="yes">In Vitro</italic> Digestion by LC-HRMS</title><p>The isolated cafestol
+was subjected to an <italic toggle="yes">in vitro</italic> digestion protocol to
+study the possible biotransformation of the cafestol alcohol during
+digestion.</p><p>The oral, gastric, and intestinal phases were analyzed
+using LC-HRMS. Cafestol was observed in all phases of digestion, represented
+by the ion at <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 317.21112 [M +
+H]<sup>+</sup> and a retention time of 15.36 min, as shown in <xref rid="fig3" ref-type="fig">Figure <xref rid="fig3" ref-type="fig">3</xref></xref>. Thus, cafestol
+is to a certain extent resistant to the digestive conditions to which
+it was subjected in this study.</p><fig id="fig3" position="float" orientation="portrait"><label>Figure 3</label><caption><p>Base peak chromatogram for <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 317.21112 [M + H]<sup>+</sup> of LC-HRMS analysis
+of (A) oral, (B)
+gastric, and (C) intestinal phases of the <italic toggle="yes">in vitro</italic> digestion of cafestol.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr3" position="float" orientation="portrait" xlink:href="jf4c06411_0003.jpg"><?image-name jf4c06411_0003.jpg?><?image-size 42545?><?image-md5 5929b06f75dbf82af5c096b8ec0114f3?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 768?><?image-original-width 1875?><?image-scaled-height 307?><?image-scaled-width 750?><?image-cloudpmc-urn urn:cdn:blobs/103c/11660246/5929b06f75db/jf4c06411_0003.jpg?><?thumb-name jf4c06411_0003.gif?><?thumb-size 9436?><?thumb-md5 3e629e3dd50b638f4decbbf2781abab7?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 195?><?thumb-cloudpmc-urn urn:cdn:blobs/103c/11660246/3e629e3dd50b/jf4c06411_0003.gif?></graphic></fig><p>The fragmentation spectrum of cafestol obtained
+by LC-HRMS was
+compared to the spectra obtained during the analysis of isolated cafestol
+and the spectra found in the literature.<sup><xref ref-type="bibr" rid="ref15">15</xref>,<xref ref-type="bibr" rid="ref49">49</xref></sup> The fragmentation spectra and proposed fragmentation for cafestol
+are provided in the <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://pubs.acs.org/doi/suppl/10.1021/acs.jafc.4c06411/suppl_file/jf4c06411_si_001.pdf">Supporting Information</ext-link>.</p><p>Initially, from the fragmentation spectrum of the hydrogen
+adduct,
+it was possible to observe the molecular ion at <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 317.2104, referring to the protonated cafestol
+molecule. Next, we have fragments <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 299.2005 and <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 281.18942 referring
+to the loss of one and two water molecules, respectively, as reported
+for the cafestol molecule using atmospheric pressure chemical ionization
+(APCI). The fragment at <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 253.15782
+is formed by the opening of the B and C rings by the retro-Diels–Alder
+reaction and subsequent elimination of the side chain by remote hydrogen
+rearrangement. Furthermore, fragments with <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> values of 149.0959 and 147.08017 were described as marker
+fragments of the furan ring. The fragments <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 131.08546 and <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 121.10121
+are derived from the breaking of the C-18 bond with oxygen, followed
+by dehydration of fragment <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 149.09593
+and breaking of the C-3 bond with oxygen, with the elimination of
+carbonyls from the same fragment, respectively. Finally, fragment <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 81.0392, the base peak of the spectrum,
+corresponds to the portion of the furan ring linked to an ethylene
+group.</p><p>One cafestol metabolite, with <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 331.19075 [M + H]<sup>+</sup> and a retention time of
+7.87 min,
+was observed during the <italic toggle="yes">in vitro</italic> digestion of cafestol.
+This metabolite was observed in the oral phase, and its intensity
+increased during the other phases. The extracted chromatogram is shown
+in the <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://pubs.acs.org/doi/suppl/10.1021/acs.jafc.4c06411/suppl_file/jf4c06411_si_001.pdf">Supporting Information</ext-link>. The mass
+difference between cafestol and this metabolite may correspond to
+the addition of an oxo group (13.95926 Da).</p><p>The possible structure
+of a carboxylic acid from cafestol (17-oxo-cafestol)
+and the mass spectrum obtained by the fragmentation experiment of
+this metabolite are presented in <xref rid="fig4" ref-type="fig">Figure <xref rid="fig4" ref-type="fig">4</xref></xref>.</p><fig id="fig4" position="float" orientation="portrait"><label>Figure 4</label><caption><p>Structure and fragmentation profile of the cafestol
+metabolite
+(retention time 7.8 min) and <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 331.19094 [M + H]<sup>+</sup> by ESI-Orbitrap.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr4" position="float" orientation="portrait" xlink:href="jf4c06411_0004.jpg"><?image-name jf4c06411_0004.jpg?><?image-size 57036?><?image-md5 46bc767578d3f0560152026d30ff4b4c?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 810?><?image-original-width 2100?><?image-scaled-height 270?><?image-scaled-width 700?><?image-cloudpmc-urn urn:cdn:blobs/103c/11660246/46bc767578d3/jf4c06411_0004.jpg?><?thumb-name jf4c06411_0004.gif?><?thumb-size 11983?><?thumb-md5 a8bb635c80e06b315da4fc34e3403947?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 77?><?thumb-scaled-width 200?><?thumb-cloudpmc-urn urn:cdn:blobs/103c/11660246/a8bb635c80e0/jf4c06411_0004.gif?></graphic></fig><p>Fragments at <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 313.17982 [M+H–H2O]<sup>+</sup> and <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 295.16925 [M+H-2H2O]<sup>+</sup> correspond to two consecutive
+dehydrations from <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 331.19038
+[M + H]<sup>+</sup>. Fragment <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 267.17434 [M+H-2H2O–CO]<sup>+</sup> indicates the loss of
+a carbonyl group after dehydration.
+Furthermore, fragment <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 239.14304
+suggests that the carbonyl would be present in C-17 due to the loss
+of a CH<sub>2</sub>CH<sub>2</sub> unit from ion <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 267.17434, and ion <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 285.14852 suggests a COOH in the metabolite structure.
+The MS fragmentation is rationalized in <xref rid="fig5" ref-type="fig">Figure <xref rid="fig5" ref-type="fig">5</xref></xref>. Oxidation at C-17 in cafestol is suggested
+by <italic toggle="yes">in silico</italic> investigations using SMARTCyp and Way2Drug
+programs for analyte target prediction, based on previous work from
+our group as detailed in Andriolo et al.</p><fig id="fig5" position="float" orientation="portrait"><label>Figure 5</label><caption><p>Proposed fragmentation
+of the carboxylic acid (17-oxo-cafestol)
+of cafestol by ESI-Orbitrap.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr5" position="float" orientation="portrait" xlink:href="jf4c06411_0005.jpg"><?image-name jf4c06411_0005.jpg?><?image-size 52510?><?image-md5 8a7ca4e4f227a5f13d1f7671b922818d?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1477?><?image-original-width 4200?><?image-scaled-height 268?><?image-scaled-width 763?><?image-cloudpmc-urn urn:cdn:blobs/103c/11660246/8a7ca4e4f227/jf4c06411_0005.jpg?><?thumb-name jf4c06411_0005.gif?><?thumb-size 7852?><?thumb-md5 8560a9783da07d9ccf3b6344e9bcc7ea?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 70?><?thumb-scaled-width 200?><?thumb-cloudpmc-urn urn:cdn:blobs/103c/11660246/8560a9783da0/jf4c06411_0005.gif?></graphic></fig><p>Isomers of 17-oxo-cafestol were described in the
+investigation
+of cafestol biotransformation in a zebrafish water tank (ZWT), determined
+by ultraperformance liquid chromatography coupled to high-resolution
+mass spectrometry with the support of an <italic toggle="yes">in silico</italic> approach.<sup><xref ref-type="bibr" rid="ref15">15</xref></sup> The absence of the ion at <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 285.14852 in the mass spectra of the
+metabolite suggests that the oxo group is not positioned at the C-17
+position. Thus, the authors suggested the metabolite 2-oxo-cafestol
+based on the rationalization of the mass spectrum.</p><p>Therefore,
+the carboxylic acid derivative (17-oxo-cafestol) from
+cafestol seems to be the most likely chemical structure for the metabolite
+according to the rationalization used in this study due to the presence
+of the ion <italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 285.14852 in the
+substance mass spectra. This study is the first to report this substance
+as a cafestol metabolite. The formation of 17-oxo-cafestol in the
+oral phase can be associated with the presence of microorganisms in
+saliva used in this study, which are derived from the oral microbiota.</p><p>The metabolite 17-oxo-cafestol is formed by the oxidation of the
+cafestol molecule in the oral phase of <italic toggle="yes">in vitro</italic> digestion.
+Saliva has many functions, such as lubrication, predigestion, protection,
+and taste modulation. Human saliva contains many reactive oxygen species
+(ROS) to control the oral microbiota.<sup><xref ref-type="bibr" rid="ref50">50</xref></sup> However, the production of salivary ROS is carefully managed by
+many enzymes to maintain the homeostasis of the oral cavity.<sup><xref ref-type="bibr" rid="ref51">51</xref></sup> Furthermore, saliva contains enzymes that can
+promote oxidation reactions, such as salivary peroxidase and superoxide
+dismutase.<sup><xref ref-type="bibr" rid="ref52">52</xref></sup> These enzymes are capable
+of oxidizing several xenobiotics and are one of the main lines of
+microbiological defense in the oral cavity.<sup><xref ref-type="bibr" rid="ref53">53</xref></sup> A study observed that several peroxidases were capable of promoting
+oxidative ring expansion of substituted furfuryl alcohols.<sup><xref ref-type="bibr" rid="ref54">54</xref></sup> Therefore, due to the oxidative capacity of
+this enzyme, it is possible that 17-oxo-cafestol was formed by the
+enzymatic oxidation of cafestol in the oral phase of the <italic toggle="yes">in
+vitro</italic> digestion protocol.</p><p>Moreover, many nutrients
+are involved in the regulation of the
+oxidative stress, such as vitamins C and E. Polyphenols present in
+tea and berries can raise the antioxidant capacity of saliva. Resveratrol,
+a polyphenol found in wine, is reported to also increase the antioxidant
+activity of the salivary fluid and protect salivary glands and salivary
+proteins from oxidative stress.<sup><xref ref-type="bibr" rid="ref50">50</xref></sup> As for
+coffee, caffeine impacts the oxidative homeostasis in saliva. Caffeine
+inhibits the antioxidant enzyme aldehyde dehydrogenase in saliva,
+leading to an increase in secretions of salivary aldehyde dehydrogenase
+and glutathione transferase.<sup><xref ref-type="bibr" rid="ref55">55</xref></sup></p><p>The
+bioaccessibility of cafestol from the boiled coffee brew and
+the metabolism of cafestol were studied by using an <italic toggle="yes">in vitro</italic> digestion method. During the digestion of the coffee brew, free
+cafestol was only observed in the intestinal phase with a bioaccessibility
+of 93.65%. However, other lipases, such as gastric lipases, not present
+in this study, could also cleave the ester bonds in humans. This suggests
+that cafestol is absorbed mainly in its free form (alcohol instead
+of ester, the main natural form found in coffee beans) due to the
+action of pancreatic lipase in the intestinal phase.</p><p>Furthermore,
+a novel cafestol metabolite formed during the digestion
+protocol was identified. The metabolite 17-oxo-cafestol (<italic toggle="yes">m</italic>/<italic toggle="yes">z</italic> 331.19038 [M + H]<sup>+</sup>) was formed during
+the oral phase of digestion probably due to the oxidation of the cafestol
+molecule. The structure of 17-oxo-cafestol was proposed through rationalization
+of the fragmentation mass spectra of the substance. To the best of
+our knowledge, this is the first study employing LC-HRMS to study
+the biotransformation of a substance during an <italic toggle="yes">in vitro</italic> digestion protocol. The investigation of these transformations is
+of great relevance, as they can affect the bioavailability of cafestol
+and its biological activities after absorption.</p></sec></sec></body><back><notes notes-type="data-availability" id="notes3"><title>Data Availability Statement</title><p>Data will be
+made available on request.</p></notes><notes id="notes4" notes-type="si"><title>Supporting Information Available</title><p>The Supporting Information is
+available free of charge at <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://pubs.acs.org/doi/10.1021/acs.jafc.4c06411?goto=supporting-info">https://pubs.acs.org/doi/10.1021/acs.jafc.4c06411</ext-link>.<list id="silist" list-type="simple"><list-item><p>Spectral information for the isolated cafestol standard,
+validation parameters for the chromatographic conditions employed,
+fragmentation spectra for cafestol and proposed fragmentation for
+the substance, table for the mass error (ppm) table for cafestol and
+17-oxo cafestol fragments, extracted ion chromatogram for the metabolite
+17-oxo-cafestol ([M + H]<sup>+</sup>= 331.19094) in oral, gastric,
+intestinal phases, structures for the cafestol metabolites investigated
+suggested by SMARTCyp e Way2Drug programs and the literature, and
+cafestol and kahweol chromatogram, and UV–vis spectra obtained
+by HPLC-DAD (<ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://pubs.acs.org/doi/suppl/10.1021/acs.jafc.4c06411/suppl_file/jf4c06411_si_001.pdf">PDF</ext-link>)</p></list-item></list></p></notes><sec sec-type="supplementary-material"><title>Supplementary Material</title><supplementary-material content-type="local-data" id="sifile1" position="float" orientation="portrait"><media xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="jf4c06411_si_001.pdf" position="float" orientation="portrait"><?suppdata-name jf4c06411_si_001.pdf?><?suppdata-size 512376?><?suppdata-md5 2e888308a6af4b1103154ea1d168a33d?><?suppdata-image-server-status NEVER_LOAD?><?suppdata-mime-type application?><?suppdata-mime-sub-type pdf?><?suppdata-cloudpmc-urn urn:app:103c/11660246/2e888308a6af/jf4c06411_si_001.pdf?><caption><p>jf4c06411_si_001.pdf</p></caption></media></supplementary-material></sec><notes notes-type="" id="notes1"><title>Author Contributions</title><p>Brand, A.L.M.:
+conceptualization; methodology; investigation; data curation; visualization,
+writing—original draft; writing—review and editing.
+Silva, A.C.R.: investigation; methodology; data curation. Andriolo,
+C.V.: investigation; methodology; data curation. Mellinger, C.G.:
+supervision; writing—review and editing. Uekane, T.M.: conceptualization;
+supervision; writing—review and editing. Garrett, R.: supervision;
+writing—review and editing. Rezende, C.M.: project administration;
+conceptualization; supervision; writing—original draft; writing—review
+and editing.</p></notes><notes notes-type="funding-statement" id="notes5"><p>The Article Processing
+Charge for the publication of this research was funded by the Coordination
+for the Improvement of Higher Education Personnel - CAPES (ROR identifier:
+00x0ma614).</p></notes><notes notes-type="COI-statement" id="notes2"><p>The authors
+declare no competing financial interest.</p></notes><ack><title>Acknowledgments</title><p>The authors
+thank EMBRAPA CAFÉ, CNPq 309212/2021-9;
+401749/2019-3, CAPES and FAPERJ E-26/211.375/2021, E-26/200.862/2021,
+and E-26/202.941/2017 for financial support.</p></ack><glossary id="dl1"><def-list><title>Abbreviations</title><def-item><term>LC-MS</term><def><p>liquid
+chromatography coupled
+to mass spectrometry</p></def></def-item><def-item><term>DMSO</term><def><p>dimethyl sulfoxide</p></def></def-item><def-item><term>HPLC-DAD</term><def><p>high-performance liquid chromatography coupled to diode array
+detector</p></def></def-item><def-item><term>UV</term><def><p>ultraviolet</p></def></def-item><def-item><term>FDA</term><def><p>Food and Drug Administration</p></def></def-item><def-item><term>LOD</term><def><p>limit of detection</p></def></def-item><def-item><term>LOQ</term><def><p>limit of quantification</p></def></def-item><def-item><term>SGF</term><def><p>simulated gastric
+fluid</p></def></def-item><def-item><term>SIF</term><def><p>simulated
+intestinal fluid</p></def></def-item><def-item><term>LC-HRMS</term><def><p>liquid chromatography coupled to high-resolution mass spectrometry</p></def></def-item><def-item><term>PRM</term><def><p>Parallel Reaction
+Monitoring</p></def></def-item><def-item><term>TAGs</term><def><p>triglycerides</p></def></def-item><def-item><term>DAGs</term><def><p>diglycerides</p></def></def-item><def-item><term>MAGs</term><def><p>monoglycerides</p></def></def-item><def-item><term>FFAs</term><def><p>free fatty acids</p></def></def-item><def-item><term>EIC</term><def><p>extracted ion chromatogram</p></def></def-item><def-item><term>APCI</term><def><p>atmospheric pressure chemical ionization</p></def></def-item><def-item><term>ESI</term><def><p>electrospray ionization</p></def></def-item><def-item><term>ZWT</term><def><p>zebrafish water tank.</p></def></def-item></def-list></glossary><ref-list><title>References</title><ref id="ref1"><mixed-citation publication-type="journal" id="cit1"><name name-style="western"><surname>Adhikari</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Chambers</surname><given-names>E.</given-names></name>; <name name-style="western"><surname>Koppel</surname><given-names>K.</given-names></name>
+<article-title>Impact of Consumption Temperature
+on Sensory Properties of Hot Brewed Coffee</article-title>. <source>Food Res. Int.</source>
+<year>2019</year>, <volume>115</volume>, <fpage>95</fpage>–<lpage>104</lpage>. <pub-id pub-id-type="doi">10.1016/j.foodres.2018.08.014</pub-id>.<pub-id pub-id-type="pmid">30599987</pub-id>
+</mixed-citation></ref><ref id="ref2"><mixed-citation publication-type="journal" id="cit2"><name name-style="western"><surname>da
+Silva Portela</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>de Almeida</surname><given-names>I. F.</given-names></name>; <name name-style="western"><surname>Mori</surname><given-names>A. L. B.</given-names></name>; <name name-style="western"><surname>Yamashita</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>de Toledo Benassi</surname><given-names>M.</given-names></name>
+<article-title>Brewing Conditions Impact on the Composition and Characteristics
+of Cold Brew Arabica and Robusta Coffee Beverages</article-title>. <source>LWT</source>
+<year>2021</year>, <volume>143</volume>, <elocation-id>111090</elocation-id><pub-id pub-id-type="doi">10.1016/j.lwt.2021.111090</pub-id>.</mixed-citation></ref><ref id="ref3"><mixed-citation publication-type="journal" id="cit3"><name name-style="western"><surname>Silva</surname><given-names>M. A. E.</given-names></name>; <name name-style="western"><surname>Brand</surname><given-names>A. L. M.</given-names></name>; <name name-style="western"><surname>Novaes</surname><given-names>F. J. M.</given-names></name>; <name name-style="western"><surname>Rezende</surname><given-names>C. M.</given-names></name>
+<article-title>Cafestol, Kahweol
+and Their Acylated Derivatives: Antitumor Potential, Pharmacokinetics,
+and Chemopreventive Profile</article-title>. <source>Food Rev. Int.</source>
+<year>2022</year>, <volume>39</volume> (<issue>9</issue>), <fpage>7048</fpage>–<lpage>7080</lpage>. <pub-id pub-id-type="doi">10.1080/87559129.2022.2141776</pub-id>.</mixed-citation></ref><ref id="ref4"><mixed-citation publication-type="journal" id="cit4"><name name-style="western"><surname>Wu</surname><given-names>H.</given-names></name>; <name name-style="western"><surname>Gu</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>BK</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Nawaz</surname><given-names>M. A.</given-names></name>; <name name-style="western"><surname>Barrow</surname><given-names>C. J.</given-names></name>; <name name-style="western"><surname>Dunshea</surname><given-names>F. R.</given-names></name>; <name name-style="western"><surname>Suleria</surname><given-names>H. A. R.</given-names></name>
+<article-title>Effect
+of Processing on Bioaccessibility and Bioavailability
+of Bioactive Compounds in Coffee Beans</article-title>. <source>Food
+Biosci.</source>
+<year>2022</year>, <volume>46</volume>, <elocation-id>101373</elocation-id><pub-id pub-id-type="doi">10.1016/j.fbio.2021.101373</pub-id>.</mixed-citation></ref><ref id="ref5"><mixed-citation publication-type="journal" id="cit5"><name name-style="western"><surname>Novaes</surname><given-names>F. J. M.</given-names></name>; <name name-style="western"><surname>da Silva</surname><given-names>M. A. E.</given-names></name>; <name name-style="western"><surname>Silva</surname><given-names>D. C.</given-names></name>; <name name-style="western"><surname>de Aquino
+Neto</surname><given-names>F. R.</given-names></name>; <name name-style="western"><surname>Rezende</surname><given-names>C. M.</given-names></name>
+<article-title>Extraction of Diterpene-Phytochemicals
+in Raw and Roasted Coffee Beans and Beverage Preparations and Their
+Relationship</article-title>. <source>Plants</source>
+<year>2023</year>, <volume>12</volume> (<issue>8</issue>), <fpage>1580</fpage><pub-id pub-id-type="doi">10.3390/plants12081580</pub-id>.<pub-id pub-id-type="pmid">37111804</pub-id>
+<pub-id pub-id-type="pmcid">PMC10145731</pub-id></mixed-citation></ref><ref id="ref6"><mixed-citation publication-type="journal" id="cit6"><name name-style="western"><surname>Speer</surname><given-names>K.</given-names></name>; <name name-style="western"><surname>Kölling-Speer</surname><given-names>I.</given-names></name>
+<article-title>The Lipid Fraction of the Coffee Bean</article-title>. <source>Brazilian J. Plant Physiol.</source>
+<year>2006</year>, <volume>18</volume> (<issue>1</issue>), <fpage>201</fpage>–<lpage>216</lpage>. <pub-id pub-id-type="doi">10.1590/S1677-04202006000100014</pub-id>.</mixed-citation></ref><ref id="ref7"><mixed-citation publication-type="journal" id="cit7"><name name-style="western"><surname>Rendón</surname><given-names>M. Y.</given-names></name>; <name name-style="western"><surname>dos Santos Scholz</surname><given-names>M. B.</given-names></name>; <name name-style="western"><surname>Bragagnolo</surname><given-names>N.</given-names></name>
+<article-title>Physical Characteristics of the Paper
+Filter and Low Cafestol Content Filter Coffee Brews</article-title>. <source>Food Res. Int.</source>
+<year>2018</year>, <volume>108</volume>, <fpage>280</fpage>–<lpage>285</lpage>. <pub-id pub-id-type="doi">10.1016/j.foodres.2018.03.041</pub-id>.<pub-id pub-id-type="pmid">29735059</pub-id>
+</mixed-citation></ref><ref id="ref8"><mixed-citation publication-type="journal" id="cit8"><name name-style="western"><surname>Novaes</surname><given-names>F. J. M.</given-names></name>; <name name-style="western"><surname>Bayan</surname><given-names>F. C.</given-names></name>; <name name-style="western"><surname>Aquino
+Neto</surname><given-names>F. R.</given-names></name>; <name name-style="western"><surname>Resende</surname><given-names>C. M.</given-names></name>
+<article-title>The Occurrence of
+Cafestol and Kahweol Diterpenes in Different Coffee Brews</article-title>. <source>Coffee Sci.</source>
+<year>2019</year>, <volume>14</volume> (<issue>2</issue>), <fpage>265</fpage><pub-id pub-id-type="doi">10.25186/cs.v14i2.1571</pub-id>.</mixed-citation></ref><ref id="ref9"><mixed-citation publication-type="journal" id="cit9"><name name-style="western"><surname>Moeenfard</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Silva</surname><given-names>J. A.</given-names></name>; <name name-style="western"><surname>Borges</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Santos</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Alves</surname><given-names>A.</given-names></name>
+<article-title>Quantification
+of Diterpenes and Their Palmitate Esters in Coffee Brews by HPLC-DAD</article-title>. <source>Int. J. Food Prop.</source>
+<year>2015</year>, <volume>18</volume> (<issue>10</issue>), <fpage>2284</fpage>–<lpage>2299</lpage>. <pub-id pub-id-type="doi">10.1080/10942912.2014.933351</pub-id>.</mixed-citation></ref><ref id="ref10"><mixed-citation publication-type="journal" id="cit10"><name name-style="western"><surname>Ren</surname><given-names>Y.</given-names></name>; <name name-style="western"><surname>Wang</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Xu</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Wang</surname><given-names>S.</given-names></name>
+<article-title>Cafestol and Kahweol:
+A Review on Their Bioactivities and Pharmacological Properties</article-title>. <source>Int. J. Mol. Sci.</source>
+<year>2019</year>, <volume>20</volume> (<issue>17</issue>), <fpage>4238</fpage><pub-id pub-id-type="doi">10.3390/ijms20174238</pub-id>.<pub-id pub-id-type="pmid">31480213</pub-id>
+<pub-id pub-id-type="pmcid">PMC6747192</pub-id></mixed-citation></ref><ref id="ref11"><mixed-citation publication-type="journal" id="cit11"><name name-style="western"><surname>De
+Roos</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Meyboom</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Kosmeijer-Schuil</surname><given-names>T. G.</given-names></name>; <name name-style="western"><surname>Katan</surname><given-names>M. B.</given-names></name>
+<article-title>Absorption and Urinary
+Excretion of the Coffee Diterpenes Cafestol and Kahweol in Healthy
+Ileostomy Volunteers</article-title>. <source>J. Int. Med.</source>
+<year>1998</year>, <volume>244</volume> (<issue>6</issue>), <fpage>451</fpage>–<lpage>460</lpage>. <pub-id pub-id-type="doi">10.1046/j.1365-2796.1998.00386.x</pub-id>.<pub-id pub-id-type="pmid">9893098</pub-id></mixed-citation></ref><ref id="ref12"><mixed-citation publication-type="journal" id="cit12"><name name-style="western"><surname>Iriondo-DeHond</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Cornejo</surname><given-names>F. S.</given-names></name>; <name name-style="western"><surname>Fernandez-Gomez</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Vera</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Guisantes-Batan</surname><given-names>E.</given-names></name>; <name name-style="western"><surname>Alonso</surname><given-names>S. G.</given-names></name>; <name name-style="western"><surname>Andres</surname><given-names>M. I. S.</given-names></name>; <name name-style="western"><surname>Sanchez-Fortun</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Lopez-Gomez</surname><given-names>L.</given-names></name>; <name name-style="western"><surname>Uranga</surname><given-names>J. A.</given-names></name>; <name name-style="western"><surname>Abalo</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>del Castillo</surname><given-names>M. D.</given-names></name>
+<article-title>Bioaccesibility,
+Metabolism, and Excretion of Lipids Composing Spent Coffee Grounds</article-title>. <source>Nutrients</source>
+<year>2019</year>, <volume>11</volume> (<issue>6</issue>), <fpage>1411</fpage><pub-id pub-id-type="doi">10.3390/nu11061411</pub-id>.<pub-id pub-id-type="pmid">31234581</pub-id>
+<pub-id pub-id-type="pmcid">PMC6627363</pub-id></mixed-citation></ref><ref id="ref13"><mixed-citation publication-type="journal" id="cit13"><name name-style="western"><surname>Van
+Cruchten</surname><given-names>S. T. J.</given-names></name>; <name name-style="western"><surname>De Waart</surname><given-names>D. R.</given-names></name>; <name name-style="western"><surname>Kunne</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Hooiveld</surname><given-names>G. J. E. J.</given-names></name>; <name name-style="western"><surname>Boekschoten</surname><given-names>M. V.</given-names></name>; <name name-style="western"><surname>Katan</surname><given-names>M. B.</given-names></name>; <name name-style="western"><surname>Oude
+Elferink</surname><given-names>R. P. J.</given-names></name>; <name name-style="western"><surname>Witkamp</surname><given-names>R. F.</given-names></name>
+<article-title>Absorption, Distribution, and Biliary
+Excretion of Cafestol, a Potent Cholesterol-Elevating Compound in
+Unfiltered Coffees in Mice</article-title>. <source>Drug Metab. Dispos.</source>
+<year>2010</year>, <volume>38</volume> (<issue>4</issue>), <fpage>635</fpage>–<lpage>640</lpage>. <pub-id pub-id-type="doi">10.1124/dmd.109.030213</pub-id>.<pub-id pub-id-type="pmid">20047988</pub-id>
+</mixed-citation></ref><ref id="ref14"><mixed-citation publication-type="journal" id="cit14"><name name-style="western"><surname>Van
+Cruchten</surname><given-names>S. T. J.</given-names></name>; <name name-style="western"><surname>de Haan</surname><given-names>L. H. J.</given-names></name>; <name name-style="western"><surname>Mulder</surname><given-names>P. P. J.</given-names></name>; <name name-style="western"><surname>Kunne</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Boekschoten</surname><given-names>M. V.</given-names></name>; <name name-style="western"><surname>Katan</surname><given-names>M. B.</given-names></name>; <name name-style="western"><surname>Aarts</surname><given-names>J. M. M. J. G.</given-names></name>; <name name-style="western"><surname>Witkamp</surname><given-names>R. F.</given-names></name>
+<article-title>The Role of Epoxidation and Electrophile-Responsive
+Element-Regulated Gene Transcription in the Potentially Beneficial
+and Harmful Effects of the Coffee Components Cafestol and Kahweol</article-title>. <source>J. Nutr. Biochem.</source>
+<year>2010</year>, <volume>21</volume> (<issue>8</issue>), <fpage>757</fpage>–<lpage>763</lpage>. <pub-id pub-id-type="doi">10.1016/j.jnutbio.2009.05.001</pub-id>.<pub-id pub-id-type="pmid">19616929</pub-id>
+</mixed-citation></ref><ref id="ref15"><mixed-citation publication-type="journal" id="cit15"><name name-style="western"><surname>Andriolo</surname><given-names>C. V.</given-names></name>; <name name-style="western"><surname>Novaes</surname><given-names>F. J. M.</given-names></name>; <name name-style="western"><surname>Pereira</surname><given-names>H. M. G.</given-names></name>; <name name-style="western"><surname>Sardela</surname><given-names>V. F.</given-names></name>; <name name-style="western"><surname>Rezende</surname><given-names>C. M.</given-names></name>
+<article-title>Metabolic
+Study of Cafestol Using in Silico Approach, Zebrafish Water Tank Experiments
+and Liquid Chromatography High-Resolution Mass Spectrometry Analyses.</article-title>. <source>J. Chromatogr. B: Anal. Technol. Biomed. Life Sci.</source>
+<year>2021</year>, <volume>1186</volume>, <elocation-id>123028</elocation-id><pub-id pub-id-type="doi">10.1016/j.jchromb.2021.123028</pub-id>.<pub-id pub-id-type="pmid">34801941</pub-id></mixed-citation></ref><ref id="ref16"><mixed-citation publication-type="journal" id="cit16"><name name-style="western"><surname>Dima</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Assadpour</surname><given-names>E.</given-names></name>; <name name-style="western"><surname>Dima</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Jafari</surname><given-names>S. M.</given-names></name>
+<article-title>Bioavailability
+and Bioaccessibility of Food Bioactive Compounds; Overview and Assessment
+by in Vitro Methods</article-title>. <source>Compr. Rev. Food Sci. Food
+Saf.</source>
+<year>2020</year>, <volume>19</volume> (<issue>6</issue>), <fpage>2862</fpage>–<lpage>2884</lpage>. <pub-id pub-id-type="doi">10.1111/1541-4337.12623</pub-id>.<pub-id pub-id-type="pmid">33337033</pub-id>
+</mixed-citation></ref><ref id="ref17"><mixed-citation publication-type="journal" id="cit17"><name name-style="western"><surname>Carbonell-Capella</surname><given-names>J. M.</given-names></name>; <name name-style="western"><surname>Buniowska</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Barba</surname><given-names>F. J.</given-names></name>; <name name-style="western"><surname>Esteve</surname><given-names>M. J.</given-names></name>; <name name-style="western"><surname>Frígola</surname><given-names>A.</given-names></name>
+<article-title>Analytical
+Methods for Determining Bioavailability and Bioaccessibility of Bioactive
+Compounds from Fruits and Vegetables: A Review</article-title>. <source>Compr. Rev. Food Sci. Food Saf.</source>
+<year>2014</year>, <volume>13</volume> (<issue>2</issue>), <fpage>155</fpage>–<lpage>171</lpage>. <pub-id pub-id-type="doi">10.1111/1541-4337.12049</pub-id>.<pub-id pub-id-type="pmid">33412647</pub-id>
+</mixed-citation></ref><ref id="ref18"><mixed-citation publication-type="journal" id="cit18"><name name-style="western"><surname>Thakur</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Raigond</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Singh</surname><given-names>Y.</given-names></name>; <name name-style="western"><surname>Mishra</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Singh</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Lal</surname><given-names>M. K.</given-names></name>; <name name-style="western"><surname>Dutt</surname><given-names>S.</given-names></name>
+<article-title>Recent Updates
+on Bioaccessibility
+of Phytonutrients</article-title>. <source>Trends Food Sci. Technol.</source>
+<year>2020</year>, <volume>97</volume>, <fpage>366</fpage>–<lpage>380</lpage>. <pub-id pub-id-type="doi">10.1016/j.tifs.2020.01.019</pub-id>.</mixed-citation></ref><ref id="ref19"><mixed-citation publication-type="journal" id="cit19"><name name-style="western"><surname>Minekus</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Alminger</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Alvito</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Ballance</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Bohn</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Bourlieu</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Carrière</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Boutrou</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Corredig</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Dupont</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Dufour</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Egger</surname><given-names>L.</given-names></name>; <name name-style="western"><surname>Golding</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Karakaya</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Kirkhus</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Le Feunteun</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Lesmes</surname><given-names>U.</given-names></name>; <name name-style="western"><surname>MacIerzanka</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>MacKie</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Marze</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>McClements</surname><given-names>D. J.</given-names></name>; <name name-style="western"><surname>Ménard</surname><given-names>O.</given-names></name>; <name name-style="western"><surname>Recio</surname><given-names>I.</given-names></name>; <name name-style="western"><surname>Santos</surname><given-names>C. N.</given-names></name>; <name name-style="western"><surname>Singh</surname><given-names>R. P.</given-names></name>; <name name-style="western"><surname>Vegarud</surname><given-names>G. E.</given-names></name>; <name name-style="western"><surname>Wickham</surname><given-names>M. S. J.</given-names></name>; <name name-style="western"><surname>Weitschies</surname><given-names>W.</given-names></name>; <name name-style="western"><surname>Brodkorb</surname><given-names>A.</given-names></name>
+<article-title>A Standardised Static in Vitro Digestion Method Suitable
+for Food-an International Consensus</article-title>. <source>Food Funct.</source>
+<year>2014</year>, <volume>5</volume> (<issue>6</issue>), <fpage>1113</fpage>–<lpage>1124</lpage>. <pub-id pub-id-type="doi">10.1039/C3FO60702J</pub-id>.<pub-id pub-id-type="pmid">24803111</pub-id>
+</mixed-citation></ref><ref id="ref20"><mixed-citation publication-type="journal" id="cit20"><name name-style="western"><surname>Novaes</surname><given-names>F.
+J. M.</given-names></name>; <name name-style="western"><surname>Lima</surname><given-names>F. A.</given-names></name>; <name name-style="western"><surname>Calado</surname><given-names>V.</given-names></name>; <name name-style="western"><surname>Marriott</surname><given-names>P. J.</given-names></name>; <name name-style="western"><surname>de Aquino
+Neto</surname><given-names>F. R.</given-names></name>; <name name-style="western"><surname>Rezende</surname><given-names>C. M.</given-names></name>
+<article-title>Isolating Valuable Coffee Diterpenes
+by Using an Inexpensive Procedure</article-title>. <source>Ind. Crops
+Prod.</source>
+<year>2020</year>, <volume>152</volume>, <elocation-id>112494</elocation-id><pub-id pub-id-type="doi">10.1016/j.indcrop.2020.112494</pub-id>.</mixed-citation></ref><ref id="ref21"><mixed-citation publication-type="journal" id="cit21"><name name-style="western"><surname>Gross</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Jaccaud</surname><given-names>E.</given-names></name>; <name name-style="western"><surname>Huggett</surname><given-names>A. C.</given-names></name>
+<article-title>Analysis
+of the Content of the Diterpenes
+Cafestol and Kahweol in Coffee Brews</article-title>. <source>Food Chem.
+Toxicol.</source>
+<year>1997</year>, <volume>35</volume> (<issue>6</issue>), <fpage>547</fpage>–<lpage>554</lpage>. <pub-id pub-id-type="doi">10.1016/S0278-6915(96)00123-8</pub-id>.<pub-id pub-id-type="pmid">9225012</pub-id>
+</mixed-citation></ref><ref id="ref22"><mixed-citation publication-type="journal" id="cit22"><name name-style="western"><surname>Urgert</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>van der Weg</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Kosmeijer-Schuil</surname><given-names>T. G.</given-names></name>; <name name-style="western"><surname>van de Bovenkamp</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Hovenier</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Katan</surname><given-names>M. B.</given-names></name>
+<article-title>Levels of the Cholesterol-Elevating
+Diterpenes Cafestol and Kahweol in Various Coffee Brews</article-title>. <source>J. Agric. Food Chem.</source>
+<year>1995</year>, <volume>43</volume> (<issue>8</issue>), <fpage>2167</fpage>–<lpage>2172</lpage>. <pub-id pub-id-type="doi">10.1021/jf00056a039</pub-id>.</mixed-citation></ref><ref id="ref23"><mixed-citation publication-type="weblink" id="cit23"><person-group person-group-type="allauthors"><collab>World
+Health Organization</collab></person-group><source>Evaluation of
+Carcinogeic Risks to Humans</source>; <year>1991</year>, Vol. <volume>51</volume>, <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://journals.lww.com/00008469-200710000-00001">http://journals.lww.com/00008469-200710000-00001</uri>.</mixed-citation></ref><ref id="ref24"><mixed-citation publication-type="journal" id="cit24"><name name-style="western"><surname>Wei</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Furihata</surname><given-names>K.</given-names></name>; <name name-style="western"><surname>Koda</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Hu</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Miyakawa</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Tanokura</surname><given-names>M.</given-names></name>
+<article-title>Roasting Process of Coffee Beans
+as Studied by Nuclear
+Magnetic Resonance: Time Course of Changes in Composition</article-title>. <source>J. Agric. Food Chem.</source>
+<year>2012</year>, <volume>60</volume> (<issue>4</issue>), <fpage>1005</fpage>–<lpage>1012</lpage>. <pub-id pub-id-type="doi">10.1021/jf205315r</pub-id>.<pub-id pub-id-type="pmid">22224944</pub-id>
+</mixed-citation></ref><ref id="ref25"><mixed-citation publication-type="journal" id="cit25"><name name-style="western"><surname>Tinoco</surname><given-names>N. A. B.</given-names></name>; <name name-style="western"><surname>Pacheco</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Godoy</surname><given-names>R. L. O.</given-names></name>; <name name-style="western"><surname>Bizzo</surname><given-names>H. R.</given-names></name>; <name name-style="western"><surname>de Aguiar</surname><given-names>P. F.</given-names></name>; <name name-style="western"><surname>Leite</surname><given-names>S. G. F.</given-names></name>; <name name-style="western"><surname>Rezende</surname><given-names>C. M.</given-names></name>
+<article-title>Reduction
+of N-Alkanoyl-5-Hydroxytryptamides
+and Diterpenes by Yeast Supplementation to Green Coffee during Wet
+Processing</article-title>. <source>Food Res. Int.</source>
+<year>2019</year>, <volume>115</volume> (<issue>June</issue>), <fpage>487</fpage>–<lpage>492</lpage>. <pub-id pub-id-type="doi">10.1016/j.foodres.2018.10.007</pub-id>.<pub-id pub-id-type="pmid">30599969</pub-id>
+</mixed-citation></ref><ref id="ref26"><mixed-citation publication-type="journal" id="cit26"><name name-style="western"><surname>Druzhilovskiy</surname><given-names>D. S.</given-names></name>; <name name-style="western"><surname>Rudik</surname><given-names>A. V.</given-names></name>; <name name-style="western"><surname>Filimonov</surname><given-names>D. A.</given-names></name>; <name name-style="western"><surname>Gloriozova</surname><given-names>T. A.</given-names></name>; <name name-style="western"><surname>Lagunin</surname><given-names>A. A.</given-names></name>; <name name-style="western"><surname>Dmitriev</surname><given-names>A. V.</given-names></name>; <name name-style="western"><surname>Pogodin</surname><given-names>P. V.</given-names></name>; <name name-style="western"><surname>Dubovskaya</surname><given-names>V. I.</given-names></name>; <name name-style="western"><surname>Ivanov</surname><given-names>S. M.</given-names></name>; <name name-style="western"><surname>Tarasova</surname><given-names>O. A.</given-names></name>; <name name-style="western"><surname>Bezhentsev</surname><given-names>V. M.</given-names></name>; <name name-style="western"><surname>Murtazalieva</surname><given-names>K. A.</given-names></name>; <name name-style="western"><surname>Semin</surname><given-names>M. I.</given-names></name>; <name name-style="western"><surname>Maiorov</surname><given-names>I. S.</given-names></name>; <name name-style="western"><surname>Gaur</surname><given-names>A. S.</given-names></name>; <name name-style="western"><surname>Sastry</surname><given-names>G. N.</given-names></name>; <name name-style="western"><surname>Poroikov</surname><given-names>V. V.</given-names></name>
+<article-title>Computational Platform Way2Drug:
+From the Prediction of Biological Activity to Drug Repurposing</article-title>. <source>Russ. Chem. Bull.</source>
+<year>2017</year>, <volume>66</volume> (<issue>10</issue>), <fpage>1832</fpage>–<lpage>1841</lpage>. <pub-id pub-id-type="doi">10.1007/s11172-017-1954-x</pub-id>.</mixed-citation></ref><ref id="ref27"><mixed-citation publication-type="journal" id="cit27"><name name-style="western"><surname>Rydberg</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Gloriam</surname><given-names>D. E.</given-names></name>; <name name-style="western"><surname>Zaretzki</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Breneman</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Olsen</surname><given-names>L.</given-names></name>
+<article-title>SMARTCyp:
+A 2D Method for Prediction of Cytochrome P450-Mediated Drug Metabolism</article-title>. <source>ACS Med. Chem. Lett.</source>
+<year>2010</year>, <volume>1</volume> (<issue>3</issue>), <fpage>96</fpage>–<lpage>100</lpage>. <pub-id pub-id-type="doi">10.1021/ml100016x</pub-id>.<pub-id pub-id-type="pmid">24936230</pub-id>
+<pub-id pub-id-type="pmcid">PMC4055970</pub-id></mixed-citation></ref><ref id="ref28"><mixed-citation publication-type="journal" id="cit28"><name name-style="western"><surname>Sridevi</surname><given-names>V.</given-names></name>; <name name-style="western"><surname>Giridhar</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Ravishankar</surname><given-names>G. A.</given-names></name>
+<article-title>Evaluation
+of Roasting and Brewing
+Effect on Antinutritional Diterpenes-Cafestol and Kahweol in Coffee</article-title>. <source>Global J. Med. Res.</source>
+<year>2011</year>, <volume>11</volume> (<issue>5</issue>), <fpage>1</fpage>–<lpage>7</lpage>.</mixed-citation></ref><ref id="ref29"><mixed-citation publication-type="journal" id="cit29"><name name-style="western"><surname>Silva</surname><given-names>J. A.</given-names></name>; <name name-style="western"><surname>Borges</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Santos</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Alves</surname><given-names>A.</given-names></name>
+<article-title>Method Validation for
+Cafestol and Kahweol Quantification in Coffee Brews by HPLC-DAD</article-title>. <source>Food Anal. Methods</source>
+<year>2012</year>, <volume>5</volume> (<issue>6</issue>), <fpage>1404</fpage>–<lpage>1410</lpage>. <pub-id pub-id-type="doi">10.1007/s12161-012-9387-5</pub-id>.</mixed-citation></ref><ref id="ref30"><mixed-citation publication-type="journal" id="cit30"><name name-style="western"><surname>Zhang</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Linforth</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Fisk</surname><given-names>I. D.</given-names></name>
+<article-title>Cafestol
+Extraction Yield from Different
+Coffee Brew Mechanisms</article-title>. <source>Food Res. Int.</source>
+<year>2012</year>, <volume>49</volume> (<issue>1</issue>), <fpage>27</fpage>–<lpage>31</lpage>. <pub-id pub-id-type="doi">10.1016/j.foodres.2012.06.032</pub-id>.</mixed-citation></ref><ref id="ref31"><mixed-citation publication-type="journal" id="cit31"><name name-style="western"><surname>Moeenfard</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Erny</surname><given-names>G. L.</given-names></name>; <name name-style="western"><surname>Alves</surname><given-names>A.</given-names></name>
+<article-title>Variability of Some Diterpene Esters
+in Coffee Beverages as Influenced by Brewing Procedures</article-title>. <source>J. Food Sci. Technol.</source>
+<year>2016</year>, <volume>53</volume> (<issue>11</issue>), <fpage>3916</fpage>–<lpage>3927</lpage>. <pub-id pub-id-type="doi">10.1007/s13197-016-2378-6</pub-id>.<pub-id pub-id-type="pmid">28035147</pub-id>
+<pub-id pub-id-type="pmcid">PMC5156634</pub-id></mixed-citation></ref><ref id="ref32"><mixed-citation publication-type="book" id="cit32"><person-group person-group-type="allauthors"><name name-style="western"><surname>De Penã</surname><given-names>M. P.</given-names></name>; <name name-style="western"><surname>Ludwig</surname><given-names>I. A.</given-names></name>; <name name-style="western"><surname>Cid</surname><given-names>C.</given-names></name></person-group><article-title>Beverage
+Preparation</article-title>. In <source>Coffee: Production, Quality
+and Chemistry</source>; <person-group person-group-type="editor"><name name-style="western"><surname>Farah</surname><given-names>A.</given-names></name></person-group>, Ed.; <publisher-name>Royal Society of Chemistry</publisher-name>: <publisher-loc>Croydon</publisher-loc>, <year>2019</year>; pp <fpage>272</fpage>–<lpage>292</lpage>.</mixed-citation></ref><ref id="ref33"><mixed-citation publication-type="book" id="cit33"><person-group person-group-type="allauthors"><name name-style="western"><surname>Guimarães</surname><given-names>R. J.</given-names></name>; <name name-style="western"><surname>Borém</surname><given-names>F. M.</given-names></name>; <name name-style="western"><surname>Shuler</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Farha</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Romero</surname><given-names>J. C. P.</given-names></name></person-group><article-title>Coffee Growing
+and Post-Harvest Processing</article-title>. In <source>Coffee: Production,
+Quality and Chemistry</source>; <person-group person-group-type="editor"><name name-style="western"><surname>Farah</surname><given-names>A.</given-names></name></person-group>, Ed.; <publisher-name>Royal Society of Chemistry</publisher-name>: <publisher-loc>Croydon</publisher-loc>, <year>2019</year>; pp <fpage>26</fpage>–<lpage>89</lpage>.</mixed-citation></ref><ref id="ref34"><mixed-citation publication-type="journal" id="cit34"><name name-style="western"><surname>Reis</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Holmberg</surname><given-names>K.</given-names></name>; <name name-style="western"><surname>Watzke</surname><given-names>H.</given-names></name>; <name name-style="western"><surname>Leser</surname><given-names>M. E.</given-names></name>; <name name-style="western"><surname>Miller</surname><given-names>R.</given-names></name>
+<article-title>Lipases at
+Interfaces: A Review</article-title>. <source>Adv. Colloid Interface
+Sci.</source>
+<year>2009</year>, <volume>147–148</volume>, <fpage>237</fpage>–<lpage>250</lpage>. <pub-id pub-id-type="doi">10.1016/j.cis.2008.06.001</pub-id>.<pub-id pub-id-type="pmid">18691682</pub-id></mixed-citation></ref><ref id="ref35"><mixed-citation publication-type="journal" id="cit35"><name name-style="western"><surname>Amara</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Bourlieu</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Humbert</surname><given-names>L.</given-names></name>; <name name-style="western"><surname>Rainteau</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Carrière</surname><given-names>F.</given-names></name>
+<article-title>Variations
+in Gastrointestinal Lipases, PH and Bile Acid Levels with Food Intake,
+Age and Diseases: Possible Impact on Oral Lipid-Based Drug Delivery
+Systems</article-title>. <source>Adv. Drug Delivery Rev.</source>
+<year>2019</year>, <volume>142</volume>, <fpage>3</fpage>–<lpage>15</lpage>. <pub-id pub-id-type="doi">10.1016/j.addr.2019.03.005</pub-id>.<pub-id pub-id-type="pmid">30926476</pub-id></mixed-citation></ref><ref id="ref36"><mixed-citation publication-type="journal" id="cit36"><name name-style="western"><surname>Moeenfard</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Alves</surname><given-names>A.</given-names></name>
+<article-title>New Trends in Coffee
+Diterpenes Research from Technological to Health
+Aspects</article-title>. <source>Food Res. Int.</source>
+<year>2020</year>, <volume>134</volume>, <elocation-id>109207</elocation-id><pub-id pub-id-type="doi">10.1016/j.foodres.2020.109207</pub-id>.<pub-id pub-id-type="pmid">32517949</pub-id>
+</mixed-citation></ref><ref id="ref42"><mixed-citation publication-type="journal" id="cit42"><name name-style="western"><surname>Shahidi</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Pan</surname><given-names>Y.</given-names></name>
+<article-title>Influence of Food Matrix and Food
+Processing on the Chemical Interaction
+and Bioaccessibility of Dietary Phytochemicals: A Review</article-title>. <source>Crit. Rev. Food Sci. Nutr.</source>
+<year>2021</year>, <volume>62</volume> (<issue>23</issue>), <fpage>6421</fpage>–<lpage>6445</lpage>. <pub-id pub-id-type="doi">10.1080/10408398.2021.1901650</pub-id>.<pub-id pub-id-type="pmid">33787422</pub-id>
+</mixed-citation></ref><ref id="ref43"><mixed-citation publication-type="journal" id="cit43"><name name-style="western"><surname>Jia</surname><given-names>W.</given-names></name>; <name name-style="western"><surname>Zhang</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Zhang</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Xu</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Xue</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Song</surname><given-names>W.</given-names></name>; <name name-style="western"><surname>Shi</surname><given-names>L.</given-names></name>
+<article-title>Bioaccessibility of Phospholipids
+in Homogenized Goat Milk: Lipid Digestion Ecology through INFOGEST
+Model</article-title>. <source>Food Chem.</source>
+<year>2022</year>, <volume>386</volume>, <elocation-id>132770</elocation-id><pub-id pub-id-type="doi">10.1016/j.foodchem.2022.132770</pub-id>.<pub-id pub-id-type="pmid">35339088</pub-id>
+</mixed-citation></ref><ref id="ref44"><mixed-citation publication-type="journal" id="cit44"><name name-style="western"><surname>Parada</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Aguilera</surname><given-names>J. M.</given-names></name>
+<article-title>Food Microstructure
+Affects the Bioavailability of
+Several Nutrients</article-title>. <source>J. Food Sci.</source>
+<year>2007</year>, <volume>72</volume> (<issue>2</issue>), <fpage>21</fpage>–<lpage>32</lpage>. <pub-id pub-id-type="doi">10.1111/j.1750-3841.2007.00274.x</pub-id>.<pub-id pub-id-type="pmid">17995848</pub-id></mixed-citation></ref><ref id="ref45"><mixed-citation publication-type="book" id="cit45"><person-group person-group-type="allauthors"><name name-style="western"><surname>Farah</surname><given-names>A.</given-names></name></person-group><article-title>Coffee Constituents</article-title>. In <source>Coffee: Emerging
+Health Effects and Disease Prevention</source>; <person-group person-group-type="editor"><name name-style="western"><surname>Chu</surname><given-names>Y.-F.</given-names></name></person-group>, Ed.; <publisher-name>Wiley-Blackwell</publisher-name>: <publisher-loc>Oxford, UK: Oxford</publisher-loc>, <year>2012</year>; pp <fpage>21</fpage>–<lpage>58</lpage>. <pub-id pub-id-type="doi">10.1002/9781119949893.ch2</pub-id>.</mixed-citation></ref><ref id="ref46"><mixed-citation publication-type="journal" id="cit46"><name name-style="western"><surname>Priyadarshani</surname><given-names>A. M. B.</given-names></name>
+<article-title>A Review
+on Factors Influencing Bioaccessibility and Bioefficacy of Carotenoids</article-title>. <source>Crit. Rev. Food Sci. Nutr.</source>
+<year>2017</year>, <volume>57</volume> (<issue>8</issue>), <fpage>1710</fpage>–<lpage>1717</lpage>. <pub-id pub-id-type="doi">10.1080/10408398.2015.1023431</pub-id>.<pub-id pub-id-type="pmid">26168011</pub-id>
+</mixed-citation></ref><ref id="ref47"><mixed-citation publication-type="journal" id="cit47"><name name-style="western"><surname>Sensoy</surname><given-names>I.</given-names></name>
+<article-title>A Review on
+the Food Digestion in the Digestive Tract and the Used in Vitro Models</article-title>. <source>Curr. Res. Food Sci.</source>
+<year>2021</year>, <volume>4</volume>, <fpage>308</fpage>–<lpage>319</lpage>. <pub-id pub-id-type="doi">10.1016/j.crfs.2021.04.004</pub-id>.<pub-id pub-id-type="pmid">34027433</pub-id>
+<pub-id pub-id-type="pmcid">PMC8134715</pub-id></mixed-citation></ref><ref id="ref48"><mixed-citation publication-type="journal" id="cit48"><name name-style="western"><surname>Dupont</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Alric</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Blanquet-Diot</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Bornhorst</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Cueva</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Deglaire</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Denis</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Ferrua</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Havenaar</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Lelieveld</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Mackie</surname><given-names>A. R.</given-names></name>; <name name-style="western"><surname>Marzorati</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Menard</surname><given-names>O.</given-names></name>; <name name-style="western"><surname>Minekus</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Miralles</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Recio</surname><given-names>I.</given-names></name>; <name name-style="western"><surname>Van den Abbeele</surname><given-names>P.</given-names></name>
+<article-title>Can Dynamic <italic toggle="yes">in Vitro</italic> Digestion Systems
+Mimic the Physiological Reality?</article-title>. <source>Crit. Rev.
+Food Sci. Nutr.</source>
+<year>2018</year>, <volume>59</volume>, <fpage>1546</fpage>–<lpage>1562</lpage>. <pub-id pub-id-type="doi">10.1080/10408398.2017.1421900</pub-id>.<pub-id pub-id-type="pmid">29359955</pub-id>
+</mixed-citation></ref><ref id="ref49"><mixed-citation publication-type="journal" id="cit49"><name name-style="western"><surname>Dias</surname><given-names>R. C. E.</given-names></name>; <name name-style="western"><surname>de Faria</surname><given-names>A. F.</given-names></name>; <name name-style="western"><surname>Mercadante</surname><given-names>A. Z.</given-names></name>; <name name-style="western"><surname>Bragagnolo</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>de Toledo Benassi</surname><given-names>M.</given-names></name>
+<article-title>Comparison of Extraction Methods
+for Kahweol and Cafestol
+Analysis in Roasted Coffee</article-title>. <source>J. Braz. Chem. Soc.</source>
+<year>2013</year>, <volume>24</volume> (<issue>3</issue>), <fpage>492</fpage>–<lpage>499</lpage>. <pub-id pub-id-type="doi">10.5935/0103-5053.20130057</pub-id>.</mixed-citation></ref><ref id="ref50"><mixed-citation publication-type="journal" id="cit50"><name name-style="western"><surname>Schwartz</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Neiers</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Feron</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Canon</surname><given-names>F.</given-names></name>
+<article-title>The Relationship Between
+Salivary Redox, Diet, and Food Flavor Perception</article-title>. <source>Front. Nutr.</source>
+<year>2021</year>, <volume>7</volume>, <elocation-id>612735</elocation-id><pub-id pub-id-type="doi">10.3389/fnut.2020.612735</pub-id>.<pub-id pub-id-type="pmid">33585536</pub-id>
+<pub-id pub-id-type="pmcid">PMC7876224</pub-id></mixed-citation></ref><ref id="ref51"><mixed-citation publication-type="journal" id="cit51"><name name-style="western"><surname>Čižmárová</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Tomečková</surname><given-names>V.</given-names></name>; <name name-style="western"><surname>Hubková</surname><given-names>B.</given-names></name>; <name name-style="western"><surname>Hurajtová</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Ohlasová</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Birková</surname><given-names>A.</given-names></name>
+<article-title>Salivary Redox
+Homeostasis in Human Health and Disease</article-title>. <source>Int.
+J. Mol. Sci.</source>
+<year>2022</year>, <volume>23</volume> (<issue>17</issue>), <fpage>10076</fpage><pub-id pub-id-type="doi">10.3390/ijms231710076</pub-id>.<pub-id pub-id-type="pmid">36077473</pub-id>
+<pub-id pub-id-type="pmcid">PMC9455999</pub-id></mixed-citation></ref><ref id="ref52"><mixed-citation publication-type="journal" id="cit52"><name name-style="western"><surname>Nagler</surname><given-names>R. M.</given-names></name>; <name name-style="western"><surname>Klein</surname><given-names>I.</given-names></name>; <name name-style="western"><surname>Zarzhevsky</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Drigues</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Reznick</surname><given-names>A. Z.</given-names></name>
+<article-title>Characterization
+of the Differentiated Antioxidant Profile of Human Saliva</article-title>. <source>Free Radic. Biol. Med.</source>
+<year>2002</year>, <volume>32</volume> (<issue>3</issue>), <fpage>268</fpage>–<lpage>277</lpage>. <pub-id pub-id-type="doi">10.1016/S0891-5849(01)00806-1</pub-id>.<pub-id pub-id-type="pmid">11827752</pub-id>
+</mixed-citation></ref><ref id="ref53"><mixed-citation publication-type="journal" id="cit53"><name name-style="western"><surname>Panwar</surname><given-names>H.</given-names></name>; <name name-style="western"><surname>Rokana</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Aparna</surname><given-names>S. V.</given-names></name>; <name name-style="western"><surname>Kaur</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Singh</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Singh</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Singh</surname><given-names>K. S.</given-names></name>; <name name-style="western"><surname>Chaudhary</surname><given-names>V.</given-names></name>; <name name-style="western"><surname>Puniya</surname><given-names>A. K.</given-names></name>
+<article-title>Gastrointestinal Stress as Innate
+Defence against Microbial
+Attack</article-title>. <source>J. Appl. Microbiol.</source>
+<year>2021</year>, <volume>130</volume> (<issue>4</issue>), <fpage>1035</fpage>–<lpage>1061</lpage>. <pub-id pub-id-type="doi">10.1111/jam.14836</pub-id>.<pub-id pub-id-type="pmid">32869386</pub-id>
+</mixed-citation></ref><ref id="ref54"><mixed-citation publication-type="journal" id="cit54"><name name-style="western"><surname>Thiel</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Doknić</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Deska</surname><given-names>J.</given-names></name>
+<article-title>Enzymatic Aerobic Ring Rearrangement
+of Optically Active Furylcarbinols</article-title>. <source>Nat. Commun.</source>
+<year>2014</year>, <volume>5</volume> (<issue>1</issue>), <fpage>5278</fpage><pub-id pub-id-type="doi">10.1038/ncomms6278</pub-id>.<pub-id pub-id-type="pmid">25335580</pub-id>
+</mixed-citation></ref><ref id="ref55"><mixed-citation publication-type="journal" id="cit55"><name name-style="western"><surname>Laskar</surname><given-names>A. A.</given-names></name>; <name name-style="western"><surname>Alam</surname><given-names>M. F.</given-names></name>; <name name-style="western"><surname>Ahmad</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Younus</surname><given-names>H.</given-names></name>
+<article-title>Kinetic and Biophysical
+Investigation of the Inhibitory Effect of Caffeine on Human Salivary
+Aldehyde Dehydrogenase: Implications in Oral Health and Chemotherapy</article-title>. <source>J. Mol. Struct.</source>
+<year>2018</year>, <volume>1157</volume>, <fpage>61</fpage>–<lpage>68</lpage>. <pub-id pub-id-type="doi">10.1016/j.molstruc.2017.12.050</pub-id>.</mixed-citation></ref></ref-list></back></article>

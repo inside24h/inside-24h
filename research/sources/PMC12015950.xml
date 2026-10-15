@@ -1,0 +1,662 @@
+
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.4 20241031//EN" "JATS-archivearticle1-4-mathml3.dtd">
+<article xml:lang="EN" article-type="research-article" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">Chem Res Toxicol</journal-id><journal-id journal-id-type="iso-abbrev">Chem Res Toxicol</journal-id><journal-id journal-id-type="pmc-domain-id">822</journal-id><journal-id journal-id-type="pmc-domain">acssd</journal-id><journal-id journal-id-type="nlm-id">8807448</journal-id><journal-id journal-id-type="publisher-id">tx</journal-id><journal-title-group><journal-title>Chemical Research in Toxicology</journal-title></journal-title-group><issn pub-type="ppub">0893-228X</issn><issn pub-type="epub">1520-5010</issn><?publisher_abbrev acs?><custom-meta-group><custom-meta><meta-name>pmc-is-collection-domain</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-collection-title</meta-name><meta-value>ACS AuthorChoice</meta-value></custom-meta></custom-meta-group></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC12015950</article-id><article-id pub-id-type="pmcid-ver">PMC12015950.1</article-id><article-id pub-id-type="pmcaid">12015950</article-id><article-id pub-id-type="pmcaiid">12015950</article-id><article-id pub-id-type="pmid">40094483</article-id><article-id pub-id-type="doi">10.1021/acs.chemrestox.4c00462</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group><subject>Article</subject></subj-group></article-categories><title-group><article-title>Nicotine
+Dosimetry in Evaluating Electronic Cigarettes
+Compared to Cigarette Smoking: Implications for Tobacco Regulatory
+Science</article-title></title-group><contrib-group><contrib contrib-type="author" corresp="yes" id="ath1"><name name-style="western"><surname>Benowitz</surname><given-names initials="NL">Neal L.</given-names></name><xref rid="cor1" ref-type="other">*</xref></contrib><contrib contrib-type="author" id="ath2"><name name-style="western"><surname>Yang</surname><given-names initials="HY">Hao-Yuan</given-names></name></contrib><contrib contrib-type="author" id="ath3"><contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0003-3366-2775</contrib-id><name name-style="western"><surname>Jacob</surname><given-names initials="P">Peyton</given-names><suffix>III</suffix></name></contrib><contrib contrib-type="author" id="ath4"><name name-style="western"><surname>St Helen</surname><given-names initials="G">Gideon</given-names></name></contrib><aff id="aff1">Research Program in Clinical
+Pharmacology, Division of Cardiology, Department of Medicine, <institution>University of California, San Francisco</institution>, Box 1237, San Francisco, California 94143, <country>United States</country></aff></contrib-group><author-notes><corresp id="cor1"><label>*</label>Email: <email>Neal.Benowitz@ucsf.edu</email>. Tel: <phone>(415) 502-1034</phone>.</corresp></author-notes><pub-date pub-type="epub"><day>17</day><month>03</month><year>2025</year></pub-date><pub-date pub-type="collection"><day>21</day><month>04</month><year>2025</year></pub-date><volume>38</volume><issue>4</issue><issue-id pub-id-type="pmc-issue-id">487074</issue-id><fpage>686</fpage><lpage>694</lpage><history><date date-type="received"><day>29</day><month>10</month><year>2024</year></date><date date-type="accepted"><day>10</day><month>03</month><year>2025</year></date><date date-type="rev-recd"><day>03</day><month>03</month><year>2025</year></date></history><pub-history><event event-type="pmc-release"><date><day>23</day><month>04</month><year>2025</year></date></event><event event-type="pmc-live"><date><day>24</day><month>04</month><year>2025</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2025-04-24 10:25:41.947"><day>24</day><month>04</month><year>2025</year></date></event></pub-history><permissions><copyright-statement>© 2025 The Authors. Published by American Chemical Society</copyright-statement><copyright-year>2025</copyright-year><copyright-holder>The Authors</copyright-holder><license><ali:license_ref xmlns:ali="http://www.niso.org/schemas/ali/1.0/" specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p>Permits the broadest form of re-use including for commercial purposes, provided that author attribution and integrity are maintained (<ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://creativecommons.org/licenses/by/4.0/">https://creativecommons.org/licenses/by/4.0/</ext-link>).</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="tx4c00462.pdf"><?pdf-name tx4c00462.pdf?><?pdf-size 2585841?><?pdf-md5 68b523de881bf3e40bbaaa8efb5126d7?><?pdf-image-server-status NEVER_LOAD?><?pdf-cloudpmc-urn urn:app:04ac/12015950/68b523de881b/tx4c00462.pdf?></self-uri><abstract><p content-type="toc-graphic"><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="ab-tgr1" position="float" orientation="portrait" xlink:href="tx4c00462_0005.jpg"><?image-name tx4c00462_0005.jpg?><?image-size 81147?><?image-md5 d6bc0801c04a03aac798666112f842cc?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 512?><?image-original-width 992?><?image-scaled-height 341?><?image-scaled-width 661?><?image-cloudpmc-urn urn:cdn:blobs/04ac/12015950/d6bc0801c04a/tx4c00462_0005.jpg?><?thumb-name tx4c00462_0005.gif?><?thumb-size 14830?><?thumb-md5 dccdc45a15aa2ccb193b873d015aff80?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 155?><?thumb-cloudpmc-urn urn:cdn:blobs/04ac/12015950/dccdc45a15aa/tx4c00462_0005.gif?></graphic></p><p>The delivery and systemic absorption of nicotine are
+important
+for assessing the potential safety and efficacy of novel inhaled nicotine
+delivery devices. We describe an experimental approach for examining
+systemic nicotine intake, looking at individual variability, comparing
+JUUL electronic cigarettes and cigarette smoking, and comparing standardized
+puffing and ad libitum use. Fourteen cigarette smokers who were infrequent
+e-cigarette users vaped JUUL or smoked cigarettes, both in a standardized
+session (ten 3.5 s puffs over 5 min) and in a 4 h ad libitum use session.
+Plasma nicotine concentrations were measured, and using sex and body
+weight-based population nicotine clearance predictions, systemic nicotine
+dose was estimated in each session. The pharmacokinetically (PK)-estimated
+nicotine dose in the standardized session averaged 0.55 mg (range
+0.16–0.82) for JUUL and 1.15 mg (range 0.35–4.56) for
+cigarette smoking. The PK-estimated dose with ad libitum use averaged
+4.1 mg (range 0.4–9.5) for JUUL and 5.0 mg (range 1.5–15)
+for smoking (average 3.4 cigarettes). Within individual correlations,
+comparing PK-estimated dose for JUUL use with standardized vs ad libitum
+session was weak (<italic toggle="yes">r</italic> = 0.45, NS) but was much stronger
+for cigarette smoking (<italic toggle="yes">r</italic> = 0.82, <italic toggle="yes">p</italic> &lt; 0.001). Data from ad libitum use predicted that consumption
+of the liquid contained in a JUUL pod would correspond to smoking
+15 cigarettes, which is similar to that observed in real world studies.
+We conclude that standardized vaping sessions do not predict usual
+nicotine self-administration behavior with ad libitum use. With ad
+libitum use, nicotine intake is much more similar to vaping and smoking
+and provides a much better predictor of product delivery in the real
+world. This approach is recommended for screening of novel inhaled
+nicotine devices and to aid FDA regulatory decision making.</p></abstract><funding-group><award-group><funding-source><institution-wrap><institution>National Institute on Drug Abuse</institution><institution-id institution-id-type="doi">10.13039/100000026</institution-id></institution-wrap></funding-source><award-id>P30DA012393</award-id></award-group></funding-group><funding-group><award-group><funding-source><institution-wrap><institution>National Institute on Drug Abuse</institution><institution-id institution-id-type="doi">10.13039/100000026</institution-id></institution-wrap></funding-source><award-id>R01DA039264</award-id></award-group></funding-group><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-license-ref</meta-name><meta-value>CC BY</meta-value></custom-meta><custom-meta><meta-name>document-id-old-9</meta-name><meta-value>tx4c00462</meta-value></custom-meta><custom-meta><meta-name>document-id-new-14</meta-name><meta-value>tx4c00462</meta-value></custom-meta><custom-meta><meta-name>ccc-price</meta-name><meta-value/></custom-meta></custom-meta-group></article-meta></front><body><sec id="sec1"><title>Introduction</title><p>Nicotine delivery, absorption, and pharmacokinetics
+are important
+features in assessing the safety and efficacy of novel nicotine delivery
+devices. The extent and speed of nicotine delivery and systemic absorption
+have implications both for benefit to aid smoking cessation and for
+risk, particularly abuse liability. Nicotine delivery from an electronic
+cigarette (e-cigarette) can be influenced by the concentration and
+extent of protonation of nicotine in the e-liquid and by device characteristics,
+such as power and the nature of the coil, which, in turn, influence
+aerosol particle size and distribution. Nicotine delivery is also
+affected by the duration, intensity, frequency, and manner of puffing
+and pattern of deposition of aerosol in the airways.<sup><xref ref-type="bibr" rid="ref1">1</xref>,<xref ref-type="bibr" rid="ref2">2</xref></sup></p><p>A recent review of nicotine delivery and cigarette equivalents
+from vaping a JUUL e-cigarette reported that on average in regular
+users, one JUUL pod labeled as 59 mg nicotine/mL (5% by weight) delivers
+a nicotine dose equivalent to smoking around 18 cigarettes.<sup><xref ref-type="bibr" rid="ref3">3</xref></sup> This estimate was based on the measurement of
+urine total nicotine equivalents comparing daily smoking vs ad libitum
+JUUL use. However, the most common experimental approaches to dose
+estimation from e-cigarettes consist of standardized smoking and vaping
+sessions in human volunteers in whom plasma nicotine concentrations
+are measured in a research laboratory or machine vaping studies in
+which nicotine dose per puff is measured and extrapolated to the number
+of puffs provided by the device. In the case of JUUL, 200 puffs are
+reportedly produced from a JUUL pod.<sup><xref ref-type="bibr" rid="ref3">3</xref></sup> All
+of the methods yielded wide variability in predicted nicotine delivery.</p><p>We report here results of a laboratory study comparing nicotine
+delivery from JUUL to cigarette smoking in daily smokers who had a
+history of infrequent vaping to assess the potential acceptability
+of providing JUUL use for cigarette harm reduction and quitting in
+relatively novice vapers. We present an analysis of data from this
+study to describe a pharmacokinetic approach to nicotine dosimetry,
+an examination of individual variation in nicotine exposure, and an
+assessment of the relationships between nicotine exposure from vaping
+vs smoking. We discuss experimental designs that might serve as screening
+tools for novel nicotine delivery devices in general. In particular,
+we compared nicotine exposure from standardized use sessions to ad
+libitum use sessions.</p><p>In addition, we examined the concept of
+nicotine flux (nicotine
+dose/s), which has been proposed as a measure of nicotine delivery
+by a particular device or product under specified inhalational parameters.<sup><xref ref-type="bibr" rid="ref4">4</xref></sup> The amount of nicotine delivered per second is
+thought to be an important determinant of potential toxicity and abuse
+liability. We assessed the nicotine flux in two ways. We computed
+the systemic nicotine flux, as determined by pharmacokinetically estimated
+nicotine systemic exposure during a standardized puffing regimen for
+both JUUL use and cigarette smoking. For JUUL, we also computed the
+delivered nicotine flux, as determined by the dose of nicotine emitted
+per second by the device during a standardized puffing session.</p></sec><sec id="sec2"><title>Experimental Procedures</title><p>Fourteen daily smokers of five
+or more cigarettes per day who had
+infrequently used e-cigarettes in the past (fewer than 5 days per
+month) were recruited by newspaper ads and the Internet. Participants
+had to be at least 21 years old and not intending to quit smoking
+in the next 3 months. Exclusions included pregnancy, using nicotine
+metabolism-altering medications, chronic medical disease, active substance
+use disorder, or recent use of illicit drugs other than marijuana.
+To ensure adequate regular nicotine use, a saliva cotinine concentration
+of 50 ng/mL or greater was required for study participation. Twenty-seven
+subjects were screened with exclusions for positive urine drug screen
+for illicit drugs, plan to quit smoking in next 30 days, high blood
+pressure, poor venous access, and low saliva cotinine. The study was
+approved by the Institutional Review Board of the University of California
+San Francisco. Written informed consent was obtained from each participant,
+and participants were financially compensated.</p><sec id="sec2.1"><title>Study Procedures</title><p>A two-arm counterbalanced crossover
+study was conducted in which participants were confined to a clinical
+research ward on 2 separate days. Participants were shown a training
+video and provided with a JUUL e-cigarette to allow experience with
+use of the device for one day prior to the vaping session. Each study
+day included a standardized vaping or smoking session in the morning,
+followed by a 4 h ad libitum product use session in the afternoon.
+On day 1, participants used a JUUL e-cigarette and on the other their
+usual brand of tobacco cigarette.</p><p>The order of product use was
+balanced. The JUUL e-cigarettes were obtained in local vape shops
+in tobacco or menthol flavors. None of the participants smoked menthol
+cigarettes as their usual brand (local menthol cigarette ban in place),
+but 6 participants selected menthol-flavored JUUL.</p><p>Participants
+were asked to abstain from tobacco product use starting
+at 10 pm the night before hospital admission. At approximately 8:00
+am, an intravenous catheter was inserted in a forearm vein, and a
+light breakfast was provided. At 9:00 AM, participants used the assigned
+e-cigarette or their usual brand tobacco cigarette in a standardized
+protocol, taking one puff every 30 s for 10 puffs. This standardized
+use protocol has been widely used in studying nicotine delivery and
+acute effects of e-cigarettes.<sup><xref ref-type="bibr" rid="ref5">5</xref></sup> With e-cigarette
+use and cigarette smoking, puff duration was controlled at 3.5 s using
+a recorded audible signal. The 3.5 s puff duration was based on observations
+of people puffing JUUL e-cigarettes.<sup><xref ref-type="bibr" rid="ref6">6</xref></sup> Electronic
+cigarettes and cigarettes were weighed prior to and after the standardized
+use to determine the amount of liquid or tobacco consumed. Blood samples
+were collected before and 2, 5, 7, 10, 15, 30, 45, 60, 90, and 118
+min after the last puff of each product during the standardized session
+to measure plasma nicotine concentrations. Heart rate, blood pressure,
+and skin blood flow were measured at various times after product use,
+and the results of which will be reported elsewhere.</p><p>After 3
+h of abstinence, starting at 12:00 pm, participants vaped
+or smoked as desired for 4 h. During this time, participants were
+permitted to watch television, use computers or smartphones, and/or
+read books or magazines. Blood samples were obtained every 30 min
+prior to and until the end of the session. Electronic cigarettes and
+cigarettes were weighed before and after ad libitum use. Subjective
+questionnaires were administered before, during, and after both standardized
+and ad libitum sessions, and the results of which will be presented
+in another publication.</p></sec><sec id="sec2.2"><title>Analytical Chemistry</title><p>Plasma nicotine concentrations
+were determined by GC-MS/MS using a modification of a published GC-MS
+method.<sup><xref ref-type="bibr" rid="ref4">4</xref></sup> Use of tandem mass spectrometry
+(MS/MS) improved sensitivity, providing a lower limit of quantitation
+of 0.2 ng/mL, and concentrating the final extract was unnecessary.
+The nicotine concentration of the tobacco cigarette brand smoked by
+each participant was extracted using a published method.<sup><xref ref-type="bibr" rid="ref7">7</xref></sup> Concentrations of nicotine in tobacco extracts
+were determined by gas chromatography with nitrogen–phosphorus
+detection, using 5-methyl nicotine as a standard.<sup><xref ref-type="bibr" rid="ref8">8</xref></sup> This method has been modified for determination using capillary
+GC, and the concentration of the final extract is not necessary.<sup><xref ref-type="bibr" rid="ref9">9</xref></sup></p></sec><sec id="sec2.3"><title>Pharmacokinetic Analysis</title><p>Pharmacokinetic parameters
+were estimated from plasma nicotine concentrations using a Phoenix
+WinNonlin 6.3 (Pharsight Corporation, Mountain View, CA). Maximal
+plasma nicotine concentration (<italic toggle="yes">C</italic><sub>max</sub>) and
+time to maximal concentration (<italic toggle="yes">T</italic><sub>max</sub>) were
+measured, and the area under the plasma nicotine concentration–time
+curve (AUC) was computed using a noncompartmental model and trapezoidal
+rule for both standardized and ad libitum sessions. AUC from 0 to
+infinity (AUC<sub>0–∞</sub>) for standardized and ad
+libitum sessions was estimated by extrapolation from the last measured
+nicotine concentration using the individual participant terminal half-life
+that was determined in the standardized session. Since all participants
+had quantifiable plasma nicotine levels at baseline prior to standardized
+and ad libitum sessions (prestandardized, 1.3 ± 2.0 ng/mL), we
+corrected all measured baseline values as described previously.<sup><xref ref-type="bibr" rid="ref10">10</xref></sup></p><p>The PK-estimated systemic nicotine dose
+was computed using the AUC<sub>(0–∞)</sub> and the average
+population clearance of nicotine (Cl) based on sex and body weight
+(women: 17.7 mL/min/kg; men: 16.7 mL/min/kg), using the equation:
+dose = Cl × AUC<sub>(0–∞)</sub>.<sup><xref ref-type="bibr" rid="ref11">11</xref></sup> We computed the systemic nicotine flux (nicotine dose/s)
+for each individual during the standardized session as PK-estimated
+systemic nicotine dose/number of puffs × 3.5 s per puff, as described
+by Shihadeh.<sup><xref ref-type="bibr" rid="ref12">12</xref></sup></p></sec><sec id="sec2.4"><title>Other Data Analyses</title><p>The amount of nicotine potentially
+delivered by the vaping device (liquid consumption) was computed by
+multiplying the change in weight pre–post vaping (mg) by 50
+mg nicotine/g liquid, the latter being the concentration of nicotine
+in the JUUL e-liquid.<sup><xref ref-type="bibr" rid="ref3">3</xref></sup> The amount of nicotine
+released from the cigarette was estimated by multiplying the weight
+of tobacco burned by the nicotine concentration in the filler of the
+particular brand smoked by the individual participant. We computed
+the delivered nicotine flux for JUUL using the amount of nicotine
+in the liquid consumed/number of puffs × 3.5 s per puff. The
+ratio of PK-estimated nicotine dose/delivered nicotine from JUUL as
+a measure of uptake fraction was also computed.</p><p>To examine relationships
+between the amount of product consumed and dose of nicotine absorbed,
+we examined within-subject Pearson correlations between the amount
+of nicotine in the liquid consumed from the JUUL device and between
+the weight of tobacco cigarette burned and nicotine content of that
+tobacco, with plasma nicotine AUC and PK-estimated nicotine dose.
+To determine how well nicotine intake during the standardized session
+predicts nicotine intake during ad libitum product use, we examined
+the within-subject correlations between nicotine AUC and PK-estimated
+nicotine dose, comparing the standardized and ad libitum sessions.
+The extent of nicotine titration comparing JUUL to cigarette smoking
+with ad libitum use was computed as the ratio of AUC<sub>(0–∞)</sub> for [JUUL]/[cigarette], where a ratio of 1 would indicate complete
+titration.</p></sec></sec><sec id="sec3"><title>Results</title><sec id="sec3.1"><p>The 14 participants included nine males and five females, with
+an average age of 32 years. Eleven were non-Hispanic white, two mixed
+race, and one Asian (<xref rid="tbl1" ref-type="other">Table <xref rid="tbl1" ref-type="other">1</xref></xref>). All were daily cigarette smokers with an average of 8.6
+cigarettes per day (range 4–15). The level of cigarette dependence
+as estimated by the Heaviness of Smoking index averaged 1.2 (mean).
+All had used e-cigarettes in the past, but only two had used them
+in the past month. Saliva cotinine at screening averaged 96 ng/mL.
+The cigarette brands smoked by participants with tobacco filler weight
+and nicotine concentration in tobacco are shown in <xref rid="tbl2" ref-type="other">Table <xref rid="tbl2" ref-type="other">2</xref></xref>.</p><table-wrap id="tbl1" position="float" orientation="portrait"><label>Table 1</label><caption><title>Demographics and Baseline Nicotine
+Use Behaviors</title></caption><table frame="hsides" rules="groups" border="0"><colgroup span="1"><col align="left" span="1"/><col align="left" span="1"/><col align="left" span="1"/></colgroup><thead><tr><th style="border:none;" align="center" colspan="1" rowspan="1">variable</th><th style="border:none;" align="center" colspan="1" rowspan="1"><italic toggle="yes">N</italic> (%)/mean (SD)</th><th style="border:none;" align="center" colspan="1" rowspan="1">range</th></tr></thead><tbody><tr><td style="border:none;" align="left" colspan="1" rowspan="1">age (mean, SD)</td><td style="border:none;" align="left" colspan="1" rowspan="1">32.1 (8)</td><td style="border:none;" align="left" colspan="1" rowspan="1">28–37</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">gender</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="padding-left: 2em;" align="left" colspan="1" rowspan="1">female</td><td style="border:none;" align="left" colspan="1" rowspan="1">5 (35.7)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">race</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="padding-left: 2em;" align="left" colspan="1" rowspan="1">non-Hispanic White</td><td style="border:none;" align="left" colspan="1" rowspan="1">11 (78.6%)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="padding-left: 2em;" align="left" colspan="1" rowspan="1">mixed</td><td style="border:none;" align="left" colspan="1" rowspan="1">2 (14.3%)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="padding-left: 2em;" align="left" colspan="1" rowspan="1">Asian</td><td style="border:none;" align="left" colspan="1" rowspan="1">1 (7.1%)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">cigarettes per
+day</td><td style="border:none;" align="left" colspan="1" rowspan="1">8.6 (4.1)</td><td style="border:none;" align="left" colspan="1" rowspan="1">4–15</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">have
+you used e-cigarettes in the past 30
+days?</td><td style="border:none;" align="left" colspan="1" rowspan="1">yes (14.3%)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1">no (85.7%)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">heaviness of smoking index<sup><xref ref-type="bibr" rid="ref13">13</xref></sup></td><td style="border:none;" align="left" colspan="1" rowspan="1">1.2</td><td style="border:none;" align="left" colspan="1" rowspan="1">0–4</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">baseline
+saliva cotinine (ng/mL)</td><td style="border:none;" align="left" colspan="1" rowspan="1">96.6 (62)</td><td style="border:none;" align="left" colspan="1" rowspan="1">16.6–258.2</td></tr></tbody></table></table-wrap><table-wrap id="tbl2" position="float" orientation="portrait"><label>Table 2</label><caption><title>Cigarette Brands, Tobacco Weights,
+and Nicotine Contents Used by Participants</title></caption><table frame="hsides" rules="groups" border="0"><colgroup span="1"><col align="left" span="1"/><col align="left" span="1"/><col align="char" char="." span="1"/><col align="left" span="1"/><col align="char" char="." span="1"/></colgroup><thead><tr><th style="border:none;" align="center" colspan="1" rowspan="1">cigarette
+brand name</th><th style="border:none;" align="center" colspan="1" rowspan="1"><italic toggle="yes">N</italic></th><th style="border:none;" align="center" char="." colspan="1" rowspan="1">weight of
+cigarette filler (g)</th><th style="border:none;" align="center" colspan="1" rowspan="1">total nicotine
+in filler (mg)</th><th style="border:none;" align="center" char="." colspan="1" rowspan="1">% nicotine
+in filler</th></tr></thead><tbody><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Camel Blue Turkish Domestic
+Blend</td><td style="border:none;" align="left" colspan="1" rowspan="1">1</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.6</td><td style="border:none;" align="left" colspan="1" rowspan="1">10.4</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.72</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Natural American Spirit
+Mellow Taste</td><td style="border:none;" align="left" colspan="1" rowspan="1">3</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.71</td><td style="border:none;" align="left" colspan="1" rowspan="1">13.9</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.96</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Natural American Full Bodied
+Taste</td><td style="border:none;" align="left" colspan="1" rowspan="1">4</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.7</td><td style="border:none;" align="left" colspan="1" rowspan="1">13.7</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.95</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Marlboro Smooth Original
+Flavor Filter Cigarettes</td><td style="border:none;" align="left" colspan="1" rowspan="1">1</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.62</td><td style="border:none;" align="left" colspan="1" rowspan="1">9.2</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.49</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Marlboro Gold Seventy Twos</td><td style="border:none;" align="left" colspan="1" rowspan="1">1</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.58</td><td style="border:none;" align="left" colspan="1" rowspan="1">8.2</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.41</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Marlboro Sliver Seventy
+Twos</td><td style="border:none;" align="left" colspan="1" rowspan="1">1</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.57</td><td style="border:none;" align="left" colspan="1" rowspan="1">8.7</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.53</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">Marlboro Red Seventy Twos
+Class A Cigarettes</td><td style="border:none;" align="left" colspan="1" rowspan="1">3</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.69</td><td style="border:none;" align="left" colspan="1" rowspan="1">11</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">1.6</td></tr></tbody></table></table-wrap></sec><sec id="sec3.2"><title>Standardized Session</title><p>Average plasma nicotine concentrations
+while using JUUL and usual brand cigarettes are shown in <xref rid="fig1" ref-type="fig">Figure <xref rid="fig1" ref-type="fig">1</xref></xref>. One participant
+took only 6 puffs on the JUUL and another only nine puffs from the
+cigarette due to a communication problem related to COVID-related
+safety procedures. Nicotine consumption and pharmacokinetic data during
+the standardized use sessions are shown in <xref rid="tbl3" ref-type="other">Table <xref rid="tbl3" ref-type="other">3</xref></xref>. The average weight of e-liquid consumed
+with the use of JUUL averaged 24 mg, with a wide range of 6.7–39.3
+(<xref rid="fig2" ref-type="fig">Figure <xref rid="fig2" ref-type="fig">2</xref></xref>). Based on
+e-liquid consumption, the delivered nicotine dose averaged 1.21 mg
+with a range of 0.34–1.97 mg. The average tobacco burned during
+smoking averaged 0.53 g, with a range from 0.42 to 0.65 g (<xref rid="fig2" ref-type="fig">Figure <xref rid="fig2" ref-type="fig">2</xref></xref>). The estimated
+nicotine loss from the cigarette based on the amount of tobacco burned
+and the nicotine concentration in the filler averaged 9.1 mg (range
+7.1–11.4).</p><fig id="fig1" position="float" orientation="portrait"><label>Figure 1</label><caption><p>Average plasma nicotine concentrations (mean and SEM)
+corrected
+for baseline levels during the standardized session (A) and ad libitum
+session (B) with vaping of JUUL e-cigarette and cigarette smoking.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr1" position="float" orientation="portrait" xlink:href="tx4c00462_0001.jpg"><?image-name tx4c00462_0001.jpg?><?image-size 99513?><?image-md5 c121261b76e4651c1b4a1bd4f0bbb43b?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 3388?><?image-original-width 2400?><?image-scaled-height 1091?><?image-scaled-width 773?><?image-cloudpmc-urn urn:cdn:blobs/04ac/12015950/c121261b76e4/tx4c00462_0001.jpg?><?thumb-name tx4c00462_0001.gif?><?thumb-size 3915?><?thumb-md5 49e88fe2c75a1f991e61e1ddbbe46b1f?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 141?><?thumb-scaled-width 100?><?thumb-cloudpmc-urn urn:cdn:blobs/04ac/12015950/49e88fe2c75a/tx4c00462_0001.gif?></graphic></fig><fig id="fig2" position="float" orientation="portrait"><label>Figure 2</label><caption><p>Individual variability in amount of e-liquid consumed,
+amount of
+tobacco burned, and PK-estimated nicotine dose from JUUL and cigarette
+smoking during standardized session. Dark bars indicate means; lighter
+bars indicate SEM.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr2" position="float" orientation="portrait" xlink:href="tx4c00462_0002.jpg"><?image-name tx4c00462_0002.jpg?><?image-size 56786?><?image-md5 ce8eeb775b9adf269e6e09ae98618c9a?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1201?><?image-original-width 3000?><?image-scaled-height 300?><?image-scaled-width 750?><?image-cloudpmc-urn urn:cdn:blobs/04ac/12015950/ce8eeb775b9a/tx4c00462_0002.jpg?><?thumb-name tx4c00462_0002.gif?><?thumb-size 10015?><?thumb-md5 d66efc93b56e8b21266eff34d0247548?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 199?><?thumb-cloudpmc-urn urn:cdn:blobs/04ac/12015950/d66efc93b56e/tx4c00462_0002.gif?></graphic></fig><table-wrap id="tbl3" position="float" orientation="portrait"><label>Table 3</label><caption><title>Product Consumption and Nicotine Pharmacokinetics
+during Standardized Session</title></caption><table frame="hsides" rules="groups" border="0"><colgroup span="1"><col align="left" span="1"/><col align="char" char="(" span="1"/><col align="left" span="1"/><col align="left" span="1"/><col align="char" char="." span="1"/></colgroup><thead><tr><th style="border:none;" align="center" colspan="1" rowspan="1"> </th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1"> </th><th style="border:none;" align="center" colspan="1" rowspan="1"> </th><th colspan="2" align="center" rowspan="1">e-cigarette vs tobacco<hr/></th></tr><tr><th style="border:none;" align="center" colspan="1" rowspan="1">variable</th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1">e-cigarette mean ± SD (range)</th><th style="border:none;" align="center" colspan="1" rowspan="1">tobacco mean ± SD (range)</th><th style="border:none;" align="center" colspan="1" rowspan="1">mean ratio
+or difference (95% CI)</th><th style="border:none;" align="center" char="." colspan="1" rowspan="1"><italic toggle="yes">p</italic> value (paired <italic toggle="yes">t</italic>-test)</th></tr></thead><tbody><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount of e-liquid consumed (mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">24 ± 10 (6.7, 39.3)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount nicotine delivered
+from JUUL(mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">1.21 ± 0.52 (0.34, 1.97)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount of tobacco burned
+(g)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1">0.53 ± 0.08 (0.42, 0.65)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount
+of nicotine in burned
+tobacco (mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1">9.14 ± 1.29 (7.08, 11.43)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1"><italic toggle="yes">C</italic><sub>max</sub> (ng/mL)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">4.7 ± 2.11 (2.1, 9.7)</td><td style="border:none;" align="left" colspan="1" rowspan="1">8.8 ± 6.31 (3.1, 23.7)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.59 (0.27, 1.29)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.05</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1"><italic toggle="yes">T</italic><sub>max</sub> (min)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">4.5 ± 3.9 (2, 15)</td><td style="border:none;" align="left" colspan="1" rowspan="1">5.2 ± 4.81 (2, 15)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.92 (0.43, 2.01)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.63</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">half-life (min)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">102.6 ± 67.5 (51.9, 298)</td><td style="border:none;" align="left" colspan="1" rowspan="1">113 ± 88.9 (38.2, 396.5)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.95 (0.44, 2.1)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.41</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">baseline corrected AUC (0–240) (ng/mL min)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">236.9 ± 103.27 (76.7, 392.8)</td><td style="border:none;" align="left" colspan="1" rowspan="1">457.7 ± 344.89 (153.7, 1502.8)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.56 (0.26, 1.22)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.04</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">baseline corrected AUC (0–∞) (ng/mL min)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">400.1 ± 162.6 (129.7, 689.1)</td><td style="border:none;" align="left" colspan="1" rowspan="1">841.2 ± 766.7 (289, 3372.7)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.54 (0.25, 1.16)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.04</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-estimated dose
+(mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">0.55 ± 0.21 (0.16, 0.82)</td><td style="border:none;" align="left" colspan="1" rowspan="1">1.15 ± 1.04 (0.35, 4.56)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.54 (0.25, 1.16)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.04</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">delivered nicotine flux
+for JUUL: delivered nicotine flux (μg/s)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">35.1 ± 14.1 (9.6, 56.1)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">systemic nicotine flux (μg/s)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">16.25 ± 6.1 (4.54, 23.29)</td><td style="border:none;" align="left" colspan="1" rowspan="1">33.43 ± 29.7 (10, 129.7)</td><td style="border:none;" align="left" colspan="1" rowspan="1">0.55 (0.25, 1.19)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.04</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">ratio systemic/delivered nicotine flux (all)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">0.56 ± 0.42 (0.18, 1.84)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">ratio systemic/delivered nicotine flux (excluding outlier)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">0.47 ± 0.21 (0.18, 0.93)</td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="left" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr></tbody></table></table-wrap><p>The average plasma nicotine Cmax after vaping JUUL
+(4.7 ng/mL)
+was lower than that seen after cigarette smoking (8.8 ng/mL) (<italic toggle="yes">p</italic> = 0.05). Similarly, nicotine AUC<sub>(0–∞)</sub> was lower for JUUL vs for cigarette smoking (400 ng/mL·min
+vs 841 ng/mL·min) (<italic toggle="yes">p</italic> &lt; 0.05). The PK-estimated
+systemic nicotine dose averaged 0.55 mg with JUUL (range 0.16–0.82)
+vs 1.15 mg (range 0.35–4.56) with smoking (<italic toggle="yes">p</italic> &lt; 0.05). This corresponds to a mean per puff systemic nicotine
+dose of 50 μg for JUUL vs 102 μg for cigarette smoking.
+The within-subject correlation between weight of e-liquid consumed
+and the PK-estimated nicotine dose was 0.34 (NS); between weight of
+e-liquid consumed and Cmax was 0.41 (NS); between weight of tobacco
+burned and the PK-estimated dose was 0.43 (NS), while the correlation
+based on amount of nicotine lost from the cigarette and the PK-estimated
+dose was 0.42 (NS) (<xref rid="tbl4" ref-type="other">Table <xref rid="tbl4" ref-type="other">4</xref></xref>).</p><table-wrap id="tbl4" position="float" orientation="portrait"><label>Table 4</label><caption><title>Correlations between Product Consumption
+and Nicotine Pharmacokinetics and Dosing</title></caption><table frame="hsides" rules="groups" border="0"><colgroup span="1"><col align="left" span="1"/><col align="char" char="." span="1"/><col align="char" char="." span="1"/></colgroup><thead><tr><th style="border:none;" align="center" colspan="1" rowspan="1">variable</th><th style="border:none;" align="center" char="." colspan="1" rowspan="1">correlation
+coefficient (<italic toggle="yes">r</italic>)</th><th style="border:none;" align="center" char="." colspan="1" rowspan="1"><italic toggle="yes">p</italic>-value</th></tr></thead><tbody><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of e-liquid used and PK-estimated nicotine doses
+for standardized session (all)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.34</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.234</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of e-liquid used and PK-estimated nicotine doses for standardized session
+(excluding outlier)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.44</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.129</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of e-liquid used and plasma nicotine <italic toggle="yes">C</italic><sub>max</sub> for standardized session (all)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.41</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.143</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of e-liquid used and plasma
+nicotine <italic toggle="yes">C</italic><sub>max</sub> for standardized session
+(excluding outlier)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.47</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.106</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of tobacco
+burned
+and PK-estimated nicotine doses for
+standardized session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.43</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.125</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of e-liquid
+used
+and PK-estimated nicotine doses for
+ad libitum session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.778</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.001</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">weight of tobacco
+burned
+and PK-estimated nicotine doses for
+ad libitum session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.403</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.153</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">the amount of
+nicotine in
+burned tobacco and PK-estimated nicotine
+doses for the standardized session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.422</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.132</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">the amount of nicotine in
+burned tobacco and PK-estimated nicotine
+doses for an ad libitum session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.699</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.005</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">plasma nicotine <italic toggle="yes">C</italic><sub>max</sub> for standardized
+and ad libitum sessions
+with JUUL</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.026</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.929</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">plasma nicotine <italic toggle="yes">C</italic><sub>max</sub> for standardized and ad libitum sessions
+with a cigarette</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.518</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.058</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-estimated doses per cigarette smoked and nicotine in cigarette filler</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.472</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.088</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-estimated doses
+for standardized and ad libitum sessions with JUUL</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.45</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.106</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-estimated doses
+for standardized and ad libitum sessions with a cigarette</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.815</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">&lt;0.001</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-estimated nicotine
+doses comparing JUUL and smoking for the standardized session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.367</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.196</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-estimated nicotine
+doses comparing JUUL and smoking for ad libitum session</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.689</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.006</td></tr></tbody></table></table-wrap><p>Systemic nicotine flux based on PK-estimated nicotine
+dose averaged
+16.2 μg/s for JUUL cigarette and 33.4 μg/s for cigarette
+(<italic toggle="yes">p</italic> &lt; 0.05). Delivered nicotine flux averaged 35.1
+μg/s for JUUL. The fractional systemic uptake (systemic/delivered
+nicotine) averaged 56% for all participants, with a wide range of
+0.18–1.84. The estimation in one outlier with a ratio of 1.81
+(biologically impossible) was thought to be incorrect due to a technical
+problem in weighing the JUUL device. Excluding this individual, the
+average fractional uptake was 0.47 (range 0.18–0.93).</p></sec><sec id="sec3.3"><title>Ad Libitum Session</title><p>Average plasma nicotine concentrations
+for JUUL and cigarette smoking during the 240 min ad libitum use with
+extrapolation over time using each participant’s half-life
+are shown in <xref rid="fig1" ref-type="fig">Figure <xref rid="fig1" ref-type="fig">1</xref></xref>. During the ad libitum vaping session, an average of 146 mg of e-liquid
+(range 26–900 mg) was consumed, corresponding to an average
+of 7.3 mg (range 1.5–30 mg) of nicotine delivered (<xref rid="tbl5" ref-type="other">Table <xref rid="tbl5" ref-type="other">5</xref></xref>). There was marked
+individual variability, as shown in <xref rid="fig3" ref-type="fig">Figure <xref rid="fig3" ref-type="fig">3</xref></xref>. During ad libitum smoking, participants
+smoked an average of 3.4 cigarettes (range 1–6) and burned
+an average of 2.14 g of tobacco (range 0.47–3.91 g).</p><fig id="fig3" position="float" orientation="portrait"><label>Figure 3</label><caption><p>Individual
+variability in the amount of e-liquid consumed, amount
+of tobacco burned, and PK-estimated nicotine dose from JUUL and cigarette
+smoking during ad libitum session. Dark bars indicate means; lighter
+bars SEM.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr3" position="float" orientation="portrait" xlink:href="tx4c00462_0003.jpg"><?image-name tx4c00462_0003.jpg?><?image-size 53696?><?image-md5 0fe5d52cb94e39c3b3c853747b2682e1?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1226?><?image-original-width 3000?><?image-scaled-height 307?><?image-scaled-width 750?><?image-cloudpmc-urn urn:cdn:blobs/04ac/12015950/0fe5d52cb94e/tx4c00462_0003.jpg?><?thumb-name tx4c00462_0003.gif?><?thumb-size 9864?><?thumb-md5 656260e5be1af29cc663b211c29f6b4f?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 195?><?thumb-cloudpmc-urn urn:cdn:blobs/04ac/12015950/656260e5be1a/tx4c00462_0003.gif?></graphic></fig><table-wrap id="tbl5" position="float" orientation="portrait"><label>Table 5</label><caption><title>Product Consumption and Nicotine Pharmacokinetics
+during Standardized Session</title></caption><table frame="hsides" rules="groups" border="0"><colgroup span="1"><col align="left" span="1"/><col align="char" char="(" span="1"/><col align="char" char="(" span="1"/><col align="char" char="(" span="1"/><col align="char" char="." span="1"/></colgroup><thead><tr><th style="border:none;" align="center" colspan="1" rowspan="1"> </th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1"> </th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1"> </th><th colspan="2" align="center" char="(" rowspan="1">e-cigarette vs tobacco<hr/></th></tr><tr><th style="border:none;" align="center" colspan="1" rowspan="1">variable</th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1">e-cigarette mean ± SD (range)</th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1">tobacco mean ± SD (range)</th><th style="border:none;" align="center" char="(" colspan="1" rowspan="1">mean ratio
+or difference (95% CI)</th><th style="border:none;" align="center" char="." colspan="1" rowspan="1"><italic toggle="yes">p</italic> value (paired <italic toggle="yes">t</italic>-test)</th></tr></thead><tbody><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount of e-liquid used (mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">146 ± 154 (26, 900)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount of nicotine inhaled
+(g)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">7.3 ± 7.7 (1.47, 30)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">number of cigarettes smoked</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">3.4 ± 1.5 (1, 6)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount
+of tobacco burned
+(g)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">2.1 ± 0.9 (0.4, 3.9)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">amount
+of nicotine in burned
+tobacco (mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">37.6 ± 19.3 (8.1, 76.7)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-predicted nicotine dose (mg)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">4.1 ± 2.9 (0.4, 9.5)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">5 ± 3.8 (1.5, 15)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">0.8 (0.4, 1.7)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.3</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">PK-predicted nicotine
+dose per cigarette</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">1.5 ± 0.8 (0.4, 2.9)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1"> </td><td style="border:none;" align="char" char="." colspan="1" rowspan="1"> </td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1"><italic toggle="yes">T</italic><sub>max</sub> (min)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">195 ± 49 (90, 240)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">154 ± 69 (30, 240)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">1.4 (0.7, 3.1)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.2</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1"><italic toggle="yes">C</italic><sub>max</sub> (ng/mL)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">11.2 ± 7.8 (1, 28.1)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">15.6 ± 10 (5, 35.1)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">0.7 (0.3, 1.4)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.1</td></tr><tr><td style="border:none;" align="left" colspan="1" rowspan="1">baseline corrected AUC (0–∞) (ng/mL min)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">3013.7 ± 2266.2 (281.1, 8020.4)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">3604.5 ± 2764.4 (1261.5, 11,113.4)</td><td style="border:none;" align="char" char="(" colspan="1" rowspan="1">0.8 (0.4, 1.7)</td><td style="border:none;" align="char" char="." colspan="1" rowspan="1">0.3</td></tr></tbody></table></table-wrap><p>On average, the plasma nicotine <italic toggle="yes">C</italic><sub>max</sub> (11.2 ng/mL vs 15.6 ng/mL) and AUC<sub>(0–240)</sub> min
+were lower with JUUL use vs smoking (1641 ng/mL·min vs 2158 ng/mL·min),
+but these differences were not statistically significant. Nicotine
+AUC 0–∞ averaged 3014 ng/mL·min for JUUL and 3604
+ng/mL·min for cigarette (<italic toggle="yes">p</italic> = 0.27). PK-estimated
+nicotine intake averaged 4.08 and 4.98 mg for JUUL and cigarette,
+respectively (<italic toggle="yes">p</italic> = 0.25). The within-subject correlations
+between weight of e-liquid used and weight of tobacco burned vs PK-estimated
+nicotine dose were 0.78 (<italic toggle="yes">p</italic> &lt; 0.005) and 0.40 (NS),
+respectively. The correlation between nicotine in the burned tobacco
+filler vs PK-estimated nicotine dose was 0.70 (<italic toggle="yes">p</italic> =
+0.005). The correlation between the PK-estimated nicotine dose per
+cigarette smoked and the amount of nicotine in the tobacco filler
+was 0.47 (NS). The extent of individual participant titration of nicotine
+intake from JUUL compared to that from cigarette smoking is shown
+in <xref rid="fig4" ref-type="fig">Figure <xref rid="fig4" ref-type="fig">4</xref></xref>. The average
+and median nicotine titration indices were 0.93 and 0.89, respectively.</p><fig id="fig4" position="float" orientation="portrait"><label>Figure 4</label><caption><p>Nicotine
+titration ratios during ad libitum use of JUUL and cigarette
+smoking. Titration ratios calculated as [JUUL plasma nicotine AUC
+0–∞]/[cigarette plasma nicotine AUC 0–∞]
+and represent the extent to which individuals titrate nicotine intake
+between JUUL and cigarette. The dashed line represents the point at
+which nicotine intake is the same for JUUL and cigarette smoking (representing
+complete titration).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="gr4" position="float" orientation="portrait" xlink:href="tx4c00462_0004.jpg"><?image-name tx4c00462_0004.jpg?><?image-size 55051?><?image-md5 75b8543dc9c92b5d81771be6a4c9b7cc?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1592?><?image-original-width 1983?><?image-scaled-height 637?><?image-scaled-width 793?><?image-cloudpmc-urn urn:cdn:blobs/04ac/12015950/75b8543dc9c9/tx4c00462_0004.jpg?><?thumb-name tx4c00462_0004.gif?><?thumb-size 8784?><?thumb-md5 e7a0c515fae51691f4df9d67e2027ef5?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 100?><?thumb-cloudpmc-urn urn:cdn:blobs/04ac/12015950/e7a0c515fae5/tx4c00462_0004.gif?></graphic></fig></sec><sec id="sec3.4"><title>Relationships between Standardized and Ad Libitum Sessions</title><p>The within-subject Pearson correlations between plasma nicotine
+Cmax compared to standardized to ad libitum sessions were 0.026 for
+JUUL and 0.52 for cigarettes, respectively, both not statistically
+significant (<xref rid="tbl4" ref-type="other">Table <xref rid="tbl4" ref-type="other">4</xref></xref>). The correlations between PK-estimated nicotine dose for the standardized
+session and PK-estimated nicotine dose for the ad libitum session
+were 0.45 (NS) for JUUL and 0.82 (<italic toggle="yes">p</italic> &lt; 001) for
+cigarette smoking, respectively. Thus, the strength of correlation
+(predictive value) for nicotine intake comparing standardized use
+vs ad libitum use was much stronger for cigarette smoking than for
+e-cigarette use.</p></sec><sec id="sec3.5"><title>Estimating Equivalence of Vaping One JUUL Pod to Cigarettes
+per Day with Ad Libitum Use</title><p>One JUUL pod with 0.7 mL of liquid
+with 59 mg/mL contains 40 mg of nicotine. As noted above, on average
+participants consumed 7.3 mg liquid with a systemic intake of nicotine
+of 4.08 mg in 4 h of ad libitum use. Thus, if a person vaped 40 mg
+(1 pod), the systemic nicotine intake would be equivalent to 22.3
+mg. Our participants smoked an average of 3.4 cigarettes, with an
+average systemic nicotine intake of 4.98 mg. The number of cigarettes
+predicted to be needed for a systemic nicotine intake equivalent to
+vaping one JUUL pod (22.3 mg) would be 15 cigarettes.</p></sec></sec><sec id="sec4"><title>Discussion</title><p>We present novel data on pharmacokinetically
+estimated systemic
+nicotine dosimetry, individual variability in nicotine dosing from
+e-cigarette use, cigarette smoking in relation to measures of product
+use, delivered, and systemic nicotine flux, and an assessment of how
+well measures of nicotine exposure with standardized product use predict
+nicotine self-administration with ad libitum e-cigarette use and smoking.</p><p>Smokers who were infrequent vapers were studied in an attempt to
+simulate a study of a new inhaled nicotine product that was being
+evaluated prior to marketing. We found that a standardized JUUL vaping
+session consisting of ten 3.5-s puffs, one every 30 s, resulted in
+wide variability in the amount of liquid consumed and in the systemic
+nicotine dose. The estimated systemic nicotine dose during the standardized
+session with JUUL averaged 0.55 mg, with a range of 0.16–0.81
+mg. Plasma nicotine concentrations and PK-estimated nicotine doses
+were much lower with standardized JUUL use compared with standardized
+cigarette smoking. These</p><p>findings are consistent with other
+studies comparing plasma nicotine
+after standardized puffing of JUUL with 5% nicotine e-liquid as well
+as other types of e-cigarettes vs cigarette smoking.<sup><xref ref-type="bibr" rid="ref14">14</xref>−<xref ref-type="bibr" rid="ref17">17</xref></sup> However, studies of experienced vapers that allowed participants
+to vape JUUL or smoke ad libitum for 5 min found that plasma nicotine
+levels were similar to JUUL 5% and cigarette smoking.<sup><xref ref-type="bibr" rid="ref18">18</xref>,<xref ref-type="bibr" rid="ref19">19</xref></sup> Thus, the design of a short time-duration e-cigarette pharmacokinetic
+study, considering both the vaping timing and puff duration control
+details and the prior experience of the vaper, strongly influences
+results.</p><p>It has been assumed that the amount of nicotine in
+e-liquid consumed
+would approximate the systemic dose of nicotine delivered to the vaper.<sup><xref ref-type="bibr" rid="ref20">20</xref></sup> We found a poor correlation between the amount
+of nicotine contained in the liquid consumed during the standardized
+session and the PK-estimated nicotine intake, despite an attempt to
+control the puffing duration. On average we found that the fractional
+uptake was 47%, with wide individual variation. This discrepancy likely
+relates to differences in puffing intensity (air flow) and differences
+in the amount of nicotine exhaled and/or deposition pattern of the
+nicotine aerosol. Our data also suggest that some of this variability
+is due to differences in delivered nicotine flux across JUUL devices,
+as discussed in more detail below. Of note, the average PK-estimated
+nicotine intake per puff, 50 μg, is lower than that predicted
+in several vaping machine aerosol studies, but even nicotine per puff
+in machine vaping studies is quite variable, with a range of 72–164
+μg/puff.<sup><xref ref-type="bibr" rid="ref3">3</xref></sup> Thus, vaping machine studies
+may not accurately predict the systemic nicotine intake.</p><p>With
+standardized puffing of a cigarette, there was considerable
+individual variability in the amount of tobacco burned although the
+extent of variation was less than that seen with the use of JUUL.
+The systemic nicotine intake averaged 1.15 mg, with a range of 0.35–4.0
+mg, which is in the expected range for smoking a cigarette.<sup><xref ref-type="bibr" rid="ref21">21</xref></sup> There were weak correlations between the PK-estimated
+systemic nicotine dose and the weight of cigarette tobacco burned
+or with the amount of nicotine contained in that burned tobacco.</p><p>With ad libitum use for 4 h, the PK-estimated systemic dose from
+JUUL averaged 4.08 mg compared to 4.98 mg for cigarette smoking. Nicotine
+intake was much closer compared with the two nicotine delivery devices
+compared to that seen in the standardized session, with a median titration
+ratio of 0.89. The majority of participants titrated the nicotine
+dose from JUUL to 75% or more compared to that consumed from cigarette
+smoking. In contrast to the standardized sessions, with ad libitum
+use, the amount of e-liquid consumed and the amount of nicotine in
+the cigarette burned were significantly correlated with the systemic
+nicotine intake.</p><p>The use of a standardized puffing study paradigm
+to compare nicotine
+intake from vaping to cigarette smoking has been thought to be a good
+way to predict relative nicotine intake from the two products. The
+typical standardized session of 10 puffs in 5 min that we and other
+researchers have used is based on simulating the behavior of cigarette
+smokers. The difference between relative nicotine dose in standardized
+vs ad libitum session is likely because vapers do not puff in the
+same way in which they smoke cigarettes. A cigarette smoker needs
+to take a number of puffs in a relatively short period of time because
+the cigarette tobacco continues to burn. In contrast, an e-cigarette
+vaper spaces their puffs out according to nicotine craving over time.<sup><xref ref-type="bibr" rid="ref22">22</xref></sup> The hypothesis that standardized vaping sessions
+do not predict the usual nicotine self-administration behavior is
+supported by the observation that within-subject nicotine intake from
+vaping in the standardized session was poorly correlated with intake
+with ad libitum vaping. In contrast, the within-subject correlation
+was much stronger compared to nicotine intake from smoking in the
+two sessions. Despite the large difference in nicotine intake from
+JUUL and cigarette smoking in the standardized session, JUUL users
+were able to titrate their nicotine intake to a level similar to that
+when smoking with ad libitum use. We have made similar observations
+of nicotine titration with daily use of e-cigarettes compared to smoking
+in regular dual users.<sup><xref ref-type="bibr" rid="ref23">23</xref>,<xref ref-type="bibr" rid="ref24">24</xref></sup></p><p>We were also able to examine
+the potential utility of the measurement
+of delivered nicotine flux of an e-cigarette device as a predictor
+of actual nicotine systemic exposure. Nicotine flux has been defined
+as the nicotine emitted per puff second (μg/s) from a particular
+device. It has been hypothesized that nicotine flux will predict nicotine
+delivery to the user and will predict both inadequate nicotine to
+satisfy smokers and high exposure to nicotine associated with high
+abuse liability and/or other nicotine toxicities.<sup><xref ref-type="bibr" rid="ref12">12</xref></sup> The determination of nicotine flux from e-cigarettes has
+been based on e-cigarette design, liquid composition, and puffing
+behavior and measured ex vivo.</p><p>We took the approach of using
+the in vivo measurement of nicotine
+released from JUUL and the PK-estimated nicotine dose to assess individual
+variability in delivered nicotine flux and how well-delivered nicotine
+flux predicts actual systemic nicotine exposure during a standardized
+puffing protocol. Systemic nicotine flux from both JUUL and cigarette
+smoking was highly variable across individuals, despite a defined
+3.5 s puffing regimen. Presumably, individual differences in puffing
+intensity (air flow) as well as individual differences in inhalation
+and exhalation behavior influence systemically absorbed nicotine flux.
+In addition, variability in delivered flux related to the device appears
+to influence systemic nicotine delivery, at least for JUUL. Talih
+et al. determined by machine testing the nicotine delivery and flux
+in nine JUUL pods purchased from commercial vendors using a single
+JUUL device with fully charged battery.<sup><xref ref-type="bibr" rid="ref2">2</xref></sup> The vaping machine parameters were one 4 s puff with a flow rate
+of 1.5 L/min every 30 s for 10 puffs. The average nicotine emitted
+was 1.6 mg, and the average delivered nicotine flux was 27 μg/s
+mg (coefficient of variation 22%). The average nicotine delivery in
+the Talih study is higher than what we found (1.2 mg, coefficient
+of variation 42%), presumably due to the longer puff duration. The
+Talih study provides evidence that differences in pod performance
+explain some of the large individual variability in delivered nicotine
+flux observed in our study. Overall, our data support the idea that
+the nicotine flux might be useful in assessing which e-cigarette devices
+might not be able to deliver adequate nicotine to replace nicotine
+from smoking but do not inform the actual intake of nicotine related
+to nicotine reinforcement and abuse liability.</p><p>Limitations of
+our study include the relatively small participant
+sample size, inclusion of infrequent e-cigarette users and relatively
+light regular cigarette smokers, and making assumptions about individual
+nicotine pharmacokinetic parameters (clearance) based on population
+data. While our nicotine clearance estimates are based on population
+sex and body weight associations, nicotine clearance also varies among
+individuals due to other factors. While we did not explicitly determine
+clearance for each participant, our PK-estimates do provide a general
+measure of nicotine exposure and can serve as a way to compare various
+nicotine delivery devices. In the standardized session, a puff duration
+of 3.5 s was prompted by an audio signal but was not verified by direct
+topography measurement. The puff duration of 3.5 s was based on observations
+of JUUL users, but puff duration for cigarette smokers is typically
+shorter.<sup><xref ref-type="bibr" rid="ref20">20</xref>,<xref ref-type="bibr" rid="ref25">25</xref></sup> The longer than typical puff duration with
+cigarette smoking could explain in part why nicotine intake was higher
+with smoking than with JUUL, but our estimates are consistent with
+nicotine intake from smoking in our studies, as described above.</p><p>The implications of our study for the methodology in assessing
+novel nicotine delivery devices are as follows. Using standardized
+use sessions to assess nicotine exposure is not a good predictor of
+ad libitum nicotine use for devices that are inhaled with different
+topographies compared to cigarette smoking. Ad libitum use sessions
+provide a much better indicator of expected nicotine exposure and
+nicotine-related effects than standardized sessions. It should be
+noted that during ad libitum e-cigarette use, liquid consumption does
+strongly predict the PK-estimated dose, which may be useful for estimating
+exposure when plasma nicotine concentrations cannot be measured.</p><p>While the optimal duration of use to determine nicotine equivalency
+of a novel device to smoking would be several days in duration, a
+self-administration session of even several hours can provide a reasonable
+estimate of device delivery in the context of its reinforcing effects.</p><p>This is illustrated by our prediction of daily equivalence of vaping
+one JUUL pod and cigarettes per day compared to other studies done
+with ad libitum product use over several days.</p><p>Our study also
+illustrates the limitation of trying to translate
+nicotine concentration in e-liquids to nicotine intake, in comparison
+to smoking. Because of the differences in e-cigarette device characteristics
+and in the composition of e-liquids, we suggest that experimental
+studies such as ours be used to assess nicotine dosing and abuse liability
+rather than basing regulation on particular e-liquid nicotine concentrations.
+Relatedly, there has been considerable international debate about
+whether concentrations of nicotine in electronic cigarettes should
+be capped at a particular level, in the case of the European Union
+at 20 mg·mL, based on typical nicotine intake from cigarette
+smoking.<sup><xref ref-type="bibr" rid="ref26">26</xref></sup> Our data suggest that assumptions
+used to establish nicotine limits in liquids as predictors of real-life
+nicotine self-administration are not valid. Nicotine intake in relation
+to nicotine concentration in the liquids depends on the nature of
+the nicotine (salt vs free base), the presence of flavors and the
+nature of the e-cigarette device, and inhalational behaviors and should
+be tested for individual e-cigarette products.<sup><xref ref-type="bibr" rid="ref27">27</xref></sup></p></sec></body><back><notes notes-type="" id="notes-295"><title>Author Contributions</title><p>CRediT: <bold>Neal L. Benowitz</bold> conceptualization, funding acquisition, investigation,
+methodology, supervision, writing - original draft; <bold>Hao-Yuan
+Yang</bold> formal analysis; <bold>Peyton Jacob</bold> conceptualization,
+funding acquisition, investigation, methodology, supervision, writing
+- review &amp; editing; <bold>Gideon St.Helen</bold> conceptualization,
+formal analysis, funding acquisition, investigation, methodology,
+writing - review &amp; editing.</p></notes><notes notes-type="funding-statement" id="notes-1"><p>This study was
+supported by grants R01DA039264 and P30DA012393 from the National
+Institute on Drug Abuse and was carried out in part at the Clinical
+Research Center at Zuckerberg San Francisco General Hospital (NIH/NCRR
+UCSF-CTSI UL1 RR024131). The content is solely the responsibility
+of the authors and does not necessarily represent the official views
+of the National Institutes of Health (NIH) or the Food and Drug Administration
+(FDA).</p></notes><notes notes-type="COI-statement" id="NOTES-d14e1405-autogenerated"><p>The authors declare the
+following competing financial interest(s): Dr. Benowitz is a consultant
+to Achieve Life Sciences and Qnovia, companies that market or are
+developing smoking cessation medications, and has served as a paid
+expert witness in litigation against tobacco companies. The other
+authors declare no conflict of interest.</p></notes><ack><title>Acknowledgments</title><p>We thank Jeremy Giberson, Armando Barraza,
+Sundos Yassin,
+and Lisa Lawrence for clinical research coordination; Edgar Castellanos
+Diaz for editorial assistance; Kristina Bello, Trisha Mao, and Lisa
+Yu for performing analytical chemistry; and Zuckerberg San Francisco
+General Hospital Clinical Research Center nurses and staff for research
+participant care and study procedures.</p></ack><ref-list><title>References</title><ref id="ref1"><mixed-citation publication-type="journal" id="cit1"><name name-style="western"><surname>Talih</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Balhas</surname><given-names>Z.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Salman</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Karaoghlanian</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>El Hellani</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Baalbaki</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Saliba</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Shihadeh</surname><given-names>A.</given-names></name>
+<article-title>Effects of
+User Puff Topography, Device Voltage, and Liquid Nicotine Concentration
+on Electronic Cigarette Nicotine Yield: Measurements and Model Predictions</article-title>. <source>Nicotine Tob. Res.</source>
+<year>2015</year>, <volume>17</volume> (<issue>2</issue>), <fpage>150</fpage>–<lpage>157</lpage>. <pub-id pub-id-type="doi">10.1093/ntr/ntu174</pub-id>.<pub-id pub-id-type="pmid">25187061</pub-id>
+<pub-id pub-id-type="pmcid">PMC4837998</pub-id></mixed-citation></ref><ref id="ref2"><mixed-citation publication-type="journal" id="cit2"><name name-style="western"><surname>Talih</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Hanna</surname><given-names>E.</given-names></name>; <name name-style="western"><surname>Salman</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Salam</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>El-Hage</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Karaoghlanian</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Talih</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Baldassari</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Saliba</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Elbejjani</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>El-Hellani</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Shihadeh</surname><given-names>A.</given-names></name>
+<article-title>Influence of Nicotine
+Form and Nicotine
+Flux on Puffing Behavior and Mouth-Level Exposure to Nicotine from
+Electronic Nicotine Delivery Systems</article-title>. <source>Drug Alcohol
+Depend.</source>
+<year>2024</year>, <volume>254</volume>, <elocation-id>111052</elocation-id><pub-id pub-id-type="doi">10.1016/j.drugalcdep.2023.111052</pub-id>.<pub-id pub-id-type="pmid">38103538</pub-id>
+<pub-id pub-id-type="pmcid">PMC10872307</pub-id></mixed-citation></ref><ref id="ref3"><mixed-citation publication-type="journal" id="cit3"><name name-style="western"><surname>Prochaska</surname><given-names>J. J.</given-names></name>; <name name-style="western"><surname>Vogel</surname><given-names>E. A.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N.</given-names></name>
+<article-title>Nicotine Delivery and Cigarette Equivalents
+from Vaping a JUULpod</article-title>. <source>Tob. Control</source>
+<year>2022</year>, <volume>31</volume> (<issue>e1</issue>), <fpage>e88</fpage>–<lpage>e93</lpage>. <pub-id pub-id-type="doi">10.1136/tobaccocontrol-2020-056367</pub-id>.<pub-id pub-id-type="pmid">33762429</pub-id>
+<pub-id pub-id-type="pmcid">PMC8460696</pub-id></mixed-citation></ref><ref id="ref4"><mixed-citation publication-type="journal" id="cit4"><name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Shihadeh</surname><given-names>A.</given-names></name>
+<article-title>Understanding the Nicotine Dose Delivered by Electronic
+Nicotine Delivery Systems in a Single Puff: The Importance of Nicotine
+Flux and Puff Duration</article-title>. <source>Tob. Control</source>
+<year>2024</year>, <elocation-id>058485</elocation-id><pub-id pub-id-type="doi">10.1136/tc-2023-058485</pub-id>.<pub-id pub-id-type="pmcid">PMC11655706</pub-id><pub-id pub-id-type="pmid">38897725</pub-id></mixed-citation></ref><ref id="ref5"><mixed-citation publication-type="journal" id="cit5"><name name-style="western"><surname>Vansickel</surname><given-names>A. R.</given-names></name>; <name name-style="western"><surname>Cobb</surname><given-names>C. O.</given-names></name>; <name name-style="western"><surname>Weaver</surname><given-names>M. F.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T. E.</given-names></name>
+<article-title>A Clinical
+Laboratory Model for Evaluating the Acute Effects of Electronic “Cigarettes”:
+Nicotine Delivery Profile and Cardiovascular and Subjective Effects</article-title>. <source>Cancer Epidemiol., Biomark. Prev.</source>
+<year>2010</year>, <volume>19</volume> (<issue>8</issue>), <fpage>1945</fpage>–<lpage>1953</lpage>. <pub-id pub-id-type="doi">10.1158/1055-9965.EPI-10-0288</pub-id>.<pub-id pub-id-type="pmcid">PMC2919621</pub-id><pub-id pub-id-type="pmid">20647410</pub-id></mixed-citation></ref><ref id="ref6"><mixed-citation publication-type="journal" id="cit6"><name name-style="western"><surname>Vargas-Rivera</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Kalan</surname><given-names>M. E.</given-names></name>; <name name-style="western"><surname>Ward-Peterson</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Osibogun</surname><given-names>O.</given-names></name>; <name name-style="western"><surname>Li</surname><given-names>W.</given-names></name>; <name name-style="western"><surname>Brown</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Maziak</surname><given-names>W.</given-names></name>
+<article-title>Effect of Flavour Manipulation
+on ENDS (JUUL) Users’ Experiences, Puffing Behaviour and Nicotine
+Exposure among US College Students</article-title>. <source>Tob. Control</source>
+<year>2021</year>, <volume>30</volume> (<issue>4</issue>), <fpage>399</fpage>–<lpage>404</lpage>. <pub-id pub-id-type="doi">10.1136/tobaccocontrol-2019-055551</pub-id>.<pub-id pub-id-type="pmcid">PMC10127226</pub-id><pub-id pub-id-type="pmid">32447315</pub-id></mixed-citation></ref><ref id="ref7"><mixed-citation publication-type="journal" id="cit7"><name name-style="western"><surname>Benowttz</surname><given-names>N. L.</given-names></name>; <name name-style="western"><surname>Hall</surname><given-names>S. M.</given-names></name>; <name name-style="western"><surname>Herning</surname><given-names>R. I.</given-names></name>; <name name-style="western"><surname>Jacob</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Jones</surname><given-names>R. T.</given-names></name>; <name name-style="western"><surname>Osman</surname><given-names>A.-L.</given-names></name>
+<article-title>Smokers of Low-Yield Cigarettes Do Not Consume Less
+Nicotine</article-title>. <source>N. Engl. J. Med.</source>
+<year>1983</year>, <volume>309</volume> (<issue>3</issue>), <fpage>139</fpage>–<lpage>142</lpage>. <pub-id pub-id-type="doi">10.1056/NEJM198307213090303</pub-id>.<pub-id pub-id-type="pmid">6866013</pub-id>
+</mixed-citation></ref><ref id="ref8"><mixed-citation publication-type="journal" id="cit8"><name name-style="western"><surname>Jacob</surname><given-names>P.</given-names><suffix>III</suffix></name>; <name name-style="western"><surname>Wilson</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>
+<article-title>Improved Gas Chromatographic
+Method for the Determination of Nicotine and Cotinine in Biologic
+Fluids</article-title>. <source>J. Chromatogr. B: Biomed. Sci. Appl.</source>
+<year>1981</year>, <volume>222</volume> (<issue>1</issue>), <fpage>61</fpage>–<lpage>70</lpage>. <pub-id pub-id-type="doi">10.1016/S0378-4347(00)81033-6</pub-id>.<pub-id pub-id-type="pmid">6783675</pub-id></mixed-citation></ref><ref id="ref9"><mixed-citation publication-type="journal" id="cit9"><name name-style="western"><surname>Jacob</surname><given-names>P.</given-names><suffix>III</suffix></name>; <name name-style="western"><surname>Wu</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Yu</surname><given-names>L.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>
+<article-title>Simultaneous
+Determination of Mecamylamine, Nicotine, and Cotinine in Plasma by
+Gas Chromatography- Mass Spectrometry</article-title>. <source>J. Pharm.
+Biomed. Anal.</source>
+<year>2000</year>, <volume>23</volume> (<issue>4</issue>), <fpage>653</fpage>–<lpage>661</lpage>. <pub-id pub-id-type="doi">10.1016/S0731-7085(00)00343-5</pub-id>.<pub-id pub-id-type="pmid">10975241</pub-id>
+</mixed-citation></ref><ref id="ref10"><mixed-citation publication-type="journal" id="cit10"><name name-style="western"><surname>St
+Helen</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Havel</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Dempsey</surname><given-names>D. A.</given-names></name>; <name name-style="western"><surname>Jacob</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>
+<article-title>Nicotine Delivery, Retention and Pharmacokinetics from
+Various Electronic Cigarettes</article-title>. <source>Addiction</source>
+<year>2016</year>, <volume>111</volume> (<issue>3</issue>), <fpage>535</fpage>–<lpage>544</lpage>. <pub-id pub-id-type="doi">10.1111/add.13183</pub-id>.<pub-id pub-id-type="pmid">26430813</pub-id>
+<pub-id pub-id-type="pmcid">PMC4749433</pub-id></mixed-citation></ref><ref id="ref11"><mixed-citation publication-type="journal" id="cit11"><name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>; <name name-style="western"><surname>Jacob</surname><given-names>P.</given-names></name>
+<article-title>Metabolism of Nicotine
+to Cotinine Studied by a Dual Stable Isotope
+Method</article-title>. <source>Clin. Pharmacol. Ther.</source>
+<year>1994</year>, <volume>56</volume> (<issue>5</issue>), <fpage>483</fpage>–<lpage>493</lpage>. <pub-id pub-id-type="doi">10.1038/clpt.1994.169</pub-id>.<pub-id pub-id-type="pmid">7955812</pub-id>
+</mixed-citation></ref><ref id="ref12"><mixed-citation publication-type="journal" id="cit12"><name name-style="western"><surname>Shihadeh</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>
+<article-title>Electronic
+Cigarette Effectiveness and Abuse Liability:
+Predicting and Regulating Nicotine Flux</article-title>. <source>Nicotine
+Tob. Res.</source>
+<year>2015</year>, <volume>17</volume> (<issue>2</issue>), <fpage>158</fpage>–<lpage>162</lpage>. <pub-id pub-id-type="doi">10.1093/ntr/ntu175</pub-id>.<pub-id pub-id-type="pmid">25180079</pub-id>
+<pub-id pub-id-type="pmcid">PMC4837999</pub-id></mixed-citation></ref><ref id="ref13"><mixed-citation publication-type="journal" id="cit13"><name name-style="western"><surname>Heatherton</surname><given-names>T. F.</given-names></name>; <name name-style="western"><surname>Kozlowski</surname><given-names>L. T.</given-names></name>; <name name-style="western"><surname>Frecker</surname><given-names>R. C.</given-names></name>; <name name-style="western"><surname>Rickert</surname><given-names>W.</given-names></name>; <name name-style="western"><surname>Robinson</surname><given-names>J.</given-names></name>
+<article-title>Measuring
+the Heaviness of Smoking: Using Self-reported Time to the First Cigarette
+of the Day and Number of Cigarettes Smoked per Day</article-title>. <source>Br. J. Addict.</source>
+<year>1989</year>, <volume>84</volume> (<issue>7</issue>), <fpage>791</fpage>–<lpage>800</lpage>. <pub-id pub-id-type="doi">10.1111/j.1360-0443.1989.tb03059.x</pub-id>.<pub-id pub-id-type="pmid">2758152</pub-id>
+</mixed-citation></ref><ref id="ref14"><mixed-citation publication-type="journal" id="cit14"><name name-style="western"><surname>Goldenson</surname><given-names>N. I.</given-names></name>; <name name-style="western"><surname>Fearon</surname><given-names>I. M.</given-names></name>; <name name-style="western"><surname>Buchhalter</surname><given-names>A. R.</given-names></name>; <name name-style="western"><surname>Henningfield</surname><given-names>J. E.</given-names></name>
+<article-title>An Open-Label,
+Randomized, Controlled, Crossover Study to Assess Nicotine Pharmacokinetics
+and Subjective Effects of the JUUL System with Three Nicotine Concentrations
+Relative to Combustible Cigarettes in Adult Smokers</article-title>. <source>Nicotine Tob. Res.</source>
+<year>2021</year>, <volume>23</volume> (<issue>6</issue>), <fpage>947</fpage>–<lpage>955</lpage>. <pub-id pub-id-type="doi">10.1093/ntr/ntab001</pub-id>.<pub-id pub-id-type="pmid">33486526</pub-id>
+<pub-id pub-id-type="pmcid">PMC8628869</pub-id></mixed-citation></ref><ref id="ref15"><mixed-citation publication-type="journal" id="cit15"><name name-style="western"><surname>Goldenson</surname><given-names>N. I.</given-names></name>; <name name-style="western"><surname>Buchhalter</surname><given-names>A. R.</given-names></name>; <name name-style="western"><surname>Augustson</surname><given-names>E. M.</given-names></name>; <name name-style="western"><surname>Rubinstein</surname><given-names>M. L.</given-names></name>; <name name-style="western"><surname>Henningfield</surname><given-names>J. E.</given-names></name>
+<article-title>Abuse Liability
+Assessment of the JUUL System in Four
+Flavors Relative to Combustible Cigarette, Nicotine Gum and a Comparator
+Electronic Nicotine Delivery System among Adult Smokers</article-title>. <source>Drug Alcohol Depend.</source>
+<year>2020</year>, <volume>217</volume>, <elocation-id>108395</elocation-id><pub-id pub-id-type="doi">10.1016/j.drugalcdep.2020.108395</pub-id>.<pub-id pub-id-type="pmid">33176942</pub-id>
+</mixed-citation></ref><ref id="ref16"><mixed-citation publication-type="journal" id="cit16"><name name-style="western"><surname>Maloney</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Eversole</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Crabtree</surname><given-names>M.</given-names></name>; <name name-style="western"><surname>Soule</surname><given-names>E.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Breland</surname><given-names>A.</given-names></name>
+<article-title>Acute Effects of JUUL
+and IQOS in Cigarette Smokers</article-title>. <source>Tob. Control</source>
+<year>2021</year>, <volume>30</volume> (<issue>4</issue>), <fpage>449</fpage>–<lpage>452</lpage>. <pub-id pub-id-type="doi">10.1136/tobaccocontrol-2019-055475</pub-id>.<pub-id pub-id-type="pmcid">PMC7864587</pub-id><pub-id pub-id-type="pmid">32041833</pub-id></mixed-citation></ref><ref id="ref17"><mixed-citation publication-type="journal" id="cit17"><name name-style="western"><surname>Cao</surname><given-names>Y.</given-names></name>; <name name-style="western"><surname>Liu</surname><given-names>X.</given-names></name>; <name name-style="western"><surname>Hu</surname><given-names>Z.</given-names></name>; <name name-style="western"><surname>Li</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Chen</surname><given-names>X.</given-names></name>; <name name-style="western"><surname>Xiong</surname><given-names>Y.</given-names></name>; <name name-style="western"><surname>Zheng</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Zhang</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Zhang</surname><given-names>L.</given-names></name>; <name name-style="western"><surname>Liu</surname><given-names>X.</given-names></name>
+<article-title>Assessing
+Nicotine Pharmacokinetics of New Generation Tobacco Products and Conventional
+Cigarettes: A Systematic Review and Meta-Analysis</article-title>. <source>Nicotine Tob. Res.</source>
+<year>2024</year>, <elocation-id>ntae199</elocation-id><pub-id pub-id-type="doi">10.1093/ntr/ntae199</pub-id>.<pub-id pub-id-type="pmid">39162577</pub-id></mixed-citation></ref><ref id="ref18"><mixed-citation publication-type="journal" id="cit18"><name name-style="western"><surname>Hajek</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Pittaccio</surname><given-names>K.</given-names></name>; <name name-style="western"><surname>Pesola</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Smith</surname><given-names>K. M.</given-names></name>; <name name-style="western"><surname>Phillips-Waller</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Przulj</surname><given-names>D.</given-names></name>
+<article-title>Nicotine Delivery and Users’ Reactions to Juul
+Compared with Cigarettes and Other E-cigarette Products</article-title>. <source>Addiction</source>
+<year>2020</year>, <volume>115</volume> (<issue>6</issue>), <fpage>1141</fpage>–<lpage>1148</lpage>. <pub-id pub-id-type="doi">10.1111/add.14936</pub-id>.<pub-id pub-id-type="pmid">31994254</pub-id>
+<pub-id pub-id-type="pmcid">PMC7318270</pub-id></mixed-citation></ref><ref id="ref19"><mixed-citation publication-type="journal" id="cit19"><name name-style="western"><surname>Phillips-Waller</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Przulj</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Smith</surname><given-names>K. M.</given-names></name>; <name name-style="western"><surname>Pesola</surname><given-names>F.</given-names></name>; <name name-style="western"><surname>Hajek</surname><given-names>P.</given-names></name>
+<article-title>Nicotine Delivery
+and User Reactions to Juul EU (20 Mg/Ml) Compared with Juul US (59
+Mg/Ml), Cigarettes and Other e-Cigarette Products</article-title>. <source>Psychopharmacology</source>
+<year>2021</year>, <volume>238</volume> (<issue>3</issue>), <fpage>825</fpage>–<lpage>831</lpage>. <pub-id pub-id-type="doi">10.1007/s00213-020-05734-2</pub-id>.<pub-id pub-id-type="pmid">33270145</pub-id>
+<pub-id pub-id-type="pmcid">PMC7914237</pub-id></mixed-citation></ref><ref id="ref20"><mixed-citation publication-type="journal" id="cit20"><name name-style="western"><surname>Farsalinos</surname><given-names>K.</given-names></name>; <name name-style="western"><surname>Romagna</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Tsiapras</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Kyrzopoulos</surname><given-names>S.</given-names></name>; <name name-style="western"><surname>Voudris</surname><given-names>V.</given-names></name>
+<article-title>Evaluation of Electronic Cigarette
+Use (Vaping) Topography
+and Estimation of Liquid Consumption: Implications for Research Protocol
+Standards Definition and for Public Health Authorities’ Regulation</article-title>. <source>Int. J. Environ. Res. Public Health</source>
+<year>2013</year>, <volume>10</volume> (<issue>6</issue>), <fpage>2500</fpage>–<lpage>2514</lpage>. <pub-id pub-id-type="doi">10.3390/ijerph10062500</pub-id>.<pub-id pub-id-type="pmid">23778060</pub-id>
+<pub-id pub-id-type="pmcid">PMC3717749</pub-id></mixed-citation></ref><ref id="ref21"><mixed-citation publication-type="journal" id="cit21"><name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>; <name name-style="western"><surname>Jacob</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Denaro</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Jenkins</surname><given-names>R.</given-names></name>
+<article-title>Stable Isotope Studies
+of Nicotine Kinetics and Bioavailability</article-title>. <source>Clin.
+Pharmacol. Ther.</source>
+<year>1991</year>, <volume>49</volume> (<issue>3</issue>), <fpage>270</fpage>–<lpage>277</lpage>. <pub-id pub-id-type="doi">10.1038/clpt.1991.28</pub-id>.<pub-id pub-id-type="pmid">2007322</pub-id>
+</mixed-citation></ref><ref id="ref22"><mixed-citation publication-type="journal" id="cit22"><name name-style="western"><surname>St
+Helen</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Ross</surname><given-names>K. C.</given-names></name>; <name name-style="western"><surname>Dempsey</surname><given-names>D. A.</given-names></name>; <name name-style="western"><surname>Havel</surname><given-names>C. M.</given-names></name>; <name name-style="western"><surname>Jacob</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>
+<article-title>Nicotine Delivery and Vaping Behavior
+during ad Libitum E-Cigarette Access</article-title>. <source>Tob. Regul.
+Sci.</source>
+<year>2016</year>, <volume>2</volume> (<issue>4</issue>), <fpage>363</fpage>–<lpage>376</lpage>. <pub-id pub-id-type="doi">10.18001/TRS.2.4.8</pub-id>.<pub-id pub-id-type="pmid">28393086</pub-id>
+<pub-id pub-id-type="pmcid">PMC5381821</pub-id></mixed-citation></ref><ref id="ref23"><mixed-citation publication-type="journal" id="cit23"><name name-style="western"><surname>St
+Helen</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Nardone</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Addo</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Dempsey</surname><given-names>D.</given-names></name>; <name name-style="western"><surname>Havel</surname><given-names>C.</given-names></name>; <name name-style="western"><surname>Jacob</surname><given-names>P.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>
+<article-title>Differences in Nicotine
+Intake and Effects from Electronic and Combustible Cigarettes among
+Dual Users</article-title>. <source>Addiction</source>
+<year>2020</year>, <volume>115</volume> (<issue>4</issue>), <fpage>757</fpage>–<lpage>767</lpage>. <pub-id pub-id-type="doi">10.1111/add.14884</pub-id>.<pub-id pub-id-type="pmid">31691397</pub-id>
+<pub-id pub-id-type="pmcid">PMC7339816</pub-id></mixed-citation></ref><ref id="ref24"><mixed-citation publication-type="journal" id="cit24"><name name-style="western"><surname>Harvanko</surname><given-names>A. M.</given-names></name>; <name name-style="western"><surname>St Helen</surname><given-names>G.</given-names></name>; <name name-style="western"><surname>Nardone</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Addo</surname><given-names>N.</given-names></name>; <name name-style="western"><surname>Benowitz</surname><given-names>N. L.</given-names></name>
+<article-title>Twenty-four-hour
+Subjective and Pharmacological Effects of <italic toggle="yes">Ad-libitum</italic> Electronic and Combustible Cigarette Use among Dual Users</article-title>. <source>Addiction</source>
+<year>2020</year>, <volume>115</volume> (<issue>6</issue>), <fpage>1149</fpage>–<lpage>1159</lpage>. <pub-id pub-id-type="doi">10.1111/add.14931</pub-id>.<pub-id pub-id-type="pmid">31837232</pub-id>
+<pub-id pub-id-type="pmcid">PMC7255919</pub-id></mixed-citation></ref><ref id="ref25"><mixed-citation publication-type="journal" id="cit25"><name name-style="western"><surname>Spindle</surname><given-names>T. R.</given-names></name>; <name name-style="western"><surname>Breland</surname><given-names>A. B.</given-names></name>; <name name-style="western"><surname>Karaoghlanian</surname><given-names>N. V.</given-names></name>; <name name-style="western"><surname>Shihadeh</surname><given-names>A. L.</given-names></name>; <name name-style="western"><surname>Eissenberg</surname><given-names>T.</given-names></name>
+<article-title>Preliminary
+Results of an Examination of Electronic Cigarette User Puff Topography:
+The Effect of a Mouthpiece-Based Topography Measurement Device on
+Plasma Nicotine and Subjective Effects</article-title>. <source>Nicotine
+Tob. Res.</source>
+<year>2015</year>, <volume>17</volume> (<issue>2</issue>), <fpage>142</fpage>–<lpage>149</lpage>. <pub-id pub-id-type="doi">10.1093/ntr/ntu186</pub-id>.<pub-id pub-id-type="pmid">25239957</pub-id>
+<pub-id pub-id-type="pmcid">PMC4838000</pub-id></mixed-citation></ref><ref id="ref26"><mixed-citation publication-type="weblink" id="cit26"><person-group><collab>European Commission</collab></person-group>. <article-title>Revision of Tobacco Products Directive</article-title><year>2021</year><uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://https//cc.Europa.Eu/Health/Tobacco/Products/Revision_en">https//cc.Europa.Eu/Health/Tobacco/Products/Revision_en</uri>.</mixed-citation></ref><ref id="ref27"><mixed-citation publication-type="journal" id="cit27"><name name-style="western"><surname>Cho</surname><given-names>Y. J.</given-names></name>; <name name-style="western"><surname>Mehta</surname><given-names>T.</given-names></name>; <name name-style="western"><surname>Hinton</surname><given-names>A.</given-names></name>; <name name-style="western"><surname>Sloan</surname><given-names>R.</given-names></name>; <name name-style="western"><surname>Nshimiyimana</surname><given-names>J.</given-names></name>; <name name-style="western"><surname>Tackett</surname><given-names>A. P.</given-names></name>; <name name-style="western"><surname>Roberts</surname><given-names>M. E.</given-names></name>; <name name-style="western"><surname>Brinkman</surname><given-names>M. C.</given-names></name>; <name name-style="western"><surname>Wagener</surname><given-names>T. L.</given-names></name>
+<article-title>E-Cigarette
+Nicotine Delivery Among Young Adults by Nicotine Form, Concentration,
+and Flavor: A Crossover Randomized Clinical Trial</article-title>. <source>JAMA Network Open</source>
+<year>2024</year>, <volume>7</volume> (<issue>8</issue>), <elocation-id>e2426702</elocation-id><pub-id pub-id-type="doi">10.1001/jamanetworkopen.2024.26702</pub-id>.<pub-id pub-id-type="pmid">39120901</pub-id>
+<pub-id pub-id-type="pmcid">PMC11316233</pub-id></mixed-citation></ref></ref-list></back></article>

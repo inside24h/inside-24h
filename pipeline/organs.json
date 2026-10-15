@@ -1,0 +1,30 @@
+{
+  "_comment": "Which BodyParts3D concepts go into the app, grouped by our organ key. ratio = fraction of triangles kept after simplification. points = interior sample points for particles.",
+  "organs": [
+    { "key": "skin",          "fma": ["FMA7163"],  "ratio": 0.12, "points": 1800 },
+    { "key": "brain",         "fma": ["FMA50801"], "ratio": 0.06, "points": 500 },
+    { "key": "tongue",        "fma": ["FMA54640"], "ratio": 0.5,  "points": 60 },
+    { "key": "esophagus",     "fma": ["FMA7131"],  "ratio": 0.6,  "points": 120 },
+    { "key": "stomach",       "fma": ["FMA7148"],  "ratio": 0.5,  "points": 500 },
+    { "key": "duodenum",      "fma": ["FMA7206"],  "ratio": 0.5,  "points": 200 },
+    { "key": "jejunum",       "fma": ["FMA7207"],  "ratio": 0.4,  "points": 400 },
+    { "key": "ileum",         "fma": ["FMA7208"],  "ratio": 0.4,  "points": 400 },
+    { "key": "cecum",         "fma": ["FMA14541", "FMA14542"], "ratio": 0.5, "points": 80 },
+    { "key": "colon_asc",     "fma": ["FMA14545"], "ratio": 0.5,  "points": 150 },
+    { "key": "colon_trans",   "fma": ["FMA14546"], "ratio": 0.5,  "points": 150 },
+    { "key": "colon_desc",    "fma": ["FMA14547"], "ratio": 0.5,  "points": 150 },
+    { "key": "rectum",        "fma": ["FMA14544"], "ratio": 0.5,  "points": 100 },
+    { "key": "liver",         "fma": ["FMA7197"],  "ratio": 0.1,  "points": 600 },
+    { "key": "gallbladder",   "fma": ["FMA7202"],  "ratio": 0.5 },
+    { "key": "pancreas",      "fma": ["FMA7198"],  "ratio": 0.3,  "points": 100 },
+    { "key": "portal_vein",   "fma": ["FMA50735"], "ratio": 0.25, "points": 200 },
+    { "key": "kidney_l",      "fma": ["FMA7205"],  "ratio": 0.5,  "points": 120 },
+    { "key": "kidney_r",      "fma": ["FMA7204"],  "ratio": 0.5,  "points": 120 },
+    { "key": "bladder",       "fma": ["FMA15900"], "ratio": 0.5,  "points": 200 },
+    { "key": "heart",         "fma": ["FMA7088"],  "ratio": 0.1,  "points": 250 },
+    { "key": "aorta",         "fma": ["FMA3734"],  "ratio": 0.5,  "points": 200 },
+    { "key": "vena_cava",     "fma": ["FMA10951"], "ratio": 0.5,  "points": 150 },
+    { "key": "lung_l",        "fma": ["FMA7310"],  "ratio": 0.15, "points": 200 },
+    { "key": "lung_r",        "fma": ["FMA7309"],  "ratio": 0.15, "points": 200 }
+  ]
+}

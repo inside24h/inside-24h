@@ -1,0 +1,456 @@
+{
+  "report": [
+    {
+      "key": "skin",
+      "trianglesIn": 203382,
+      "trianglesOut": 24404
+    },
+    {
+      "key": "brain",
+      "trianglesIn": 322262,
+      "trianglesOut": 19328
+    },
+    {
+      "key": "tongue",
+      "trianglesIn": 524,
+      "trianglesOut": 262
+    },
+    {
+      "key": "esophagus",
+      "trianglesIn": 578,
+      "trianglesOut": 346
+    },
+    {
+      "key": "stomach",
+      "trianglesIn": 1810,
+      "trianglesOut": 904
+    },
+    {
+      "key": "duodenum",
+      "trianglesIn": 1860,
+      "trianglesOut": 930
+    },
+    {
+      "key": "jejunum",
+      "trianglesIn": 6026,
+      "trianglesOut": 2410
+    },
+    {
+      "key": "ileum",
+      "trianglesIn": 8172,
+      "trianglesOut": 3268
+    },
+    {
+      "key": "cecum",
+      "trianglesIn": 730,
+      "trianglesOut": 366
+    },
+    {
+      "key": "colon_asc",
+      "trianglesIn": 3310,
+      "trianglesOut": 1654
+    },
+    {
+      "key": "colon_trans",
+      "trianglesIn": 3472,
+      "trianglesOut": 1736
+    },
+    {
+      "key": "colon_desc",
+      "trianglesIn": 5588,
+      "trianglesOut": 2794
+    },
+    {
+      "key": "rectum",
+      "trianglesIn": 2118,
+      "trianglesOut": 1058
+    },
+    {
+      "key": "liver",
+      "trianglesIn": 191622,
+      "trianglesOut": 19124
+    },
+    {
+      "key": "gallbladder",
+      "trianglesIn": 2396,
+      "trianglesOut": 1198
+    },
+    {
+      "key": "pancreas",
+      "trianglesIn": 16962,
+      "trianglesOut": 4900
+    },
+    {
+      "key": "portal_vein",
+      "trianglesIn": 35982,
+      "trianglesOut": 8986
+    },
+    {
+      "key": "kidney_l",
+      "trianglesIn": 2982,
+      "trianglesOut": 1490
+    },
+    {
+      "key": "kidney_r",
+      "trianglesIn": 2310,
+      "trianglesOut": 1154
+    },
+    {
+      "key": "bladder",
+      "trianglesIn": 226,
+      "trianglesOut": 188
+    },
+    {
+      "key": "heart",
+      "trianglesIn": 102802,
+      "trianglesOut": 10250
+    },
+    {
+      "key": "aorta",
+      "trianglesIn": 10188,
+      "trianglesOut": 5094
+    },
+    {
+      "key": "vena_cava",
+      "trianglesIn": 3080,
+      "trianglesOut": 1540
+    },
+    {
+      "key": "lung_l",
+      "trianglesIn": 41438,
+      "trianglesOut": 6214
+    },
+    {
+      "key": "lung_r",
+      "trianglesIn": 73312,
+      "trianglesOut": 10996
+    }
+  ],
+  "bounds": {
+    "skin": {
+      "min": [
+        -0.334,
+        -0.078,
+        -0.0448
+      ],
+      "max": [
+        0.3327,
+        1.641,
+        0.2467
+      ],
+      "tris": 24404
+    },
+    "brain": {
+      "min": [
+        -0.0699,
+        1.4646,
+        -0.0103
+      ],
+      "max": [
+        0.0689,
+        1.6303,
+        0.1691
+      ],
+      "tris": 19328
+    },
+    "tongue": {
+      "min": [
+        -0.02,
+        1.4311,
+        0.1105
+      ],
+      "max": [
+        0.0187,
+        1.4673,
+        0.1699
+      ],
+      "tris": 262
+    },
+    "esophagus": {
+      "min": [
+        -0.0088,
+        1.116,
+        0.0664
+      ],
+      "max": [
+        0.0234,
+        1.3904,
+        0.1242
+      ],
+      "tris": 346
+    },
+    "stomach": {
+      "min": [
+        -0.0288,
+        1.0399,
+        0.0815
+      ],
+      "max": [
+        0.1055,
+        1.1567,
+        0.1944
+      ],
+      "tris": 904
+    },
+    "duodenum": {
+      "min": [
+        -0.0656,
+        0.9857,
+        0.1039
+      ],
+      "max": [
+        0.0323,
+        1.077,
+        0.1569
+      ],
+      "tris": 930
+    },
+    "jejunum": {
+      "min": [
+        -0.0871,
+        0.9093,
+        0.1178
+      ],
+      "max": [
+        0.1061,
+        1.0237,
+        0.1834
+      ],
+      "tris": 2410
+    },
+    "ileum": {
+      "min": [
+        -0.0799,
+        0.8061,
+        0.1079
+      ],
+      "max": [
+        0.1016,
+        0.9526,
+        0.1793
+      ],
+      "tris": 3268
+    },
+    "cecum": {
+      "min": [
+        -0.0881,
+        0.8657,
+        0.082
+      ],
+      "max": [
+        -0.0192,
+        0.9232,
+        0.1413
+      ],
+      "tris": 366
+    },
+    "colon_asc": {
+      "min": [
+        -0.1268,
+        0.8684,
+        0.0907
+      ],
+      "max": [
+        -0.0639,
+        1.0537,
+        0.1456
+      ],
+      "tris": 1654
+    },
+    "colon_trans": {
+      "min": [
+        -0.0888,
+        0.9934,
+        0.1068
+      ],
+      "max": [
+        0.0966,
+        1.0647,
+        0.1969
+      ],
+      "tris": 1736
+    },
+    "colon_desc": {
+      "min": [
+        -0.0179,
+        0.8223,
+        0.0503
+      ],
+      "max": [
+        0.1173,
+        1.0613,
+        0.1416
+      ],
+      "tris": 2794
+    },
+    "rectum": {
+      "min": [
+        -0.0261,
+        0.7573,
+        0.0113
+      ],
+      "max": [
+        0.0354,
+        0.8738,
+        0.0735
+      ],
+      "tris": 1058
+    },
+    "liver": {
+      "min": [
+        -0.115,
+        1.028,
+        0.0434
+      ],
+      "max": [
+        0.0944,
+        1.183,
+        0.2023
+      ],
+      "tris": 19124
+    },
+    "gallbladder": {
+      "min": [
+        -0.0633,
+        1.0512,
+        0.1302
+      ],
+      "max": [
+        -0.0268,
+        1.0915,
+        0.1785
+      ],
+      "tris": 1198
+    },
+    "pancreas": {
+      "min": [
+        -0.0567,
+        1.0044,
+        0.0954
+      ],
+      "max": [
+        0.0726,
+        1.078,
+        0.1464
+      ],
+      "tris": 4900
+    },
+    "portal_vein": {
+      "min": [
+        -0.1015,
+        1.0623,
+        0.0496
+      ],
+      "max": [
+        0.0573,
+        1.1634,
+        0.1995
+      ],
+      "tris": 8986
+    },
+    "kidney_l": {
+      "min": [
+        0.0328,
+        0.9846,
+        0.0596
+      ],
+      "max": [
+        0.0904,
+        1.0904,
+        0.1002
+      ],
+      "tris": 1490
+    },
+    "kidney_r": {
+      "min": [
+        -0.0876,
+        0.9669,
+        0.0647
+      ],
+      "max": [
+        -0.0305,
+        1.0712,
+        0.1118
+      ],
+      "tris": 1154
+    },
+    "bladder": {
+      "min": [
+        -0.0341,
+        0.7897,
+        0.0565
+      ],
+      "max": [
+        0.0326,
+        0.83,
+        0.1282
+      ],
+      "tris": 188
+    },
+    "heart": {
+      "min": [
+        -0.0363,
+        1.175,
+        0.0706
+      ],
+      "max": [
+        0.0794,
+        1.2795,
+        0.1764
+      ],
+      "tris": 10250
+    },
+    "aorta": {
+      "min": [
+        -0.0068,
+        0.9468,
+        0.0451
+      ],
+      "max": [
+        0.0348,
+        1.3171,
+        0.1374
+      ],
+      "tris": 5094
+    },
+    "vena_cava": {
+      "min": [
+        -0.0268,
+        0.9509,
+        0.1036
+      ],
+      "max": [
+        -0.0021,
+        1.1905,
+        0.1288
+      ],
+      "tris": 1540
+    },
+    "lung_l": {
+      "min": [
+        0.0199,
+        1.1232,
+        0.0204
+      ],
+      "max": [
+        0.1254,
+        1.3558,
+        0.1778
+      ],
+      "tris": 6214
+    },
+    "lung_r": {
+      "min": [
+        -0.1165,
+        1.0147,
+        0.0209
+      ],
+      "max": [
+        0.0048,
+        1.348,
+        0.1738
+      ],
+      "tris": 10996
+    }
+  }
+}

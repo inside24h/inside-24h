@@ -1,0 +1,651 @@
+
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.4 20241031//EN" "JATS-archivearticle1-4-mathml3.dtd">
+<article article-type="research-article" xml:lang="en" dtd-version="1.4"><front><journal-meta><journal-id journal-id-type="nlm-ta">Br J Nutr</journal-id><journal-id journal-id-type="iso-abbrev">Br J Nutr</journal-id><journal-id journal-id-type="pmc-domain-id">937</journal-id><journal-id journal-id-type="pmc-domain">cambridgeopen</journal-id><journal-id journal-id-type="nlm-id">0372547</journal-id><journal-id journal-id-type="publisher-id">BJN</journal-id><journal-title-group><journal-title>The British Journal of Nutrition</journal-title></journal-title-group><issn pub-type="ppub">0007-1145</issn><issn pub-type="epub">1475-2662</issn><?publisher_abbrev cambridgeup?><custom-meta-group><custom-meta><meta-name>pmc-is-collection-domain</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-collection-title</meta-name><meta-value>Cambridge Open Access</meta-value></custom-meta></custom-meta-group></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC8340457</article-id><article-id pub-id-type="pmcid-ver">PMC8340457.1</article-id><article-id pub-id-type="pmcaid">8340457</article-id><article-id pub-id-type="pmcaiid">8340457</article-id><article-id pub-id-type="pmid">33161904</article-id><article-id pub-id-type="doi">10.1017/S0007114520004468</article-id><article-id pub-id-type="pii">S0007114520004468</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Full Papers</subject></subj-group><subj-group subj-group-type="section"><subject>Human and Clinical Nutrition</subject></subj-group></article-categories><title-group><article-title>Blackcurrant (<italic toggle="yes">Ribes nigrum</italic>) lowers sugar-induced postprandial glycaemia independently and in a product with fermented quinoa: a randomised crossover trial</article-title></title-group><contrib-group><contrib contrib-type="author"><name name-style="western"><surname>Lappi</surname><given-names initials="J">Jenni</given-names></name><xref ref-type="aff" rid="a1">
+<sup>1</sup>
+</xref><xref ref-type="corresp" rid="cor1">*</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Raninen</surname><given-names initials="K">Kaisa</given-names></name><xref ref-type="aff" rid="a2">
+<sup>2</sup>
+</xref><xref ref-type="aff" rid="a3">
+<sup>3</sup>
+</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Väkeväinen</surname><given-names initials="K">Kati</given-names></name><xref ref-type="aff" rid="a2">
+<sup>2</sup>
+</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Kårlund</surname><given-names initials="A">Anna</given-names></name><xref ref-type="aff" rid="a2">
+<sup>2</sup>
+</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Törrönen</surname><given-names initials="R">Riitta</given-names></name><xref ref-type="aff" rid="a2">
+<sup>2</sup>
+</xref></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">https://orcid.org/0000-0002-3770-2538</contrib-id><name name-style="western"><surname>Kolehmainen</surname><given-names initials="M">Marjukka</given-names></name><xref ref-type="aff" rid="a2">
+<sup>2</sup>
+</xref><xref ref-type="corresp" rid="cor1">*</xref></contrib></contrib-group><aff id="a1"><label>1</label>Faculty of Business, Tourism and Hospitality, <institution>Savonia University of Applied Sciences</institution>, <postal-code>70201</postal-code>
+<city>Kuopio</city>, <country>Finland</country></aff><aff id="a2"><label>2</label>Institute of Public Health and Clinical Nutrition, <institution>University of Eastern Finland</institution>, <postal-code>70211</postal-code>
+<city>Kuopio</city>, <country>Finland</country></aff><aff id="a3"><label>3</label>SIB Labs Infrastructural Unit, <institution>University of Eastern Finland</institution>, <postal-code>70211</postal-code>
+<city>Kuopio</city>, <country>Finland</country></aff><author-notes><corresp id="cor1"><label>*</label><bold>Corresponding authors:</bold> Jenni Lappi, email <email>jenni.lappi@savonia.fi</email>; Marjukka Kolehmainen, email <email>marjukka.kolehmainen@uef.fi</email></corresp></author-notes><pub-date date-type="pub" publication-format="print" iso-8601-date="2021-09-14"><day>14</day><month>9</month><year>2021</year></pub-date><pub-date date-type="pub" publication-format="electronic" iso-8601-date="2020-11-09"><day>09</day><month>11</month><year>2020</year></pub-date><volume>126</volume><issue>5</issue><issue-id pub-id-type="pmc-issue-id">387390</issue-id><fpage>708</fpage><lpage>717</lpage><history><date date-type="received"><day>08</day><month>5</month><year>2020</year></date><date date-type="rev-recd"><day>20</day><month>10</month><year>2020</year></date><date date-type="accepted"><day>29</day><month>10</month><year>2020</year></date></history><pub-history><event event-type="pmc-release"><date><day>05</day><month>08</month><year>2021</year></date></event><event event-type="pmc-live"><date><day>06</day><month>08</month><year>2021</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2026-09-30 16:35:08.133"><day>30</day><month>09</month><year>2026</year></date></event></pub-history><permissions><copyright-statement>© The Author(s) 2020</copyright-statement><copyright-year>2020</copyright-year><copyright-holder>The Author(s)</copyright-holder><license><ali:license_ref xmlns:ali="http://www.niso.org/schemas/ali/1.0/" specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p>This is an Open Access article, distributed under the terms of the Creative Commons Attribution licence (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</uri>), which permits unrestricted re-use, distribution, and reproduction in any medium, provided the original work is properly cited.</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="S0007114520004468a.pdf"><?pdf-name S0007114520004468a.pdf?><?pdf-size 452588?><?pdf-md5 bf2606a9e512044ead3f7032eb9bcd83?><?pdf-image-server-status NEVER_LOAD?><?pdf-cloudpmc-urn urn:app:454e/8340457/bf2606a9e512/S0007114520004468a.pdf?></self-uri><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:title="pdf" xlink:href="S0007114520004468a.pdf"/><abstract abstract-type="normal"><p>Berries rich in anthocyanins have beneficial effects on postprandial glycaemia. We investigated whether blackcurrant (75 g in a portion) independently and in a product with fermented quinoa induced similar effects on the sugar-induced postprandial glucose metabolism as observed before with 150 g of blackcurrant. Twenty-six healthy subjects (twenty-two females and four males) consumed four test products after fasting overnight in a randomised, controlled crossover design. Each test product portion contained 31 g of available carbohydrates and had similar composition of sugar components: 300 ml water with sucrose, glucose and fructose (SW; reference), blackcurrant purée with added sugars (BC), a product consisting of the blackcurrant purée and a product base with fermented quinoa (BCP) and the product base without blackcurrant (PB). Blood samples were collected at 0, 15, 30, 45, 60, 90, 120 and 180 min after eating each test product to analyse the concentrations of glucose, insulin and NEFA. In comparison with the SW, the intake of both the BC and BCP resulted in reduced glucose and insulin concentrations during the first 30 min, a more balanced decline during the first hour and improved glycaemic profile. The BCP induced more efficient effects than the BC due to the product base with fermented quinoa. A rebound of NEFA after the sugar-induced hypoglycaemic response was attenuated at the late postprandial phase by the BC and BCP. In conclusion, we showed that 75 g of blackcurrant and the product with fermented quinoa were able to lower postprandial glycaemia and insulinaemia.</p></abstract><abstract abstract-type="graphical"><p>
+<fig orientation="portrait" id="d31e173" position="anchor"><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_figAb.jpg"><?image-name S0007114520004468_figAb.jpg?><?image-size 203826?><?image-md5 3eb262933e35c72b580bab70497373ce?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1404?><?image-original-width 628?><?image-scaled-height 1404?><?image-scaled-width 628?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/3eb262933e35/S0007114520004468_figAb.jpg?><?thumb-name S0007114520004468_figAb.gif?><?thumb-size 11713?><?thumb-md5 f3a83975dae6dfb3ecf25f741f261221?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 224?><?thumb-scaled-width 100?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/f3a83975dae6/S0007114520004468_figAb.gif?></graphic></fig>
+</p></abstract><kwd-group><title>Key words:</title><kwd>Blackcurrants</kwd><kwd>Fermented quinoa</kwd><kwd>Postprandial metabolism</kwd><kwd>Glycaemia</kwd><kwd>Food products</kwd></kwd-group><kwd-group kwd-group-type="abbreviations"><title>Abbreviations:</title><compound-kwd><compound-kwd-part content-type="abbrev">BC</compound-kwd-part><compound-kwd-part content-type="expansion">blackcurrant purée</compound-kwd-part></compound-kwd><compound-kwd><compound-kwd-part content-type="abbrev">BCP</compound-kwd-part><compound-kwd-part content-type="expansion">blackcurrant product</compound-kwd-part></compound-kwd><compound-kwd><compound-kwd-part content-type="abbrev">GP</compound-kwd-part><compound-kwd-part content-type="expansion">glycaemic profile</compound-kwd-part></compound-kwd><compound-kwd><compound-kwd-part content-type="abbrev">hs-CRP</compound-kwd-part><compound-kwd-part content-type="expansion">high-sensitive C-reactive protein</compound-kwd-part></compound-kwd><compound-kwd><compound-kwd-part content-type="abbrev">PB</compound-kwd-part><compound-kwd-part content-type="expansion">product base</compound-kwd-part></compound-kwd><compound-kwd><compound-kwd-part content-type="abbrev">SW</compound-kwd-part><compound-kwd-part content-type="expansion">sugary water</compound-kwd-part></compound-kwd></kwd-group><counts><fig-count count="3"/><table-count count="4"/><ref-count count="56"/><page-count count="10"/></counts><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-license-ref</meta-name><meta-value>CC BY</meta-value></custom-meta></custom-meta-group></article-meta></front><body><p>Berries are an important component of a healthy Nordic diet<sup>(<xref rid="r1" ref-type="bibr">1</xref>)</sup> that supports the prevention of non-communicable diseases, such as CVD<sup>(<xref rid="r2" ref-type="bibr">2</xref>)</sup> and type 2 diabetes<sup>(<xref rid="r3" ref-type="bibr">3</xref>)</sup>. High-carbohydrate, low-fibre meals rapidly increase blood glucose and insulin levels, and for a few postprandial hours, expose the body to oxidative stress and inflammatory challenges<sup>(<xref rid="r4" ref-type="bibr">4</xref>,<xref rid="r5" ref-type="bibr">5</xref>)</sup>. If recurring regularly during a long period of time, large variations in the blood glucose and insulin levels may increase the risk factors of the metabolic syndrome, by increasing hunger and eating, reducing the insulin sensitivity of tissues, activating the immune system for low-grade inflammation<sup>(<xref rid="r6" ref-type="bibr">6</xref>,<xref rid="r7" ref-type="bibr">7</xref>)</sup> and causing changes in the normal function of blood vessels<sup>(<xref rid="r8" ref-type="bibr">8</xref>)</sup>.</p><p>Berries have been found to have beneficial effects on the postprandial glucose metabolism<sup>(<xref rid="r9" ref-type="bibr">9</xref>–<xref rid="r16" ref-type="bibr">16</xref>)</sup>. These effects were associated with berry-derived polyphenolic compounds, especially anthocyanins rich in dark-coloured berries<sup>(<xref rid="r17" ref-type="bibr">17</xref>)</sup>. Polyphenolic compounds may slow down the absorption of glucose from the small intestine, by interacting with carbohydrate-digesting enzymes and glucose transport proteins<sup>(<xref rid="r18" ref-type="bibr">18</xref>,<xref rid="r19" ref-type="bibr">19</xref>)</sup>. In addition, polyphenolic compounds may reduce oxidative stress<sup>(<xref rid="r20" ref-type="bibr">20</xref>)</sup> and inflammation<sup>(<xref rid="r21" ref-type="bibr">21</xref>)</sup>. In previous short- and long-term intervention studies, dark berries, in general, have been partly but not consistently associated with reduced low-grade inflammation measured by biomarkers such as various IL and high-sensitive C-reactive protein (hs-CRP)<sup>(<xref rid="r7" ref-type="bibr">7</xref>,<xref rid="r22" ref-type="bibr">22</xref>–<xref rid="r24" ref-type="bibr">24</xref>)</sup>.</p><p>In comparison with many other berries, the blackcurrant is rich in anthocyanins<sup>(<xref rid="r25" ref-type="bibr">25</xref>)</sup> and easy to cultivate, thus making it an interesting raw material for the food industry and health-conscious consumers. Although the nutritional value of blackcurrants is high, blackcurrant is currently not utilised efficiently in food products. Consumers may find its natural sourness, bitterness and astringency unpleasant, unless an adequate amount of sugar is added<sup>(<xref rid="r26" ref-type="bibr">26</xref>,<xref rid="r27" ref-type="bibr">27</xref>)</sup>. Thus, there is a great need for new, innovative berry products with high nutritional and sensory quality, and with high potential for increased health-related functionalities. In our earlier studies showing favourable effects on the postprandial glucose metabolism, a 150 g portion of purée made of whole blackcurrants was used<sup>(<xref rid="r11" ref-type="bibr">11</xref>,<xref rid="r13" ref-type="bibr">13</xref>)</sup>. However, from the food industry and consumer points-of-view, using as high as 150 g of blackcurrants in one portion sets challenges for the development of pleasant and palatable commercial berry products. Thus, we halved this amount in the present study since 75 g of blackcurrant is more suitable for the development of diverse berry products for one portion.</p><p>Quinoa is an interesting raw material because it is naturally gluten-free and has high-fibre and protein contents. In general, the native taste and texture of cereal-based products can be technologically modified to more pleasant attributes by using fermentation<sup>(<xref rid="r28" ref-type="bibr">28</xref>)</sup>. Quinoa-based ingredients are well suited for fermented food applications of high sensory and nutritional quality<sup>(<xref rid="r29" ref-type="bibr">29</xref>)</sup>. Some human interventions have indicated that quinoa may have a modest improving effect on blood lipid profile and glucose metabolism in elderly or obese subjects<sup>(<xref rid="r30" ref-type="bibr">30</xref>,<xref rid="r31" ref-type="bibr">31</xref>)</sup>. Still, a postprandial study showed no difference in glycaemic response between ingested quinoa and white wheat bread with equal amounts of available carbohydrates<sup>(<xref rid="r32" ref-type="bibr">32</xref>)</sup>. Although fermented quinoa has no confirmed health effects, in combination with berries and fruits, quinoa-based fermented products are perceived as healthy by the consumers<sup>(<xref rid="r29" ref-type="bibr">29</xref>)</sup>. Thus, fermented quinoa is a nutritious and well-fitted matrix for palatable snack products.</p><p>The aim of the present study was to gain more scientific knowledge on the effect of whole blackcurrants ingested as a 75 g portion, as well as when incorporated in a newly produced palatable snack product with fermented quinoa, on the postprandial glucose metabolism, induced by intake of a reasonable amount of sugar. Primary outcomes in the study were incremental glucose and insulin peaks, area under the glucose and insulin curves, and glycaemic profile (GP), which were derived from blood glucose and insulin concentrations measured at 0–180 min. Secondary, we aimed to investigate effects on postprandial NEFA and hs-CRP. Hs-CRP was chosen for biomarker of inflammation because it has been shown to respond to oral glucose load after 1 h of the load as reviewed by Calder <italic toggle="yes">et al.</italic>
+<sup>(<xref rid="r33" ref-type="bibr">33</xref>)</sup>. Based on the previous studies, we hypothesised that the ingested 75 g of blackcurrant is able to attenuate the increase of glucose and insulin concentrations in the early postprandial phase and to retard the decrease of the glucose concentration below the fasting level. We also hypothesised that these effects will remain when the same amount of blackcurrant is ingested in a newly developed snack product, in which blackcurrant was mixed with a product base (PB) containing fermented quinoa.</p><sec sec-type="methods" id="s1"><title>Methods</title><sec id="s1-1" sec-type="other"><title>Participants</title><p>Participants for the study were recruited by an announcement in a local newspaper and on noticeboards at the local universities’ campus areas and intranet, as well as via social media of a food sector network Food Valley in Eastern Finland. The inclusion criteria for the participants were as follows: healthy males or females aged 25–65 years with normal weight or slightly overweight (BMI 20–28 kg/m<sup>2</sup>), with no diabetes or other chronic diseases affecting the glucose metabolism, no smoking, no celiac disease and no pregnancy or lactating. In addition, low-carbohydrate or vegan diet or weight gain or loss &gt;5 % over the past 6 months was not allowed. Drinking wine or spirits was restricted to less than a portion of 120 or 40 ml, respectively, three times per week, and drinking beer and cider was restricted to less than daily. Regarding food supplements, possible use was asked to remain constant over the study. Attending other clinical trials or blood-sample donations shortly before or concurrently with the present study was not allowed.</p><p>On the recruitment, the participants contacted the study nurse, who shortly interviewed them via telephone to preliminary assess whether they fit the inclusion criteria (<xref ref-type="fig" rid="f1">Fig. 1</xref>). The participants’ health status and medical history were assessed using a structured form and by anthropometric and laboratory measurements (fasting plasma glucose and lipids, thyroid-stimulating hormone, alanine aminotransferase and creatinine). If these measures indicated exclusion criteria, the participants were excluded from the study after the first study visit.</p><p>
+<fig id="f1" orientation="portrait" position="float"><label>Fig. 1.</label><caption><p>Flow diagram of the participant recruitment.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_fig1.jpg"><?image-name S0007114520004468_fig1.jpg?><?image-size 59699?><?image-md5 24488e97e4dc9ab0a17c53d5437da4d2?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 1912?><?image-original-width 2400?><?image-scaled-height 621?><?image-scaled-width 780?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/24488e97e4dc/S0007114520004468_fig1.jpg?><?thumb-name S0007114520004468_fig1.gif?><?thumb-size 3126?><?thumb-md5 89d7311a111a14eba6f0cb552bab382a?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 100?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/89d7311a111a/S0007114520004468_fig1.gif?></graphic></fig>
+</p><p>The present study was conducted according to the guidelines laid down in the Declaration of Helsinki and all procedures involving human participants were approved by the Research Ethics Committee of the Northern Savo Hospital District (Finland) (894/2019). Written informed consent was obtained from all participants. The study was registered at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clinicaltrials.gov">clinicaltrials.gov</uri> as <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="pmc:clinical-trial" xlink:href="NCT04150926">NCT04150926</ext-link>.</p></sec><sec id="s1-2" sec-type="other"><title>Test products</title><p>The four test products each contained 31 g of available carbohydrates and were sugary water (SW), blackcurrant purée (BC), a blackcurrant product (BCP) and a fermented quinoa PB (<xref rid="tbl1" ref-type="table">Table 1</xref>). Since the amount of available carbohydrates was matched for each test product to investigate the postprandial glycaemic effects, the portion sizes differed as follows: 300 ml for the liquid SW, and 100, 147 and 78 g for the solid BC, BCP and PB, respectively. The test products had similar composition of sugar components per portion. The sugar composition in each product was adjusted according to the amounts of added sucrose and the concentrations of natural sucrose, glucose and fructose in the BC. The most pleasant amount of the added sucrose (25·5 g) with 75 g of BC was chosen as a result of a previous sensory evaluation made by a consumer panel (results not shown). For the BCP and the PB, 2·4 g less sucrose per portion was added to balance with the amount of starch originating from the fermented quinoa, thus matching the amount of available carbohydrates in each test product portion. As for macronutrients, the fat content of the SW, BC, BCP and PB was 0, 0·2, 10 and 10 g, respectively (<xref rid="tbl1" ref-type="table">Table 1</xref>). The protein content of the SW, BC, BCP and PB was 0, 0·9, 1·0 and 0·3 g and that of total fibre 0, 5·2, 10·6 and 5·4 g, respectively.</p><p>
+<table-wrap id="tbl1" orientation="portrait" position="float"><label>Table 1.</label><caption><p>Nutrient composition, acidity and viscosity of the test products</p></caption><alternatives><table frame="hsides" rules="groups"><colgroup span="1"><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/></colgroup><thead><tr><th colspan="1" rowspan="1"/><th colspan="1" rowspan="1">SW (300 ml)</th><th colspan="1" rowspan="1">BC (100 g)</th><th colspan="1" rowspan="1">BCP (147 g)</th><th colspan="1" rowspan="1">PB (78 g)</th></tr></thead><tbody><tr><td rowspan="1" colspan="1" align="center">Fat (g)<xref ref-type="table-fn" rid="t1fn1">*</xref>
+<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">0·2</td><td rowspan="1" colspan="1" align="center">10</td><td rowspan="1" colspan="1" align="center">10</td></tr><tr><td rowspan="1" colspan="1" align="center">Available carbohydrates (g)<xref ref-type="table-fn" rid="t1fn3">‡</xref>
+</td><td rowspan="1" colspan="1" align="center">31</td><td rowspan="1" colspan="1" align="center">31</td><td rowspan="1" colspan="1" align="center">31</td><td rowspan="1" colspan="1" align="center">31</td></tr><tr><td rowspan="1" colspan="1" align="center"> Sucrose (g)</td><td rowspan="1" colspan="1" align="center">25·5</td><td rowspan="1" colspan="1" align="center">25·5</td><td rowspan="1" colspan="1" align="center">23·1</td><td rowspan="1" colspan="1" align="center">23·1</td></tr><tr><td rowspan="1" colspan="1" align="center"> Glucose (g)</td><td rowspan="1" colspan="1" align="center">2·3</td><td rowspan="1" colspan="1" align="center">2·3</td><td rowspan="1" colspan="1" align="center">2·3</td><td rowspan="1" colspan="1" align="center">2·3</td></tr><tr><td rowspan="1" colspan="1" align="center"> Fructose (g)</td><td rowspan="1" colspan="1" align="center">2·8</td><td rowspan="1" colspan="1" align="center">2·8</td><td rowspan="1" colspan="1" align="center">2·8</td><td rowspan="1" colspan="1" align="center">2·8</td></tr><tr><td rowspan="1" colspan="1" align="center"> Starch (g)</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">2·4</td><td rowspan="1" colspan="1" align="center">2·4</td></tr><tr><td rowspan="1" colspan="1" align="center">Protein (g)<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">0·9</td><td rowspan="1" colspan="1" align="center">1·0</td><td rowspan="1" colspan="1" align="center">0·3</td></tr><tr><td rowspan="1" colspan="1" align="center">Total fibre (g)<xref ref-type="table-fn" rid="t1fn4">§</xref>
+</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">5·2</td><td rowspan="1" colspan="1" align="center">10·6</td><td rowspan="1" colspan="1" align="center">5·4</td></tr><tr><td rowspan="1" colspan="1" align="center">Anthocyanins (mg)<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">187</td><td rowspan="1" colspan="1" align="center">187</td><td rowspan="1" colspan="1" align="center">0</td></tr><tr><td rowspan="1" colspan="1" align="center">Proanthocyanidins (mg)<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">0</td><td rowspan="1" colspan="1" align="center">263</td><td rowspan="1" colspan="1" align="center">263</td><td rowspan="1" colspan="1" align="center">0</td></tr><tr><td rowspan="1" colspan="1" align="center">pH<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">–</td><td rowspan="1" colspan="1" align="center">3·0</td><td rowspan="1" colspan="1" align="center">3·1</td><td rowspan="1" colspan="1" align="center">4·0</td></tr><tr><td rowspan="1" colspan="1" align="center">TTA (ml of NaOH)<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">–</td><td rowspan="1" colspan="1" align="center">24·7</td><td rowspan="1" colspan="1" align="center">37·7</td><td rowspan="1" colspan="1" align="center">0·4</td></tr><tr><td rowspan="1" colspan="1" align="center">Viscosity (Pas)<xref ref-type="table-fn" rid="t1fn2">†</xref>
+</td><td rowspan="1" colspan="1" align="center">–</td><td rowspan="1" colspan="1" align="center">34</td><td rowspan="1" colspan="1" align="center">85</td><td rowspan="1" colspan="1" align="center">–</td></tr></tbody></table><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_tab1.jpg"><?image-name S0007114520004468_tab1.jpg?><?image-size 34409?><?image-md5 398944cda89db029bf0d0e65cfe17365?><?image-image-server-status NEVER_LOAD?><?image-original-height 279?><?image-original-width 417?><?image-scaled-height 279?><?image-scaled-width 417?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/398944cda89d/S0007114520004468_tab1.jpg?><?thumb-name S0007114520004468_tab1.gif?><?thumb-size 5134?><?thumb-md5 fece21f3dc2d4cb32ac632e9289d42e0?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 119?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/fece21f3dc2d/S0007114520004468_tab1.gif?></graphic></alternatives><table-wrap-foot><p>SW, sugary water; BC, blackcurrant purée; BCP, blackcurrant product; PB, product base; TTA, titratable acidity.</p><fn id="t1fn1" fn-type="other"><label>*</label><p>Analysed value for BC and calculated for BCP and PB based on content of fat in the ingredients used.</p></fn><fn id="t1fn2" fn-type="other"><label>†</label><p>The results are the means of triplicates.</p></fn><fn id="t1fn3" fn-type="other"><label>‡</label><p>Calculated from analysed amounts of native sugars and starch in ingredients and from the added sucrose.</p></fn><fn id="t1fn4" fn-type="other"><label>§</label><p>Analysed value for BC and calculated for BCP and PB based on the analysis in BC and calculated content of fibre in the ingredients.</p></fn></table-wrap-foot></table-wrap>
+</p><p>The SW was prepared by adding 25·5, 2·8 and 2·3 g of sucrose, fructose and glucose, respectively, to 300 ml water. The SW was stored at 5°C until being served to the participants. The other test products were prepared in advance in batches from which weighed portions were stored as frozen (−18°C), until being thawed overnight at 5°C for serving to the participants.</p><p>Frozen blackcurrants (<italic toggle="yes">Ribes nigrum</italic> (Öjebyn)) of Finnish origin were provided by Pakkasmarja Ltd. Whole blackcurrants were mashed by an industrial colloid mill (PVS Systemtechnik GmbH), using a blade with diameter &lt;0·35 mm, to a fine-grained purée. The purée was analysed in triplicate according to previously published methods: the sugars and anthocyanins were determined in their native forms by the HPLC refractive index detector<sup>(<xref rid="r34" ref-type="bibr">34</xref>)</sup> and HPLC with diode-array detection<sup>(<xref rid="r13" ref-type="bibr">13</xref>)</sup>, respectively. The proanthocyanidins were determined by HPLC-diode-array detection and fluorescence detection after thiolytic degradation<sup>(<xref rid="r35" ref-type="bibr">35</xref>)</sup>. To calculate the amount of total anthocyanins, the concentrations of following were summed up: delphinidin 3-<italic toggle="yes">O</italic>-glucoside, delphinidin 3-<italic toggle="yes">O</italic>-rutinoside, cyanidin 3-<italic toggle="yes">O</italic>-glucoside, cyanidin 3-<italic toggle="yes">O</italic>-rutinoside, petunidin 3-<italic toggle="yes">O</italic>-rutinoside, peonidin 3-<italic toggle="yes">O</italic>-rutinoside, cyanidin 3-<italic toggle="yes">O</italic>-(6″-p-coumaroyl-glucoside) and petunidin 3-<italic toggle="yes">O</italic>-(6″-p-coumaroyl-glucoside).</p><p>The BC was prepared by adding 25 g of sucrose to 75 g of semi-frozen fine-grained BC and mixing with a cutter (Robot coupe R45). The BCP was prepared by utilising a fermented quinoa base, sugar, rapeseed oil and stabilising additives to prepare a PB to which 75 g of the BC was added. For the quinoa base, only little quinoa was used: 3 g of quinoa flour per the final portions of the BCP and PB was mixed with water, and fermented until pH &lt; 4·0 by <italic toggle="yes">Lactobacillus plantarum</italic> Q823, a starter culture previously used to prepare quinoa products<sup>(<xref rid="r29" ref-type="bibr">29</xref>)</sup> and isolated from quinoa<sup>(<xref rid="r36" ref-type="bibr">36</xref>)</sup>. The fermented quinoa base was cooled down to 6°C and other ingredients were added: sucrose, rapeseed oil, water, <italic toggle="yes">α</italic>-cyclodextrin (Wacker Chemie AG), guar gum and locust bean gum (Unipektin Ingredients AG). The proportion of the fermented quinoa base in the final BCP was 17·7 %. The PB was prepared as described, but the BC was left out and 0·5, 2·3 and 2·8 g more sucrose, glucose and fructose were added per portion, respectively, to compensate for the amount of natural blackcurrant sugars in the BCP.</p><p>The fermented quinoa base was freeze-dried and analysed for native starch (enzymatic UV-method, catalogue no. 10 207 748 035, R-Biopharm AG) and sugars (HPLC with pulsed amperometric detector).</p><p>The nutritional compositions (fat for BC and protein for BC, BCP and PB) were analysed using standard methods of the Association of Official Analytical Chemists (AOAC)<sup>(<xref rid="r37" ref-type="bibr">37</xref>)</sup> in triplicates (<xref rid="tbl1" ref-type="table">Table 1</xref>). In addition, the BC was analysed for total fibre and inulin by standard enzymatic-gravimetric and enzymatic-photometric methods (Association of Official Analytical Chemists 985.29 and ASU L 00.00-94, respectively). The pH, total titratable acidity and viscosity (spindle 7, Rotary Viscometer PCR-RVI3, 127 Model 20) of the products were also measured<sup>(<xref rid="r29" ref-type="bibr">29</xref>)</sup>.</p></sec><sec id="s1-3" sec-type="other"><title>Design</title><p>The study was a randomised, controlled crossover postprandial study with four separate study visits at least 5 d apart. Before the study started, an investigator assigned the participants to eat the test products in random order by using the function ‘Random’ in Excel. Before the first study visit, the participants were instructed to consume an evening meal of their choice. Before the other three visits, they were asked to eat a similar meal at the same time in the preceding evening. The evening meals were recorded by the participants and the records checked by a research assistant at every visit. Furthermore, the participants were asked to keep their diet, body weight and living habits constant during the study, to refrain from intensive physical activity for 12 h before the test, and not to consume any berries or berry products the day before.</p><p>Each test visit was conducted with the following procedure: the tests were carried out in the morning after 10–12 h of overnight fasting. The study nurse interviewed the participants on their health status and measured their blood pressure and body weight. For the collection of venous blood samples, an intravenous catheter was inserted in an antecubital vein of the forearm. After this, the participants were offered the test product and asked to consume each product in less than 10 min. The eating time was recorded. Baseline blood samples were drawn at the fasting state (0 min), and the other samples at 15, 30, 45, 60, 90, 120 and 180 min after starting to consume the test product. The samples for plasma glucose measurements were collected in citrate-fluoride tubes, for plasma insulin and NEFA measurements in EDTA tubes kept on ice and for plasma hs-CRP measurements in lithium-heparin tubes. Plasma was immediately separated by centrifugation at 4°C and stored at −70°C.</p></sec><sec id="s1-4" sec-type="other"><title>Laboratory analyses</title><p>The plasma glucose concentrations were analysed with the hexokinase method using reagents for cobas c systems (glucose HK, Roche Diagnostics GmbH) and a cobas 8000 c702 analyzer (Hitachi High Technology Co.). The plasma insulin was measured with a chemiluminometric immunoassay using a Liaison analyzer (DiaSorin Deutschland GmbH). The plasma NEFA concentrations were measured with an enzymatic colorimetric method using Wako NEFA-HR(2) reagents (Wako Chemicals GmbH) and a Konelab 20 XTi analyzer. For analysing the hs-CRP, a particle-enhanced immunoturbidimetric method with reagents for cobas c systems (C-reactive protein (Latex) high sensitive assay, Roche Diagnostics GmbH) and a cobas 8000 c502 analyzer (Hitachi High Technology Co.) were used.</p><p>For screening of the general health status, the following methodology was used: the total cholesterol, TAG and creatinine were analysed with an enzymatic colorimetric method using reagents for the cobas c systems (Cholesterol Gen.2, TAG and Creatinine plus version 2, respectively, Roche Diagnostics GmbH) and the cobas 8000 c702 analyzer (Hitachi High Technology Co.). The same analyzer was used to measure the LDL-cholesterol and the HDL-cholesterol with a homogeneous enzymatic colorimetric assay and alanine aminotransferase with a kinetic method according to the International Federation of Clinical Chemistry and Laboratory Medicine, using reagents for the cobas c systems (LDL-Cholesterol Gen.3, HDL-Cholesterol Gen.4, Alanine Aminotransferase, International Federation of Clinical Chemistry and Laboratory Medicine with pyridoxal phosphate, respectively, Roche Diagnostics GmbH). The thyroid-stimulating hormone levels were analysed with an electrochemiluminescence immunoassay using a cobas e801 analyzer (Hitachi High Technology Co.).</p></sec><sec id="s1-5" sec-type="other"><title>Calculations and statistical analyses</title><p>The data were analysed using IBM SPSS Statistics for Windows, version 25.0 (IMB Corp.) and are expressed as means and standard deviations or standard errors of the mean as described in text, tables and figures. Sufficient sample size was evaluated based on previous studies<sup>(<xref rid="r11" ref-type="bibr">11</xref>,<xref rid="r13" ref-type="bibr">13</xref>)</sup>, assuming 80 % power and the <italic toggle="yes">α</italic> (<italic toggle="yes">P</italic>) level of 5 % (two-sided testing). For observing statistically significant differences in the incremental glucose peaks, the areas under the glucose curves and the GP, the calculated sample sizes were 12–14, 26–34 and 6, respectively. Thus, our aim was to recruit thirty participants, allowing for 15 % drop-out rate.</p><p>Linear mixed-effect modelling was used to compare the effects of the test products with adjustment (Sidak). Histograms were used for checking the normality of the model residuals, and logarithmic transformation of variables was used if the normality was improved, that is, for the GP (illustrating the form of the glucose curve), glucose and insulin AUC and the incremental peak of insulin. Values of <italic toggle="yes">P</italic> &lt; 0·05 were considered as statistically significant. The statistical significance of the product × time interaction was tested in the mixed-model analysis using participants as a random factor and product × time and their main effects as fixed factors. When the product × time interaction was statistically significant, the differences between the test products at individual time points were tested by <italic toggle="yes">post hoc</italic> analysis with Sidak adjustment for multiple comparisons. For monitoring the possible effect of sex, the statistical analyses were re-examined using sex as a covariate in the model, as well as excluding males. As no impact regarding these was observed in the results, the final analyses were performed with all the subjects without adjustment for sex.</p><p>The incremental peak of glucose and insulin values was calculated by subtracting the fasting value from the highest value. The GP was calculated for each participant and test product by dividing the time (min) during which the plasma glucose was above the fasting concentration with the incremental peak glucose value (mmol/l)<sup>(<xref rid="r38" ref-type="bibr">38</xref>)</sup>, using GraphPad Prism 5.03 for Windows software (GraphPad Software Inc.). The incremental AUC was calculated using the GraphPad Prism software, ignoring the area below the fasting (0 min) concentration. The differences in incremental peaks, GP, AUCs, eating times of the products and weight of the subjects among and between the test products or visits were tested using the participant as a random factor and the product as a fixed factor in the linear mixed-effect model analysis. In the hs-CRP, fourteen individuals had values under the detection limit of 0·15 mmol/l. These were calculated as 0·14 mmol/l in the data analysis.</p></sec></sec><sec sec-type="results" id="s2"><title>Results</title><sec id="s2-1" sec-type="other"><title>Participant characteristics</title><p>Twenty-six participants fulfilled the inclusion criteria and conducted the whole postprandial study with the four study visits (<xref ref-type="fig" rid="f1">Fig. 1</xref>). The basic characteristics of the participants are presented in <xref rid="tbl2" ref-type="table">Table 2</xref>. The weight of the participants remained stable throughout the study (<italic toggle="yes">P</italic> = 0·143). The eating times of the four test products differed statistically (<italic toggle="yes">P</italic> &lt; 0·001) and were 5·0 (<sc>sd</sc> 0·7) min for SW, 4·9 (<sc>sd</sc> 0·8) min for BC and 5·1 (<sc>sd</sc> 0·8) min for BCP and PB.</p><p>
+<table-wrap id="tbl2" orientation="portrait" position="float"><label>Table 2.</label><caption><p>Basic characteristics of the participants (<italic toggle="yes">n</italic> 26; twenty-two females, four males)</p><p>(Mean values and standard deviations)</p></caption><alternatives><table frame="hsides" rules="groups"><colgroup span="1"><col span="1"/><col span="1"/><col span="1"/></colgroup><thead><tr><th colspan="1" rowspan="1"/><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th></tr></thead><tbody><tr><td rowspan="1" colspan="1" align="center">Age (years)</td><td rowspan="1" colspan="1" align="center">50</td><td rowspan="1" colspan="1" align="center">15</td></tr><tr><td rowspan="1" colspan="1" align="center">Weight (kg)</td><td rowspan="1" colspan="1" align="center">68</td><td rowspan="1" colspan="1" align="center">11</td></tr><tr><td rowspan="1" colspan="1" align="center">BMI (kg/m<sup>2</sup>)</td><td rowspan="1" colspan="1" align="center">24</td><td rowspan="1" colspan="1" align="center">3</td></tr><tr><td colspan="3" rowspan="1">Waist circumference (cm)</td></tr><tr><td rowspan="1" colspan="1" align="center"> Female</td><td rowspan="1" colspan="1" align="center">79</td><td rowspan="1" colspan="1" align="center">7</td></tr><tr><td rowspan="1" colspan="1" align="center"> Male</td><td rowspan="1" colspan="1" align="center">96</td><td rowspan="1" colspan="1" align="center">12</td></tr><tr><td colspan="3" rowspan="1">Blood pressure (mmHg)</td></tr><tr><td rowspan="1" colspan="1" align="center"> Diastolic</td><td rowspan="1" colspan="1" align="center">82</td><td rowspan="1" colspan="1" align="center">9</td></tr><tr><td rowspan="1" colspan="1" align="center"> Systolic</td><td rowspan="1" colspan="1" align="center">127</td><td rowspan="1" colspan="1" align="center">18</td></tr><tr><td rowspan="1" colspan="1" align="center">Fasting plasma glucose (mmol/l)</td><td rowspan="1" colspan="1" align="center">5·4</td><td rowspan="1" colspan="1" align="center">0·4</td></tr><tr><td rowspan="1" colspan="1" align="center">Fasting plasma total cholesterol (mmol/l)</td><td rowspan="1" colspan="1" align="center">4·7</td><td rowspan="1" colspan="1" align="center">0·9</td></tr><tr><td rowspan="1" colspan="1" align="center">Fasting plasma LDL-cholesterol (mmol/l)</td><td rowspan="1" colspan="1" align="center">3·0</td><td rowspan="1" colspan="1" align="center">0·8</td></tr><tr><td rowspan="1" colspan="1" align="center">Fasting plasma HDL-cholesterol (mmol/l)</td><td rowspan="1" colspan="1" align="center">1·7</td><td rowspan="1" colspan="1" align="center">0·3</td></tr><tr><td rowspan="1" colspan="1" align="center">Fasting plasma TAG (mmol/l)</td><td rowspan="1" colspan="1" align="center">1·0</td><td rowspan="1" colspan="1" align="center">0·5</td></tr></tbody></table><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_tab2.jpg"><?image-name S0007114520004468_tab2.jpg?><?image-size 30968?><?image-md5 18941ddf75eb809d6adfcc19e9378a2f?><?image-image-server-status NEVER_LOAD?><?image-original-height 263?><?image-original-width 417?><?image-scaled-height 263?><?image-scaled-width 417?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/18941ddf75eb/S0007114520004468_tab2.jpg?><?thumb-name S0007114520004468_tab2.gif?><?thumb-size 4937?><?thumb-md5 6f825ee56dc924d1a6ca1879422d3db4?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 79?><?thumb-scaled-width 126?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/6f825ee56dc9/S0007114520004468_tab2.gif?></graphic></alternatives></table-wrap>
+</p></sec><sec id="s2-2" sec-type="other"><title>Glucose, insulin and NEFA</title><p>The postprandial glucose responses (<xref ref-type="fig" rid="f2">Fig. 2</xref>(A)) differed among the test products (<italic toggle="yes">P</italic> &lt; 0·001 for product × time interaction). The GP was more favourable after the BC, BCP and PB as compared with the SW (<xref rid="tbl3" ref-type="table">Table 3</xref>). The plasma glucose concentration increased more moderately after the BC as compared with the SW and was significantly lower at 15 min (<italic toggle="yes">P</italic> &lt; 0·001) and slightly, but not significantly, lower at 30 min (<italic toggle="yes">P</italic> = 0·055), and higher at 45 min (<italic toggle="yes">P</italic> &lt; 0·05) and 60 min (<italic toggle="yes">P</italic> &lt; 0·001). The BCP lowered and balanced the glycaemic response even more; the postprandial glucose was lower at 15 and 30 min (<italic toggle="yes">P</italic> &lt; 0·001 in both) as compared with the SW and also avoided dramatic dropping under the fasting level, being significantly higher at 60 and 90 min (<italic toggle="yes">P</italic> &lt; 0·001 in both). The glucose concentration for the BCP as compared with the BC was significantly lower at 30 min (<italic toggle="yes">P</italic> &lt; 0·001) and 45 min (<italic toggle="yes">P</italic> &lt; 0·05), and higher at 90 min (<italic toggle="yes">P</italic> &lt; 0·01). The PB had also an independent lowering and balancing effect for the glycaemic response; when the BCP was compared with the PB, the glucose concentration was lower with the PB at 30 min (<italic toggle="yes">P</italic> &lt; 0·01). The incremental glucose peak was lowered by 17 % (<italic toggle="yes">P</italic> &lt; 0·05), 50 % (<italic toggle="yes">P</italic> &lt; 0·001) and 67 % (<italic toggle="yes">P</italic> &lt; 0·001) for the BC, BCP and PB, respectively, as compared with SW (<xref rid="tbl3" ref-type="table">Table 3</xref>).</p><p>
+<fig id="f2" orientation="portrait" position="float"><label>Fig. 2.</label><caption><p>The plasma glucose (A), insulin (B) and NEFA (C) concentrations after ingestion of the test products: sugary water (○), blackcurrant purée (●), blackcurrant product (▲) and product base (Δ). The values are means with their standard errors (<italic toggle="yes">n</italic> 26). The <italic toggle="yes">P</italic> values in the figures indicate the level of significance of time × product interactions in the linear mixed-effect model. The blackcurrant purée was significantly different from that of the sugary water at an individual time point: * <italic toggle="yes">P</italic> &lt; 0·05, ** <italic toggle="yes">P</italic> &lt; 0·01, *** <italic toggle="yes">P</italic> &lt; 0·001 (<italic toggle="yes">post hoc</italic> analysis with Sidak adjustment). The blackcurrant product was significantly different from that of the sugary water at an individual time point: † <italic toggle="yes">P</italic> &lt; 0·05, †† <italic toggle="yes">P</italic> &lt; 0·01, ††† <italic toggle="yes">P</italic> &lt; 0·001 (<italic toggle="yes">post hoc</italic> analysis with Sidak adjustment).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_fig2.jpg"><?image-name S0007114520004468_fig2.jpg?><?image-size 172126?><?image-md5 b4fac1ce762ae985064566b437eaeb4b?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 5108?><?image-original-width 2400?><?image-scaled-height 1703?><?image-scaled-width 800?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/b4fac1ce762a/S0007114520004468_fig2.jpg?><?thumb-name S0007114520004468_fig2.gif?><?thumb-size 98326?><?thumb-md5 dd1f7399ba421f6934f8ecd54c669e8c?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 3537?><?thumb-scaled-width 1662?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/dd1f7399ba42/S0007114520004468_fig2.gif?></graphic></fig>
+</p><p>
+<table-wrap id="tbl3" orientation="portrait" position="float"><label>Table 3.</label><caption><p>Glucose and insulin variables after the intake of the test products (<italic toggle="yes">n</italic> 26)<xref ref-type="table-fn" rid="t3fn1">†</xref></p><p>(Mean values and standard deviations)</p></caption><alternatives><table frame="hsides" rules="groups"><colgroup span="1"><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/></colgroup><thead><tr><th rowspan="2" colspan="1"/><th colspan="2" rowspan="1">SW</th><th colspan="2" rowspan="1">BC</th><th colspan="2" rowspan="1">BCP</th><th colspan="2" rowspan="1">PB</th><th rowspan="2" colspan="1">
+<italic toggle="yes">P</italic>
+<xref ref-type="table-fn" rid="t3fn2">‡</xref>
+</th></tr><tr><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th></tr></thead><tbody><tr><td rowspan="1" colspan="1" align="center">Glycaemic profile (min/(mmol/l))</td><td rowspan="1" colspan="1" align="center">23·9</td><td rowspan="1" colspan="1" align="center">6·8</td><td rowspan="1" colspan="1" align="center">41·8**</td><td rowspan="1" colspan="1" align="center">18·5</td><td rowspan="1" colspan="1" align="center">74·2***</td><td rowspan="1" colspan="1" align="center">34·1</td><td rowspan="1" colspan="1" align="center">204·4***</td><td rowspan="1" colspan="1" align="center">186·9</td><td rowspan="1" colspan="1" align="center">&lt;0·001</td></tr><tr><td rowspan="1" colspan="1" align="center">Incremental glucose peak (mmol/l)</td><td rowspan="1" colspan="1" align="center">2·4</td><td rowspan="1" colspan="1" align="center">1·0</td><td rowspan="1" colspan="1" align="center">2·0*</td><td rowspan="1" colspan="1" align="center">0·8</td><td rowspan="1" colspan="1" align="center">1·2***</td><td rowspan="1" colspan="1" align="center">0·6</td><td rowspan="1" colspan="1" align="center">0·8***</td><td rowspan="1" colspan="1" align="center">0·5</td><td rowspan="1" colspan="1" align="center">&lt;0·001</td></tr><tr><td rowspan="1" colspan="1" align="center">Glucose AUC (mmol/l × min)</td><td rowspan="1" colspan="1" align="center">76·1</td><td rowspan="1" colspan="1" align="center">59·8</td><td rowspan="1" colspan="1" align="center">69·6</td><td rowspan="1" colspan="1" align="center">46·9</td><td rowspan="1" colspan="1" align="center">58·9</td><td rowspan="1" colspan="1" align="center">47·9</td><td rowspan="1" colspan="1" align="center">62·7*</td><td rowspan="1" colspan="1" align="center">50·3</td><td rowspan="1" colspan="1" align="center">0·031</td></tr><tr><td rowspan="1" colspan="1" align="center">Incremental insulin peak (mU/l)</td><td rowspan="1" colspan="1" align="center">32·0</td><td rowspan="1" colspan="1" align="center">19·1</td><td rowspan="1" colspan="1" align="center">21·0**</td><td rowspan="1" colspan="1" align="center">9·0</td><td rowspan="1" colspan="1" align="center">16·9***</td><td rowspan="1" colspan="1" align="center">5·9</td><td rowspan="1" colspan="1" align="center">9·2***</td><td rowspan="1" colspan="1" align="center">5·6</td><td rowspan="1" colspan="1" align="center">&lt;0·001</td></tr><tr><td rowspan="1" colspan="1" align="center">Insulin AUC (mU/l × min)</td><td rowspan="1" colspan="1" align="center">1055·4</td><td rowspan="1" colspan="1" align="center">502·0</td><td rowspan="1" colspan="1" align="center">898·0</td><td rowspan="1" colspan="1" align="center">406·3</td><td rowspan="1" colspan="1" align="center">1050·2</td><td rowspan="1" colspan="1" align="center">453·5</td><td rowspan="1" colspan="1" align="center">702·7***</td><td rowspan="1" colspan="1" align="center">389·6</td><td rowspan="1" colspan="1" align="center">&lt;0·001</td></tr></tbody></table><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_tab3.jpg"><?image-name S0007114520004468_tab3.jpg?><?image-size 21612?><?image-md5 1c76a7e4f4101ecc08c820f7c4870260?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 147?><?image-original-width 1159?><?image-scaled-height 98?><?image-scaled-width 772?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/1c76a7e4f410/S0007114520004468_tab3.jpg?><?thumb-name S0007114520004468_tab3.gif?><?thumb-size 2801?><?thumb-md5 65f52e4b496427155429e086a14c7612?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 25?><?thumb-scaled-width 200?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/65f52e4b4964/S0007114520004468_tab3.gif?></graphic></alternatives><table-wrap-foot><p>SW, sugary water; BC, blackcurrant purée; BCP, blackcurrant product; PB, product base.</p><p>Mean value was significantly different from that of the SW: * <italic toggle="yes">P</italic> &lt; 0·05, ** <italic toggle="yes">P</italic> &lt; 0·01, *** <italic toggle="yes">P</italic> &lt; 0·001 (<italic toggle="yes">post hoc</italic> analysis with Sidak adjustment).</p><fn id="t3fn1" fn-type="other"><label>†</label><p>Except for the glycaemic profile for SW (<italic toggle="yes">n</italic> 25) due to a missing value necessary for the calculation of the glycaemic profile.</p></fn><fn id="t3fn2" fn-type="other"><label>‡</label><p>Linear mixed-effect model analysis.</p></fn></table-wrap-foot></table-wrap>
+</p><p>The postprandial insulin responses (<xref ref-type="fig" rid="f2">Fig. 2</xref>(B)) followed the observed glucose responses and were different among the test products (<italic toggle="yes">P</italic> &lt; 0·001 for product × time interaction). The postprandial plasma insulin concentration was significantly lower for BC, BCP and PB compared with SW at 15 and 30 min (<italic toggle="yes">P</italic> &lt; 0·001 for all). The BCP induced a significantly lower insulin concentration than the BC at 30 min (<italic toggle="yes">P</italic> &lt; 0·01). When the BCP was compared with the PB, the insulin concentration was lower with the PB at 30 min (<italic toggle="yes">P</italic> &lt; 0·001), 45 min (<italic toggle="yes">P</italic> &lt; 0·001) and 60 min (<italic toggle="yes">P</italic> &lt; 0·05). The incremental peak of insulin was lowered by 34 % (<italic toggle="yes">P</italic> &lt; 0·01), 47 % (<italic toggle="yes">P</italic> &lt; 0·001) and 71 % (<italic toggle="yes">P</italic> &lt; 0·001) for BC, BCP and PB, respectively, as compared with the SW (<xref rid="tbl3" ref-type="table">Table 3</xref>).</p><p>The NEFA response differed among the test products (<italic toggle="yes">P</italic> &lt; 0·001 for product × time interaction). The plasma NEFA concentrations decreased postprandially more slowly after the BCP and PB (<xref ref-type="fig" rid="f2">Fig. 2</xref>(C)), the differences between the BCP and SW being statistically significant at 30 and 45 min (<italic toggle="yes">P</italic> &lt; 0·01, <italic toggle="yes">P</italic> &lt; 0·001, respectively). This was not seen after the BC. The NEFA concentration for the BCP was higher than for the BC at 45 min (<italic toggle="yes">P</italic> &lt; 0·05). Furthermore, the concentration of NEFA turned to rise earlier after ingestion of the SW as compared with the other products: NEFA for the SW was significantly higher at 120 min as compared with the BCP (<italic toggle="yes">P</italic> &lt; 0·01) and with the BC (<italic toggle="yes">P</italic> &lt; 0·05), and at 180 min (<italic toggle="yes">P</italic> &lt; 0·05) as compared with the BCP.</p><p>We also measured the effect of these products on the circulating hs-CRP concentration (<xref rid="tbl4" ref-type="table">Table 4</xref>). The detected hs-CRP levels were low in these healthy participants, and there was no effect on acute inflammation with any of these products compared with the glucose concentration. Fourteen individuals had part of the hs-CRP values under the detection limit.</p><p>
+<table-wrap id="tbl4" orientation="portrait" position="float"><label>Table 4.</label><caption><p>Highly sensitive C-reactive protein (hs-CRP) concentrations after intake of the test products (<italic toggle="yes">n</italic> 26)<xref ref-type="table-fn" rid="t4fn1">*</xref></p><p>(Mean values and standard deviations)</p></caption><alternatives><table frame="hsides" rules="groups"><colgroup span="1"><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/><col span="1"/></colgroup><thead><tr><th rowspan="2" colspan="1">hs-CRP (mmol/l)</th><th colspan="2" rowspan="1">SW</th><th colspan="2" rowspan="1">BC</th><th colspan="2" rowspan="1">BCP</th><th colspan="2" rowspan="1">PB</th><th rowspan="2" colspan="1">
+<italic toggle="yes">P</italic>
+<xref ref-type="table-fn" rid="t4fn2">†</xref>
+</th></tr><tr><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th><th colspan="1" rowspan="1">Mean</th><th colspan="1" rowspan="1">
+<sc>sd</sc>
+</th></tr></thead><tbody><tr><td rowspan="1" colspan="1" align="center">0 min</td><td rowspan="1" colspan="1" align="center">0·72</td><td rowspan="1" colspan="1" align="center">0·82</td><td rowspan="1" colspan="1" align="center">0·58</td><td rowspan="1" colspan="1" align="center">0·64</td><td rowspan="1" colspan="1" align="center">0·94</td><td rowspan="1" colspan="1" align="center">1·24</td><td rowspan="1" colspan="1" align="center">0·63</td><td rowspan="1" colspan="1" align="center">0·65</td><td rowspan="1" colspan="1" align="center">NS</td></tr><tr><td rowspan="1" colspan="1" align="center">30 min</td><td rowspan="1" colspan="1" align="center">0·68</td><td rowspan="1" colspan="1" align="center">0·78</td><td rowspan="1" colspan="1" align="center">0·56</td><td rowspan="1" colspan="1" align="center">0·63</td><td rowspan="1" colspan="1" align="center">0·88</td><td rowspan="1" colspan="1" align="center">1·24</td><td rowspan="1" colspan="1" align="center">0·59</td><td rowspan="1" colspan="1" align="center">0·66</td><td rowspan="1" colspan="1" align="center">NS</td></tr><tr><td rowspan="1" colspan="1" align="center">60 min</td><td rowspan="1" colspan="1" align="center">0·69</td><td rowspan="1" colspan="1" align="center">0·84</td><td rowspan="1" colspan="1" align="center">0·57</td><td rowspan="1" colspan="1" align="center">0·64</td><td rowspan="1" colspan="1" align="center">0·88</td><td rowspan="1" colspan="1" align="center">1·22</td><td rowspan="1" colspan="1" align="center">0·51</td><td rowspan="1" colspan="1" align="center">0·63</td><td rowspan="1" colspan="1" align="center">NS</td></tr><tr><td rowspan="1" colspan="1" align="center">120 min</td><td rowspan="1" colspan="1" align="center">0·73</td><td rowspan="1" colspan="1" align="center">0·82</td><td rowspan="1" colspan="1" align="center">0·56</td><td rowspan="1" colspan="1" align="center">0·60</td><td rowspan="1" colspan="1" align="center">0·89</td><td rowspan="1" colspan="1" align="center">1·18</td><td rowspan="1" colspan="1" align="center">0·59</td><td rowspan="1" colspan="1" align="center">0·64</td><td rowspan="1" colspan="1" align="center">NS</td></tr><tr><td rowspan="1" colspan="1" align="center">180 min</td><td rowspan="1" colspan="1" align="center">0·74</td><td rowspan="1" colspan="1" align="center">0·79</td><td rowspan="1" colspan="1" align="center">0·55</td><td rowspan="1" colspan="1" align="center">0·65</td><td rowspan="1" colspan="1" align="center">0·94</td><td rowspan="1" colspan="1" align="center">1·22</td><td rowspan="1" colspan="1" align="center">0·61</td><td rowspan="1" colspan="1" align="center">0·66</td><td rowspan="1" colspan="1" align="center">NS</td></tr></tbody></table><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S0007114520004468_tab4.jpg"><?image-name S0007114520004468_tab4.jpg?><?image-size 16407?><?image-md5 e63ec336e06353d6cf26fb23d726bf1c?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 147?><?image-original-width 875?><?image-scaled-height 98?><?image-scaled-width 583?><?image-cloudpmc-urn urn:cdn:blobs/454e/8340457/e63ec336e063/S0007114520004468_tab4.jpg?><?thumb-name S0007114520004468_tab4.gif?><?thumb-size 3246?><?thumb-md5 31d5419a9de58d4ada38d1f3e8d1f1b2?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 34?><?thumb-scaled-width 200?><?thumb-cloudpmc-urn urn:cdn:blobs/454e/8340457/31d5419a9de5/S0007114520004468_tab4.gif?></graphic></alternatives><table-wrap-foot><p>SW, sugary water; BC, blackcurrant purée; BCP, blackcurrant product; PB, product base.</p><fn id="t4fn1" fn-type="other"><label>*</label><p>Fourteen individuals had part of the hs-CRP values under the detection limit of 0·15 mmol/l, these were calculated as 0·14 mmol/l in the data analysis.</p></fn><fn id="t4fn2" fn-type="other"><label>†</label><p>Linear mixed-effect model analysis.</p></fn></table-wrap-foot></table-wrap>
+</p></sec></sec><sec sec-type="discussion" id="s3"><title>Discussion</title><p>In this clinical postprandial study, we demonstrated that 75 g of whole blackcurrants as purée was able to lower glycaemic response after eating the blackcurrants with sugar. Our results of the effect of blackcurrant on balancing the postprandial glycaemic response were similar to those observed in our previous studies<sup>(<xref rid="r11" ref-type="bibr">11</xref>,<xref rid="r13" ref-type="bibr">13</xref>)</sup>. Surprisingly, the new snack product containing 75 g of blackcurrant and the fermented quinoa base reinforced the lowering effect observed for blackcurrants only. The effects were shown with twenty-six healthy, mainly female participants, who consumed 31 g of available carbohydrates in four different products: a reference (SW), two products (BC and BCP) containing the same amount of blackcurrant (75 g) and a PB with fermented quinoa but without the blackcurrant (PB).</p><p>Ingestion of the SW induced a rapid and high initial elevation in glucose and insulin concentrations. Due to the high insulin response, the glucose concentrations rapidly decreased below the fasting level and reached the lowest concentration – below the fasting level – already at 1 h. The glucose concentration stayed below the fasting level until the end of the test period. The hypoglycaemic response was accompanied by a compensatory elevation in NEFA concentrations. These effects on glucose and insulin responses were attenuated when 75 g of blackcurrants in the BC was consumed with the same amount of sugar. Ingestion of the BC resulted in a more beneficial GP in line with a reduced postprandial insulin response, as compared with the SW. A higher value of the GP is considered more beneficial, since the high GP value is related to the low incremental glucose peak and the less pronounced late hypoglycaemia<sup>(<xref rid="r38" ref-type="bibr">38</xref>)</sup>.</p><p>In the present study, the observed effects were shown with half the amount of blackcurrant than in the previous studies (150 g). The proportion of blackcurrant (g) to available carbohydrates (g) was 2·5 to 1 in the present study. The same proportions were 3·2–3·4 to 1 and 4·3 to 1 in our previous studies<sup>(<xref rid="r11" ref-type="bibr">11</xref>,<xref rid="r13" ref-type="bibr">13</xref>)</sup>. When reflecting these proportions to the observed reductions in the incremental peak of glucose, a dose–response-like effect emerged. As compared with references, the reduction in the incremental glucose peak was 17 % for the BC whereas that was 22–30 % for a BC and nectar containing 3·2–3·4 times more blackcurrants than available carbohydrates<sup>(<xref rid="r11" ref-type="bibr">11</xref>)</sup>, and 33 % for a blackcurrant nectar containing 4·3 times more blackcurrants than available carbohydrates<sup>(<xref rid="r13" ref-type="bibr">13</xref>)</sup>. The similar dose–response-like effect can be observed for the GP: 75 % improvement in the GP in our study compared with 84 % improvement in Törrönen <italic toggle="yes">et al.</italic>
+<sup>(<xref rid="r13" ref-type="bibr">13</xref>)</sup>.</p><p>Half of the total fibre in the BC was soluble, according to the Finnish food composition database<sup>(<xref rid="r39" ref-type="bibr">39</xref>)</sup>. Soluble fibre in the BC might have slightly affected the postprandial responses by increasing the viscosity in the gastrointestinal track and thus reducing the absorption of glucose<sup>(<xref rid="r40" ref-type="bibr">40</xref>)</sup>. However, soluble fibre cannot solely explain the beneficial effects of blackcurrant on postprandial glycaemia because blackcurrant nectar and blackcurrant extract with low fibre content also previously induced beneficial effects on the postprandial glucose and insulin responses<sup>(<xref rid="r11" ref-type="bibr">11</xref>,<xref rid="r13" ref-type="bibr">13</xref>,<xref rid="r15" ref-type="bibr">15</xref>)</sup>.</p><p>Anthocyanins and proanthocyanidins are the most abundant polyphenols in blackcurrant and may have contributed to the attenuated glycaemic effect (induced mainly by sucrose in the present study) by inhibiting the activity of <italic toggle="yes">α</italic>-glucosidase<sup>(<xref rid="r18" ref-type="bibr">18</xref>)</sup>, and thus reducing sucrose digestion and the subsequent absorption from the intestine. Blackcurrant extracts rich in anthocyanins inhibited the activity of <italic toggle="yes">α</italic>-glucosidase <italic toggle="yes">in vitro</italic>
+<sup>(<xref rid="r41" ref-type="bibr">41</xref>,<xref rid="r42" ref-type="bibr">42</xref>)</sup> but attenuated the postprandial glucose response only slightly after a high-carbohydrate meal while decreasing the postprandial insulin response<sup>(<xref rid="r15" ref-type="bibr">15</xref>)</sup>.</p><p>Previously, postprandial glycaemia induced by free glucose and fructose was also attenuated by the ingestion of blackcurrant<sup>(<xref rid="r13" ref-type="bibr">13</xref>)</sup>, referring to other mechanisms in addition to or instead of inhibition of <italic toggle="yes">α</italic>-glucosidase. Polyphenol-induced inhibition of glucose absorption via GLUT from the small intestine might play a mechanistic role in reducing the postprandial responses<sup>(<xref rid="r18" ref-type="bibr">18</xref>,<xref rid="r19" ref-type="bibr">19</xref>)</sup>. In a recent <italic toggle="yes">in vitro</italic> study on the potential mechanisms for the reduction of postprandial glycaemia by a blackcurrant extract, glucose uptake and sugar transport were modulated by some minor phenolic compounds rather than anthocyanins<sup>(<xref rid="r42" ref-type="bibr">42</xref>)</sup>. At present, the key mechanisms in the regulation of postprandial glucose metabolism by blackcurrants or other berries are not clear, and further studies are needed.</p><p>The BCP – also containing 75 g of blackcurrants – reinforced the effects observed by the BC. Particularly, the BCP attenuated the elevation in glucose and insulin concentrations and the subsequent decline in the concentrations. The effect of the BCP was clearly caused by the PB to which the BC was added. Indeed, the PB produced the steadiest postprandial glucose, insulin and NEFA responses. There was a slight difference between the eating times of the test products. However, the difference was in practice only 3–12 s, which is unlikely to make a difference in the postprandial effects of the test products. The somewhat longer eating time for the BCP and PB than for the SW and BC was very likely explained by the larger portion size and the solid state of the BCP and the PB, respectively. The structure of the PB was so rigid that it was not possible to measure the viscosity of the product using a rotary viscometer (<xref rid="tbl1" ref-type="table">Table 1</xref>). The dense structure of the PB might explain the steadiest postprandial responses via the delayed absorption of the carbohydrates due to retarded gastric emptying<sup>(<xref rid="r43" ref-type="bibr">43</xref>)</sup>. It is of note that the PB contained also stabilising additives, as described below, that may well have had an impact on the postprandial glycaemia. Apart from making the portion size bigger, adding BC to the PB made the BCP fluffier and more palatable. When the structure changed to a less rigid form, this most probably increased the postprandial glucose and insulin concentrations for the BCP as compared with the PB. Quinoa alone is unlikely to have influenced the postprandial responses for the BCP and PB because the amount of quinoa used for the ingested product portion was only 3 g.</p><p>The PB contained fat from rapeseed oil and soluble fibres from the stabilising additives, in addition to the fermented quinoa base. The higher content of fat – and thus the higher energy content – may partly explain the retarded effects of the BCP and PB, as compared with the SW and BC. Fat in the ingested meal is known to slow down the rate of gastric emptying<sup>(<xref rid="r44" ref-type="bibr">44</xref>,<xref rid="r45" ref-type="bibr">45</xref>)</sup>, thus delaying the delivery of carbohydrates to the small intestine for digestion and absorption. <italic toggle="yes">α</italic>-Cyclodextrin contributed mainly to the soluble fibre content of the PB. Intake of <italic toggle="yes">α</italic>-cyclodextrin reduced postprandial glucose concentrations after a high-carbohydrate meal when the origin of available carbohydrates was starch<sup>(<xref rid="r46" ref-type="bibr">46</xref>)</sup>. <italic toggle="yes">α</italic>-Cyclodextrin appears to inhibit the effect of pancreatic amylase<sup>(<xref rid="r47" ref-type="bibr">47</xref>)</sup>, thus impairing the digestion of starch to absorbable sugar units. However, the effect of <italic toggle="yes">α</italic>-cyclodextrin in lowering the postprandial glucose response induced by sucrose intake was not clearly detected<sup>(<xref rid="r48" ref-type="bibr">48</xref>)</sup>.</p><p>Along with the modified glycaemia, NEFA concentrations also showed an attenuated increase after the decreased glucose levels. We have previously demonstrated that 150 g of BC is able to attenuate the increase of NEFA in late postprandial phase along with attenuated glycaemic effect when compared with SW<sup>(<xref rid="r11" ref-type="bibr">11</xref>)</sup>. Postprandial and longer-term elevation of NEFA concentration may play a role in causing insulin resistance and low-grade inflammation<sup>(<xref rid="r49" ref-type="bibr">49</xref>)</sup>. We have also shown<sup>(<xref rid="r6" ref-type="bibr">6</xref>)</sup> that the sharp and continuous increases and decreases in postprandial glycaemia and NEFA levels were related to increased postprandial epinephrine and norepinephrine levels that, in a 12-week long-term intervention with refined cereals, induced increase in low-grade inflammatory markers. Moreover, oral glucose load with 75 g of glucose has previously been shown to increase various inflammation markers postprandially<sup>(<xref rid="r33" ref-type="bibr">33</xref>,<xref rid="r50" ref-type="bibr">50</xref>,<xref rid="r51" ref-type="bibr">51</xref>)</sup>. It has been proposed that the postprandial glycaemic excursions might be one of the key factors within the development in chronic low-grade inflammation<sup>(<xref rid="r4" ref-type="bibr">4</xref>,<xref rid="r52" ref-type="bibr">52</xref>)</sup>. However, the evidence is somewhat controversial, and the ingestion of 50 g of sucrose or glucose has not always led to increase in inflammatory markers postprandially<sup>(<xref rid="r53" ref-type="bibr">53</xref>)</sup>. In line with this, in our present study, we did not see any acute inflammatory effects measured by hs-CRP and using 31 g of available carbohydrates consisting of sucrose, glucose and fructose in the SW, BC, BCP or PC. Previous postprandial studies with raspberries<sup>(<xref rid="r54" ref-type="bibr">54</xref>)</sup> and lyophilised black raspberries consumed with high-fat high-energy meals<sup>(<xref rid="r55" ref-type="bibr">55</xref>)</sup> decreased, however, blood levels of IL-6, had inconsistent effects on TNF-<italic toggle="yes">α</italic> and no effect on hs-CRP. Furthermore, blackcurrant juice with a high-fat meal did not have any effect on postprandial inflammation measured by inflammation markers TNF-<italic toggle="yes">α</italic> and IL-1<italic toggle="yes">β</italic>
+<sup>(<xref rid="r56" ref-type="bibr">56</xref>)</sup>. Blackcurrant and reasonable amounts of blackcurrant-containing products as such have not been studied regarding postprandial inflammation to the best of our knowledge.</p><p>Low amounts of blackcurrant in our present results are, however, most likely not a reason for not showing an effect on inflammatory markers. Instead, we speculate that the volunteers in the present study represent a healthy population with reasonably healthy lifestyles and have no deterioration in their health that would cause metabolic defects. In line with this, the postprandial inflammatory response, measured by hs-CRP in the present study, was not seen even with the SW. Previous studies showing the effect on postprandial inflammation or its alleviation have studied populations at risk of chronic diseases, with chronic diseases or with high-fat diets<sup>(<xref rid="r51" ref-type="bibr">51</xref>,<xref rid="r54" ref-type="bibr">54</xref>,<xref rid="r55" ref-type="bibr">55</xref>)</sup>. Thus, our results should be interpreted with caution, as over half of the volunteers had hs-CRP levels under the detection limit at least in some of the measurements.</p><p>One of the main strengths of the present study was that we were able to show the benefits of blackcurrant for postprandial glycaemia with a smaller portion than before. Thus, the added evidence on the benefits of berry consumption with a more consumer-friendly portion may encourage the use of berries in everyday life. These results are easily comparable with the previous studies using the same design, which enables us to add to the relevant scientific understanding on the benefits of berries with varying amounts consumed. Furthermore and unexpected to us, we produced a PB that induced very low glycaemic and insulinaemic responses. When mixed with blackcurrants to gain more pleasant structure and taste, this innovative product would be ideal for prediabetics to balance postprandial glycaemia.</p><p>Naturally, there are also weaknesses in our study. With the present study design, we cannot distinguish the possible impact of <italic toggle="yes">α</italic>-cyclodextrin from the effect of fat and the structure of the PB. Thus, further studies are necessary to elucidate the individual effects of the added ingredients in the BCP. Furthermore, to distinguish the possible impacts of dietary fibre from that of the polyphenols, further studies should use, for example, white currants as a reference for blackcurrants. Another weakness is that, despite the open recruitment for both males and females, we were able to recruit mainly female volunteers in the study. This is very typical when volunteers are recruited with open calls – females are more willing to participate in studies concerning healthy foods and food products and to commit for the whole study period. Thus, the results from the present and from our previous studies can be generalised mainly to apply to healthy females.</p><p>As a conclusion, blackcurrant, as a 75 g portion and containing all the inherent components of the berry, alleviated sugar-induced excursions and lowered postprandial glycaemia and insulinaemia, as well as balanced NEFA level. These effects were reinforced with a new PB, containing fermented quinoa combined with blackcurrants, which encourages the development of blackcurrant-containing palatable and healthy products.</p></sec></body><back><ack><title>Acknowledgements</title><p>We want to acknowledge the European Regional Development Fund, Leverage from the EU 2014-2020 and the Regional Council of Northern Savo via which the regional Food Valley project (A73605) has supported to build up an ecosystem and a related concept, which combines practical food development, consumer insights and demonstrated health benefits of foodstuffs. M. K. has received funding from Olvi-foundation (201910702). We also thank students Anna Ruponen and Noora Rinkinen, R&amp;D specialist Johanna Kantala from Savonia, Urpo Hirvonen from SavoGrow Ltd and study nurse Eeva Lajunen for assisting in product development and clinical meal studies. Pakkasmarja Ltd and Probitat Ltd are thanked for providing ingredients and knowhow for preparing the test products.</p><p>This research received no specific grant from any funding agency, commercial or not-for-profit sectors.</p><p>The authors contributions are as follows: formulating the research questions, J. L., K. R., R. T. and M. K.; designing the study, J. L., R. T. and M. K.; carrying out the study, K. R. and A. K.; analysing the data, J. L. and K. R.; writing the article, J. L., K. R., K. V., A. K., R. T. and M. K. All authors read and agreed with the final version of the manuscript.</p><p>The authors have no ﬁnancial or personal conﬂicts of interest to declare.</p></ack><ref-list id="reflist1"><title>References</title><ref id="ref1"><label>1.</label><mixed-citation publication-type="journal" id="r1">
+<string-name name-style="western">
+<surname>Lankinen</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Uusitupa</surname>
+<given-names>M</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Schwab</surname>
+<given-names>U</given-names>
+</string-name> (<year>2019</year>) <article-title>Nordic diet and inflammation – a review of observational and intervention studies</article-title>. <source>Nutrients</source>
+<volume>11</volume>, <fpage>1369</fpage>.<pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/nu11061369</pub-id><pub-id pub-id-type="pmcid">PMC6627927</pub-id><pub-id pub-id-type="pmid">31216678</pub-id></mixed-citation></ref><ref id="ref2"><label>2.</label><mixed-citation publication-type="journal" id="r2">
+<string-name name-style="western">
+<surname>Luis</surname>
+<given-names>A</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Domingues</surname>
+<given-names>F</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Pereira</surname>
+<given-names>L</given-names>
+</string-name> (<year>2018</year>) <article-title>Association between berries intake and cardiovascular diseases risk factors: a systematic review with meta-analysis and trial sequential analysis of randomized controlled trials</article-title>. <source>Food Funct</source>
+<volume>9</volume>, <fpage>740</fpage>–<lpage>757</lpage>.<pub-id pub-id-type="pmid">29243749</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1039/c7fo01551h</pub-id></mixed-citation></ref><ref id="ref3"><label>3.</label><mixed-citation publication-type="journal" id="r3">
+<string-name name-style="western">
+<surname>Edirisinghe</surname>
+<given-names>I</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Burton-Freeman</surname>
+<given-names>B</given-names>
+</string-name> (<year>2016</year>) <article-title>Anti-diabetic actions of berry polyphenols – review on proposed mechanisms of action</article-title>. <source>J Berry Res</source>
+<volume>6</volume>, <fpage>237</fpage>–<lpage>250</lpage>.</mixed-citation></ref><ref id="ref4"><label>4.</label><mixed-citation publication-type="journal" id="r4">
+<string-name name-style="western">
+<surname>de Vries</surname>
+<given-names>MA</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Klop</surname>
+<given-names>B</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Janssen</surname>
+<given-names>HW</given-names>
+</string-name>, <etal>et al.</etal> (<year>2014</year>) <article-title>Postprandial inflammation: targeting glucose and lipids</article-title>. <source>Adv Exp Med Biol</source>
+<volume>824</volume>, <fpage>161</fpage>–<lpage>170</lpage>.<pub-id pub-id-type="pmid">25038999</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1007/978-3-319-07320-0_12</pub-id></mixed-citation></ref><ref id="ref5"><label>5.</label><mixed-citation publication-type="journal" id="r5">
+<string-name name-style="western">
+<surname>Derosa</surname>
+<given-names>G</given-names>
+</string-name>, <string-name name-style="western">
+<surname>D’Angelo</surname>
+<given-names>A</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Salvadeo</surname>
+<given-names>SA</given-names>
+</string-name>, <etal>et al.</etal> (<year>2010</year>) <article-title>Oral glucose tolerance test effects on endothelial inflammation markers in healthy subjects and diabetic patients</article-title>. <source>Horm Metab Res</source>
+<volume>42</volume>, <fpage>8</fpage>–<lpage>13</lpage>.<pub-id pub-id-type="pmid">19735057</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1055/s-0029-1237728</pub-id></mixed-citation></ref><ref id="ref6"><label>6.</label><mixed-citation publication-type="journal" id="r6">
+<string-name name-style="western">
+<surname>Kallio</surname>
+<given-names>P</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Kolehmainen</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Laaksonen</surname>
+<given-names>DE</given-names>
+</string-name>, <etal>et al.</etal> (<year>2008</year>) <article-title>Inflammation markers are modulated by responses to diets differing in postprandial insulin responses in individuals with the metabolic syndrome</article-title>. <source>Am J Clin Nutr</source>
+<volume>87</volume>, <fpage>1497</fpage>–<lpage>1503</lpage>.<pub-id pub-id-type="pmid">18469276</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1093/ajcn/87.5.1497</pub-id></mixed-citation></ref><ref id="ref7"><label>7.</label><mixed-citation publication-type="journal" id="r7">
+<string-name name-style="western">
+<surname>Kolehmainen</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Mykkänen</surname>
+<given-names>O</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Kirjavainen</surname>
+<given-names>PV</given-names>
+</string-name>, <etal>et al.</etal> (<year>2012</year>) <article-title>Bilberries reduce low-grade inflammation in individuals with features of metabolic syndrome</article-title>. <source>Mol Nutr Food Res</source>
+<volume>56</volume>, <fpage>1501</fpage>–<lpage>1510</lpage>.<pub-id pub-id-type="pmid">22961907</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1002/mnfr.201200195</pub-id></mixed-citation></ref><ref id="ref8"><label>8.</label><mixed-citation publication-type="journal" id="r8">
+<string-name name-style="western">
+<surname>Ceriello</surname>
+<given-names>A</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Testa</surname>
+<given-names>R</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Genovese</surname>
+<given-names>S</given-names>
+</string-name> (<year>2016</year>) <article-title>Clinical implications of oxidative stress and potential role of natural antioxidants in diabetic vascular complications</article-title>. <source>Nutr Metab Cardiovasc Dis</source>
+<volume>26</volume>, <fpage>285</fpage>–<lpage>292</lpage>.<pub-id pub-id-type="pmid">27036849</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.numecd.2016.01.006</pub-id></mixed-citation></ref><ref id="ref9"><label>9.</label><mixed-citation publication-type="journal" id="r9">
+<string-name name-style="western">
+<surname>Törrönen</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Sarkkinen</surname>
+<given-names>E</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Tapola</surname>
+<given-names>N</given-names>
+</string-name>, <etal>et al.</etal> (<year>2010</year>) <article-title>Berries modify the postprandial plasma glucose response to sucrose in healthy subjects</article-title>. <source>Br J Nutr</source>
+<volume>103</volume>, <fpage>1094</fpage>–<lpage>1097</lpage>.<pub-id pub-id-type="pmid">19930765</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114509992868</pub-id></mixed-citation></ref><ref id="ref10"><label>10.</label><mixed-citation publication-type="journal" id="r10">
+<string-name name-style="western">
+<surname>Törrönen</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Sarkkinen</surname>
+<given-names>E</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Niskanen</surname>
+<given-names>T</given-names>
+</string-name>, <etal>et al.</etal> (<year>2012</year>) <article-title>Postprandial glucose, insulin and glucagon-like peptide 1 responses to sucrose ingested with berries in healthy subjects</article-title>. <source>Br J Nutr</source>
+<volume>107</volume>, <fpage>1445</fpage>–<lpage>1451</lpage>.<pub-id pub-id-type="pmid">21929838</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114511004557</pub-id></mixed-citation></ref><ref id="ref11"><label>11.</label><mixed-citation publication-type="journal" id="r11">
+<string-name name-style="western">
+<surname>Törrönen</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Kolehmainen</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Sarkkinen</surname>
+<given-names>E</given-names>
+</string-name>, <etal>et al.</etal> (<year>2012</year>) <article-title>Postprandial glucose, insulin, and free fatty acid responses to sucrose consumed with blackcurrants and lingonberries in healthy women</article-title>. <source>Am J Clin Nutr</source>
+<volume>96</volume>, <fpage>527</fpage>–<lpage>533</lpage>.<pub-id pub-id-type="pmid">22854401</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3945/ajcn.112.042184</pub-id></mixed-citation></ref><ref id="ref12"><label>12.</label><mixed-citation publication-type="journal" id="r12">
+<string-name name-style="western">
+<surname>Törrönen</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Kolehmainen</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Sarkkinen</surname>
+<given-names>E</given-names>
+</string-name>, <etal>et al.</etal> (<year>2013</year>) <article-title>Berries reduce postprandial insulin responses to wheat and rye breads in healthy women</article-title>. <source>J Nutr</source>
+<volume>143</volume>, <fpage>430</fpage>–<lpage>436</lpage>.<pub-id pub-id-type="pmid">23365108</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3945/jn.112.169771</pub-id></mixed-citation></ref><ref id="ref13"><label>13.</label><mixed-citation publication-type="journal" id="r13">
+<string-name name-style="western">
+<surname>Törrönen</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Hellström</surname>
+<given-names>J</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Mattila</surname>
+<given-names>P</given-names>
+</string-name>, <etal>et al.</etal> (<year>2017</year>) <article-title>Postprandial glycaemic response to berry nectars containing inverted sucrose</article-title>. <source>J Nutr Sci</source>
+<volume>6</volume>, <fpage>e4</fpage>.<pub-id pub-id-type="pmid">28620479</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/jns.2016.44</pub-id><pub-id pub-id-type="pmcid">PMC5465854</pub-id></mixed-citation></ref><ref id="ref14"><label>14.</label><mixed-citation publication-type="journal" id="r14">
+<string-name name-style="western">
+<surname>Castro-Acosta</surname>
+<given-names>ML</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Lenihan-Geels</surname>
+<given-names>GN</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Corpe</surname>
+<given-names>CP</given-names>
+</string-name>, <etal>et al.</etal> (<year>2016</year>) <article-title>Berries and anthocyanins: promising functional food ingredients with postprandial glycaemia-lowering effects</article-title>. <source>Proc Nutr Soc</source>
+<volume>75</volume>, <fpage>342</fpage>–<lpage>355</lpage>.<pub-id pub-id-type="pmid">27170557</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0029665116000240</pub-id></mixed-citation></ref><ref id="ref15"><label>15.</label><mixed-citation publication-type="journal" id="r15">
+<string-name name-style="western">
+<surname>Castro-Acosta</surname>
+<given-names>ML</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Smith</surname>
+<given-names>L</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Miller</surname>
+<given-names>RJ</given-names>
+</string-name>, <etal>et al.</etal> (<year>2016</year>) <article-title>Drinks containing anthocyanin-rich blackcurrant extract decrease postprandial blood glucose, insulin and incretin concentrations</article-title>. <source>J Nutr Biochem</source>
+<volume>38</volume>, <fpage>154</fpage>–<lpage>161</lpage>.<pub-id pub-id-type="pmid">27764725</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jnutbio.2016.09.002</pub-id><pub-id pub-id-type="pmcid">PMC5170886</pub-id></mixed-citation></ref><ref id="ref16"><label>16.</label><mixed-citation publication-type="journal" id="r16">
+<string-name name-style="western">
+<surname>Coe</surname>
+<given-names>S</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Ryan</surname>
+<given-names>L</given-names>
+</string-name> (<year>2016</year>) <article-title>Impact of polyphenol-rich sources on acute postprandial glycaemia: a systematic review</article-title>. <source>J Nutr Sci</source>
+<volume>5</volume>, <fpage>e24</fpage>.<pub-id pub-id-type="pmid">27547387</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/jns.2016.11</pub-id><pub-id pub-id-type="pmcid">PMC4976115</pub-id></mixed-citation></ref><ref id="ref17"><label>17.</label><mixed-citation publication-type="journal" id="r17">
+<string-name name-style="western">
+<surname>Burton-Freeman</surname>
+<given-names>B</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Brzezinski</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Park</surname>
+<given-names>E</given-names>
+</string-name>, <etal>et al.</etal> (<year>2019</year>) <article-title>A selective role of dietary anthocyanins and flavan-3-ols in reducing the risk of type 2 diabetes mellitus: a review of recent evidence</article-title>. <source>Nutrients</source>
+<volume>11</volume>, <fpage>841</fpage>.<pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/nu11040841</pub-id><pub-id pub-id-type="pmcid">PMC6520947</pub-id><pub-id pub-id-type="pmid">31013914</pub-id></mixed-citation></ref><ref id="ref18"><label>18.</label><mixed-citation publication-type="journal" id="r18">
+<string-name name-style="western">
+<surname>Hanhineva</surname>
+<given-names>K</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Torrönen</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Bondia-Pons</surname>
+<given-names>I</given-names>
+</string-name>, <etal>et al.</etal> (<year>2010</year>) <article-title>Impact of dietary polyphenols on carbohydrate metabolism</article-title>. <source>Int J Mol Sci</source>
+<volume>11</volume>, <fpage>1365</fpage>–<lpage>1402</lpage>.<pub-id pub-id-type="pmid">20480025</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/ijms11041365</pub-id><pub-id pub-id-type="pmcid">PMC2871121</pub-id></mixed-citation></ref><ref id="ref19"><label>19.</label><mixed-citation publication-type="journal" id="r19">
+<string-name name-style="western">
+<surname>Williamson</surname>
+<given-names>G</given-names>
+</string-name> (<year>2013</year>) <article-title>Possible effects of dietary polyphenols on sugar absorption and digestion</article-title>. <source>Mol Nutr Food Res</source>
+<volume>57</volume>, <fpage>48</fpage>–<lpage>57</lpage>.<pub-id pub-id-type="pmid">23180627</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1002/mnfr.201200511</pub-id></mixed-citation></ref><ref id="ref20"><label>20.</label><mixed-citation publication-type="journal" id="r20">
+<string-name name-style="western">
+<surname>Del Bo’</surname>
+<given-names>C</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Martini</surname>
+<given-names>D</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Porrini</surname>
+<given-names>M</given-names>
+</string-name>, <etal>et al.</etal> (<year>2015</year>) <article-title>Berries and oxidative stress markers: an overview of human intervention studies</article-title>. <source>Food Funct</source>
+<volume>6</volume>, <fpage>2890</fpage>–<lpage>2917</lpage>.<pub-id pub-id-type="pmid">26226324</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1039/c5fo00657k</pub-id></mixed-citation></ref><ref id="ref21"><label>21.</label><mixed-citation publication-type="journal" id="r21">
+<string-name name-style="western">
+<surname>Joseph</surname>
+<given-names>SV</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Edirisinghe</surname>
+<given-names>I</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Burton-Freeman</surname>
+<given-names>BM</given-names>
+</string-name> (<year>2014</year>) <article-title>Berries: anti-inflammatory effects in humans</article-title>. <source>J Agric Food Chem</source>
+<volume>62</volume>, <fpage>3886</fpage>–<lpage>3903</lpage>.<pub-id pub-id-type="pmid">24512603</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1021/jf4044056</pub-id></mixed-citation></ref><ref id="ref22"><label>22.</label><mixed-citation publication-type="journal" id="r22">
+<string-name name-style="western">
+<surname>Loo</surname>
+<given-names>BM</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Erlund</surname>
+<given-names>I</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Koli</surname>
+<given-names>R</given-names>
+</string-name>, <etal>et al.</etal> (<year>2016</year>) <article-title>Consumption of chokeberry (<italic toggle="yes">Aronia mitschurinii</italic>) products modestly lowered blood pressure and reduced low-grade inflammation in patients with mildly elevated blood pressure</article-title>. <source>Nutr Res</source>
+<volume>36</volume>, <fpage>1222</fpage>–<lpage>1230</lpage>.<pub-id pub-id-type="pmid">27865620</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.nutres.2016.09.005</pub-id></mixed-citation></ref><ref id="ref23"><label>23.</label><mixed-citation publication-type="journal" id="r23">
+<string-name name-style="western">
+<surname>Khan</surname>
+<given-names>F</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Ray</surname>
+<given-names>S</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Craigie</surname>
+<given-names>AM</given-names>
+</string-name>, <etal>et al.</etal> (<year>2014</year>) <article-title>Lowering of oxidative stress improves endothelial function in healthy subjects with habitually low intake of fruit and vegetables: a randomized controlled trial of antioxidant- and polyphenol-rich blackcurrant juice</article-title>. <source>Free Radic Biol Med</source>
+<volume>72</volume>, <fpage>232</fpage>–<lpage>237</lpage>.<pub-id pub-id-type="pmid">24742818</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.freeradbiomed.2014.04.006</pub-id></mixed-citation></ref><ref id="ref24"><label>24.</label><mixed-citation publication-type="journal" id="r24">
+<string-name name-style="western">
+<surname>Karlsen</surname>
+<given-names>A</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Paur</surname>
+<given-names>I</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Bohn</surname>
+<given-names>SK</given-names>
+</string-name>, <etal>et al.</etal> (<year>2010</year>) <article-title>Bilberry juice modulates plasma concentration of NF-kappaB related inflammatory markers in subjects at increased risk of CVD</article-title>. <source>Eur J Nutr</source>
+<volume>49</volume>, <fpage>345</fpage>–<lpage>355</lpage>.<pub-id pub-id-type="pmid">20119859</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1007/s00394-010-0092-0</pub-id></mixed-citation></ref><ref id="ref25"><label>25.</label><mixed-citation publication-type="journal" id="r25">
+<string-name name-style="western">
+<surname>Koponen</surname>
+<given-names>JM</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Happonen</surname>
+<given-names>AM</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Mattila</surname>
+<given-names>PH</given-names>
+</string-name>, <etal>et al.</etal> (<year>2007</year>) <article-title>Contents of anthocyanins and ellagitannins in selected foods consumed in Finland</article-title>. <source>J Agric Food Chem</source>
+<volume>55</volume>, <fpage>1612</fpage>–<lpage>1619</lpage>.<pub-id pub-id-type="pmid">17261015</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1021/jf062897a</pub-id></mixed-citation></ref><ref id="ref26"><label>26.</label><mixed-citation publication-type="journal" id="r26">
+<string-name name-style="western">
+<surname>Laaksonen</surname>
+<given-names>O</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Mäkilä</surname>
+<given-names>L</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Tahvonen</surname>
+<given-names>R</given-names>
+</string-name>, <etal>et al.</etal> (<year>2013</year>) <article-title>Sensory quality and compositional characteristics of blackcurrant juices produced by different processes</article-title>. <source>Food Chem</source>
+<volume>138</volume>, <fpage>2421</fpage>–<lpage>2429</lpage>.<pub-id pub-id-type="pmid">23497904</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.foodchem.2012.12.035</pub-id></mixed-citation></ref><ref id="ref27"><label>27.</label><mixed-citation publication-type="journal" id="r27">
+<string-name name-style="western">
+<surname>Ng</surname>
+<given-names>SW</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Slining</surname>
+<given-names>MM</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Popkin</surname>
+<given-names>BM</given-names>
+</string-name> (<year>2012</year>) <article-title>Use of caloric and noncaloric sweeteners in US consumer packaged foods, 2005–2009</article-title>. <source>J Acad Nutr Diet</source>
+<volume>112</volume>, <fpage>1828</fpage>–<lpage>1834</lpage>.<pub-id pub-id-type="pmid">23102182</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jand.2012.07.009</pub-id><pub-id pub-id-type="pmcid">PMC3490437</pub-id></mixed-citation></ref><ref id="ref28"><label>28.</label><mixed-citation publication-type="journal" id="r28">
+<string-name name-style="western">
+<surname>Nionelli</surname>
+<given-names>L</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Coda</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Curiel</surname>
+<given-names>JA</given-names>
+</string-name>, <etal>et al.</etal> (<year>2014</year>) <article-title>Manufacture and characterization of a yogurt-like beverage made with oat flakes fermented by selected lactic acid bacteria</article-title>. <source>Int J Food Microbiol</source>
+<volume>185</volume>, <fpage>17</fpage>–<lpage>26</lpage>.<pub-id pub-id-type="pmid">24929680</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.ijfoodmicro.2014.05.004</pub-id></mixed-citation></ref><ref id="ref29"><label>29.</label><mixed-citation publication-type="journal" id="r29">
+<string-name name-style="western">
+<surname>Väkeväinen</surname>
+<given-names>K</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Ludena-Urquizo</surname>
+<given-names>F</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Korkala</surname>
+<given-names>E</given-names>
+</string-name>, <etal>et al.</etal> (<year>2020</year>) <article-title>Potential of quinoa in the development of fermented spoonable vegan products</article-title>. <source>LWT</source>
+<volume>120</volume>, <fpage>108912</fpage>.</mixed-citation></ref><ref id="ref30"><label>30.</label><mixed-citation publication-type="journal" id="r30">
+<string-name name-style="western">
+<surname>Li</surname>
+<given-names>L</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Lietz</surname>
+<given-names>G</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Bal</surname>
+<given-names>W</given-names>
+</string-name>, <etal>et al.</etal> (<year>2018</year>) <article-title>Effects of quinoa (<italic toggle="yes">Chenopodium quinoa</italic> Willd.) consumption on markers of CVD risk</article-title>. <source>Nutrients</source>
+<volume>10</volume>, <fpage>777</fpage>.<pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/nu10060777</pub-id><pub-id pub-id-type="pmcid">PMC6024323</pub-id><pub-id pub-id-type="pmid">29914146</pub-id></mixed-citation></ref><ref id="ref31"><label>31.</label><mixed-citation publication-type="journal" id="r31">
+<string-name name-style="western">
+<surname>Pourshahidi</surname>
+<given-names>LK</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Caballero</surname>
+<given-names>E</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Osses</surname>
+<given-names>A</given-names>
+</string-name>, <etal>et al.</etal> (<year>2020</year>) <article-title>Modest improvement in CVD risk markers in older adults following quinoa (<italic toggle="yes">Chenopodium quinoa</italic> Willd.) consumption: a randomized-controlled crossover study with a novel food product</article-title>. <source>Eur J Nutr</source>
+<volume>59</volume>, <fpage>3313</fpage>–<lpage>3323</lpage>.<pub-id pub-id-type="pmid">31919583</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1007/s00394-019-02169-0</pub-id></mixed-citation></ref><ref id="ref32"><label>32.</label><mixed-citation publication-type="journal" id="r32">
+<string-name name-style="western">
+<surname>Gabrial</surname>
+<given-names>SGN</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Shakib</surname>
+<given-names>MR</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Gabrial</surname>
+<given-names>GN</given-names>
+</string-name> (<year>2016</year>) <article-title>Effect of pseudocereal-based breakfast meals on the first and second meal glucose tolerance in healthy and diabetic subjects</article-title>. <source>Open Access Maced J Med Sci</source>
+<volume>4</volume>, <fpage>565</fpage>–<lpage>573</lpage>.<pub-id pub-id-type="pmid">28028392</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3889/oamjms.2016.115</pub-id><pub-id pub-id-type="pmcid">PMC5175500</pub-id></mixed-citation></ref><ref id="ref33"><label>33.</label><mixed-citation publication-type="journal" id="r33">
+<string-name name-style="western">
+<surname>Calder</surname>
+<given-names>PC</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Ahluwalia</surname>
+<given-names>N</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Albers</surname>
+<given-names>R</given-names>
+</string-name>, <etal>et al.</etal> (<year>2013</year>) <article-title>A consideration of biomarkers to be used for evaluation of inflammation in human nutritional studies</article-title>. <source>Br J Nutr</source>
+<volume>109</volume>, <issue>Suppl. 1</issue>, <fpage>S1</fpage>–<lpage>34</lpage>.<pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114512005119</pub-id><pub-id pub-id-type="pmid">23343744</pub-id></mixed-citation></ref><ref id="ref34"><label>34.</label><mixed-citation publication-type="journal" id="r34">
+<string-name name-style="western">
+<surname>Nissinen</surname>
+<given-names>A</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Lemmetty</surname>
+<given-names>A</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Pihlava</surname>
+<given-names>J</given-names>
+</string-name>, <etal>et al.</etal> (<year>2012</year>) <article-title>Effects of carrot psyllid (<italic toggle="yes">Trioza apicalis</italic>) feeding on carrot yield and content of sugars and phenolic compounds</article-title>. <source>Ann Appl Biol</source>
+<volume>161</volume>, <fpage>68</fpage>–<lpage>80</lpage>.</mixed-citation></ref><ref id="ref35"><label>35.</label><mixed-citation publication-type="journal" id="r35">
+<string-name name-style="western">
+<surname>Mattila</surname>
+<given-names>P</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Pihlava</surname>
+<given-names>J</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Hellström</surname>
+<given-names>J</given-names>
+</string-name>, <etal>et al.</etal> (<year>2018</year>) <article-title>Contents of phytochemicals and antinutritional factors in commercial protein-rich plant products</article-title>. <source>Food Qual Saf</source>
+<volume>2</volume>, <fpage>213</fpage>–<lpage>219</lpage>.<pub-id pub-id-type="doi" assigning-authority="pmc">10.1007/s11130-018-0660-7</pub-id><pub-id pub-id-type="pmcid">PMC5956054</pub-id><pub-id pub-id-type="pmid">29500810</pub-id></mixed-citation></ref><ref id="ref36"><label>36.</label><mixed-citation publication-type="journal" id="r36">
+<string-name name-style="western">
+<surname>Vera-Pingitore</surname>
+<given-names>E</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Jimenez</surname>
+<given-names>ME</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Dallagnol</surname>
+<given-names>A</given-names>
+</string-name>, <etal>et al.</etal> (<year>2016</year>) <article-title>Screening and characterization of potential probiotic and starter bacteria for plant fermentations</article-title>. <source>LWT</source>
+<volume>71</volume>, <fpage>288</fpage>–<lpage>294</lpage>.</mixed-citation></ref><ref id="ref37"><label>37.</label><mixed-citation publication-type="book" id="r37">
+<string-name name-style="western">
+<surname>Horwitz</surname>
+<given-names>W</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Latimer</surname>
+<given-names>GW</given-names>
+</string-name> (<year>2005</year>) <source>Official Methods of Analysis of AOAC International</source>, <edition>18th ed</edition>. <publisher-loc>Washington, DC</publisher-loc>: <publisher-name>AOAC International</publisher-name>.</mixed-citation></ref><ref id="ref38"><label>38.</label><mixed-citation publication-type="journal" id="r38">
+<string-name name-style="western">
+<surname>Rosen</surname>
+<given-names>LA</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Silva</surname>
+<given-names>LO</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Andersson</surname>
+<given-names>UK</given-names>
+</string-name>, <etal>et al.</etal> (<year>2009</year>) <article-title>Endosperm and whole grain rye breads are characterized by low post-prandial insulin response and a beneficial blood glucose profile</article-title>. <source>Nutr J</source>
+<volume>8</volume>, <fpage>42</fpage>.<pub-id pub-id-type="pmid">19781071</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1186/1475-2891-8-42</pub-id><pub-id pub-id-type="pmcid">PMC2761418</pub-id></mixed-citation></ref><ref id="ref39"><label>39.</label><mixed-citation publication-type="other" id="r39">
+<collab>National Institute for Health and Welfare</collab> (<year>2019</year>) Fineli – National Food Composition Database. <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://fineli.fi/fineli/en/index">https://fineli.fi/fineli/en/index</uri> (accessed February 2020).</mixed-citation></ref><ref id="ref40"><label>40.</label><mixed-citation publication-type="journal" id="r40">
+<string-name name-style="western">
+<surname>Dikeman</surname>
+<given-names>CL</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Fahey</surname>
+<given-names>GC</given-names>
+</string-name> (<year>2006</year>) <article-title>Viscosity as related to dietary fiber: a review</article-title>. <source>Crit Rev Food Sci Nutr</source>
+<volume>46</volume>, <fpage>649</fpage>–<lpage>663</lpage>.<pub-id pub-id-type="pmid">17092830</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1080/10408390500511862</pub-id></mixed-citation></ref><ref id="ref41"><label>41.</label><mixed-citation publication-type="journal" id="r41">
+<string-name name-style="western">
+<surname>McDougall</surname>
+<given-names>GJ</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Shpiro</surname>
+<given-names>F</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Dobson</surname>
+<given-names>P</given-names>
+</string-name>, <etal>et al.</etal> (<year>2005</year>) <article-title>Different polyphenolic components of soft fruits inhibit alpha-amylase and alpha-glucosidase</article-title>. <source>J Agric Food Chem</source>
+<volume>53</volume>, <fpage>2760</fpage>–<lpage>2766</lpage>.<pub-id pub-id-type="pmid">15796622</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1021/jf0489926</pub-id></mixed-citation></ref><ref id="ref42"><label>42.</label><mixed-citation publication-type="journal" id="r42">
+<string-name name-style="western">
+<surname>Barik</surname>
+<given-names>SK</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Russell</surname>
+<given-names>WR</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Moar</surname>
+<given-names>KM</given-names>
+</string-name>, <etal>et al.</etal> (<year>2019</year>) <article-title>The anthocyanins in black currants regulate postprandial hyperglycaemia primarily by inhibiting alpha-glucosidase while other phenolics modulate salivary alpha-amylase, glucose uptake and sugar transporters</article-title>. <source>J Nutr Biochem</source>
+<volume>78</volume>, <fpage>108325</fpage>.<pub-id pub-id-type="pmid">31952012</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jnutbio.2019.108325</pub-id></mixed-citation></ref><ref id="ref43"><label>43.</label><mixed-citation publication-type="journal" id="r43">
+<string-name name-style="western">
+<surname>Kong</surname>
+<given-names>F</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Singh</surname>
+<given-names>RP</given-names>
+</string-name> (<year>2008</year>) <article-title>Disintegration of solid foods in human stomach</article-title>. <source>J Food Sci</source>
+<volume>73</volume>, <fpage>R67</fpage>–<lpage>R80</lpage>.<pub-id pub-id-type="pmid">18577009</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1111/j.1750-3841.2008.00766.x</pub-id></mixed-citation></ref><ref id="ref44"><label>44.</label><mixed-citation publication-type="journal" id="r44">
+<string-name name-style="western">
+<surname>Cecil</surname>
+<given-names>JE</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Francis</surname>
+<given-names>J</given-names>
+</string-name> &amp; <string-name name-style="western">
+<surname>Read</surname>
+<given-names>NW</given-names>
+</string-name> (<year>1999</year>) <article-title>Comparison of the effects of a high-fat and high-carbohydrate soup delivered orally and intragastrically on gastric emptying, appetite, and eating behaviour</article-title>. <source>Physiol Behav</source>
+<volume>67</volume>, <fpage>299</fpage>–<lpage>306</lpage>.<pub-id pub-id-type="pmid">10477062</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/s0031-9384(99)00069-4</pub-id></mixed-citation></ref><ref id="ref45"><label>45.</label><mixed-citation publication-type="journal" id="r45">
+<string-name name-style="western">
+<surname>Mihai</surname>
+<given-names>BM</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Mihai</surname>
+<given-names>C</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Cijevschi-Prelipcean</surname>
+<given-names>C</given-names>
+</string-name>, <etal>et al.</etal> (<year>2018</year>) <article-title>Bidirectional relationship between gastric emptying and plasma glucose control in normoglycemic individuals and diabetic patients</article-title>. <source>J Diabetes Res</source>
+<volume>2018</volume>, <fpage>1736959</fpage>.<pub-id pub-id-type="pmid">30402500</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1155/2018/1736959</pub-id><pub-id pub-id-type="pmcid">PMC6192082</pub-id></mixed-citation></ref><ref id="ref46"><label>46.</label><mixed-citation publication-type="journal" id="r46">
+<string-name name-style="western">
+<surname>Buckley</surname>
+<given-names>JD</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Thorp</surname>
+<given-names>AA</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Murphy</surname>
+<given-names>KJ</given-names>
+</string-name>, <etal>et al.</etal> (<year>2006</year>) <article-title>Dose-dependent inhibition of the post-prandial glycaemic response to a standard carbohydrate meal following incorporation of alpha-cyclodextrin</article-title>. <source>Ann Nutr Metab</source>
+<volume>50</volume>, <fpage>108</fpage>–<lpage>114</lpage>.<pub-id pub-id-type="pmid">16373993</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1159/000090498</pub-id></mixed-citation></ref><ref id="ref47"><label>47.</label><mixed-citation publication-type="journal" id="r47">
+<string-name name-style="western">
+<surname>Koukiekolo</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Desseaux</surname>
+<given-names>V</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Moreau</surname>
+<given-names>Y</given-names>
+</string-name>, <etal>et al.</etal> (<year>2001</year>) <article-title>Mechanism of porcine pancreatic alpha-amylase. Inhibition of amylose and maltopentaose hydrolysis by alpha-, beta- and gamma-cyclodextrins</article-title>. <source>Eur J Biochem</source>
+<volume>268</volume>, <fpage>841</fpage>–<lpage>848</lpage>.<pub-id pub-id-type="pmid">11168426</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1046/j.1432-1327.2001.01950.x</pub-id></mixed-citation></ref><ref id="ref48"><label>48.</label><mixed-citation publication-type="journal" id="r48">
+<string-name name-style="western">
+<surname>Gentilcore</surname>
+<given-names>D</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Vanis</surname>
+<given-names>L</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Teng</surname>
+<given-names>JC</given-names>
+</string-name>, <etal>et al.</etal> (<year>2011</year>) <article-title>The oligosaccharide alpha-cyclodextrin has modest effects to slow gastric emptying and modify the glycaemic response to sucrose in healthy older adults</article-title>. <source>Br J Nutr</source>
+<volume>106</volume>, <fpage>583</fpage>–<lpage>587</lpage>.<pub-id pub-id-type="pmid">21554816</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114511000444</pub-id></mixed-citation></ref><ref id="ref49"><label>49.</label><mixed-citation publication-type="journal" id="r49">
+<string-name name-style="western">
+<surname>Boden</surname>
+<given-names>G</given-names>
+</string-name> (<year>2011</year>) <article-title>Obesity, insulin resistance and free fatty acids</article-title>. <source>Curr Opin Endocrinol Diabetes Obes</source>
+<volume>18</volume>, <fpage>139</fpage>–<lpage>143</lpage>.<pub-id pub-id-type="pmid">21297467</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1097/MED.0b013e3283444b09</pub-id><pub-id pub-id-type="pmcid">PMC3169796</pub-id></mixed-citation></ref><ref id="ref50"><label>50.</label><mixed-citation publication-type="journal" id="r50">
+<string-name name-style="western">
+<surname>Deopurkar</surname>
+<given-names>R</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Ghanim</surname>
+<given-names>H</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Friedman</surname>
+<given-names>J</given-names>
+</string-name>, <etal>et al.</etal> (<year>2010</year>) <article-title>Differential effects of cream, glucose, and orange juice on inflammation, endotoxin, and the expression of Toll-like receptor-4 and suppressor of cytokine signaling-3</article-title>. <source>Diabetes Care</source>
+<volume>33</volume>, <fpage>991</fpage>–<lpage>997</lpage>.<pub-id pub-id-type="pmid">20067961</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.2337/dc09-1630</pub-id><pub-id pub-id-type="pmcid">PMC2858203</pub-id></mixed-citation></ref><ref id="ref51"><label>51.</label><mixed-citation publication-type="journal" id="r51">
+<string-name name-style="western">
+<surname>Martinez-Garcia</surname>
+<given-names>MA</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Moncayo</surname>
+<given-names>S</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Insenser</surname>
+<given-names>M</given-names>
+</string-name>, <etal>et al.</etal> (<year>2020</year>) <article-title>Postprandial inflammatory responses after oral glucose, lipid and protein challenges: influence of obesity, sex and polycystic ovary syndrome</article-title>. <source>Clin Nutr</source>
+<volume>39</volume>, <fpage>876</fpage>–<lpage>885</lpage>.<pub-id pub-id-type="pmid">30975555</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.clnu.2019.03.027</pub-id></mixed-citation></ref><ref id="ref52"><label>52.</label><mixed-citation publication-type="journal" id="r52">
+<string-name name-style="western">
+<surname>Calder</surname>
+<given-names>PC</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Ahluwalia</surname>
+<given-names>N</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Brouns</surname>
+<given-names>F</given-names>
+</string-name>, <etal>et al.</etal> (<year>2011</year>) <article-title>Dietary factors and low-grade inflammation in relation to overweight and obesity</article-title>. <source>Br J Nutr</source>
+<volume>106</volume>, <issue>Suppl. 3</issue>, <fpage>S5</fpage>–<lpage>78</lpage>.<pub-id pub-id-type="pmid">22133051</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114511005460</pub-id></mixed-citation></ref><ref id="ref53"><label>53.</label><mixed-citation publication-type="journal" id="r53">
+<string-name name-style="western">
+<surname>Jameel</surname>
+<given-names>F</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Phang</surname>
+<given-names>M</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Wood</surname>
+<given-names>LG</given-names>
+</string-name>, <etal>et al.</etal> (<year>2014</year>) <article-title>Acute effects of feeding fructose, glucose and sucrose on blood lipid levels and systemic inflammation</article-title>. <source>Lipids Health Dis</source>
+<volume>13</volume>, <fpage>195</fpage>.<pub-id pub-id-type="pmid">25515398</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1186/1476-511X-13-195</pub-id><pub-id pub-id-type="pmcid">PMC4290803</pub-id></mixed-citation></ref><ref id="ref54"><label>54.</label><mixed-citation publication-type="journal" id="r54">
+<string-name name-style="western">
+<surname>Schell</surname>
+<given-names>J</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Betts</surname>
+<given-names>NM</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Lyons</surname>
+<given-names>TJ</given-names>
+</string-name>, <etal>et al.</etal> (<year>2019</year>) <article-title>Raspberries improve postprandial glucose and acute and chronic inflammation in adults with type 2 diabetes</article-title>. <source>Ann Nutr Metab</source>
+<volume>74</volume>, <fpage>165</fpage>–<lpage>174</lpage>.<pub-id pub-id-type="pmid">30763939</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1159/000497226</pub-id></mixed-citation></ref><ref id="ref55"><label>55.</label><mixed-citation publication-type="journal" id="r55">
+<string-name name-style="western">
+<surname>Sardo</surname>
+<given-names>CL</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Kitzmiller</surname>
+<given-names>JP</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Apseloff</surname>
+<given-names>G</given-names>
+</string-name>, <etal>et al.</etal> (<year>2016</year>) <article-title>An open-label randomized crossover trial of lyophilized black raspberries on postprandial inflammation in older overweight males: a pilot study</article-title>. <source>Am J Ther</source>
+<volume>23</volume>, <fpage>e86</fpage>–<lpage>e91</lpage>.<pub-id pub-id-type="pmid">23982695</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1097/MJT.0b013e3182a40bf8</pub-id></mixed-citation></ref><ref id="ref56"><label>56.</label><mixed-citation publication-type="journal" id="r56">
+<string-name name-style="western">
+<surname>Huebbe</surname>
+<given-names>P</given-names>
+</string-name>, <string-name name-style="western">
+<surname>Giller</surname>
+<given-names>K</given-names>
+</string-name>, <string-name name-style="western">
+<surname>de Pascual-Teresa</surname>
+<given-names>S</given-names>
+</string-name>, <etal>et al.</etal> (<year>2012</year>) <article-title>Effects of blackcurrant-based juice on atherosclerosis-related biomarkers in cultured macrophages and in human subjects after consumption of a high-energy meal</article-title>. <source>Br J Nutr</source>
+<volume>108</volume>, <fpage>234</fpage>–<lpage>244</lpage>.<pub-id pub-id-type="pmid">22011640</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114511005642</pub-id></mixed-citation></ref></ref-list></back></article>
