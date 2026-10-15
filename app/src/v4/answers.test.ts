@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { nextStep, quickAnswers, type AnswerInput } from './Answers';
+import { mealLinesFor, nextStep, quickAnswers, type AnswerInput } from './Answers';
+import { parseMeal } from './food/parse';
+import { DEFAULT_PROFILE } from '../science/profile';
 import type { System } from './status';
 
 const base: AnswerInput = { systems: [], drinkAt: 18 * 60, bedtimeMin: 23 * 60, weightKg: 70, kcal: 200, extraSleepMin: 0, caffeineAtBedMg: 0, waterMl: 0 };
@@ -28,5 +30,24 @@ describe('quick answers: honest about what we cannot know', () => {
     expect(nextStep([energy, brain], false)!.key).toBe('alcohol');
     expect(nextStep([energy, brain], true)!.key).toBe('sugarSpike');
     expect(nextStep([sys('heart', 0, () => null)], false)).toBeNull();
+  });
+});
+
+describe('quick answers: meals', () => {
+  const meal = parseMeal('burger and cola');
+  it('a meal gets whole-meal wording; a single food gets none and answers are unchanged', () => {
+    expect(meal.length).toBeGreaterThan(1);
+    const lines = mealLinesFor(meal, DEFAULT_PROFILE);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.join(' ')).toMatch(/the (burger|cola)/i);
+    const withMeal = quickAnswers({ ...base, mealLines: lines });
+    const m = withMeal.find((x) => x.q === 'How does this meal work?')!;
+    expect(m.a).toBe(lines.join(' '));
+    const single = parseMeal('cola');
+    expect(mealLinesFor(single, DEFAULT_PROFILE)).toEqual([]);
+    const plain = quickAnswers(base);
+    expect(plain.some((x) => x.q === 'How does this meal work?')).toBe(false);
+    expect(quickAnswers({ ...base, mealLines: [] })).toEqual(plain);
+    expect(withMeal.filter((x) => x.q !== 'How does this meal work?')).toEqual(plain);
   });
 });

@@ -41,7 +41,7 @@ import { Passport } from './Passport';
 import { Pro } from './Pro';
 import { Tour } from './Tour';
 import { CalmBar } from './CalmBar';
-import { Answers, quickAnswers } from './Answers';
+import { Answers, mealLinesFor, quickAnswers } from './Answers';
 import { personalNotes } from '../science/personal';
 import { Disclaimer, HowWeKnow } from './HowWeKnow';
 import { VideoFallback } from './VideoFallback';
@@ -220,7 +220,8 @@ export default function AppV4() {
     const g = built.effects.glucoseMgDl ?? (unknownSugar ? undefined : new Float64Array(1441));
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
       glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, bac: built.bac, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
-      latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH) });
+      latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH),
+      mealLines: productId === 'food' ? mealLinesFor(foodParts, profile) : undefined });
   }, [systems, profile, built, vYou, productId, foodParts]);
   // the current item as database parts (curated products too), its sugar peak, and a checked better swap
   const currentParts = useMemo(() => (productId === 'food' ? foodParts : parseMeal(({ cola: 'cola', espresso: 'espresso', water: 'glass of water' } as Record<string, string>)[productId] ?? productId)), [productId, foodParts]);

@@ -9,6 +9,11 @@ import { TIPS } from '../content/tips';
 import { LEVEL_LABEL } from '../content/types';
 import { Disclaimer } from './HowWeKnow';
 import { FACTORS, FED_PEAK_RATIO, type PersonalNotes } from '../science/personal';
+import { simulateFood } from '../science/foodSim';
+import type { Profile } from '../science/profile';
+import { toMeal } from './food/meal';
+import { mealAnswerLines } from './food/mealWords';
+import type { Part } from './food/parse';
 import './personal.css';
 
 export interface AnswerInput {
@@ -19,6 +24,14 @@ export interface AnswerInput {
   latestForSleep?: number | null;
   /** what is known about this person (science/personal.ts); without it answers are labelled typical */
   personal?: PersonalNotes;
+  /** meal wording (food/mealWords.ts) when the food is a meal of 2+ items; see mealLinesFor */
+  mealLines?: string[];
+}
+
+/** Whole-meal sentences (which item drives sugar, speed, alcohol, caffeine) for 2+ items; [] for a single food. */
+export function mealLinesFor(parts: Part[], profile: Profile): string[] {
+  if (parts.length < 2) return [];
+  return mealAnswerLines(simulateFood(toMeal(parts), profile), toMeal(parts), parts);
 }
 export interface Answer { icon: string; q: string; a: string; tone: 0 | 1 | 2; /** small line under the answer (evidence level) */ note?: string; title?: string;
   /** 'you' = computed for this person's body and settings; 'typical' = the same for everyone */
@@ -46,6 +59,8 @@ export function quickAnswers(x: AnswerInput): Answer[] {
   } else out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: x.bac
     ? 'Hard to say: alcohol changes how your liver handles sugar, so we don’t draw a curve.'
     : 'Not known: its glycaemic index has not been measured.', tone: 0 });
+  // Meal as a whole: names the item behind each effect (food/mealWords.ts); the single-food answers stay as they are
+  if (x.mealLines?.length) out.push({ icon: '🍱', q: 'How does this meal work?', a: x.mealLines.join(' '), tone: 0, note: 'The meal as a whole, estimated from its parts' });
   // Sleep
   const bedRel = (x.bedtimeMin - x.drinkAt + 1440) % 1440;
   const bacBed = x.bac ? at(x.bac, bedRel) : 0;
