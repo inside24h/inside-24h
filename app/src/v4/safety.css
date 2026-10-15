@@ -1,0 +1,27 @@
+/* Phase 1B: disclaimer line, next-step tips, "How we know" page, video fallback. Kept out of v4.css on purpose. */
+
+/* one quiet line under the estimates */
+.disclaim { margin: 2px 0 0; font: 11.5px/1.4 var(--body); color: var(--mute); }
+.disclaim button { background: none; border: 0; padding: 0; margin-left: 4px; color: var(--mute); font: inherit; cursor: pointer;
+  text-decoration: underline; text-decoration-color: var(--line2); text-underline-offset: 3px; }
+.disclaim button:hover { color: var(--text); }
+.now .disclaim { margin-top: auto; padding-top: 14px; }
+
+/* next step under a yellow or red traffic light */
+.light .ltip { grid-column: 2; margin-top: 4px; font-size: 11.5px; line-height: 1.35; color: var(--text); }
+.light .ltip::before { content: '→ '; color: var(--lc); }
+.ans .tipsrc { display: block; margin-top: 3px; font: 10.5px var(--mono); color: var(--faint); }
+
+/* "How we know" page */
+.method h3 { margin: 22px 0 6px; font-size: 15px; font-weight: 600; }
+.method h3:first-of-type { margin-top: 6px; }
+.method ul.models, .method ul.tiplist { margin: 0 0 6px; padding-left: 18px; display: grid; gap: 8px; color: #c8d3df; }
+.method ul.models b { color: var(--text); font-weight: 600; }
+.method .src { margin-top: 2px; }
+.method .lvrow { display: flex; align-items: flex-start; gap: 10px; margin: 6px 0; color: #c8d3df; }
+.method .lvrow .lv { flex: none; margin-top: 2px; }
+
+/* video fallback (no WebCodecs: in-app browsers) */
+.sharebox .fallback { display: grid; gap: 10px; }
+.sharebox .linkrow { display: flex; gap: 6px; }
+.sharebox .linkrow input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line2); color: var(--text); border-radius: 8px; padding: 8px 10px; font: 12px var(--mono); }

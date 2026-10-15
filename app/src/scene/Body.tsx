@@ -2,20 +2,32 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import anatomyData from '../assets/anatomy.glb?inline';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { MeshoptDecoder as MeshoptDecoderJS } from './meshoptDecoderReference.js';
+import anatomyData from '../assets/anatomy.meshopt.glb?inline';
 import type { OrganKey } from '../content/types';
 
 // The model ships inside the bundle as a base64 data URL and is decoded in memory.
 // No fetch: sandboxed hosts (e.g. claude.ai previews) may block network requests, data: URLs included.
+// It is meshopt-compressed (pipeline/compress-anatomy.mjs, ~2.6x smaller). The fast decoder is WebAssembly,
+// embedded in the JS (no fetch); where WebAssembly is blocked, the slower pure-JS decoder takes over.
+async function meshoptDecoder() {
+  try {
+    await MeshoptDecoder.ready;
+    if (MeshoptDecoder.supported) return MeshoptDecoder;
+  } catch { /* fall through to the JS decoder */ }
+  return MeshoptDecoderJS;
+}
+
 let anatomyPromise: Promise<THREE.Group> | null = null;
 function loadAnatomy(): Promise<THREE.Group> {
   if (!anatomyPromise) {
-    anatomyPromise = new Promise((resolve, reject) => {
+    anatomyPromise = meshoptDecoder().then((decoder) => new Promise((resolve, reject) => {
       const bin = atob(anatomyData.slice(anatomyData.indexOf(',') + 1));
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      new GLTFLoader().parse(bytes.buffer, '', (gltf) => resolve(gltf.scene), reject);
-    });
+      new GLTFLoader().setMeshoptDecoder(decoder as typeof MeshoptDecoder).parse(bytes.buffer, '', (gltf) => resolve(gltf.scene), reject);
+    }));
   }
   return anatomyPromise;
 }

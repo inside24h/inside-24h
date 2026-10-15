@@ -90,5 +90,8 @@ export const SOURCES: Record<string, Source> = {
   efsa2010: { id: 'efsa2010', cite: 'EFSA NDA Panel 2010, dietary reference values for water', url: 'https://www.efsa.europa.eu/en/efsajournal/pub/1459' },
   perrier2021: { id: 'perrier2021', cite: 'Perrier ET et al. 2021, Eur J Nutr (review)', url: 'https://europepmc.org/article/PMC/PMC7987589' },
   charriere2015: { id: 'charriere2015', cite: 'Charrière N et al. 2015 (water thermogenesis)', url: pubmed('26690288') },
+  buffey2022: { id: 'buffey2022', cite: 'Buffey AJ et al. 2022, Sports Med (meta-analysis of 7 crossover RCTs)', url: 'https://europepmc.org/article/PMC/PMC9325803' },
+  reynolds2016: { id: 'reynolds2016', cite: 'Reynolds AN et al. 2016, Diabetologia (crossover RCT, n=41)', url: pubmed('27747394') },
+  meade2024: { id: 'meade2024', cite: 'Meade RD et al. 2024, Environ Health Perspect', url: 'https://europepmc.org/article/PMC/PMC10852046' },
   bodyparts3d: { id: 'bodyparts3d', cite: 'BodyParts3D, © The Database Center for Life Science, CC BY 4.0', url: 'https://dbarchive.biosciencedbc.jp/en/bodyparts3d/' },
 };

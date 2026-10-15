@@ -10,7 +10,13 @@
     "noUnusedParameters": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    // @types/three 0.169.0 ships broken "exports" (points at JS), so map the typings explicitly
+    "paths": {
+      "three": ["./node_modules/@types/three/index.d.ts"],
+      "three/examples/jsm/*": ["./node_modules/@types/three/examples/jsm/*"],
+      "three/addons/*": ["./node_modules/@types/three/examples/jsm/*"]
+    }
   },
   "include": ["src"]
 }

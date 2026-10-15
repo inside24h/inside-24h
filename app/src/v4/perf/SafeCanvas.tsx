@@ -1,0 +1,49 @@
+// The react-three-fiber <Canvas> with phone-friendly defaults:
+// - no WebGL at all -> a friendly message instead of an error;
+// - weak devices -> no antialiasing and a lower pixel-ratio ceiling;
+// - pixel ratio follows the measured frame rate (drei PerformanceMonitor), frozen while a video is recorded;
+// - WebGL context lost (phone backgrounded the tab, GPU reset) -> a notice with a reload button until it comes back;
+// - preserveDrawingBuffer only where the video export needs it: the frame-exact WebCodecs path renders and reads
+//   in the same task, so it does not; the MediaRecorder fallback (no WebCodecs) reads a frame later, so it does.
+import { useMemo, useRef, useState } from 'react';
+import { Canvas, type CanvasProps } from '@react-three/fiber';
+import { PerformanceMonitor } from '@react-three/drei';
+import { canEncode } from '../share';
+import { deviceTier, webglAvailable } from './device';
+
+const NO_3D = "Your browser can't show 3D — try opening in Chrome/Safari.";
+
+export function SafeCanvas({ children, gl, frameloop, onCreated, ...rest }: CanvasProps) {
+  const ok = useMemo(webglAvailable, []);
+  const tier = useMemo(deviceTier, []);
+  const maxDpr = Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, tier === 'low' ? 1.5 : 2);
+  const [dpr, setDpr] = useState(maxDpr);
+  const [lost, setLost] = useState(false);
+  const recording = useRef(false);
+  recording.current = frameloop === 'never'; // the recorder draws each frame itself: keep the size steady
+
+  if (!ok) return <div className="stage-error nogl" role="alert"><b>{NO_3D}</b><p>Everything else still works.</p></div>;
+  return (
+    <>
+      <Canvas {...rest} frameloop={frameloop} dpr={dpr}
+        gl={{ antialias: tier !== 'low', alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: !canEncode(), ...(gl as object) }}
+        onCreated={(state) => {
+          const el = state.gl.domElement;
+          el.addEventListener('webglcontextlost', () => setLost(true)); // three.js calls preventDefault, so it can be restored
+          el.addEventListener('webglcontextrestored', () => setLost(false));
+          onCreated?.(state);
+        }}>
+        <PerformanceMonitor factor={1} flipflops={3}
+          onChange={({ factor }) => { if (!recording.current) setDpr(Math.round((1 + (maxDpr - 1) * factor) * 4) / 4); }}
+          onFallback={() => { if (!recording.current) setDpr(1); }} />
+        {children}
+      </Canvas>
+      {lost && (
+        <div className="stage-error nogl" role="alert">
+          <b>The 3D view was paused by your browser.</b>
+          <p>It usually comes back by itself. If not: <button className="nogl-reload" onClick={() => location.reload()}>Reload</button></p>
+        </div>
+      )}
+    </>
+  );
+}

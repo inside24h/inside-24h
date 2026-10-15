@@ -5,6 +5,8 @@ import { useMemo } from 'react';
 import { uFromMinutes, minutesFromU } from '../time';
 import type { Level, System } from './status';
 import { worstMoment } from './status';
+import { TIPS } from '../content/tips';
+import './safety.css';
 
 const ICON: Record<System['key'], string> = { energy: '⚡', heart: '❤', water: '💧', brain: '🧠' };
 const WORD: Record<Level, string> = { 0: 'Good', 1: 'Mild stress', 2: 'Overload' };
@@ -27,12 +29,14 @@ export function StatusLights({ systems, minute, onJump, onRules, weather }: {
         const l = lvlAt(s, minute);
         const peak = worstMoment(s);
         const worstLvl = s.levels[peak] as Level;
+        const tip = !s.unknown && s.tip ? s.tip(l, minute) : null;
         return (
           <button key={s.key} className={`light l${l} ${s.unknown ? 'unknown' : ''}`} onClick={() => onJump(peak, s.organ)}
             title={worstLvl > 0 ? 'Show the hardest moment for this part of you' : 'Show this part of your body'}>
             <span className="li" aria-hidden="true">{ICON[s.key]}</span>
             <span className="lt"><b>{s.label}</b><em>{s.unknown ? 'Not measured' : WORD[l]}</em></span>
             <span className="ls">{s.says(l, minute)}</span>
+            {tip && l > 0 && <span className="ltip" title={TIPS[tip].why}>{TIPS[tip].text}</span>}
           </button>
         );
       })}

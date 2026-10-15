@@ -1,7 +1,7 @@
 // Build 0.4 layout: one screen. Left: what is happening now. Centre: the body. Right: your readings.
 // Bottom: the 24 h timeline. Evidence and the profile open in side panels on demand.
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, advance, useThree, type RootState } from '@react-three/fiber';
+import { advance, useThree, type RootState } from '@react-three/fiber';
 import { flushSync } from 'react-dom';
 import { OrbitControls } from '@react-three/drei';
 import { Body, type Glow } from '../scene/Body';
@@ -29,7 +29,7 @@ import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
-import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, storyFrames, type CmpOverlay, type CmpSide, pickMime, record, recordFrames, saveFile, type Format, type Overlay } from './share';
+import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, storyFrames, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { verdict, worstMoment } from './status';
 
 const ICON_OF = { energy: '⚡', heart: '❤', water: '💧', brain: '🧠' } as const;
@@ -42,8 +42,14 @@ import { Pro } from './Pro';
 import { Tour } from './Tour';
 import { CalmBar } from './CalmBar';
 import { Answers, quickAnswers } from './Answers';
+import { Disclaimer, HowWeKnow } from './HowWeKnow';
+import { VideoFallback } from './VideoFallback';
+import { videoSupportHere } from './share';
+import { bacRangeText, glucoseRangeText } from '../science/ranges';
 import { Compare } from './Compare';
 import { CompareScene } from './CompareVideo';
+import { SafeCanvas } from './perf/SafeCanvas';
+import { isTouch } from './perf/device';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
 
@@ -135,7 +141,7 @@ export default function AppV4() {
   useEffect(() => { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* fine */ } }, [profile]);
   const [selected, setSelected] = useState<string | null>(HASH.get('organ'));
   const [evidence, setEvidence] = useState<Evidence | null>(null);
-  const [panel, setPanel] = useState<'body' | 'about' | 'every' | 'rules' | 'colours' | 'support' | 'pro' | null>(
+  const [panel, setPanel] = useState<'body' | 'about' | 'every' | 'rules' | 'colours' | 'support' | 'pro' | 'method' | null>(
     (['body', 'about', 'every', 'rules', 'colours', 'support', 'pro'] as const).find((x) => x === HASH.get('panel')) ?? null);
   const [sceneError, setSceneError] = useState<unknown>(null);
   const [touched, setTouched] = useState(false);
@@ -153,7 +159,7 @@ export default function AppV4() {
   // Calm = the default for everyone: body, one sentence, play. 'Full' adds the lights, the trip and the steps.
   const [calm, setCalm] = useState(HASH.get('view') !== 'full');
   const calmNow = mode === 'simple' && calm;
-  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string } | null>(null);
+  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string } | null>(null);
   const [handle, setHandle] = useState(() => { try { return localStorage.getItem('i24-handle') || '@inside24h'; } catch { return '@inside24h'; } });
   const recRef = useRef(false);
   const r3f = useRef<RootState | null>(null);
@@ -228,7 +234,7 @@ export default function AppV4() {
   };
   const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (HASH.get('compare') ? { with: parseMeal(HASH.get('compare')!) } : null));
   const answersBlock = (<>
-    <Answers list={answers} />
+    <Answers list={answers} onHow={() => setPanel('method')} />
     {swap && peakNow !== null && <SwapCard swap={swap} peakNow={peakNow} onCompare={() => setCompare({ with: swap.parts })} />}
   </>);
   const stageIndex = PRODUCT.stages.reduce((acc, s, i) => (minute >= s.min ? i : acc), 0);
@@ -301,6 +307,14 @@ export default function AppV4() {
   const overlayRef = useRef<Overlay | null>(null);
   const reelStops = useRef<number[] | null>(null);
   const [shortVid, setShortVid] = useState(false); // ≈ 22 s cut for TikTok / Shorts
+  // a still of this moment (fallback when the browser cannot make video)
+  const stillImage = async () => {
+    const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
+    if (!canvas || !overlayRef.current) return null;
+    if (r3f.current) r3f.current.gl.render(r3f.current.scene, r3f.current.camera);
+    const c = composeFrame(canvas, 'reel', overlayRef.current, 'main');
+    return new Promise<Blob | null>((r) => c.toBlob(r, 'image/png'));
+  };
   const saveCover = async () => {
     const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
     if (!canvas || !overlayRef.current) return;
@@ -320,9 +334,10 @@ export default function AppV4() {
     pop: (() => {
       const mi = Math.round(Math.min(1440, minute));
       const bac = built.bac ? built.bac[mi] : 0;
-      if (bac >= 0.1) return { big: `${bac.toFixed(2)}‰`, small: 'blood alcohol', level: (bac >= 0.5 ? 2 : 1) as 0 | 1 | 2 };
+      // a range, never one number (Widmark ±20–40%, alcohol.md W6)
+      if (bac >= 0.1) return { big: bacRangeText(bac).replace(' ‰', ''), small: '‰ blood alcohol', level: (bac >= 0.5 ? 2 : 1) as 0 | 1 | 2 };
       const g = built.effects.glucoseMgDl ? built.effects.glucoseMgDl[mi] / 18.016 : 0;
-      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: `${g > 0 ? '+' : ''}${g.toFixed(1)}`, small: g > 0 ? 'blood sugar' : 'sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
+      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeText(g) : g.toFixed(1), small: g > 0 ? 'blood sugar, typical' : 'sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
       const caf = built.caffeine.doseMg >= 10 ? built.caffeine.body[mi] : 0;
       if (caf >= 20) return { big: `${Math.round(caf)} mg`, small: 'caffeine in you', level: (caf >= 200 ? 1 : 0) as 0 | 1 | 2 };
       return undefined;
@@ -341,7 +356,7 @@ export default function AppV4() {
   };
   const startShare = (format: Format) => {
     const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
-    if (!canvas || (!canEncode() && !pickMime())) { setShare({ state: 'error', msg: 'This browser cannot record video. Try Chrome or Edge on a computer.' }); return; }
+    if (!canvas || videoSupportHere() === 'none') { setShare({ state: 'nosupport' }); return; }
     if (share?.url) URL.revokeObjectURL(share.url);
     setMode('simple'); setSelected(null); setWholeBody(false); setFlightKey((k) => k + 1); setEvidence(null); setPanel(null);
     recRef.current = true; setU(0); setPlaying(false); setShare({ state: 'rec', format }); setRecPct(0);
@@ -460,7 +475,7 @@ export default function AppV4() {
             <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
           </div>
           {started && <button className="ghost hdr" onClick={() => setCompare({})}>⇄ Compare</button>}
-          {started && <button className="ghost sharebtn" onClick={() => setShare({ state: 'choose' })} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share video'}</button>}
+          {started && <button className="ghost sharebtn" onClick={() => setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' })} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share video'}</button>}
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
           <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>soon</small></button>
           <button className="ghost hdr support" onClick={() => setPanel('support')}>♥ Support</button>
@@ -490,13 +505,14 @@ export default function AppV4() {
             <b>If you have this every day</b><span>cholesterol, diabetes, weight and more →</span>
           </button>
           <Where rows={built.where} title={({ cola: 'Where the sugar is', water: 'Where the water is', espresso: 'Where the caffeine is' } as Record<string, string>)[productId] ?? `Where the ${lower} is`} minute={minute} selected={selected} onPick={setSelected} />
+          <Disclaimer onHow={() => setPanel('method')} />
         </section>}
 
         <section className="stage" aria-label="3D body"
           onPointerDown={(e) => { down.current = [e.clientX, e.clientY]; setTouched(true); }}>
           <ErrorBoundary fallback={(e) => <StageError error={e} />}>
             {sceneError ? <StageError error={sceneError} /> : (
-              <Canvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} dpr={[1, 2]} gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : 'always'}
+              <SafeCanvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : 'always'}
                 onPointerMissed={(e) => {
                   const d = down.current;
                   if (!d || Math.hypot(e.clientX - d[0], e.clientY - d[1]) < 5) setSelected(null);
@@ -515,7 +531,7 @@ export default function AppV4() {
                 </Suspense>
                 <OrbitControls makeDefault target={[0, 1.15, 0]} enablePan={false} minDistance={0.3} maxDistance={3.2} />
                 {mode === 'simple' && !cmpRec && <CameraRig focus={share?.state === 'rec' ? liquidFocus ?? 'torso' : selected ?? (wholeBody ? null : liquidFocus ?? chapter.focus)} bounds={bounds} minDist={share?.state === 'rec' ? 1.05 : !selected && liquidFocus ? 0.95 : 0.5} flightKey={`${productId}-${chapterIdx}-${selected}-${flightKey}`} />}
-              </Canvas>
+              </SafeCanvas>
             )}
           </ErrorBoundary>
           {calmNow && <div className="stageanswers">{answersBlock}</div>}
@@ -532,7 +548,7 @@ export default function AppV4() {
             </div>
           )}
           {(mode === 'detailed' || !built.route) && <Journey steps={built.journey} unit={built.journeyUnit} minute={minute} selected={selected} onPick={setSelected} />}
-          {!touched && <div className="hint">Drag to turn · scroll to zoom · tap an organ</div>}
+          {!touched && <div className="hint">{isTouch() ? 'Swipe to turn · pinch to zoom · tap an organ' : 'Drag to turn · scroll to zoom · tap an organ'}</div>}
           {mode === 'detailed' ? (
             <div className="legend">
               {built.legend.map((l) => <span key={l.label}><i style={{ background: l.color }} />{l.label}</span>)}
@@ -646,6 +662,8 @@ export default function AppV4() {
               </div>
             </>)}
             {share.state === 'error' && (<><h2>Could not make the video</h2><p>{share.msg}</p></>)}
+            {share.state === 'nosupport' && <VideoFallback makeImage={stillImage}
+              onSave={async (b) => { const r = await saveFile(`${fileName}-moment.png`, b); return r === 'saved' ? 'Saved. If nothing downloaded, press and hold the picture to save it.' : r === 'declined' ? 'Not saved.' : 'Press and hold the picture to save it.'; }} />}
             {share.state === 'ready' && (<>
               <h2>Your 24 h video</h2>
               <video src={share.url} autoPlay loop muted playsInline controls className={share.format === 'reel' ? 'v916' : 'v45'} />
@@ -690,7 +708,10 @@ export default function AppV4() {
         <Support />
       </Drawer>
       <Drawer open={panel === 'about'} title="About Inside 24h" onClose={() => setPanel(null)}>
-        <About />
+        <About onMethod={() => setPanel('method')} />
+      </Drawer>
+      <Drawer open={panel === 'method'} title="How we know" onClose={() => setPanel(null)}>
+        <HowWeKnow />
       </Drawer>
     </div>
   );
@@ -835,7 +856,7 @@ function Readings({ you, sim, twin, profile, minute, onOpen, vitalClaims, name, 
           </button>
         );
       })}
-      <p className="rnote">Lines follow your body’s natural day and night. Tap a reading to see why.</p>
+      <p className="rnote">Lines follow your body’s natural day and night. Blood sugar is a typical response, not personalised. Tap a reading to see why.</p>
     </section>
   );
 }
@@ -916,10 +937,10 @@ function LevelKey() {
   );
 }
 
-function About() {
+function About({ onMethod }: { onMethod: () => void }) {
   return (
     <div className="about">
-      <p><button className="link" onClick={() => window.dispatchEvent(new Event('i24-tour'))}>Show the quick guide again</button></p>
+      <p><button className="link" onClick={() => window.dispatchEvent(new Event('i24-tour'))}>Show the quick guide again</button> · <button className="link" onClick={onMethod}>How we know: models, evidence levels, sources →</button></p>
       <p><b>Inside 24h</b> shows what one food or drink does inside a body like yours, minute by minute for a whole day: where it goes, how much is where, and what it changes. It is free.</p>
       <h3>Not medical advice</h3>
       <p>This is an educational simulation of a typical healthy adult with your size, age and city. Real people differ a lot (the same meal can raise blood sugar twice as much in one person as in another). Do not use it to diagnose, treat, dose medicine, or decide whether you can drive. If you have diabetes, a heart, kidney or liver condition, are pregnant or take medication, ask your doctor.</p>

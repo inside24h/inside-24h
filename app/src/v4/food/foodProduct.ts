@@ -4,6 +4,7 @@
 import { at } from '../../science/espressoSim';
 import { simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, type Profile } from '../../science/profile';
+import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
 import { FOOD_CLAIMS } from '../../content/food';
 import type { OrganKey, Product, Stage } from '../../content/types';
 import { BLOOD_SITES, GUT_SITES, ROUTE_GUT_TO_BODY } from '../../scene/Flow';
@@ -123,11 +124,11 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
         case 'cecum': case 'colon_asc': case 'colon_trans': case 'colon_desc': case 'rectum': return { name: 'Large intestine', claims: ['SI10', 'CO1', 'CO3'], text: 'Fibre and leftovers arrive here. Bacteria ferment part of it while water is taken back. The trip through takes about 1–2 days.', lines: [{ label: 'Fibre here now', value: grams(s.colonG.reduce((a, c) => a + at(c, t), 0)) }, { label: 'Already out', value: grams(at(s.exitedG, t)) }] };
         case 'pancreas': return { name: 'Pancreas', claims: ['GL1', 'GL4'], text: 'It answers sugar in your blood with insulin.', lines: [{ label: 'Insulin above baseline', value: `+${r0(at(s.insulin, t))} mU/L` }] };
         case 'liver': case 'portal_vein': return meal.alcoholG > 1
-          ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a fixed speed. Nothing speeds it up.', lines: [{ label: 'Blood alcohol now', value: `${at(s.bac, t).toFixed(2)} g/L (‰)` }] }
+          ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a fixed speed. Nothing speeds it up.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
           : { name: 'Liver', claims: ['TE1'], text: 'Blood from the gut passes the liver first: it stores sugar and sorts what you absorbed.', lines: [{ label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
         case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: meal.alcoholG > 1 ? ['AL5'] : ['GL4', 'TG1'], text: 'Everything you absorb travels in your blood.', lines: [{ label: 'Sugar change', value: `${(at(s.glucoseDeltaMgDl, t) / 18.016).toFixed(1)} mmol/L` }, ...(meal.fat >= 5 ? [{ label: 'Blood fat change', value: `+${at(s.tgDelta, t).toFixed(2)} mmol/L` }] : [])] };
         case 'brain': return meal.alcoholG > 1
-          ? { name: 'Brain', claims: ['AL3', 'AL4'], text: 'Alcohol reaches the brain with the blood: from 0.2 g/L your attention is already worse.', lines: [{ label: 'Blood alcohol now', value: `${at(s.bac, t).toFixed(2)} g/L` }] }
+          ? { name: 'Brain', claims: ['AL3', 'AL4'], text: 'Alcohol reaches the brain with the blood: from 0.2 g/L your attention is already worse.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
           : { name: 'Brain', claims: ['FC1'], text: 'Your brain runs on glucose. After a big meal many people feel sleepy for a while.', lines: [] };
         case 'kidney_l': case 'kidney_r': case 'bladder': return { name: 'Kidneys and bladder', claims: ['AL7'], text: 'Extra water leaves through your kidneys within a few hours.', lines: [{ label: 'In the bladder from this', value: `${r0(at(s.bladder, t))} ml` }] };
         default: return null;
@@ -175,14 +176,15 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   ];
   if (gl !== null && s.glucosePeakMmol >= 0.2) {
     const big = s.glucosePeakMmol >= 1.5;
-    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Sugar rush' : 'Sugar rises', focus: 'pancreas', claims: ['GL1', 'GL4'], text: `Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016)}. Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
+    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Sugar rush' : 'Sugar rises', focus: 'pancreas', claims: ['GL1', 'GL4'], text: `Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucose(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD))} (typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
   }
   if (dipMin > 0) ch.push({ min: dipMin, title: 'The sugar dip', focus: 'brain', claims: ['GL7'], text: 'Insulin overshoots: your blood sugar drops a bit below where you started. Hunger tends to come back now.' });
   if (meal.alcoholG > 1) {
-    const drive = bacPeak >= 0.5 ? 'Over the 0.5 limit for drivers in Croatia.' : bacPeak >= 0.2 ? 'Attention is already worse; young and professional drivers must have 0.0.' : 'Low, but not zero: young and professional drivers must have 0.0.';
-    ch.push({ min: bacPeakMin, title: 'Alcohol peak', focus: 'brain', claims: ['AL1', 'AL3', 'AL4'], text: `Blood alcohol is highest now: about ${bacPeak.toFixed(2)} g/L (‰)${meal.fed ? ', lower than on an empty stomach' : ''}. ${drive}` });
+    // a range, never one number or a "safe" time: Widmark estimates are off by 20–40% [AL3, alcohol.md W6]
+    const drive = bacPeak >= 0.2 ? 'Attention is already worse. Don’t drive.' : 'Low, but not zero. Don’t drive.';
+    ch.push({ min: bacPeakMin, title: 'Alcohol peak', focus: 'brain', claims: ['AL1', 'AL3', 'AL4'], text: `Blood alcohol is highest now: about ${bacRangeText(bacPeak)}${meal.fed ? ', lower than on an empty stomach' : ''}. ${drive}` });
     let zero = bacPeakMin; while (zero < 1440 && s.bac[zero] > 0.005) zero++;
-    ch.push({ min: Math.min(1440, zero), title: 'Alcohol gone', focus: 'liver', claims: ['AL2'], text: `Your liver has cleared the alcohol, about ${hhmm(p.drinkAtMin + zero)}. It works at a fixed speed: coffee, water or fresh air don’t speed it up.` });
+    ch.push({ min: Math.min(1440, zero), title: 'Alcohol gone', focus: 'liver', claims: ['AL2'], text: 'In a typical body the alcohol is gone by now, but some people need hours longer. Your liver works at a fixed speed: coffee, water or fresh air don’t speed it up. This can’t tell you when you’re safe to drive.' });
   }
   if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: ['DB1'], text: `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain and blocks the tiredness signal a little.` });
   if (meal.kcal >= 500) ch.push({ min: 90, title: 'Food coma', focus: 'brain', claims: ['FC1'], text: 'A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was.' });
@@ -196,7 +198,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   }
   if (toBed > 30 && toBed < 1440) {
     const caf = at(s.caffeine.body, toBed), bac = at(s.bac, toBed);
-    const msg = bac > 0.02 ? `There is still alcohol in your blood (${bac.toFixed(2)} g/L): you may fall asleep faster, but the second half of the night will be worse.` : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` : null;
+    const msg = bac > 0.02 ? `There is still alcohol in your blood (about ${bacRangeText(bac)}): you may fall asleep faster, but the second half of the night will be worse.` : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` : null;
     if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1'], text: msg });
   }
   ch.sort((a, b) => a.min - b.min);
@@ -234,7 +236,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         out.push({ label: 'Insulin', dir: ins > 2 ? 'up' : 'same', value: ins > 2 ? `+${r0(ins)} mU/L` : 'normal', note: ins > 2 ? 'pancreas clearing the sugar' : 'resting' });
       }
       out.push({ label: `Energy from this ${noun}`, dir: at(s.kcalAbsorbed, t) > 1 ? 'up' : 'same', value: `${r0(at(s.kcalAbsorbed, t))} / ${r0(meal.kcal)} kcal`, note: 'reached your body so far' });
-      if (meal.alcoholG > 1) { const b = at(s.bac, t); out.push({ label: 'Blood alcohol', dir: b > 0.01 ? 'up' : 'same', value: `${b.toFixed(2)} ‰`, note: b >= 0.5 ? 'over the driving limit' : b >= 0.2 ? 'attention already worse' : b > 0.01 ? 'low, not zero' : 'none' }); }
+      if (meal.alcoholG > 1) { const b = at(s.bac, t); out.push({ label: 'Blood alcohol', dir: b > 0.01 ? 'up' : 'same', value: b > 0.01 ? bacRangeText(b) : '0', note: b >= 0.2 ? 'attention worse: don’t drive' : b > 0.01 ? 'low, not zero: don’t drive' : 'none' }); }
       if (meal.caffeineMg >= 10) { const mg = at(s.caffeine.body, t); out.push({ label: 'Caffeine', dir: mg > 3 ? 'up' : 'same', value: `${r0(mg)} mg`, note: mg >= 75 ? 'clear boost' : mg >= 10 ? 'mild lift' : 'almost gone' }); }
       if (m.fat >= 5) { const tg = at(s.tgDelta, t); out.push({ label: 'Blood fat', dir: tg > 0.05 ? 'up' : 'same', value: tg > 0.05 ? `+${tg.toFixed(2)} mmol/L` : 'normal', note: tg > 0.05 ? 'fat from the meal' : t < 120 ? 'arrives in 2–4 h' : 'back to normal' }); }
       if (hasFibre) { const c = s.colonG.reduce((a, x) => a + at(x, t), 0); out.push({ label: 'Fibre in your large intestine', dir: c > 0.1 ? 'up' : 'same', value: `${r1(c)} g`, note: c > 0.1 ? 'feeding your gut bacteria' : t < 200 ? 'still on its way' : 'mostly passed' }); }

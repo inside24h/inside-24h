@@ -148,3 +148,10 @@ Optional (T1–T3): a small **sitting penalty** is justified (HR 1.24 mortality,
 7. **Bar magnitudes** (anchor "HR 0.5 = +10") are our design choice (C); Opus should confirm. Cohort HRs are associations (reverse causation likely inflates them; Paluch/Saint-Maurice adjusted for baseline illness but residual confounding remains).
 8. **Secondary sources:** ACSM equations (E1) read via a study-guide page, not the ACSM text; 5 kcal/L is a standard conversion. Should be verified against the ACSM Guidelines or Pandolf/Leger (Hall 2004 supports the equations).
 9. **Compensatory eating** after exercise (offsets part of the kcal deficit) — not researched; kcal offset therefore an upper bound.
+
+## Walking after meals (tip "A 10-minute easy walk after eating makes the sugar spike smaller", app content/tips.ts)
+
+| ID | Finding | Level | Source |
+|---|---|---|---|
+| PW1 | Meta-analysis of 7 one-day randomised crossover trials (mixed-sex adults, mostly overweight/obesity): breaking up sitting with frequent short bouts of light-intensity walking lowered postprandial glucose vs continued sitting (SMD −0.72, 95% CI −1.03 to −0.41) and insulin (SMD −0.83); walking beat standing for glucose (SMD −0.30). No effect on SBP. | B (small trials, not healthy-weight adults) | Buffey AJ et al. 2022, Sports Med. PMID 35147898, PMC9325803 (abstract read via epmc.py) |
+| PW2 | 41 adults with type 2 diabetes, randomised crossover, 2 weeks each: advice to walk 10 min after each main meal gave lower 3-h postprandial glucose iAUC than one 30-min walk a day (ratio 0.88, 95% CI 0.78–0.99); after the evening meal 0.78. | B (T2D, not healthy people) | Reynolds AN et al. 2016, Diabetologia. PMID 27747394 (abstract read via epmc.py) |

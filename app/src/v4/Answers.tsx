@@ -1,7 +1,13 @@
 // Quick answers: the everyday questions people actually have, answered in a few words from the same model.
-// Sugar · Sleep · Driving (alcohol only) · Hunger (after a dip) · Energy as walking minutes.
+// Sugar · Sleep · Driving (alcohol only) · Hunger (after a dip) · Energy as walking minutes · one next step.
+// Where people differ we show a range (science/ranges.ts); blood alcohol is never a single number or a "safe" time.
 import type { System } from './status';
+import { worstMoment } from './status';
 import { at } from '../science/espressoSim';
+import { bacRangeText, glucoseRangeText } from '../science/ranges';
+import { TIPS } from '../content/tips';
+import { LEVEL_LABEL } from '../content/types';
+import { Disclaimer } from './HowWeKnow';
 
 export interface AnswerInput {
   systems: System[]; drinkAt: number; bedtimeMin: number; weightKg: number;
@@ -10,7 +16,7 @@ export interface AnswerInput {
   /** latest clock minute to have it without delaying sleep (caffeine), if any */
   latestForSleep?: number | null;
 }
-interface Answer { icon: string; q: string; a: string; tone: 0 | 1 | 2 }
+export interface Answer { icon: string; q: string; a: string; tone: 0 | 1 | 2; /** small line under the answer (evidence level) */ note?: string; title?: string }
 
 const hh = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(Math.floor(m) % 60).padStart(2, '0')}`;
 
@@ -25,7 +31,9 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     for (let m = peakAt; m < Math.min(g.length, 600); m++) if (g[m] < 0.15 * peak) { backAt = m; break; }
     const mmol = peak / 18.016;
     if (mmol < 0.3) out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: 'No, it stays steady.', tone: 0 });
-    else out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: +${mmol.toFixed(1)} mmol/L at ${at0(peakAt)}${backAt > 0 ? `, normal again by ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0 });
+    // a range: ±1 SD between people ≈ ±40% (cola.md B1, digestion-generic.md GL8)
+    else out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: about ${glucoseRangeText(mmol)} mmol/L around ${at0(peakAt)}${backAt > 0 ? `, normal again by about ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0,
+      note: 'Typical response, not personalised' });
     if (low / 18.016 <= -0.3) out.push({ icon: '🍽️', q: 'Will I get hungry again soon?', a: `Likely around ${at0(lowAt)}: sugar dips below where you started.`, tone: 1 });
   } else out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: x.bac
     ? 'Hard to say: alcohol changes how your liver handles sugar, so we don’t draw a curve.'
@@ -42,14 +50,12 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     if (x.bedtimeMin - x.latestForSleep <= 30) out.push({ icon: '⏰', q: 'When is the best time?', a: 'Any time today: this little caffeine won’t delay your sleep.', tone: 0 });
     else out.push({ icon: '⏰', q: 'When is the best time?', a: `Before ${hh(x.latestForSleep)}: then the caffeine won't delay your sleep at ${hh(x.bedtimeMin)}.${late ? ' You had it later than that.' : ''}`, tone: late ? 1 : 0 });
   }
-  // Driving
+  // Driving: never a "safe" time and never one exact number. Widmark estimates are off by 20–40% (alcohol.md W6),
+  // and attention is already worse from 0.2 g/L (AL4), so the only honest answer is "don't".
   if (x.bac) {
-    let peak = 0, zero = -1, under05 = -1;
+    let peak = 0;
     for (let m = 0; m < x.bac.length; m++) peak = Math.max(peak, x.bac[m]);
-    for (let m = x.bac.indexOf(peak); m < x.bac.length; m++) { if (under05 < 0 && x.bac[m] < 0.5) under05 = m; if (x.bac[m] <= 0.005) { zero = m; break; } }
-    out.push({ icon: '🚗', q: 'Can I drive?', a: peak >= 0.5
-      ? `No. Over the 0.5 ‰ limit until about ${at0(under05)}; back to 0.0 at ${at0(zero)}. Estimate ±30%: don't rely on it.`
-      : `Best not until ${at0(zero)} (back to 0.0 ‰). Young and professional drivers must have 0.0. Estimate ±30%.`, tone: peak >= 0.5 ? 2 : 1 });
+    out.push({ icon: '🚗', q: 'Can I drive?', a: `No. Don’t drive after drinking — this can’t tell you when you’re safe. Your peak could be about ${bacRangeText(peak)}; real values differ by up to 40%.`, tone: 2 });
   }
   // Energy as walking (Compendium of Physical Activities: walking ~5 km/h ≈ 3.5 MET; kcal/min = MET × 3.5 × kg / 200)
   if (x.kcal >= 5) {
@@ -58,20 +64,35 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     out.push({ icon: '🚶', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal ≈ ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`} of brisk walking for you.`, tone: 0 });
   } else out.push({ icon: '🚶', q: 'How much energy is that?', a: 'Almost none.', tone: 0 });
   if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', a: `Yes: about ${Math.round(x.waterMl)} ml of water for your body.`, tone: 0 });
+  const tip = nextStep(x.systems, !!x.bac);
+  if (tip) out.push({ icon: '👣', q: 'What can I do?', a: tip.text, tone: 0, note: `Evidence ${tip.level}: ${LEVEL_LABEL[tip.level].toLowerCase()}`, title: tip.why });
   return out;
 }
 
+/** One next step for the hardest moment of the day (worst light first). The alcohol tip is skipped when the
+ *  driving answer already says it. */
+export function nextStep(systems: System[], hasAlcohol: boolean) {
+  const ranked = systems.filter((s) => !s.unknown && s.tip).map((s) => ({ s, m: worstMoment(s) }))
+    .map((r) => ({ ...r, l: r.s.levels[r.m] })).filter((r) => r.l > 0).sort((a, b) => b.l - a.l);
+  for (const r of ranked) {
+    const k = r.s.tip!(r.l as 0 | 1 | 2, r.m);
+    if (k && !(k === 'alcohol' && hasAlcohol)) return TIPS[k];
+  }
+  return null;
+}
+
 const TONE = ['#3ddc84', '#ffc83d', '#ff5a5a'];
-export function Answers({ list }: { list: Answer[] }) {
+export function Answers({ list, onHow }: { list: Answer[]; onHow?: () => void }) {
   return (
     <div className="answers" aria-label="Quick answers">
       <div className="ctl">Quick answers</div>
       {list.map((x) => (
-        <div key={x.q} className="ans" style={{ ['--t' as string]: TONE[x.tone] }}>
+        <div key={x.q} className="ans" style={{ ['--t' as string]: TONE[x.tone] }} title={x.title}>
           <span className="ai" aria-hidden="true">{x.icon}</span>
-          <span><b>{x.q}</b><em>{x.a}</em></span>
+          <span><b>{x.q}</b><em>{x.a}</em>{x.note && <small className="tipsrc">{x.note}</small>}</span>
         </div>
       ))}
+      <Disclaimer onHow={onHow} />
     </div>
   );
 }

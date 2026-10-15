@@ -134,6 +134,8 @@ for (const node of scene.listChildren()) {
 
 // Quantization only (natively supported by three's GLTFLoader). No meshopt compression: it needs a WASM
 // decoder, which sandboxed previews may block. Size cost is small because the page is gzipped anyway.
+// UPDATE: the app now ships anatomy.meshopt.glb made from this file by compress-anatomy.mjs (run it after this
+// script); Body.tsx falls back to a pure-JS decoder when WebAssembly is blocked.
 doc.createExtension(KHRMeshQuantization).setRequired(true);
 await doc.transform(quantize());
 fs.mkdirSync(path.dirname(OUT), { recursive: true });

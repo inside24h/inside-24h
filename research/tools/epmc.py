@@ -8,6 +8,7 @@ Full texts are cached in research/sources/<PMCID>.xml so every quoted sentence c
 """
 import json, os, re, sys, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
+sys.stdout.reconfigure(encoding="utf-8")  # Windows console defaults to cp1252
 
 API = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 CACHE = os.path.join(os.path.dirname(__file__), "..", "sources")

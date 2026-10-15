@@ -12,11 +12,28 @@
     <meta property="og:image" content="/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2304070c' stroke='%235cd3ff' stroke-width='4'/%3E%3Ctext x='32' y='41' font-size='24' text-anchor='middle' fill='%235cd3ff' font-family='Arial' font-weight='700'%3E24%3C/text%3E%3C/svg%3E" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" />
+    <!-- Loading shell: paints at once, before the big bundle (moved to the end of <body> at build) has arrived.
+         React replaces it when it mounts (src/v4/main.tsx). Fonts are self-hosted in src/assets/fonts. -->
+    <style>
+      html, body { margin: 0; height: 100%; background: #04070c; color: #e6edf5; }
+      .boot { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center;
+        background: radial-gradient(ellipse 60% 55% at 50% 45%, #0c1b2c 0%, #04070c 75%); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .boot-body { position: relative; width: 46px; height: 120px; margin-bottom: 14px; border: 1.5px solid rgba(92, 211, 255, .45);
+        border-radius: 23px 23px 18px 18px; overflow: hidden; box-shadow: 0 0 24px rgba(92, 211, 255, .12) inset; }
+      .boot-body::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: #5cd3ff;
+        box-shadow: 0 0 12px 2px rgba(92, 211, 255, .7); animation: boot-scan 1.6s ease-in-out infinite alternate; }
+      .boot-name { font: 30px/1.1 "Instrument Serif", Georgia, "Times New Roman", serif; letter-spacing: .01em; }
+      .boot-line { color: #8292a7; font: 12px "Geist Mono", ui-monospace, Consolas, monospace; animation: boot-fade 1.6s ease-in-out infinite alternate; }
+      @keyframes boot-scan { to { transform: translateY(118px); } }
+      @keyframes boot-fade { from { opacity: .55; } to { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-body::after { animation: none; top: 50%; } .boot-line { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot" role="status" aria-live="polite"><div class="boot-body" aria-hidden="true"></div><div class="boot-name">Inside 24h</div><div class="boot-line">Loading your body…</div></div></div>
+    <noscript><p style="position:fixed;inset:auto 0 24px;text-align:center;color:#8292a7;font:13px system-ui,sans-serif">Inside 24h needs JavaScript turned on.</p></noscript>
     <script type="module" src="/src/v4/main.tsx"></script>
   </body>
 </html>

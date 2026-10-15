@@ -70,6 +70,18 @@ export function record(source: HTMLCanvasElement, format: Format, overlay: () =>
 // Yield to the browser without setTimeout: timers are throttled to ~1/min in background tabs, message events are not.
 const yieldNow = () => new Promise<void>((r) => { const ch = new MessageChannel(); ch.port1.onmessage = () => r(); ch.port2.postMessage(0); });
 export const canEncode = () => typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined';
+
+/** In-app browsers of social apps (Instagram, Facebook, TikTok, Snapchat, LINE…). They usually lack WebCodecs and
+ *  their screen recording is unreliable, so we send people to their real browser instead. */
+export const isInAppBrowser = (ua: string) => /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Bytedance|BytedanceWebview|Snapchat|\bLine\/|Twitter/i.test(ua);
+
+/** How this browser can make the video: frame by frame (WebCodecs), by filming the screen (MediaRecorder), or not at all. */
+export function videoSupport(env: { encode: boolean; mime: boolean; ua: string }): 'frames' | 'screen' | 'none' {
+  if (env.encode) return 'frames';
+  if (env.mime && !isInAppBrowser(env.ua)) return 'screen';
+  return 'none';
+}
+export const videoSupportHere = () => videoSupport({ encode: canEncode(), mime: !!pickMime(), ua: typeof navigator === 'undefined' ? '' : navigator.userAgent });
 const FPS = 30, INTRO_F = Math.round((INTRO_MS / 1000) * FPS), OUTRO_F = Math.round((OUTRO_MS / 1000) * FPS);
 
 /** step(minute) must set the day position and render one 1/30 s frame of the 3D scene synchronously.
@@ -354,7 +366,11 @@ function drawMain(ctx: CanvasRenderingContext2D, W: number, H: number, src: HTML
     ctx.save(); ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(4,7,12,.88)'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = LIGHT[o.pop.level]; ctx.lineWidth = 8; ctx.stroke();
-    ctx.fillStyle = LIGHT[o.pop.level]; ctx.font = `800 ${reel ? 64 : 54}px ${SANS}`; ctx.fillText(o.pop.big, cx, cy + 12);
+    // ranges ("0.16–0.38") are wider than one number: shrink the font until it fits inside the circle
+    let fs = reel ? 64 : 54;
+    ctx.font = `800 ${fs}px ${SANS}`;
+    while (fs > 28 && ctx.measureText(o.pop.big).width > 2 * r - 36) { fs -= 2; ctx.font = `800 ${fs}px ${SANS}`; }
+    ctx.fillStyle = LIGHT[o.pop.level]; ctx.fillText(o.pop.big, cx, cy + 12);
     ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${reel ? 26 : 22}px ${SANS}`; ctx.fillText(o.pop.small, cx, cy + 52);
     ctx.restore();
   }
