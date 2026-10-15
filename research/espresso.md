@@ -91,6 +91,23 @@ App note: default dose 63 mg, with a slider (≈ 25–320 mg) and a line saying 
 | R2 | Normal fasting glucose < 100 mg/dL (5.6 mmol/L); SpO2 95–100% at sea level. | A · **VERIFY** | ADA Standards of Care (primary page not yet read); SpO2 source pending |
 | O1 | Organ volumes measured from the BodyParts3D meshes: brain 1.22 L, liver 1.70 L, heart 0.45 L (incl. chambers), kidneys 0.10 L each, stomach 0.57 L. Lung meshes are not closed shells, so no lung volume. | C | `pipeline/build-anatomy.mjs` → `organ-volumes.json` |
 
+## Your body: personal factors (added 2026-10-15, science/personal.ts)
+
+Each factor changes the model only because a study we read shows the effect. Abstracts read via `epmc.py abs`.
+
+| ID | Claim | Level | Source |
+|---|---|---|---|
+| M6 ✔ | Re-read: smokers t½ **3.5 h vs 6.0 h** (n = 13 + 13, saliva); clearance 155 ± 16 vs 94 ± 18 ml/kg/h; Vd not different. → model ×0.58 (clears ≈ 1.7× faster). | A | Parsons & Neims 1978, PMID 657717 |
+| M7 ✔ | Re-read: pill t½ **10.7 ± 3.0 h vs 6.2 ± 1.6 h** (9 + 9 women, 250 mg); Vd and binding similar. → model ×1.73. | A | Patwardhan 1980, PMID 7359014 |
+| Y1 | Pregnancy: t½ rises from an average **3 h** (non-pregnant women) to **10.5 h** in the last 4 weeks (≈ 3.5×); the rise "is already occurring during the first part of pregnancy"; not explained by Vd; individual values not correlated with age, weight, coffee habit or smoking. Together with M8 (clearance 39% → ≈ 2.6×) the late-pregnancy factor is **2.6–3.5×**; model uses 2.6 (M9). Early/mid-pregnancy: no number read → **?**, not modelled. | A (late) · ? (earlier) | Knutti R et al. 1982, Arch Toxicol Suppl. PMID 6954898; Brazier 1983 (PMID 6628163, no numbers in abstract) |
+| Y2 | Non-users given caffeine daily: **near-complete tolerance** of BP, HR, catecholamines and renin within **1–4 days** (double-blind). | B (small, 1981) | Robertson D et al. 1981, J Clin Invest. PMID 7009653 (PMC370671) |
+| Y3 | After 5 days of 300 or 600 mg/day, 250 mg still raised systolic/diastolic BP on average (P < 0.006/0.001). **Half** of 97 adults lost the BP response **completely**, the other half showed **no loss**; men and women alike. | A (RCT, n = 97) | Lovallo WR et al. 2004, Hypertension. PMID 14967827 |
+| Y4 | Model: "coffee or tea most days" → caffeine's BP rise × **0.5** (mean of Y3's two halves; person range 0–1). | C (on Y2–Y3) | — |
+| Y5 | Age: no change modelled. Young vs elderly men had the same tmax, Cmax, F; elimination not significantly different (A1). | A1 | Blanchard & Sawers 1983, PMID 6886969 |
+| Y6 | Habit and half-life: Knutti found t½ not correlated with coffee consumption (Y1) → the daily-user setting does not change the clock or the sleep answer. Whether the **sleep** effect fades in habitual users: not read → **?** | B · ? | Knutti 1982 |
+
+Tests: `app/src/science/personal.test.ts`.
+
 ## Model parameters (default healthy adult, 70 kg, non-smoker, no oral contraceptives)
 
 One-compartment model, first-order absorption:

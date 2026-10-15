@@ -218,3 +218,10 @@ export function mixColor(parts: Part[]): string {
   }
   return `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
 }
+
+/** n servings of a food (½ → "½ slice"), or an exact weight: the same labels as typing it. Used by the meal builder. */
+export function servingPart(food: Food, n: number): Part {
+  const p = toPart(food, { count: n });
+  return n === 0.5 ? { ...p, amountLabel: p.amountLabel.replace(/^0\.5 × /, '½ × ').replace(/^0\.5 /, '½ ') } : p;
+}
+export const gramsPart = (food: Food, grams: number): Part => toPart(food, { count: null, grams });

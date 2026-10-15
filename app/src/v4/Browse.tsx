@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FOODS, fold, type Food, type Part } from './food/parse';
+import { PRESETS, presetParts } from './food/meal';
+import './meals.css';
 
 // "See all": every food and drink in one scrollable list, grouped, with a filter. Picking works exactly like picking from search.
 const GROUPS: { name: string; test: (f: Food) => boolean }[] = [
@@ -18,7 +20,10 @@ const GROUPS: { name: string; test: (f: Food) => boolean }[] = [
 const OTHER = 'More foods';
 const groupOf = (f: Food) => GROUPS.find((g) => g.test(f))?.name ?? OTHER;
 
-export function Browse({ onPick, onClose }: { onPick: (parts: Part[], text: string) => void; onClose: () => void }) {
+const one = (f: Food): Part[] => [{ food: f, grams: f.serving.grams, amountLabel: f.serving.label, assumed: !!f.assumedServing }];
+
+/** `onAdd`: a small "+" on each row adds that food to the current meal instead of replacing it. */
+export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], text: string) => void; onClose: () => void; onAdd?: (parts: Part[], text: string) => void }) {
   const [q, setQ] = useState('');
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -47,16 +52,25 @@ export function Browse({ onPick, onClose }: { onPick: (parts: Part[], text: stri
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter, e.g. coffee, kruh, apple" aria-label="Filter the list" />
       </label>
       <div className="bscroll">
+        {!q && (
+          <section className="bmeals">
+            <h3>Popular meals <small>{PRESETS.length}</small></h3>
+            <div className="mealpresets inbrowse">
+              {PRESETS.map((p) => <button key={p.id} type="button" onClick={() => onPick(presetParts(p), p.name)}><b>{p.name}</b><small>{p.sub}</small></button>)}
+            </div>
+          </section>
+        )}
         {shown === 0 && <p className="bempty">Nothing matches “{q}”. Try a simpler word.</p>}
         {groups.map((g) => (
           <section key={g.name}>
             <h3>{g.name} <small>{g.items.length}</small></h3>
             <ul>
               {g.items.map((f) => (
-                <li key={f.id}>
-                  <button onClick={() => onPick([{ food: f, grams: f.serving.grams, amountLabel: f.serving.label, assumed: !!f.assumedServing }], f.name)}>
+                <li key={f.id} className={onAdd ? 'withadd' : ''}>
+                  <button onClick={() => onPick(one(f), f.name)}>
                     <i style={{ background: f.color }} aria-hidden="true" />
                     <span className="bn">{f.name}<small>{f.serving.label}</small></span>                  </button>
+                  {onAdd && <button className="badd" aria-label={`Add ${f.name} to the meal`} title="Add to the meal" onClick={() => onAdd(one(f), f.name)}>+</button>}
                 </li>
               ))}
             </ul>

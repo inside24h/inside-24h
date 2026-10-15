@@ -1,18 +1,22 @@
 // Deep links: every moment can be shared. The hash holds what you ate, how much, the minute of the day, the view
 // and the comparison partner, e.g. #q=cola&n=2&t=45m&view=full&vs=glass+of+water. Opening it restores that moment
 // (paused, so people see what the sender saw). Old links (#q=banana, #p=cola&t=90, #compare=…) keep working.
+// MEALS: #m=hamburger+fries*2+cola (food ids, *servings or *grams g; food/meal.ts). Exact and short; old meal links
+// written as text (#q=118 g Banana + 250 g Milk) still open through the text parser.
 import { MAX_MIN } from '../time';
 import { parseMeal, type Part } from './food/parse';
+import { mealCode, mealFromCode } from './food/meal';
 
 export type View = 'simple' | 'full' | 'detailed';
 export const PORTIONS = [0.5, 1, 2, 3] as const;
 /** Keys this module owns; any other key in the hash (dose, city, QA keys…) is passed through untouched. */
-const OWN = ['q', 'p', 'n', 't', 'view', 'vs', 'compare'];
+const OWN = ['q', 'm', 'p', 'n', 't', 'view', 'vs', 'compare'];
 /** Old keys that describe a stale UI state and are dropped as soon as the app writes its own hash. */
 const DROP = ['organ', 'panel'];
 
 export interface Link {
   q?: string;      // food as text, parsed with parseMeal
+  m?: string;      // a meal of several things: "hamburger fries*2 cola" (wins over q)
   p?: string;      // old: curated product id (espresso, cola, water)
   n: number;       // portion: 0.5 · 1 · 2 · 3
   t: number | null; // minutes after eating; null = not given
@@ -50,6 +54,7 @@ export function readLink(hash: string): Link {
   const v = h.get('view');
   return {
     q: h.get('q')?.trim() || undefined,
+    m: h.get('m')?.trim() || undefined,
     p: h.get('p')?.trim() || undefined,
     n: parsePortion(h.get('n')),
     t: parseTime(h.get('t')),
@@ -61,7 +66,7 @@ export function readLink(hash: string): Link {
 /** Builds "#q=…&n=…&t=…&view=…&vs=…" (defaults left out). `prev` = the current hash, whose other keys are kept. */
 export function writeLink(l: Partial<Link>, prev = ''): string {
   const out = new URLSearchParams();
-  if (l.q) out.set('q', l.q); else if (l.p) out.set('p', l.p);
+  if (l.m) out.set('m', l.m); else if (l.q) out.set('q', l.q); else if (l.p) out.set('p', l.p);
   if (l.n !== undefined && l.n !== 1) out.set('n', String(l.n));
   if (l.t !== undefined && l.t !== null) out.set('t', formatTime(l.t));
   if (l.view && l.view !== 'simple') out.set('view', l.view);
@@ -91,3 +96,11 @@ export function mealText(parts: Part[]): string {
   cache.set(exact, out);
   return out;
 }
+
+/** What a link names: a meal code first, else the text, else nothing (curated #p= links are handled by the app). */
+export function linkParts(l: Pick<Link, 'q' | 'm'>): Part[] {
+  const meal = mealFromCode(l.m);
+  return meal.length ? meal : l.q ? parseMeal(l.q) : [];
+}
+/** Link fields for what is on screen: two or more things → exact meal code (m); one → the short text (q). */
+export const linkFor = (parts: Part[]): Pick<Link, 'q' | 'm'> => (parts.length > 1 ? { m: mealCode(parts) } : { q: mealText(parts) });

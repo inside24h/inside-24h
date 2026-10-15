@@ -1,6 +1,8 @@
 import { HEALTHY_VITALS, MG_DL_PER_MMOL_L, totalBodyWaterL, type Profile } from '../science/profile';
 import { NumberField } from './NumberField';
 import { CityField } from './CityField';
+import { FACTORS, type FactorId } from '../science/personal';
+import './personal.css';
 
 const hhmm = (min: number) => `${String(Math.floor(min / 60) % 24).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 const fromHhmm = (s: string) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
@@ -27,12 +29,19 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
           <label>Height<span><NumberField id="height" value={p.heightCm} min={130} max={220} onCommit={(v) => set('heightCm', v)} /> cm</span></label>
           <label>Weight<span><NumberField id="weight" value={p.weightKg} min={35} max={200} onCommit={(v) => set('weightKg', v)} /> kg</span></label>
         </div>
-        <div className="checks">
-          <Check id="smoker" label="I smoke" on={p.smoker} set={(v) => set('smoker', v)} />
-          {p.sex === 'female' && <Check id="pill" label="I take the contraceptive pill" on={p.oralContraceptives} set={(v) => set('oralContraceptives', v)} />}
-          {p.sex === 'female' && <Check id="preg" label="I’m in the last weeks of pregnancy" on={p.latePregnancy} set={(v) => set('latePregnancy', v)} />}
-        </div>
-        <p className="note">Your body holds about <b>{totalBodyWaterL(p).toFixed(1)} L</b> of water (Watson equations). Caffeine spreads through it.</p>
+        <p className="note">Your body holds about <b>{totalBodyWaterL(p).toFixed(1)} L</b> of water (Watson equations). Caffeine and alcohol spread through it.</p>
+      </fieldset>
+
+      <fieldset className="pf">
+        <legend>What changes it for you</legend>
+        <p className="note">All optional. Tap what’s true today; only things studies show to matter are here.</p>
+        <Factor id="smoker" label="I smoke" on={p.smoker} set={(v) => set('smoker', v)} />
+        {p.sex === 'female' && <Factor id="pill" label="I take the contraceptive pill" on={p.oralContraceptives} set={(v) => set('oralContraceptives', v)} />}
+        {p.sex === 'female' && <Factor id="latePregnancy" label="I’m in the last month of pregnancy" on={p.latePregnancy} set={(v) => set('latePregnancy', v)} />}
+        <Factor id="caffeineDaily" label="I have coffee or tea most days" on={!!p.caffeineDaily} set={(v) => set('caffeineDaily', v)} />
+        <Factor id="withMeal" label="I’ve just eaten a meal (last hour or so)" on={!!p.withMeal} set={(v) => set('withMeal', v)} />
+        <p className="pf-device">🔒 Stays on your device: saved only in this browser, never sent anywhere.</p>
+        <p className="note">Not changed by these: your sugar curve (only a glucose sensor can personalise it) and how fast caffeine leaves with age (the same at 20 and 70).</p>
       </fieldset>
 
       <fieldset>
@@ -80,6 +89,17 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
   );
 }
 
-function Check({ id, label, on, set }: { id: string; label: string; on: boolean; set: (v: boolean) => void }) {
+/** A yes/no fact with what it changes, its evidence level, and the claim behind it. */
+function Factor({ id, label, on, set }: { id: FactorId; label: string; on: boolean; set: (v: boolean) => void }) {
+  const f = FACTORS[id];
+  return (
+    <label className={`pf-row ${on ? 'on' : ''}`} htmlFor={`pf-${id}`}>
+      <input id={`pf-${id}`} type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} />
+      <span><b>{label}</b><small>{f.effect} <i className="pf-lvl" title={`Evidence ${f.level}; ${f.claims}`}>{f.level}</i></small></span>
+    </label>
+  );
+}
+
+export function Check({ id, label, on, set }: { id: string; label: string; on: boolean; set: (v: boolean) => void }) {
   return <label className="check" htmlFor={id}><input id={id} type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} /><span>{label}</span></label>;
 }

@@ -2,6 +2,7 @@
 // Compartments (mg caffeine): stomach → small intestine → body water → broken down → cleared.
 // Every rate constant is tied to a claim in research/espresso.md.
 import { DEFAULT_PROFILE, totalBodyWaterL, type Profile } from './profile';
+import { caffeineBpFactor } from './personal';
 
 const LN2 = Math.LN2;
 
@@ -93,7 +94,8 @@ export function simulateEspresso(doseMg: number, p: Profile, minutes = 1440, gas
   const conc = a.body.map((b) => b / vdL);
   const peakConc = conc.reduce((m, v) => Math.max(m, v), 0);
   const conc3mgkg = peakConc * (3 * p.weightKg) / doseMg; // linear model: peak for a 3 mg/kg dose
-  const sbpRise = conc.map((c) => SBP_AT_3MGKG * c / conc3mgkg);
+  // daily caffeine users: about half the BP rise on average [Y2–Y4] Robertson 1981, Lovallo 2004 (B)
+  const sbpRise = conc.map((c) => SBP_AT_3MGKG * caffeineBpFactor(p) * c / conc3mgkg);
   return {
     doseMg, minutes, ...a,
     stomachMl: a.stomach.map((s) => ESPRESSO_ML * s / doseMg),

@@ -80,6 +80,7 @@ Honest headline: we have good numbers for **liquid** emptying, for **one standar
 | GL7 | Cola eaten with a muffin removed the post-peak dip (cola.md B4). A larger dip at 2–3 h predicts hunger and a shorter time to the next meal. | A | cola.md B4, B9 (Wyatt 2021, PMC7610681) |
 | GL8 | Large between-person variation: CV of glucose response to identical meals **68%**, insulin 59%, triglyceride 103% (n = 1,002). Person-specific factors dominate triglyceride, meal macros dominate glucose (15.4% of variance). | A | Berry SE 2020, Nat Med. PMID 32528151 (abstract) |
 | GL9 | **Size of GL-to-peak slope is not the same for liquids and mixed solids.** Liquid anchor: 2.3 mmol/l ÷ 21 GL = **0.11 mmol/l per GL**. Free-living mixed meals (GL3): 0.07 mmol/l per 10 GL = **0.007 per GL**, ~15× smaller (includes fibre, fat, mixed carbs and CGM noise; a regression slope, not a controlled dose-response). A controlled solid-food dose-response with mmol/l values was **not retrieved**. | C · ? | GL3, GL4 |
+| GL10 | **Personal sugar curves can't be predicted from body facts.** 800 people, 46,898 meals with a glucose sensor: high variability in response to identical meals; prediction needed blood parameters, habits, anthropometrics, activity **and gut microbiota** (machine learning). → Inside 24h does **not** personalise the sugar curve by sex, age, weight or activity; it stays "typical" with a ±40% range (GL8) and the answer says so. | A (variability) · decision C | Zeevi D et al. 2015, Cell. PMID 26590418 (abstract) |
 
 ## 5. Triglycerides, amino acids
 
@@ -199,3 +200,6 @@ Amino acids: `AA(t)` same form, peak at 1 h (liquid fast protein) or 2–3 h (so
 9. **Drowsiness after meals under ~700 kcal** and the size of the effect in sleep-latency minutes (FC1 gives only direction and timing).
 10. **Tougas 2000 reports T50 values** that the abstract omits; read the full text to replace GE5's fitted 85 min.
 11. Whether lymph (chylomicron) kinetics shift with fat type (long-chain vs medium-chain, TG3 shows ±90 min peak time between oils).
+
+## Update 2026-10-15: meals (several things together)
+Mixed meals now have their own dossier: **`research/meals.md`** (ML1–ML7). Changes to this model: (1) solid T50 cap 150 → **210 min** (Farivar 2026 MRI: 132 / 158 / 188 min for 441 / 726 / ≈ 1270 kcal; the √kcal line gives 124 / 159 / 210) — partly answers open question 1: fat slows the meal mainly through its calories; (2) a drink eaten with food is a separate, faster **liquid phase** (Collins 1983/1991/1996, Maddern 1985: 18 min, 11–35), slowed ×1–2 by the food (C); (3) protein and fat of the other items shrink each item's sugar peak (Moghaddam 2006, Wolever 2017, Mishra 2026; C: 0.57 / 0.23 % per g per 50 g carbohydrate, max 35%).

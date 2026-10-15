@@ -42,6 +42,7 @@ import { Pro } from './Pro';
 import { Tour } from './Tour';
 import { CalmBar } from './CalmBar';
 import { Answers, quickAnswers } from './Answers';
+import { personalNotes } from '../science/personal';
 import { Disclaimer, HowWeKnow } from './HowWeKnow';
 import { VideoFallback } from './VideoFallback';
 import { videoSupportHere } from './share';
@@ -52,7 +53,8 @@ import { SafeCanvas } from './perf/SafeCanvas';
 import { isTouch } from './perf/device';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
-import { CURATED_Q, formatTime, isCuratedServing, mealText, readLink, writeLink } from './deeplink';
+import { CURATED_Q, formatTime, isCuratedServing, linkFor, linkParts, mealText, readLink, writeLink } from './deeplink';
+import { MealBar } from './MealBar';
 import { drawMomentCard } from './shareCard';
 import { MomentShare, type Moment } from './MomentShare';
 
@@ -94,7 +96,7 @@ const HASH_T = LINK.t;
 const HASH_DOSE = Math.max(20, Math.min(330, Number(HASH.get('dose')) || 63));
 const scaleParts = (base: Part[], f: number) => (f === 1 ? base : base.map((p) => ({ ...p, grams: p.grams * f, amountLabel: `${f === 0.5 ? '½ ×' : `${f} ×`} ${p.amountLabel}` })));
 // curated products (#q=cola) reopen in their own detailed model, like picking them in the app
-const LINK_BASE: Part[] = LINK.q ? parseMeal(LINK.q) : LINK.p && CURATED_Q[LINK.p] && LINK.n !== 1 ? parseMeal(CURATED_Q[LINK.p]) : [];
+const LINK_BASE: Part[] = LINK.m || LINK.q ? linkParts(LINK) : LINK.p && CURATED_Q[LINK.p] && LINK.n !== 1 ? parseMeal(CURATED_Q[LINK.p]) : [];
 const LINK_FOOD = LINK_BASE.length > 0 || !!(LINK.p && PRODUCTS[LINK.p]); // the link names a food: open it, skip the start screen
 const HASH_Q = LINK_BASE.length && !(LINK.n === 1 && isCuratedServing(LINK_BASE)) ? scaleParts(LINK_BASE, LINK.n) : [];
 const HASH_P = HASH_Q.length ? 'food' : LINK_BASE.length && isCuratedServing(LINK_BASE) ? LINK_BASE[0].food.id : PRODUCTS[LINK.p ?? ''] ? LINK.p! : 'espresso';
@@ -218,7 +220,7 @@ export default function AppV4() {
     const g = built.effects.glucoseMgDl ?? (unknownSugar ? undefined : new Float64Array(1441));
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
       glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, bac: built.bac, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
-      latestForSleep: latestForSleep(built.caffeine, profile) });
+      latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH) });
   }, [systems, profile, built, vYou, productId, foodParts]);
   // the current item as database parts (curated products too), its sugar peak, and a checked better swap
   const currentParts = useMemo(() => (productId === 'food' ? foodParts : parseMeal(({ cola: 'cola', espresso: 'espresso', water: 'glass of water' } as Record<string, string>)[productId] ?? productId)), [productId, foodParts]);
@@ -243,7 +245,7 @@ export default function AppV4() {
   const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (LINK.vs ? { with: parseMeal(LINK.vs) } : null));
   const [vsParts, setVsParts] = useState<Part[] | null>(null); // the partner currently chosen inside Compare
   const answersBlock = (<>
-    <Answers list={answers} onHow={() => setPanel('method')} />
+    <Answers list={answers} onHow={() => setPanel('method')} onBody={() => setPanel('body')} />
     {swap && peakNow !== null && <SwapCard swap={swap} peakNow={peakNow} onCompare={() => setCompare({ with: swap.parts })} />}
   </>);
   const stageIndex = PRODUCT.stages.reduce((acc, s, i) => (minute >= s.min ? i : acc), 0);
@@ -307,7 +309,7 @@ export default function AppV4() {
     if (one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
     setFoodParts(parts); setProductId('food');
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(true);
-    try { history.replaceState(null, '', `#q=${encodeURIComponent(canonical(parts))}`); } catch { /* sandboxed: fine */ }
+    try { history.replaceState(null, '', parts.length > 1 ? writeLink(linkFor(parts)) : `#q=${encodeURIComponent(canonical(parts))}`); } catch { /* sandboxed: fine */ }
   };
 
   // ---- Share: hook → the whole day following the liquid → summary card, recorded into a Reel or a feed video ----
@@ -468,7 +470,7 @@ export default function AppV4() {
   // ---- deep link: the address bar always describes what is on screen (replaceState, so no history spam).
   // The minute goes in only while paused / after scrubbing, never every frame.
   const linkHash = (t: number | null) => writeLink({
-    q: mealText(portion !== 1 && portionBase ? portionBase : currentParts), n: portion, t,
+    ...linkFor(portion !== 1 && portionBase ? portionBase : currentParts), n: portion, t,
     view: mode === 'detailed' ? 'detailed' : calm ? 'simple' : 'full',
     vs: compare && vsParts?.length ? mealText(vsParts) : undefined,
   }, window.location.hash);
@@ -509,7 +511,7 @@ export default function AppV4() {
           setStarted(false); setPlaying(false); setPanel(null); setEvidence(null); setCompare(null); setShare(null); setSelected(null);
           try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch { /* sandboxed */ }
         }}>Inside <em>24h</em></button>
-        <div className="topsearch">{started && <SmartSearch onPick={chooseFood} current={PRODUCT.name} />}</div>
+        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={chooseFood} />}</div>
         <div className="topactions">
           <div className="seg2 mode" role="group" aria-label="View">
             <button aria-pressed={mode === 'simple' && calm} onClick={() => { setMode('simple'); setCalm(true); }}>Simple</button>

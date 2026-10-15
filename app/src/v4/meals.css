@@ -1,0 +1,37 @@
+/* MEALS: meal builder under the header search, "+" on search/browse rows, popular-meal presets */
+.mealbar { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 560px; min-width: 0; }
+.mealchips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 100%; }
+.mchip { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 2px 0 10px; border: 1px solid var(--line2); border-radius: 999px; background: var(--surface); font: 13px var(--body); color: var(--text); max-width: 100%; }
+.mchip i { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, .15); }
+.mchip .mname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12ch; }
+.mchip button { min-width: 32px; min-height: 32px; border: 0; background: none; color: var(--text); cursor: pointer; border-radius: 999px; font: 500 13px var(--mono); }
+.mchip .mamt { color: var(--accent); padding: 0 6px; }
+.mchip .mx { color: var(--mute); font-size: 12px; }
+.mchip button:hover, .mchip button:focus-visible { background: rgba(92, 211, 255, .12); outline: 0; }
+.madd { min-height: 32px; padding: 0 12px; border: 1px dashed var(--accent); border-radius: 999px; background: rgba(92, 211, 255, .06); color: var(--accent); font: 500 13px var(--body); cursor: pointer; white-space: nowrap; }
+.madd:hover, .madd:focus-visible { background: rgba(92, 211, 255, .14); outline: 0; }
+.mfull { font: 11px var(--mono); color: var(--mute); align-self: center; }
+.search.adding .sfield { border-color: var(--accent); border-style: dashed; }
+
+/* "+" (add instead of replace) in search results and browse rows */
+.results li { position: relative; }
+.results .radd { margin-left: 6px; width: 32px; height: 32px; flex: none; border-radius: 50%; border: 1px solid var(--line2); background: var(--surface); color: var(--accent); font: 500 18px/1 var(--body); cursor: pointer; }
+.results .radd:hover, .results .radd:focus-visible { border-color: var(--accent); outline: 0; }
+.bscroll li.withadd { display: flex; align-items: center; gap: 6px; }
+.bscroll li.withadd > button:first-child { flex: 1; min-width: 0; }
+.bscroll li .badd { width: 44px; min-height: 44px; flex: none; border-radius: 50%; border: 1px solid var(--line2); background: none; color: var(--accent); font: 500 20px/1 var(--body); cursor: pointer; padding: 0; display: grid; place-items: center; grid-template-columns: none; }
+
+.search.smart .results li.canadd { grid-template-columns: auto minmax(0, 1fr) auto auto auto; }
+@media (max-width: 520px) { .search.smart .results li.canadd .rgi { display: none; } }
+
+/* popular meals */
+.search.smart .results li.mealpresets { display: block; padding: 6px 4px 8px; cursor: default; }
+.mealpresets > span { display: block; font: 500 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 4px 6px; }
+.mealpresets > div, .mealpresets.inbrowse { display: flex; flex-wrap: wrap; gap: 6px; }
+.mealpresets button { min-height: 36px; padding: 6px 12px; border: 1px solid var(--line2); border-radius: 999px; background: var(--surface); color: var(--text); font: 13px var(--body); cursor: pointer; text-align: left; }
+.mealpresets button:hover, .mealpresets button:focus-visible { border-color: var(--accent); outline: 0; }
+.mealpresets.inbrowse { padding: 4px 6px 10px; }
+.mealpresets.inbrowse button { display: grid; gap: 1px; border-radius: 12px; }
+.mealpresets.inbrowse b { font-weight: 500; }
+.mealpresets.inbrowse small { font: 11px var(--mono); color: var(--mute); }
+@media (max-width: 700px) { .mchip .mname { max-width: 9ch; } .mealbar { max-width: none; } }

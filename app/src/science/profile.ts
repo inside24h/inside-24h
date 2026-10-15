@@ -11,6 +11,10 @@ export interface Profile {
   smoker: boolean;
   oralContraceptives: boolean;
   latePregnancy: boolean;
+  /** has caffeine most days: smaller blood-pressure bump (science/personal.ts, espresso.md Y2–Y4) */
+  caffeineDaily?: boolean;
+  /** has just eaten a meal (≈ last hour): alcohol absorbed "fed" (science/personal.ts, alcohol.md PF1) */
+  withMeal?: boolean;
   // Starting values. If the person knows their own, they enter them; otherwise typical healthy values are used.
   restingHr: number; // beats/min
   sbp: number; // mmHg
@@ -48,7 +52,7 @@ export const DEFAULT_PROFILE: Profile = {
 export function healthyTwin(p: Profile): Profile {
   return { ...DEFAULT_PROFILE, sex: p.sex, ageY: p.ageY, heightCm: p.heightCm, weightKg: p.weightKg,
     drinkAtMin: p.drinkAtMin, bedtimeMin: p.bedtimeMin, wakeMin: p.wakeMin, glucoseUnit: p.glucoseUnit,
-    steps: p.steps, exercise: p.exercise, kmPerWeek: p.kmPerWeek };
+    steps: p.steps, exercise: p.exercise, kmPerWeek: p.kmPerWeek, withMeal: p.withMeal };
 }
 
 /** Watson PE et al. 1980, Am J Clin Nutr 33:27. Total body water in litres. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatTime, isCuratedServing, mealText, parsePortion, parseTime, readLink, writeLink } from './deeplink';
+import { formatTime, isCuratedServing, linkFor, mealText, parsePortion, parseTime, readLink, writeLink } from './deeplink';
 import { parseMeal } from './food/parse';
 
 describe('deep link time', () => {
@@ -93,5 +93,37 @@ describe('food text in links', () => {
     expect(isCuratedServing(parseMeal('cola'))).toBe(true);
     expect(isCuratedServing(parseMeal('2 cans of cola'))).toBe(false);
     expect(isCuratedServing(parseMeal('banana'))).toBe(false);
+  });
+});
+
+describe('meal deep links (#m=)', () => {
+  it('round-trips a meal exactly: ids, servings, grams, order', async () => {
+    const { mealFromCode, mealCode, PRESETS, presetParts } = await import('./food/meal');
+    const { linkParts } = await import('./deeplink');
+    const meal = [...mealFromCode('hamburger fries*2 cola'), ...parseMeal('200 g rice')];
+    const h = writeLink({ ...linkFor(meal), n: 1, t: 90 });
+    expect(h).toBe('#m=hamburger+fries*2+cola+rice-white*200g&t=1h30m');
+    const back = linkParts(readLink(h));
+    expect(back.map((p) => p.food.id)).toEqual(meal.map((p) => p.food.id));
+    back.forEach((p, i) => expect(p.grams).toBeCloseTo(meal[i].grams, 0));
+    // every preset survives the trip
+    for (const pr of PRESETS) {
+      const parts = presetParts(pr);
+      expect(parts.length).toBeGreaterThan(1);
+      expect(mealCode(linkParts(readLink(writeLink(linkFor(parts)))))).toBe(mealCode(parts));
+    }
+  });
+  it('keeps old links working and ignores junk in m', async () => {
+    const { linkParts } = await import('./deeplink');
+    expect(linkParts(readLink('#q=118%20g%20Banana%20%2B%20250%20g%20Milk')).map((p) => p.food.id)).toEqual(['banana', expect.stringMatching(/^milk/)]);
+    expect(linkParts(readLink('#m=nope+cola*99+banana*0'))).toEqual([]);
+    expect(linkParts(readLink('#m=cola*0.5')).map((p) => Math.round(p.grams))).toEqual([171]);
+    // a single food keeps the short text form
+    expect(writeLink(linkFor(parseMeal('banana')))).toBe('#q=banana');
+    // max 5 things
+    expect(linkParts(readLink('#m=cola+banana+apple+pizza+beer+water')).length).toBe(5);
+  });
+  it('passes other keys through and m wins over q', () => {
+    expect(writeLink({ m: 'cola banana', q: 'x' }, '#dose=80')).toBe('#m=cola+banana&dose=80');
   });
 });

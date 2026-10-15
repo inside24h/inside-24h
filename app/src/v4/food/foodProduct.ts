@@ -11,6 +11,9 @@ import { BLOOD_SITES, GUT_SITES, ROUTE_GUT_TO_BODY } from '../../scene/Flow';
 import type { Built, ProductDef, WhereRow } from '../products';
 import type { Change, Chapter, Dir, LiquidMap, Story } from '../stories';
 import { macros, mixColor, type Macros, type Part } from './parse';
+import { mealKind, toMeal } from './meal';
+import { MEAL_CLAIMS } from '../../content/mealClaims';
+import { mealCaffeineNote, mealChapters, mealDrinkNote, mealStomachText, mealSugarNote } from './mealWords';
 import { foodRoute } from '../routes';
 import volumesJson from '../../assets/organ-volumes.json';
 
@@ -24,20 +27,7 @@ const r1 = (v: number) => (Math.round(v * 10) / 10).toString();
 function rate(a: Float64Array) { let max = 1e-9; for (let i = 0; i + 1 < a.length; i++) max = Math.max(max, a[i] - a[i + 1]); return (m: number) => Math.max(0, at(a, m) - at(a, m + 1)) / max; }
 function inflow(a: Float64Array) { let max = 1e-9; for (let i = 0; i + 1 < a.length; i++) max = Math.max(max, a[i + 1] - a[i]); return (m: number) => Math.max(0, at(a, m + 1) - at(a, m)) / max; }
 
-export function mealKind(parts: Part[]): Meal['kind'] {
-  if (parts.every((p) => p.food.kind === 'liquid')) return 'liquid';
-  return parts.some((p) => p.food.kind === 'solid') ? 'solid' : 'semi';
-}
-
-export function toMeal(parts: Part[], m: Macros): Meal {
-  const kind = mealKind(parts);
-  const drink = parts.find((p) => (p.food.p.alcoholG ?? 0) > 0);
-  const abv = drink ? drink.food.p.alcoholG ?? 0 : 0; // g alcohol per 100 g
-  // [AL1] Mitchell 2014 peak times: beer 62, wine 54, spirits 36 min → absorption rates 2.5, 3.3 and ≈ 5 per hour (C)
-  const alcoholKa = abv === 0 ? undefined : (abv < 6 ? 2.5 : abv < 20 ? 3.3 : 5) / 60;
-  const fed = parts.some((p) => p.food.kind !== 'liquid' && ((p.food.p.kcal ?? 0) * p.grams) / 100 >= 100);
-  return { ...m, kind, alcoholKa, fed };
-}
+export { mealKind, toMeal }; // moved to ./meal.ts (pure, testable without the 3D scene)
 
 export function describe(parts: Part[]): string {
   return parts.map((p) => `${p.food.name.replace(/\s*\(.*\)$/, '')}`).join(' + ');
@@ -50,7 +40,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
   const serving = parts.map((p) => p.amountLabel).join(' + ');
   const color = mixColor(parts);
   const isDrink = meal.kind === 'liquid';
-  const noun = isDrink ? 'drink' : 'food';
+  const noun = parts.length > 1 ? 'meal' : isDrink ? 'drink' : 'food';
   const cache = new WeakMap<Built, FoodSim>();
 
   const build = (p: Profile): Built => {
@@ -58,9 +48,27 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
     const story = foodStory(s, meal, m, p, color, isDrink, parts);
     const g = (label: string, a: Float64Array, cls: string, organ: string, max: number): WhereRow => ({ label, value: (t) => at(a, t), unit: 'g', max, cls, organ });
     const colon = (t: number) => s.colonG.reduce((acc, c) => acc + at(c, t), 0);
+    // MEAL with a drink and food: two coloured streams, so the drink visibly leaves the stomach first [ML1–ML4]
+    const mix = s.meal?.phases.drink && s.meal.phases.food ? s.meal : null;
+    const dColor = mix ? mixColor(mix.phases.drink!.items.map((i) => parts[i])) : color;
+    const fColor = mix ? mixColor(mix.phases.food!.items.map((i) => parts[i])) : color;
+    const foodIntestine = mix ? s.intestineG.map((v, i) => Math.max(0, v - mix.drinkIntestineG[i])) : s.intestineG;
     const built: Built = {
       caffeine: s.caffeine,
-      layers: [{
+      layers: mix ? [
+        { id: 'drink', n: Math.max(120, Math.round(900 * mix.phases.drink!.grams / meal.grams)), total: mix.phases.drink!.grams, states: [
+          { amount: mix.drinkStomachG, sites: [['stomach', 1]], color: dColor },
+          { amount: mix.drinkIntestineG, sites: GUT_SITES, via: ['duodenum'], color: dColor },
+        ] },
+        { id: 'food', n: Math.max(120, Math.round(900 * mix.phases.food!.grams / meal.grams)), total: mix.phases.food!.grams + s.residueG, states: [
+          { amount: mix.foodStomachG, sites: [['stomach', 1]], color: fColor },
+          { amount: foodIntestine, sites: GUT_SITES, via: ['duodenum'], color: fColor },
+          { amount: s.carbsInBlood, sites: BLOOD_SITES, via: ROUTE_GUT_TO_BODY, color: '#9fe7ff' },
+          { amount: s.colonG[0], sites: [['cecum', 0.4], ['colon_asc', 0.6]], via: ['ileum'], color: fColor },
+          { amount: s.colonG[1], sites: [['colon_trans', 0.6], ['colon_desc', 0.4]], color: fColor },
+          { amount: s.colonG[2], sites: [['colon_desc', 0.4], ['rectum', 0.6]], color: fColor },
+        ] },
+      ] : [{
         id: 'food', n: 900, total: meal.grams, states: [
           { amount: s.stomachG, sites: [['stomach', 1]], color },
           { amount: s.intestineG, sites: GUT_SITES, via: ['duodenum'], color },
@@ -77,7 +85,9 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
         ...(s.residueG > 0.3 ? [{ label: 'Fibre in the large intestine', value: colon, unit: 'g', max: s.residueG, cls: 'met', organ: 'colon_trans' } as WhereRow] : []),
         { label: 'Energy in your blood so far', value: (t) => at(s.kcalAbsorbed, t), unit: 'kcal', max: Math.max(1, meal.kcal), cls: 'glu', organ: 'heart' },
       ],
-      legend: [{ color, label: name.toLowerCase() }, { color: '#9fe7ff', label: 'sugar in blood' }],
+      legend: mix
+        ? [{ color: dColor, label: mix.phases.drink!.items.map((i) => describe([parts[i]])).join(' + ').toLowerCase() }, { color: fColor, label: mix.phases.food!.items.map((i) => describe([parts[i]])).join(' + ').toLowerCase() }, { color: '#9fe7ff', label: 'sugar in blood' }]
+        : [{ color, label: name.toLowerCase() }, { color: '#9fe7ff', label: 'sugar in blood' }],
       dotNote: `1 dot ≈ ${(meal.grams / 900).toFixed(2)} g`,
       insulin: s.glucosePeakMmol > 0.05 ? s.insulin : undefined,
       energy: { total: r0(meal.kcal), absorbed: (t) => at(s.kcalAbsorbed, t) },
@@ -101,7 +111,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
   };
 
   // detailed-mode stages = the story chapters (built once for the default profile, timing barely depends on it)
-  const content: Product = { id, name, serving, claims: FOOD_CLAIMS, stages: [] };
+  const content: Product = { id, name, serving, claims: { ...FOOD_CLAIMS, ...MEAL_CLAIMS }, stages: [] };
   const def: ProductDef = {
     id, content, hasDose: false,
     vitalClaims: { caffeine: ['DB1'], hr: meal.alcoholG > 1 ? ['AL5'] : ['GL4'], bp: meal.alcoholG > 1 ? ['AL5'] : ['DB1'], glucose: ['DB3', 'GL1', 'GL4'], spo2: ['DB1'] },
@@ -119,7 +129,9 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
       if (!s) return null;
       const grams = (v: number) => `${v < 10 ? r1(v) : r0(v)} g`;
       switch (key) {
-        case 'stomach': return { name: 'Stomach', claims: ['GE1', 'GE12'], text: `Half of this ${noun} has left your stomach after about ${s.t50} minutes.`, lines: [{ label: 'Still here', value: grams(at(s.stomachG, t)) }] };
+        case 'stomach': return s.meal?.phases.drink && s.meal.phases.food
+          ? { name: 'Stomach', claims: ['GE1', 'ML1', 'ML2', 'ML3'], text: mealDrinkNote(s), lines: [{ label: 'Drink still here', value: grams(at(s.meal.drinkStomachG, t)) }, { label: 'Food still here', value: grams(at(s.meal.foodStomachG, t)) }] }
+          : { name: 'Stomach', claims: ['GE1', 'GE12'], text: `Half of this ${noun} has left your stomach after about ${s.t50} minutes.`, lines: [{ label: 'Still here', value: grams(at(s.stomachG, t)) }] };
         case 'duodenum': case 'jejunum': case 'ileum': return { name: 'Small intestine', claims: ['SI10', 'TE1'], text: 'Here sugars, protein and fat are taken apart and absorbed into your blood and lymph. Fibre passes through untouched.', lines: [{ label: 'Being digested here', value: grams(at(s.intestineG, t)) }, { label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
         case 'cecum': case 'colon_asc': case 'colon_trans': case 'colon_desc': case 'rectum': return { name: 'Large intestine', claims: ['SI10', 'CO1', 'CO3'], text: 'Fibre and leftovers arrive here. Bacteria ferment part of it while water is taken back. The trip through takes about 1–2 days.', lines: [{ label: 'Fibre here now', value: grams(s.colonG.reduce((a, c) => a + at(c, t), 0)) }, { label: 'Already out', value: grams(at(s.exitedG, t)) }] };
         case 'pancreas': return { name: 'Pancreas', claims: ['GL1', 'GL4'], text: 'It answers sugar in your blood with insulin.', lines: [{ label: 'Insulin above baseline', value: `+${r0(at(s.insulin, t))} mU/L` }] };
@@ -140,7 +152,9 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
 
 function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string, isDrink: boolean, parts: Part[]): Story {
   const toBed = (p.bedtimeMin - p.drinkAtMin + 1440) % 1440;
-  const noun = isDrink ? 'drink' : 'food';
+  const isMeal = parts.length > 1;
+  const noun = isMeal ? 'meal' : isDrink ? 'drink' : 'food';
+  const mixed = !!(s.meal?.phases.drink && s.meal.phases.food);
   const g = (mgdl: number) => `${formatGlucose(mgdl, p.glucoseUnit)} ${p.glucoseUnit}`;
   const sugarTsp = r0(m.sugars / 4); // 1 teaspoon of sugar ≈ 4 g
   const bacPeak = peakOf(s.bac), bacPeakMin = s.bac.indexOf(bacPeak);
@@ -159,10 +173,10 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     : m.missingGi.length && gl !== null ? ` The glycaemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`
     : m.missingGi.length ? ' Its glycaemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
-    { min: 0, title: isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${what[0].toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
+    { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${what[0].toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
     { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow; it slides down your food pipe into your stomach.' },
-    { min: 1, title: 'In your stomach', focus: 'stomach', claims: isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
-      text: isDrink
+    { min: 1, title: 'In your stomach', focus: 'stomach', claims: mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
+      text: mixed ? mealStomachText(s, parts) : isDrink
         ? `Half of it leaves your stomach within about ${s.t50} minutes${meal.kcal > 30 ? ': calories slow the stomach down, water would be gone in 13' : ''}.`
         : `Your stomach churns it into a paste and lets it out slowly: half has moved on after about ${s.t50} minutes, almost all of it by 4 hours.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
     { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1'],
@@ -176,7 +190,8 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   ];
   if (gl !== null && s.glucosePeakMmol >= 0.2) {
     const big = s.glucosePeakMmol >= 1.5;
-    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Sugar rush' : 'Sugar rises', focus: 'pancreas', claims: ['GL1', 'GL4'], text: `Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucose(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD))} (typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
+    const who = isMeal ? mealSugarNote(s, meal) : '';
+    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Sugar rush' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucose(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD))} (typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
   }
   if (dipMin > 0) ch.push({ min: dipMin, title: 'The sugar dip', focus: 'brain', claims: ['GL7'], text: 'Insulin overshoots: your blood sugar drops a bit below where you started. Hunger tends to come back now.' });
   if (meal.alcoholG > 1) {
@@ -186,7 +201,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     let zero = bacPeakMin; while (zero < 1440 && s.bac[zero] > 0.005) zero++;
     ch.push({ min: Math.min(1440, zero), title: 'Alcohol gone', focus: 'liver', claims: ['AL2'], text: 'In a typical body the alcohol is gone by now, but some people need hours longer. Your liver works at a fixed speed: coffee, water or fresh air don’t speed it up. This can’t tell you when you’re safe to drive.' });
   }
-  if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: ['DB1'], text: `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain and blocks the tiredness signal a little.` });
+  if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: s.meal?.caffeineInDrink ? ['DB1', 'ML3'] : ['DB1'], text: `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain and blocks the tiredness signal a little.${mealCaffeineNote(s)}` });
   if (meal.kcal >= 500) ch.push({ min: 90, title: 'Food coma', focus: 'brain', claims: ['FC1'], text: 'A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was.' });
   if (m.protein >= 10) ch.push({ min: 150, title: 'Building blocks', focus: 'heart', claims: ['AA1', 'TE1'], text: `The ${r0(m.protein)} g of protein arrive in your blood as amino acids, peaking about now. Your body spends about a quarter of protein’s calories just digesting it.` });
   if (m.fat >= 10) ch.push({ min: 210, title: 'Fat in your blood', focus: 'heart', claims: ['TG1'], text: `The fat travels through your lymph into the blood. Blood fat (triglycerides) peaks about now, roughly +${(s.tgDelta[210]).toFixed(1)} mmol/L, and is back to normal within about 6–8 hours.` });
@@ -201,6 +216,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     const msg = bac > 0.02 ? `There is still alcohol in your blood (about ${bacRangeText(bac)}): you may fall asleep faster, but the second half of the night will be worse.` : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` : null;
     if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1'], text: msg });
   }
+  ch.push(...mealChapters(s, parts));
   ch.sort((a, b) => a.min - b.min);
 
   const toLiquid = (t: number): LiquidMap => {

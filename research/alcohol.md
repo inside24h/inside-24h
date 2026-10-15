@@ -40,6 +40,14 @@ Check: beer 3.96 g/100 g × 500 g ≈ 19.8 g, agrees with P2 (beer.md P3).
 | A7 | Carbonation effect on absorption (beer, sparkling wine). | **?** | not researched |
 | A8 | Presystemic metabolism: men with lower self-rated effects of alcohol had higher BAC during the first 2 h (p = 0.015) with no difference in elimination rate; authors interpret as presystemic (first-pass) differences. | B (n=20 men) | Bramness JG et al. 2023, Alcohol Alcohol. PMID 36715301 (PMC10008105) |
 
+### Personal factor: "I've just eaten" (added 2026-10-15, science/personal.ts)
+
+| ID | Claim | Level | Source |
+|---|---|---|---|
+| PF1 | Abstracts re-read. 0.30 g/kg within 15 min **after** a breakfast: peak **13.3–17.7 mg/dl** vs **30.8 ± 4.3** fasted (9 men); AUC about halved; ethanol gone **1–2 h sooner**; meal type (fat, carbohydrate, protein) mattered little. 1 h after breakfast: **17.5 vs 43.8 mg/dl** fasted (10 men). → fed peak ≈ **40–57%** of fasted. | A (men only, n = 9–10) | Jones AW et al. 1997, PMID 9431825; Kechagias S et al. 1999, PMID 10594475 |
+| PF2 | Model: profile `withMeal` (or food ≥ 100 kcal in the same meal) → fed. Fed absorption rate **1.5/h** (was an unused 0.75/h placeholder) fitted so the Jones set-up gives fed/fasted ≈ 0.45 and a 0.5 L beer ≈ 0.54; with β 0.17 g/L/h fed the curve ends ≈ 1 h sooner. Also: with food in the meal the slower fed rate now wins over the drink-type rate (before, beer + pizza used the fasted beer rate). | C (fit to PF1) | test: personal.test.ts |
+| PF3 | Sex and body size enter through Widmark r (W3, Forrest BMI formula). Women's lower first-pass (A4) is not added: no number to fix it (Open question 3). | — | W3, A4 |
+
 ---
 
 ## 3. Widmark model, distribution, elimination
