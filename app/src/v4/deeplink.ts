@@ -79,7 +79,9 @@ export function writeLink(l: Partial<Link>, prev = ''): string {
 // ---- food ⇄ link text ----
 /** Curated products (own detailed models) are linked by plain name and reopen in that model. */
 export const CURATED_Q: Record<string, string> = { cola: 'cola', espresso: 'espresso', water: 'glass of water' };
-export const isCuratedServing = (parts: Part[]) => parts.length === 1 && !!CURATED_Q[parts[0].food.id] && Math.abs(parts[0].grams - parts[0].food.serving.grams) < 1;
+/** Own key only: link text like "constructor" or "__proto__" must never reach Object.prototype. */
+export const own = <T,>(o: Record<string, T>, k: string | undefined | null): T | undefined => (k != null && Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined);
+export const isCuratedServing = (parts: Part[]) => parts.length === 1 && !!own(CURATED_Q, parts[0].food.id) && Math.abs(parts[0].grams - parts[0].food.serving.grams) < 1;
 const sameMeal = (a: Part[], b: Part[]) => a.length === b.length && a.every((p, i) => p.food.id === b[i].food.id && Math.abs(p.grams - b[i].grams) < 1);
 const cache = new Map<string, string>();
 /** Shortest text that parses back to exactly these foods and grams: "cola", "banana", else "118 g Banana + 250 g Milk". */
@@ -102,5 +104,31 @@ export function linkParts(l: Pick<Link, 'q' | 'm'>): Part[] {
   const meal = mealFromCode(l.m);
   return meal.length ? meal : l.q ? parseMeal(l.q) : [];
 }
+export interface Resolved {
+  link: Link;
+  /** what the link names, as parts (empty: nothing, or nothing we know) */
+  base: Part[];
+  /** the food text the link asked for but we could not find (shown to the person, never silently replaced) */
+  miss?: string;
+  /** the comparison partner, only when we know it */
+  vs?: Part[];
+  /** the partner the link asked for but we could not find */
+  vsMiss?: string;
+}
+const safeParts = (f: () => Part[]): Part[] => { try { const p = f(); return Array.isArray(p) ? p : []; } catch { return []; } };
+/** Everything a (possibly old, mistyped or hand-edited) link asks for, without ever throwing. Unknown foods and
+ *  partners come back as `miss` / `vsMiss` so the app can say so instead of crashing or showing something else.
+ *  `isProduct` = curated product ids the app can open from an old #p= link. */
+export function resolveLink(hash: string, isProduct: (id: string) => boolean = (id) => !!own(CURATED_Q, id)): Resolved {
+  let link: Link;
+  try { link = readLink(hash); } catch { link = { n: 1, t: null, view: 'simple' }; }
+  const named = link.m || link.q;
+  const base = named ? safeParts(() => linkParts(link))
+    : link.p && own(CURATED_Q, link.p) && link.n !== 1 ? safeParts(() => parseMeal(own(CURATED_Q, link.p)!)) : [];
+  const miss = named && !base.length ? named : !named && link.p && !isProduct(link.p) ? link.p : undefined;
+  const vsParts = link.vs ? safeParts(() => parseMeal(link.vs!)) : [];
+  return { link, base, miss, vs: vsParts.length ? vsParts : undefined, vsMiss: link.vs && !vsParts.length ? link.vs : undefined };
+}
+
 /** Link fields for what is on screen: two or more things → exact meal code (m); one → the short text (q). */
 export const linkFor = (parts: Part[]): Pick<Link, 'q' | 'm'> => (parts.length > 1 ? { m: mealCode(parts) } : { q: mealText(parts) });

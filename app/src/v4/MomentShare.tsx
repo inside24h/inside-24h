@@ -46,14 +46,14 @@ export function MomentShare({ make, label }: { make: () => Promise<Moment | null
   };
 
   if (!m) return (
-    <div className="moment">
+    <div className="momentshare">
       <button className="primary momentbtn" onClick={build} disabled={busy}>{busy ? 'Drawing…' : `📸 ${label}`}</button>
       <span className="momentsub">A picture of this minute + a link that opens exactly here.</span>
       {msg && <p className="note">{msg}</p>}
     </div>
   );
   return (
-    <div className="moment ready">
+    <div className="momentshare ready">
       <img src={m.url} alt={m.title} className="momentimg" />
       <div className="nbtns">
         <button className="primary" onClick={share}>{canShareFile ? 'Share picture + link' : 'Save picture + copy link'}</button>

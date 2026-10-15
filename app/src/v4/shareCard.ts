@@ -14,6 +14,7 @@ export interface MomentCard {
   where?: string;        // "Stomach · 210 ml"
   color?: string;        // the food's colour
   link: string;          // full deep link
+  lights?: { label: string; level: 0 | 1 | 2; unknown?: boolean }[]; // the four traffic lights at this minute
 }
 
 export const CARD_W = 1080, CARD_H = 1350;
@@ -49,7 +50,7 @@ export function drawMomentCard(src: HTMLCanvasElement | null, c: MomentCard): HT
   ctx.fillStyle = '#b9c5d3'; ctx.font = `500 34px ${SANS}`; ctx.fillText(`at ${c.clock}`, 60 + sw + 24, 323);
 
   // the body, cover-cropped into a rounded panel on the right
-  const bx = 580, by = 390, bw = 440, bh = 540;
+  const bx = 540, by = 380, bw = 480, bh = 580; // bigger body: it is the picture people stop for
   ctx.save(); roundRect(ctx, bx, by, bw, bh, 28); ctx.clip();
   ctx.fillStyle = '#060c14'; ctx.fillRect(bx, by, bw, bh);
   if (src && src.width && src.height) {
@@ -72,10 +73,25 @@ export function drawMomentCard(src: HTMLCanvasElement | null, c: MomentCard): HT
   if (c.where) {
     ctx.fillStyle = '#8292a7'; ctx.font = `600 24px ${SANS}`; ctx.fillText('WHERE IT IS NOW', 60, y);
     ctx.font = `700 36px ${SANS}`;
-    const lines = wrap(ctx, c.where, 440, 2);
+    const lines = wrap(ctx, c.where, 420, 2);
     ctx.fillStyle = c.color ?? '#ffffff'; ctx.beginPath(); ctx.arc(76, y + 38, 14, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = '#ffffff'; lines.forEach((ln, i) => ctx.fillText(ln, 104, y + 50 + i * 46));
+    y += 60 + lines.length * 46 + 40;
+  }
+  // the four lights at this minute fill the left column (same words as the app)
+  if (c.lights?.length) {
+    const WORDS = ['fine', 'mild stress', 'overload'];
+    ctx.fillStyle = '#8292a7'; ctx.font = `600 24px ${SANS}`; ctx.fillText('YOUR BODY NOW', 60, y);
+    const rowH = Math.min(52, Math.max(36, (950 - y) / c.lights.length));
+    c.lights.forEach((l, i) => {
+      const cy = y + 34 + i * rowH;
+      ctx.fillStyle = l.unknown ? '#8292a7' : LIGHT[l.level]; ctx.beginPath(); ctx.arc(76, cy - 10, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.font = `700 32px ${SANS}`; ctx.fillText(l.label, 104, cy);
+      const lw = ctx.measureText(l.label).width;
+      ctx.fillStyle = l.unknown ? '#8292a7' : l.level ? LIGHT[l.level] : '#b9c5d3'; ctx.font = `500 30px ${SANS}`;
+      ctx.fillText(l.unknown ? 'not measured' : WORDS[l.level], 104 + lw + 14, cy);
+    });
   }
 
   // what is happening, in plain words

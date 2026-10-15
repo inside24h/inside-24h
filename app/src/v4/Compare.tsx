@@ -60,20 +60,20 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
   onRight?: (right: Part[] | null) => void; // the partner goes into the link (#vs=…)
 }) {
   const [left, setLeft] = useState<Part[]>(current);
-  const [right, setRight] = useState<Part[] | null>(initial ?? null);
+  const [right, setRight] = useState<Part[] | null>(initial?.length ? initial : null); // an unknown partner = none yet
   useEffect(() => { onRight?.(right); }, [right]); // eslint-disable-line react-hooks/exhaustive-deps
   const a = useMemo(() => analyze(left, profile), [left, profile]);
-  const b = useMemo(() => (right ? analyze(right, profile) : null), [right, profile]);
-  const pick = ([l, r]: [string, string]) => { setLeft(parseMeal(l)); setRight(parseMeal(r)); };
+  const b = useMemo(() => (right?.length ? analyze(right, profile) : null), [right, profile]);
+  const pick = ([l, r]: [string, string]) => { const pl = parseMeal(l), pr = parseMeal(r); if (pl.length) setLeft(pl); if (pr.length) setRight(pr); };
   return (
     <div className="cmpfull" role="dialog" aria-label="Compare two foods">
       <div className="cmpbar">
         <div className="cmptitle"><b>Compare</b><span>for your body, your city and your time of day</span>
           <button className="x" aria-label="Close" onClick={onClose}>×</button></div>
         <div className="cmppick">
-          <div className="side"><span className="lbl" style={{ color: LINE[0] }}>Left</span><SmartSearch onPick={(p) => setLeft(p)} current={a.name} /></div>
+          <div className="side"><span className="lbl" style={{ color: LINE[0] }}>Left</span><SmartSearch onPick={(p) => { if (p.length) setLeft(p); }} current={a.name} /></div>
           <div className="vs">VS</div>
-          <div className="side"><span className="lbl" style={{ color: LINE[1] }}>Right</span><SmartSearch onPick={(p) => setRight(p)} current={b?.name ?? 'choose…'} /></div>
+          <div className="side"><span className="lbl" style={{ color: LINE[1] }}>Right</span><SmartSearch onPick={(p) => { if (p.length) setRight(p); }} current={b?.name ?? 'choose…'} /></div>
         </div>
         <div className="pairs">{PAIRS.map((p) => <button key={p.join()} onClick={() => pick(p)}>{p[0].replace(/^(1 can of |glass of |1 )/, '')} <em>vs</em> {p[1].replace(/^(1 can of |glass of |1 )/, '')}</button>)}</div>
       </div>

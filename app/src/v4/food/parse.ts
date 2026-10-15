@@ -119,7 +119,7 @@ function readQty(seg: string): { rest: string; q: Qty } {
   const rest: string[] = [];
   for (let i = 0; i < toks.length; i++) {
     const t = toks[i];
-    const num = /^\d+(\.\d+)?$/.test(t) ? Number(t) : NUMBER_WORDS[t];
+    const num = /^\d+(\.\d+)?$/.test(t) ? Number(t) : Object.prototype.hasOwnProperty.call(NUMBER_WORDS, t) ? NUMBER_WORDS[t] : undefined;
     if (num !== undefined && q.count === null) { q.count = num; continue; }
     const mass = MASS.find(([r]) => r.test(t)); if (mass) { q.grams = (q.count ?? 1) * mass[1]; q.label = `${q.count ?? 1} ${t}`; q.count = null; continue; }
     const vol = VOLUME.find(([r]) => r.test(t)); if (vol) { q.ml = (q.count ?? 1) * vol[1]; q.label = `${q.count ?? 1} ${t}`; q.count = null; continue; }

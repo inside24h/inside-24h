@@ -100,7 +100,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
       ],
       journeyUnit: 'g',
       story,
-      route: foodRoute(s, meal.grams, meal.waterG, isDrink),
+      route: foodRoute(s, meal.grams, meal.waterG, isDrink, meal.alcoholG > 1),
       t50: s.t50,
       traits: { drink: isDrink, fat: m.fat >= 10, sugar: m.sugars >= 10, alcohol: meal.alcoholG > 1, caffeine: meal.caffeineMg >= 10, fibre: m.fiber >= 1 },
       bac: meal.alcoholG > 1 ? s.bac : undefined,
@@ -173,7 +173,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     : m.missingGi.length && gl !== null ? ` The glycaemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`
     : m.missingGi.length ? ' Its glycaemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
-    { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${what[0].toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
+    { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
     { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow; it slides down your food pipe into your stomach.' },
     { min: 1, title: 'In your stomach', focus: 'stomach', claims: mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
       text: mixed ? mealStomachText(s, parts) : isDrink

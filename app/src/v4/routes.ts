@@ -4,6 +4,7 @@ import type { ColaSim } from '../science/colaSim';
 import type { WaterSim } from '../science/waterSim';
 import type { FoodSim } from '../science/foodSim';
 import type { Route, SegState } from '../scene/LiquidRoute';
+import { bacRangeText } from '../science/ranges';
 
 /** Outflow per minute of a compartment, scaled so the busiest minute = 1. */
 function rate(a: Float64Array) { let max = 1e-9; for (let i = 0; i + 1 < a.length; i++) max = Math.max(max, a[i] - a[i + 1]); return (m: number) => Math.max(0, at(a, m) - at(a, m + 1)) / max; }
@@ -62,7 +63,8 @@ export function colaRoute(s: ColaSim, ml = 330): Route {
   };
 }
 
-export function foodRoute(s: FoodSim, grams: number, waterMl: number, isDrink: boolean): Route {
+/** `alcohol`: blood shows blood alcohol (as a range, alcohol.md W6) while there is any, not sugar: that is what matters then. */
+export function foodRoute(s: FoodSim, grams: number, waterMl: number, isDrink: boolean, alcohol = false): Route {
   const e = rate(s.stomachG), k = inflow(s.bladder), abs = inflow(s.kcalAbsorbed);
   const colon = (m: number) => s.colonG.reduce((acc, c) => acc + at(c, m), 0);
   const cIn = inflow(s.colonG[0]), cOut = inflow(s.exitedG);
@@ -74,6 +76,7 @@ export function foodRoute(s: FoodSim, grams: number, waterMl: number, isDrink: b
     return 0.35 * reach(c0 + c1 + c2 + x) + 0.25 * reach(c1 + c2 + x) + 0.4 * reach(c2 + x);
   };
   const peakCarb = s.carbsInBlood.reduce((x, v) => Math.max(x, v), 1e-9);
+  const peakBac = s.bac ? s.bac.reduce((x, v) => Math.max(x, v), 1e-6) : 1e-6;
   const unit = isDrink ? 'ml' : 'g';
   return {
     unit,
@@ -83,7 +86,8 @@ export function foodRoute(s: FoodSim, grams: number, waterMl: number, isDrink: b
       duodenum: st(0.25 * at(s.intestineG, m), grams, abs(m)),
       small: st(0.75 * at(s.intestineG, m), grams, abs(m)),
       portal: st(abs(m) * grams * 0.08, grams, abs(m)),
-      blood: peakCarb > 0.3 ? st(at(s.carbsInBlood, m), peakCarb * 2, 0.4 + 0.6 * abs(m), 'g sugar') : st(abs(m) * grams * 0.08, grams, abs(m)),
+      blood: alcohol && s.bac && at(s.bac, m) >= 0.01 ? { ...st(Math.max(at(s.carbsInBlood, m), abs(m) * grams * 0.08), peakCarb > 0.3 ? peakCarb * 2 : grams, 0.4 + 0.6 * abs(m)), frac: Math.max(0.3, Math.min(1, at(s.bac, m) / peakBac)), text: `alcohol ${bacRangeText(at(s.bac, m))}` }
+        : peakCarb > 0.3 ? st(at(s.carbsInBlood, m), peakCarb * 2, 0.4 + 0.6 * abs(m), 'g sugar') : st(abs(m) * grams * 0.08, grams, abs(m)),
       ...(waterMl >= 50 ? { kidney: st(k(m) * waterMl * 0.1, waterMl, k(m), 'ml'), bladder: st(recent(s.bladder, m), waterMl, k(m), 'ml urine') } : {}),
       ...(s.residueG > 0.3 ? { colon: { ...st(colon(m), s.residueG * 0.8, Math.max(cIn(m), cOut(m), colon(m) > 0.05 ? 0.15 : 0), 'g fibre'), front: colonFront(m) } } : {}),
     }),

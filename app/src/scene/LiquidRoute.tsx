@@ -14,7 +14,8 @@ const PTS = pointsJson as Record<string, number[]>;
 export type SegId = 'swallow' | 'stomach' | 'duodenum' | 'small' | 'portal' | 'blood' | 'kidney' | 'bladder' | 'colon';
 /** amount in `unit`; frac 0..1 of the serving; flow 0..1; front = how far along the segment it has reached (0..1),
  *  given by slow segments (colon) whose progress is known from the model. */
-export interface SegState { amount: number; frac: number; flow: number; unit?: string; front?: number }
+export interface SegState { amount: number; frac: number; flow: number; unit?: string; front?: number;
+  /** shown instead of "amount unit" when the number that matters here is a different one (blood alcohol as a range) */ text?: string }
 export interface Route { unit: string; segs: (m: number) => Partial<Record<SegId, SegState>> }
 
 export const SEG_LABEL: Record<SegId, string> = {
@@ -208,7 +209,7 @@ export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3
         return (
           <Html key={id} position={at} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
             <div className={`rlabel ${i === 0 ? 'main' : ''}`}>
-              <i style={{ background: color }} />{SEG_LABEL[id]} <b>{fmt(v.amount)} {v.unit ?? route.unit}</b>
+              <i style={{ background: color }} />{SEG_LABEL[id]} <b>{v.text ?? `${fmt(v.amount)} ${v.unit ?? route.unit}`}</b>
             </div>
           </Html>
         );

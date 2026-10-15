@@ -79,7 +79,7 @@ export function mealFromCode(code: string | null | undefined): Part[] {
   const out: Part[] = [];
   for (const tok of code.trim().split(/[\s+,]+/).filter(Boolean)) {
     const m = /^([a-z0-9-]+)(?:\*(\d+(?:\.\d+)?)(g)?)?$/.exec(tok.toLowerCase());
-    const f = m && FOOD_BY_ID[m[1]];
+    const f = m && Object.prototype.hasOwnProperty.call(FOOD_BY_ID, m[1]) ? FOOD_BY_ID[m[1]] : undefined; // never Object.prototype keys
     if (!m || !f) continue;
     const v = m[2] === undefined ? 1 : Number(m[2]);
     if (!(v > 0) || v > (m[3] ? 5000 : 10)) continue;

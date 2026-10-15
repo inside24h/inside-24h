@@ -1,0 +1,201 @@
+/* QA 2026-10-15 fixes, mobile first: compact header menu, body + moment + player on one phone screen, quick answers
+   in a bottom sheet, full-width slider, explained traffic lights, 44 px touch targets, Compare that fits 390 px.
+   Loaded last (main.tsx), so it wins over v4.css on equal specificity. Uses the tokens from v4.css. */
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- crash screen (main.tsx) ---- */
+.boot.crashed p { margin: 0; color: var(--mute); }
+.boot.crashed .primary { margin-top: 6px; padding: 12px 22px; font-size: 15px; }
+
+/* ---- header menu (phones) ---- */
+.top { position: relative; }
+.menubtn { display: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line2); background: none; color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; }
+.menubtn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.topmenu { position: absolute; right: 12px; top: calc(100% - 4px); z-index: 47; display: grid; gap: 2px; width: min(280px, calc(100vw - 24px)); padding: 8px;
+  background: var(--raised); border: 1px solid var(--line2); border-radius: 14px; box-shadow: 0 18px 40px rgba(0, 0, 0, .5); }
+.topmenu > button { text-align: left; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--text); font: 15px var(--body); cursor: pointer; }
+.topmenu > button:hover, .topmenu > button:focus-visible { background: rgba(92, 211, 255, .1); outline: 0; }
+.topmenu > button small { font: 10px var(--mono); color: #ffd27a; margin-left: 4px; }
+.topmenu .seg2.mode { margin-bottom: 6px; }
+.topmenu .seg2.mode button { min-height: 40px; }
+.sheetback { position: fixed; inset: 0; z-index: 45; background: rgba(2, 5, 9, .55); }
+.sheetback.menuback { z-index: 46; background: transparent; }
+@media (min-width: 721px) { .topmenu, .menuback { display: none; } }
+
+/* ---- notes about links we could not fully open ---- */
+.missnote { display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; text-align: left; font-size: 14px; color: #dfe8f2;
+  border: 1px solid rgba(255, 200, 61, .5); background: rgba(255, 200, 61, .08); }
+.missnote b { color: #ffd27a; font-weight: 600; }
+.misspicks { display: flex; flex-wrap: wrap; gap: 6px; }
+.misspicks button { min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line2); background: var(--surface); color: var(--text); font: 14px var(--body); cursor: pointer; }
+.misspicks button:hover, .misspicks button:focus-visible { border-color: var(--accent); outline: 0; }
+.linknote { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 48; width: max-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px 8px 14px; border-radius: 14px; background: var(--raised); border: 1px solid rgba(255, 200, 61, .55); color: #dfe8f2; font-size: 13.5px; box-shadow: 0 12px 30px rgba(0, 0, 0, .45); }
+.linknote .x { flex: none; }
+
+/* ---- start screen: opaque (no ghost text behind it), tidy grid on phones ---- */
+.start { background: radial-gradient(ellipse at 50% 30%, #08141f, #04070c 70%); }
+@media (max-width: 520px) {
+  .start { padding-top: 24px; }
+  .startbox { gap: 14px; }
+  .startbox .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .startbox .tile { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-items: center; column-gap: 10px; row-gap: 1px;
+    padding: 10px 12px; min-width: 0; min-height: 64px; text-align: left; }
+  .startbox .tile i { grid-row: 1 / 3; width: 26px; height: 34px; border-radius: 4px 4px 9px 9px; }
+  .startbox .tile.solid i { width: 30px; height: 30px; }
+  .startbox .tile b { font-size: 20px; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .startbox .tile span { font-size: 11px; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search.big input { font-size: 16px; padding: 14px 0; } /* 16 px: iOS does not zoom into the field */
+}
+
+/* ---- search dropdown: Browse once, full width, never over the hint ---- */
+.search.smart .results li.seeall { display: block; }
+.results { overscroll-behavior: contain; }
+@media (max-width: 720px) { .topsearch .results { max-height: 60dvh; } }
+
+/* ---- calm bar: slider, amount and time ---- */
+.calmctl { grid-template-columns: auto minmax(0, 1fr) auto auto auto; }
+.calmtrack { min-width: 0; display: flex; align-items: center; }
+.calmtrack input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 36px; margin: 0; background: transparent; cursor: pointer; }
+.calmtrack input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--accent) var(--p, 0%), rgba(140, 170, 210, .25) var(--p, 0%)); }
+.calmtrack input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: #fff; border: 0;
+  box-shadow: 0 0 0 4px rgba(92, 211, 255, .35), 0 2px 8px rgba(0, 0, 0, .5); }
+.calmtrack input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(140, 170, 210, .25); }
+.calmtrack input[type="range"]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+.calmtrack input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px rgba(92, 211, 255, .35); }
+.calmctl .portion { margin-right: 0; }
+.eatenat .plabel { margin-right: 2px; }
+
+/* ---- calm bar: the four lights are buttons that explain themselves ---- */
+.calmdots { align-items: center; }
+.calmlight { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px; border-radius: 999px; border: 1px solid transparent; background: none;
+  color: #cfdbe8; font: 13px var(--body); cursor: pointer; }
+.calmlight:hover, .calmlight:focus-visible { border-color: var(--line2); outline: 0; }
+.calmlight.warn { border-color: var(--line2); background: rgba(255, 255, 255, .03); }
+.calmlight.on { border-color: var(--accent); background: rgba(92, 211, 255, .08); }
+.calmlight em { font-style: normal; color: var(--mute); }
+.calmlight .why { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line2); font: 600 10px var(--mono); color: var(--mute); }
+.calmexplain { max-width: 920px; width: 100%; margin: 0 auto; display: grid; gap: 4px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line2); text-align: left; }
+.calmexplain b { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.calmexplain b i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.calmexplain p { margin: 0; font-size: 14px; line-height: 1.4; color: #dfe8f2; }
+.calmexplain .calmtip { color: var(--text); }
+.calmexplain .calmtip span { color: var(--accent); }
+.calmexplainbtns { display: flex; gap: 16px; }
+
+/* ---- quick answers: a column on desktop (fades out at the bottom = "there is more"), a bottom sheet below 1100 px ---- */
+.anstoggle, .sheethead { display: none; }
+.stageanswers { padding-bottom: 36px; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); }
+
+@media (max-width: 1100px) {
+  /* one screen, no page scroll: header, body (takes what is left), the moment + player */
+  .v4.calmlay { display: grid; height: 100vh; height: 100dvh; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+  .v4.calmlay .grid { min-height: 0; height: 100%; grid-template-rows: minmax(0, 1fr); }
+  .v4.calmlay .grid.calm .stage { height: auto; min-height: 200px; }
+  .v4.calmlay .calmbar { max-height: 62dvh; overflow-y: auto; overscroll-behavior: contain; }
+
+  .stageanswers { display: none; }
+  .stageanswers.open { display: block; position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 78dvh; overflow-y: auto; overscroll-behavior: contain; z-index: 46;
+    padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--line2); border-radius: 18px 18px 0 0;
+    box-shadow: 0 -18px 40px rgba(0, 0, 0, .5); -webkit-mask-image: none; mask-image: none; animation: sheetup .18s ease-out; }
+  @keyframes sheetup { from { transform: translateY(30px); opacity: 0; } }
+  .stageanswers.open .sheethead { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1; padding: 10px 0 6px; background: var(--surface); }
+  .sheethead b { font: 400 24px/1 var(--display); }
+  .stageanswers.open .answers .ctl { font-size: 0; } /* the sheet has its own title; keep only the "Your body ›" button */
+  .stageanswers.open .answers .ctl .ans-body { font: 12px var(--body); }
+  .stageanswers.open .ans em { font-size: 15px; }
+  .anstoggle { display: inline-flex; align-items: center; gap: 8px; position: absolute; right: 12px; bottom: 12px; z-index: 4; min-height: 44px; padding: 0 16px;
+    border-radius: 999px; border: 1px solid var(--accent); background: rgba(8, 16, 26, .92); color: var(--text); font: 600 14px var(--body); cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+  .anstoggle b { min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: #03141c; font: 700 12px var(--mono); text-align: center; }
+  .anstoggle .chev { color: var(--accent); font-size: 12px; }
+  .v4.ansopen .rlabel, .v4.ansopen .stage .hint { display: none; } /* nothing floats over the open sheet */
+  .v4.calmlay .legend { top: 10px; bottom: auto; left: 12px; right: 12px; align-items: center; }
+  .v4.calmlay .stage .hint { bottom: 66px; max-width: calc(100% - 24px); white-space: normal; text-align: center; }
+}
+
+/* ---- phones ---- */
+@media (max-width: 720px) {
+  .menubtn { display: inline-flex; align-items: center; justify-content: center; }
+  .topactions .seg2.mode { display: none; } /* in the menu */
+  .top { padding: 8px 12px; gap: 8px; }
+  .brand { font-size: 22px; }
+  .topactions { gap: 6px; align-items: center; }
+  .topactions .primary, .top .sharebtn { min-height: 44px; padding: 0 14px; }
+
+  .calmbar { gap: 8px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .calmtext { gap: 2px; }
+  .calmclock b { font-size: 22px; }
+  .calmtext h2 { font-size: 26px; }
+  .calmtext p { font-size: 15px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .calmwhere { font-size: 13px; }
+  .calmctl { grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-areas: "track track track" "play portion time"; gap: 4px 10px; }
+  .calmctl > .play { grid-area: play; width: 48px; height: 48px; }
+  .calmtrack { grid-area: track; }
+  .calmtrack input[type="range"] { height: 44px; }
+  .calmtrack input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
+  .calmtrack input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; }
+  .calmctl .portion { grid-area: portion; justify-self: start; gap: 2px; }
+  .calmctl .eatenat { grid-area: time; justify-self: end; }
+  .calmend, .calmctl .plabel { display: none; }
+  .calmctl .portion button { min-width: 40px; min-height: 44px; padding: 0 6px; }
+  .eatenat input { min-height: 44px; font-size: 15px; }
+  .calmdots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .calmlight { flex-direction: column; justify-content: center; gap: 1px; min-height: 48px; padding: 4px 2px; border-radius: 12px; border-color: var(--line); font-size: 13px; line-height: 1.15; }
+  .calmlight i { margin-bottom: 2px; }
+  .calmlight em { font-size: 11px; white-space: nowrap; }
+  .calmlight .why { display: none; }
+  .calmdots .fullview { display: none; } /* in the menu */
+
+  /* Compare: everything stacked inside 390 px */
+  .cmpbar { padding: 10px 14px; gap: 8px; }
+  .cmptitle b { font-size: 26px; }
+  .cmptitle span { display: none; }
+  .cmppick { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .cmppick .vs { justify-self: center; width: 30px; height: 30px; font-size: 11px; border-width: 1.5px; }
+  .pairs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .pairs::-webkit-scrollbar { display: none; }
+  .pairs button { flex: none; }
+  .cmpbody { padding: 12px 14px 32px; }
+  .cmpactions { flex-wrap: wrap; justify-content: stretch; }
+  .cmpactions .lenpick { flex-wrap: wrap; }
+  .cmpactions .primary { width: 100%; min-height: 48px; }
+  .cmpverdict { font-size: 16px; padding: 10px 12px; }
+  .cmpchart .ctl { letter-spacing: .04em; }
+  .cmpcols { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .cmph { font-size: 24px; }
+
+  /* Share dialog: fits a phone, buttons always reachable */
+  .sharebox { max-height: calc(100dvh - 24px); overflow-y: auto; }
+  .momentshare .momentimg { max-height: 44dvh; }
+}
+/* Compare at any width: columns may shrink, never push the page wider */
+.cmpfull { grid-template-columns: minmax(0, 1fr); }
+.cmppick { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.cmppick .side, .cmpcol, .cmpbar, .cmpbody { min-width: 0; }
+.cmpcols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cmpverdict { overflow-wrap: anywhere; }
+
+/* Share dialog: the picture first, the video behind one button, small handle field */
+.sharebox { max-height: calc(100vh - 32px); overflow-y: auto; }
+.sharebox .nbtns { position: sticky; bottom: -22px; padding: 10px 0; background: var(--surface); }
+.sharebox .videoopen { width: 100%; min-height: 44px; }
+.sharebox label.handle small { color: var(--faint); font-size: 11.5px; }
+.sharebox label.handle input { font-size: 14px; padding: 8px 10px; }
+
+/* ---- touch screens: every control at least 44 × 44 px ---- */
+@media (pointer: coarse) {
+  .brand { min-height: 44px; display: inline-flex; align-items: center; }
+  .link, .evlink, .disclaim button, .wholebody, .ans-body, .lrules, .chapter .why { min-height: 44px; display: inline-flex; align-items: center; }
+  .wholebody { padding: 0 14px; pointer-events: auto; }
+  .seg2 button, .portion button, .pairs button, .lenpick button, .pill, .madd, .mealpresets button { min-height: 44px; }
+  .portion button, .seg2 button { min-width: 44px; }
+  .mchip { min-height: 44px; }
+  .mchip button, .results .radd { min-width: 44px; min-height: 44px; }
+  .x, .chnav button { width: 44px; height: 44px; }
+  .topactions .ghost, .topactions .primary { min-height: 44px; }
+  .calmlight { min-height: 48px; }
+  .calmtrack input[type="range"] { height: 44px; }
+  .calmtrack input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
+  .moment { min-height: 44px; }
+}

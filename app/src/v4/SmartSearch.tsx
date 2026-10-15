@@ -42,7 +42,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
       <label className="sfield">
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6" /><path d="M13 13l5 5" /></svg>
         <input ref={input} type="search" value={q}
-          placeholder={adding ? 'Add to your meal, e.g. fries, cola…' : big ? 'e.g. 1 apple, pizza, coffee with milk' : current ? `${current} · try something else…` : 'Search food or drink'}
+          placeholder={adding ? 'Add to your meal, e.g. fries, cola…' : big ? 'e.g. apple, pizza, latte' : current ? `${current} · try something else…` : 'Search food or drink'}
           role="combobox" aria-expanded={open} aria-controls={listId} aria-autocomplete="list" aria-label={adding ? 'Add something to your meal' : 'What did you eat or drink?'}
           aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
           onFocus={() => setOpen(true)}
@@ -86,7 +86,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
               </li>
             );
           })}
-          {seeAll('end')}
+          {q && seeAll('end')}{/* empty box: the Browse button is already at the top */}
         </ul>
       )}
       {browse && createPortal(<Browse onClose={() => { setBrowse(false); if (adding) onDone?.(); }}

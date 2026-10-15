@@ -53,14 +53,14 @@ import { SafeCanvas } from './perf/SafeCanvas';
 import { isTouch } from './perf/device';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
-import { CURATED_Q, formatTime, isCuratedServing, linkFor, linkParts, mealText, readLink, writeLink } from './deeplink';
+import { formatTime, isCuratedServing, linkFor, mealText, own, resolveLink, writeLink } from './deeplink';
 import { MealBar } from './MealBar';
 import { drawMomentCard } from './shareCard';
 import { MomentShare, type Moment } from './MomentShare';
 
 
 import { SmartSearch } from './SmartSearch';
-import { macros, parseMeal, type Part } from './food/parse';
+import { macros, parseMeal, suggest, type Part } from './food/parse';
 import { makeFoodProduct } from './food/foodProduct';
 
 // Water each drink brings (ml): espresso 30 ml shot, cola 330 ml can (≈ 89% water), water 250 ml glass.
@@ -90,16 +90,20 @@ const sinceText = (m: number, name: string) => {
 
 // Deep link for every moment (deeplink.ts): #q=<food>&n=<½·1·2·3>&t=<45m>&view=<full|detailed>&vs=<partner>,
 // plus older keys (#p=<product>, #t=<minutes>, #compare=, organ, dose, city). A given t opens paused at that minute.
-const HASH = new URLSearchParams(window.location.hash.slice(1));
-const LINK = readLink(window.location.hash);
+// Any link must open something sensible: unknown foods/partners are reported (LINK_MISS / VS_MISS), never a crash.
+const HASH = (() => { try { return new URLSearchParams(window.location.hash.slice(1)); } catch { return new URLSearchParams(); } })();
+const RESOLVED = resolveLink(window.location.hash, (id) => !!own(PRODUCTS, id));
+const LINK = RESOLVED.link;
 const HASH_T = LINK.t;
 const HASH_DOSE = Math.max(20, Math.min(330, Number(HASH.get('dose')) || 63));
 const scaleParts = (base: Part[], f: number) => (f === 1 ? base : base.map((p) => ({ ...p, grams: p.grams * f, amountLabel: `${f === 0.5 ? '½ ×' : `${f} ×`} ${p.amountLabel}` })));
 // curated products (#q=cola) reopen in their own detailed model, like picking them in the app
-const LINK_BASE: Part[] = LINK.m || LINK.q ? linkParts(LINK) : LINK.p && CURATED_Q[LINK.p] && LINK.n !== 1 ? parseMeal(CURATED_Q[LINK.p]) : [];
-const LINK_FOOD = LINK_BASE.length > 0 || !!(LINK.p && PRODUCTS[LINK.p]); // the link names a food: open it, skip the start screen
+const LINK_BASE: Part[] = RESOLVED.base;
+const LINK_MISS = RESOLVED.miss; // "#q=zzzz": we say we don't have it and open the search, instead of showing espresso
+const LINK_FOOD = LINK_BASE.length > 0 || !!(LINK.p && own(PRODUCTS, LINK.p)); // the link names a food: open it, skip the start screen
 const HASH_Q = LINK_BASE.length && !(LINK.n === 1 && isCuratedServing(LINK_BASE)) ? scaleParts(LINK_BASE, LINK.n) : [];
-const HASH_P = HASH_Q.length ? 'food' : LINK_BASE.length && isCuratedServing(LINK_BASE) ? LINK_BASE[0].food.id : PRODUCTS[LINK.p ?? ''] ? LINK.p! : 'espresso';
+const HASH_P = HASH_Q.length ? 'food' : LINK_BASE.length && isCuratedServing(LINK_BASE) ? LINK_BASE[0].food.id : own(PRODUCTS, LINK.p) ? LINK.p! : 'espresso';
+const HASH_ORGAN = (() => { const o = HASH.get('organ'); return o && /^[a-z_]{2,24}$/.test(o) ? o : null; })();
 
 interface Evidence { title: string; claims: string[] }
 
@@ -138,7 +142,12 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
 export default function AppV4() {
   const [u, setU] = useState(HASH_T === null ? 0 : uFromMinutes(HASH_T));
   const [playing, setPlaying] = useState(HASH_T === null && LINK_FOOD); // a link with a minute opens paused there
-  const [started, setStarted] = useState(HASH_T !== null || LINK_FOOD); // false = show the "what did you have?" start screen
+  // false = show the "what did you have?" start screen (also when the link names a food we don't have)
+  const [started, setStarted] = useState(!LINK_MISS && (HASH_T !== null || LINK_FOOD));
+  const [missText, setMissText] = useState<string | null>(LINK_MISS ?? null);
+  // a short note at the top when a link asked for something we could not open (e.g. an unknown comparison partner)
+  const [linkNote, setLinkNote] = useState<string | null>(RESOLVED.vsMiss ? `We don’t have “${RESOLVED.vsMiss.slice(0, 40)}” yet, so there is nothing to compare with. Showing the first food on its own.` : null);
+  useEffect(() => { if (!linkNote) return; const id = setTimeout(() => setLinkNote(null), 9000); return () => clearTimeout(id); }, [linkNote]);
   const [notice, setNotice] = useState<CatalogItem | null>(null);
   const [dose, setDose] = useState(HASH_DOSE);
   const [profile, setProfile] = useState<Profile>(() => {
@@ -150,7 +159,7 @@ export default function AppV4() {
     return c ? { ...base, city: cityLabel(c) } : base;
   });
   useEffect(() => { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* fine */ } }, [profile]);
-  const [selected, setSelected] = useState<string | null>(HASH.get('organ'));
+  const [selected, setSelected] = useState<string | null>(HASH_ORGAN);
   const [evidence, setEvidence] = useState<Evidence | null>(null);
   const [panel, setPanel] = useState<'body' | 'about' | 'every' | 'rules' | 'colours' | 'support' | 'pro' | 'method' | null>(
     (['body', 'about', 'every', 'rules', 'colours', 'support', 'pro'] as const).find((x) => x === HASH.get('panel')) ?? null);
@@ -158,15 +167,32 @@ export default function AppV4() {
   const [touched, setTouched] = useState(false);
   const [productId, setProductId] = useState(HASH_P);
   const [mode, setMode] = useState<'simple' | 'detailed'>(HASH.get('view') === 'detailed' ? 'detailed' : 'simple');
-  const [bodyAsked, setBodyAsked] = useState(() => { if (HASH_T !== null || LINK_FOOD) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
+  const [bodyAsked, setBodyAsked] = useState(() => { if (LINK_MISS || HASH_T !== null || LINK_FOOD) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
   const [habits, setHabits] = useState<Habits>({});
   const [foodParts, setFoodParts] = useState<Part[]>(HASH_Q);
-  const def = useMemo(() => (productId === 'food' && foodParts.length ? makeFoodProduct(foodParts, 'food') : PRODUCTS[productId] ?? PRODUCTS.espresso), [productId, foodParts]);
+  const def = useMemo(() => (productId === 'food' && foodParts.length ? makeFoodProduct(foodParts, 'food') : own(PRODUCTS, productId) ?? PRODUCTS.espresso), [productId, foodParts]);
   const habitId = productId === 'food' ? (foodParts.length === 1 ? HABIT_OF[foodParts[0].food.id] ?? 'food' : 'food') : productId;
   const PRODUCT = def.content;
   const lower = PRODUCT.name.toLowerCase();
 
   const [wholeBody, setWholeBody] = useState(false);
+  const [ansOpen, setAnsOpen] = useState(false); // quick-answers bottom sheet (phones, tablets)
+  const [menuOpen, setMenuOpen] = useState(false); // header "⋯" menu (phones)
+  const [videoOpen, setVideoOpen] = useState(false); // "Make a video" part of the share dialog
+  // The 3D body is the heaviest thing on the page (model decode, shaders). Behind the opaque start screen nobody
+  // sees it, so it mounts once the browser is idle (or at once when a link opens a food) and does not animate
+  // until something is chosen: the start screen stays smooth on slow phones.
+  const [show3d, setShow3d] = useState(() => !LINK_MISS && (HASH_T !== null || LINK_FOOD));
+  useEffect(() => {
+    if (show3d) return;
+    if (started) { setShow3d(true); return; }
+    // step 1 (about you) takes a while to fill in: wait a little; step 2 (choose a food): as soon as the browser is idle
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    let idle = 0;
+    const go = () => { if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setShow3d(true), { timeout: 2000 }); else setShow3d(true); };
+    const id = setTimeout(go, bodyAsked ? 0 : 2500);
+    return () => { clearTimeout(id); if (idle) w.cancelIdleCallback?.(idle); };
+  }, [show3d, started, bodyAsked]);
   // Calm = the default for everyone: body, one sentence, play. 'Full' adds the lights, the trip and the steps.
   const [calm, setCalm] = useState(HASH.get('view') !== 'full');
   const calmNow = mode === 'simple' && calm;
@@ -243,7 +269,7 @@ export default function AppV4() {
     setFoodParts(scaleParts(base, f));
     setProductId('food');
   };
-  const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (LINK.vs ? { with: parseMeal(LINK.vs) } : null));
+  const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (RESOLVED.vs ? { with: RESOLVED.vs } : null));
   const [vsParts, setVsParts] = useState<Part[] | null>(null); // the partner currently chosen inside Compare
   const answersBlock = (<>
     <Answers list={answers} onHow={() => setPanel('method')} onBody={() => setPanel('body')} />
@@ -300,7 +326,7 @@ export default function AppV4() {
   const choose = (item: CatalogItem) => {
     if (item.status !== 'ready' || !PRODUCTS[item.id]) { setNotice(item); return; }
     setPortion(1); setPortionBase(null);
-    setProductId(item.id);
+    setProductId(item.id); setMissText(null);
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(true);
   };
   const chooseFood = (parts: Part[]) => {
@@ -308,7 +334,7 @@ export default function AppV4() {
     setPortion(1); setPortionBase(null);
     const one = parts.length === 1 ? parts[0] : null;
     if (one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
-    setFoodParts(parts); setProductId('food');
+    setFoodParts(parts); setProductId('food'); setMissText(null);
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(true);
     try { history.replaceState(null, '', parts.length > 1 ? writeLink(linkFor(parts)) : `#q=${encodeURIComponent(canonical(parts))}`); } catch { /* sandboxed: fine */ }
   };
@@ -358,7 +384,7 @@ export default function AppV4() {
       const top = present[0];
       if (!top || !built.route) return undefined;
       const v = top[1].amount;
-      return `${SEG_LABEL[top[0]]} · ${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? built.route.unit}`;
+      return `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? built.route.unit}`}`;
     })(),
     lights: systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2 })),
     summary: systems.map((s) => {
@@ -414,7 +440,7 @@ export default function AppV4() {
       const en = x.systems.find((s) => s.key === 'energy')!;
       return {
         name: x.name, color: x.color, step: ch.title, caption: captionOf(ch.text, 95),
-        where: top ? `${SEG_LABEL[top[0]]} · ${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}` : undefined,
+        where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
         sugar: x.sugarPeak === null ? 'Sugar ?' : Math.abs(dg) < 0.15 ? 'Sugar steady' : `Sugar ${dg > 0 ? '+' : ''}${dg.toFixed(1)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
         summary: { kcal: x.kcal, sugarPeak: x.sugarPeak === null ? 'not measured' : x.sugarPeak < 0.3 ? 'steady' : `+${x.sugarPeak.toFixed(1)} mmol/L`,
@@ -441,7 +467,9 @@ export default function AppV4() {
   useEffect(() => {
     const other = HASH.get('cmpframe');
     if (!other) return;
-    const b = analyze(parseMeal(other), profile), a = analyze(currentParts, profile);
+    const bp = parseMeal(other);
+    if (!bp.length || !currentParts.length) return; // unknown food in a QA link: nothing to draw
+    const b = analyze(bp, profile), a = analyze(currentParts, profile);
     setCmpRec({ a, b, u: uFromMinutes(HASH_T ?? 0) });
     const id = setTimeout(() => {
       const ca = document.querySelector<HTMLCanvasElement>('.stage canvas');
@@ -478,7 +506,7 @@ export default function AppV4() {
   const hashNow = started && share?.state !== 'rec' && !cmpRec ? linkHash(playing ? null : minute) : null;
   useEffect(() => {
     if (hashNow === null || hashNow === window.location.hash) return;
-    const id = setTimeout(() => { try { history.replaceState(null, '', hashNow || window.location.pathname + window.location.search); } catch { /* sandboxed */ } }, 400);
+    const id = setTimeout(() => { try { history.replaceState(null, '', hashNow || window.location.pathname + window.location.search); } catch { /* sandboxed */ } }, 700);
     return () => clearTimeout(id);
   }, [hashNow]);
   // ---- "Share this moment": a 4:5 picture of this minute + the link that reopens it ----
@@ -495,6 +523,7 @@ export default function AppV4() {
       name: PRODUCT.name, amount: productId === 'food' && foodParts.length === 1 ? foodParts[0].amountLabel : hookWhat,
       stamp, clock: hhmm(profile.drinkAtMin + minute), step: chapter.title, caption: captionOf(chapter.text, 150),
       pop: o.pop, where: o.where, color: story.color, link,
+      lights: systems.map((x) => ({ label: SHORT_OF[x.key], level: x.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2, unknown: x.unknown })),
     });
     const blob = await new Promise<Blob | null>((r) => card.toBlob(r, 'image/png'));
     return blob && { blob, link, fileName: `${fileName}-${formatTime(minute)}.png`, title: `${PRODUCT.name} · ${stamp.toLowerCase()}`,
@@ -505,7 +534,7 @@ export default function AppV4() {
   const down = useRef<[number, number] | null>(null);
 
   return (
-    <div className="v4">
+    <div className={`v4 ${calmNow ? 'calmlay' : ''} ${ansOpen && calmNow ? 'ansopen' : ''}`}>
       <header className="top">
         <button className="brand" title="Home" aria-label="Inside 24h, go to the start page" onClick={() => {
           // home = the "what did you have?" screen (your body stays remembered; "← Back to you" edits it)
@@ -520,12 +549,29 @@ export default function AppV4() {
             <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
           </div>
           {started && <button className="ghost hdr" onClick={() => setCompare({})}>⇄ Compare</button>}
-          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
+          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setVideoOpen(false); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
           <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>soon</small></button>
           <button className="ghost hdr support" onClick={() => setPanel('support')}>♥ Support</button>
           <button className="primary" onClick={() => setPanel('body')}>Your body</button>
+          {/* phones: everything that doesn't fit the header, in one menu */}
+          <button className="menubtn" aria-label="Menu" aria-expanded={menuOpen} aria-controls="topmenu" onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
         </div>
+        {menuOpen && <>
+          <div className="sheetback menuback" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+          <nav id="topmenu" className="topmenu" aria-label="Menu" onClick={(e) => { if ((e.target as HTMLElement).closest('button')) setMenuOpen(false); }}>
+            <div className="seg2 mode" role="group" aria-label="View">
+              <button aria-pressed={mode === 'simple' && calm} onClick={() => { setMode('simple'); setCalm(true); }}>Simple</button>
+              <button aria-pressed={mode === 'simple' && !calm} onClick={() => { setMode('simple'); setCalm(false); }}>Full</button>
+              <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
+            </div>
+            {started && <button onClick={() => setCompare({})}>⇄ Compare two foods</button>}
+            <button onClick={() => setPanel('method')}>How we know</button>
+            <button onClick={() => setPanel('about')}>About · not medical advice</button>
+            <button onClick={() => setPanel('support')}>♥ Support</button>
+            <button onClick={() => setPanel('pro')}>Pro <small>soon</small></button>
+          </nav>
+        </>}
       </header>
 
       <main className={`grid ${mode} ${calmNow ? 'calm' : ''}`}>
@@ -556,8 +602,8 @@ export default function AppV4() {
         <section className="stage" aria-label="3D body"
           onPointerDown={(e) => { down.current = [e.clientX, e.clientY]; setTouched(true); }}>
           <ErrorBoundary fallback={(e) => <StageError error={e} />}>
-            {sceneError ? <StageError error={sceneError} /> : (
-              <SafeCanvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : 'always'}
+            {sceneError ? <StageError error={sceneError} /> : !show3d ? null : (
+              <SafeCanvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
                 onPointerMissed={(e) => {
                   const d = down.current;
                   if (!d || Math.hypot(e.clientX - d[0], e.clientY - d[1]) < 5) setSelected(null);
@@ -579,7 +625,17 @@ export default function AppV4() {
               </SafeCanvas>
             )}
           </ErrorBoundary>
-          {calmNow && <div className="stageanswers">{answersBlock}</div>}
+          {calmNow && <>
+            {/* phones/tablets: the answers wait in a bottom sheet so the body stays visible; desktop: a column on the right */}
+            <button className="anstoggle" aria-expanded={ansOpen} aria-controls="stageanswers" onClick={() => setAnsOpen(!ansOpen)}>
+              <span aria-hidden="true">💬</span> Quick answers <b>{answers.length}</b><span className="chev" aria-hidden="true">▴</span>
+            </button>
+            {ansOpen && <div className="sheetback" onClick={() => setAnsOpen(false)} aria-hidden="true" />}
+            <div id="stageanswers" className={`stageanswers ${ansOpen ? 'open' : ''}`} role="region" aria-label="Quick answers">
+              <div className="sheethead"><b>Quick answers</b><button className="x" aria-label="Close quick answers" onClick={() => setAnsOpen(false)}>×</button></div>
+              {answersBlock}
+            </div>
+          </>}
           {mode === 'simple' && !calmNow && <StatusLights systems={systems} minute={minute} onRules={() => setPanel('colours')}
             weather={city && weather && hyd ? {
               city: city.name, range: `${Math.round(weather.tmin)}–${Math.round(weather.tmax)} °C`, month: weather.month,
@@ -624,7 +680,7 @@ export default function AppV4() {
           playing={playing} onPlay={togglePlay} u={u} setU={(v) => { setU(v); setPlaying(false); }} systems={systems} minute={minute}
           where={overlayRef.current?.where} onMore={() => setCalm(false)}
           eatenAt={profile.drinkAtMin} setEatenAt={(m) => setProfile({ ...profile, drinkAtMin: m })} noun={lower}
-          portion={portion} onPortion={applyPortion} />
+          portion={portion} onPortion={applyPortion} onRules={() => setPanel('colours')} />
       )}
       {mode === 'simple' && !calmNow && <StatusStrips systems={systems} minute={minute} onSeek={jump} clock={(m) => hhmm(profile.drinkAtMin + m)} />}
       {mode === 'simple' && !calmNow && (
@@ -650,6 +706,7 @@ export default function AppV4() {
         <div className="start" role="dialog" aria-label="Choose what you ate or drank">
           <div className="startbox">
             <div className="step">Step 2 of 2 · choose</div>
+            {missText && <MissNote text={missText} onPick={chooseFood} />}
             <h1>What should we follow through your body?</h1>
             <SmartSearch onPick={chooseFood} big />
             <div className="orpick">or pick one</div>
@@ -687,6 +744,7 @@ export default function AppV4() {
         </div>
       )}
 
+      {linkNote && <div className="linknote" role="status">{linkNote}<button className="x" aria-label="Close" onClick={() => setLinkNote(null)}>×</button></div>}
       {compare && <Compare current={currentParts} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
       {share?.state === 'rec' && <div className="recbadge" role="status">● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</div>}
@@ -694,10 +752,13 @@ export default function AppV4() {
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setShare(null); }}>
           <div className="noticebox sharebox" role="dialog" aria-label="Share">
             {share.state !== 'ready' && <MomentShare make={makeMoment} label="Share this moment" />}
-            {share.state === 'choose' && (<>
+            {share.state === 'choose' && !videoOpen && (
+              <button className="ghost videoopen" aria-expanded={false} onClick={() => setVideoOpen(true)}>🎬 Or make a 24 h video (Reel / TikTok) ▾</button>
+            )}
+            {share.state === 'choose' && videoOpen && (<>
               <h2>Make a video</h2>
               <p className="note">The whole 24 hours with a hook title, a pause at each key moment, captions for silent viewing, the liquid moving through the body, and a summary at the end.</p>
-              <label className="handle">Your Instagram / X handle<input value={handle} onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
+              <label className="handle">Name in the corner <small>(optional — our brand @inside24h, or your own handle)</small><input value={handle} placeholder="@yourname" onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
               <div className="lenpick" role="group" aria-label="Length">Length:
                 <button aria-pressed={!shortVid} onClick={() => setShortVid(false)}>Full · about 1 min</button>
                 <button aria-pressed={shortVid} onClick={() => setShortVid(true)}>Short · about 20 s</button>
@@ -722,7 +783,7 @@ export default function AppV4() {
                 setShare({ ...share, msg: r === 'saved' ? 'Saved. Post it as a Reel, Story or TikTok.' : r === 'declined' ? 'Not saved.' : 'Saving files is not available here. Right-click the video and choose “Save video as…”.' });
               }}>Save video ({share.ext?.toUpperCase()}, {((share.blob?.size ?? 0) / 1e6).toFixed(1)} MB)</button>}
               {share.state === 'ready' && <button className="ghost" onClick={() => setShare({ state: 'choose' })}>Make another</button>}
-              {share.state === 'choose' && <button className="ghost" onClick={saveCover}>Save cover image (PNG)</button>}
+              {share.state === 'choose' && videoOpen && <button className="ghost" onClick={saveCover}>Save cover image (PNG)</button>}
               <button className="ghost" onClick={() => setShare(null)}>Close</button>
             </div>
           </div>
@@ -1023,10 +1084,23 @@ function Support() {
   );
 }
 
+/** A link asked for a food we don't have: say so plainly and offer the closest foods we do have. */
+function MissNote({ text, onPick }: { text: string; onPick: (parts: Part[]) => void }) {
+  const shown = text.length > 40 ? `${text.slice(0, 40)}…` : text;
+  const closest = useMemo(() => { try { return suggest(text, 3).filter((x) => x.parts.length); } catch { return []; } }, [text]);
+  return (
+    <div className="missnote" role="status">
+      <b>We don’t have “{shown}” yet.</b>
+      {closest.length ? <span>Closest we have:</span> : <span>Search for something similar, or pick one below.</span>}
+      {closest.length > 0 && <div className="misspicks">{closest.map((x) => <button key={x.text} onClick={() => onPick(x.parts)}>{x.text}</button>)}</div>}
+    </div>
+  );
+}
+
 function StageError({ error }: { error: unknown }) {
   return (
     <div className="stage-error" role="alert">
-      <b>The 3D body could not load.</b>
+      <b>{/webgl/i.test(String(error instanceof Error ? error.message : error)) ? 'Your browser can’t show 3D — try opening in Chrome/Safari.' : 'The 3D body could not load.'}</b>
       <p>Everything else still works. Technical detail: {error instanceof Error ? error.message : String(error)}</p>
     </div>
   );

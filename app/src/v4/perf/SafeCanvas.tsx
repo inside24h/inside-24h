@@ -14,7 +14,9 @@ import { deviceTier, webglAvailable } from './device';
 const NO_3D = "Your browser can't show 3D — try opening in Chrome/Safari.";
 
 export function SafeCanvas({ children, gl, frameloop, onCreated, ...rest }: CanvasProps) {
-  const ok = useMemo(webglAvailable, []);
+  // A throwaway test context costs 50–300 ms on slow phones during start-up; the API check is free. If the real
+  // context then fails, the ErrorBoundary around the stage shows the same friendly message (AppV4 StageError).
+  const ok = useMemo(() => (typeof window !== 'undefined' && 'WebGLRenderingContext' in window) || webglAvailable(), []);
   const tier = useMemo(deviceTier, []);
   const maxDpr = Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, tier === 'low' ? 1.5 : 2);
   const [dpr, setDpr] = useState(maxDpr);

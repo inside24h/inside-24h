@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { formatTime, isCuratedServing, linkFor, mealText, parsePortion, parseTime, readLink, writeLink } from './deeplink';
+import { formatTime, isCuratedServing, linkFor, mealText, parsePortion, parseTime, readLink, resolveLink, writeLink } from './deeplink';
+import { analyze } from './analyze';
+import { DEFAULT_PROFILE } from '../science/profile';
 import { parseMeal } from './food/parse';
 
 describe('deep link time', () => {
@@ -125,5 +127,64 @@ describe('meal deep links (#m=)', () => {
   });
   it('passes other keys through and m wins over q', () => {
     expect(writeLink({ m: 'cola banana', q: 'x' }, '#dose=80')).toBe('#m=cola+banana&dose=80');
+  });
+});
+
+describe('broken, old and hand-edited links never crash (QA 2026-10-15 #3, #17)', () => {
+  it('an unknown comparison partner is ignored and reported, the food still opens', () => {
+    const r = resolveLink('#q=cola&vs=nonsense');
+    expect(r.base[0].food.id).toBe('cola');
+    expect(r.vs).toBeUndefined();
+    expect(r.vsMiss).toBe('nonsense');
+    const r2 = resolveLink('#q=cola&t=999h&n=99&vs=nonsense');
+    expect(r2.link).toMatchObject({ t: 1440, n: 1 });
+    expect(r2.vs).toBeUndefined();
+  });
+  it('a known partner is resolved', () => {
+    const r = resolveLink('#q=cola&n=2&t=45m&vs=water');
+    expect(r.vs?.[0].food.id).toBe('water');
+    expect(r.vsMiss).toBeUndefined();
+  });
+  it('an unknown food is reported as a miss, never silently replaced', () => {
+    expect(resolveLink('#q=zzzz')).toMatchObject({ base: [], miss: 'zzzz' });
+    expect(resolveLink('#m=zzzz*2').miss).toBe('zzzz*2');
+    expect(resolveLink('#p=nonsense').miss).toBe('nonsense');
+    expect(resolveLink('#q=&t=').miss).toBeUndefined(); // nothing asked for: plain start screen
+    expect(resolveLink('').miss).toBeUndefined();
+    expect(resolveLink('#p=cola').miss).toBeUndefined();
+  });
+  it('Object.prototype names are just unknown words', () => {
+    for (const w of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf']) {
+      expect(() => resolveLink(`#q=${w}`)).not.toThrow();
+      expect(() => resolveLink(`#m=${w}*2`)).not.toThrow();
+      expect(resolveLink(`#p=${w}`).miss).toBe(w);
+      expect(resolveLink(`#m=${w}`).base).toEqual([]);
+      expect(() => resolveLink(`#q=cola&vs=${w}`)).not.toThrow();
+    }
+  });
+  it('survives garbage of every kind', () => {
+    const junk = ['#', '#&&&', '#q', '#q=%', '#q=%E0%A4%A', '#t=abc', '#t=-5', '#t=1e9', '#n=NaN', '#n=-1', '#view=<script>', '#vs=', '#vs=%00',
+      '#q=' + 'a'.repeat(5000), '#m=' + 'cola+'.repeat(50), '#q=🍕🍺', '#q=1e309 g cola', '#q=-3 cola', '#q=0 g banana', '#compare=zzz', '#q=cola&q=water'];
+    for (const h of junk) {
+      const r = resolveLink(h);
+      expect(r.link.n).toBeGreaterThan(0);
+      expect(r.link.t === null || (r.link.t >= 0 && r.link.t <= 1440)).toBe(true);
+      expect(['simple', 'full', 'detailed']).toContain(r.link.view);
+      for (const p of r.base) expect(Number.isFinite(p.grams)).toBe(true);
+    }
+    // random strings: a cheap fuzz
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const chars = 'abcz019 +*&=#%gmlh.,-_~ćš';
+    for (let i = 0; i < 300; i++) {
+      const s = Array.from({ length: 1 + Math.floor(rnd() * 30) }, () => chars[Math.floor(rnd() * chars.length)]).join('');
+      expect(() => resolveLink(`#q=${s}&m=${s}&vs=${s}&t=${s}&n=${s}`)).not.toThrow();
+    }
+  });
+  it('whatever a link resolves to can be analysed (the Compare view does this for the partner)', () => {
+    for (const h of ['#q=cola&vs=water', '#q=zzzz&vs=beer', '#m=hamburger+fries*2+cola&vs=1+apple']) {
+      const r = resolveLink(h);
+      if (r.base.length) expect(() => analyze(r.base, DEFAULT_PROFILE)).not.toThrow();
+      if (r.vs) expect(() => analyze(r.vs!, DEFAULT_PROFILE)).not.toThrow();
+    }
   });
 });
