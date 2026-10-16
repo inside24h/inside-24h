@@ -21,7 +21,7 @@ import { PRODUCTS, type WhereRow } from './products';
 import { BodyStart } from './BodyStart';
 import { StoryPanel } from './StoryPanel';
 import { chapterText } from './stories';
-import { useModal } from './a11y';
+import { useModal, prefersReducedMotion } from './a11y';
 import { SEG_LABEL, type SegId, type SegState } from '../scene/segments';
 import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
@@ -42,7 +42,7 @@ import { Answers, mealLinesFor, quickAnswers } from './Answers';
 import { personalNotes } from '../science/personal';
 import { Disclaimer, HowWeKnow } from './HowWeKnow';
 import { videoSupportHere } from './share';
-import { bacRangeText, glucoseRangeText } from '../science/ranges';
+import { bacRangeText, glucoseRangeTextIn } from '../science/ranges';
 import { Compare, EveryDay, Pro, VideoFallback, YourBody } from './lazyUi'; // loaded on first use
 import { isTouch } from './perf/device';
 import { analyze, verdictOf, type Analysis } from './analyze';
@@ -135,7 +135,7 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
 
 export default function AppV4() {
   const [u, setU] = useState(HASH_T === null ? 0 : uFromMinutes(HASH_T));
-  const [playing, setPlaying] = useState(HASH_T === null && LINK_FOOD); // a link with a minute opens paused there
+  const [playing, setPlaying] = useState(HASH_T === null && LINK_FOOD && !prefersReducedMotion()); // a link with a minute opens paused there; reduced motion: no autoplay, Play starts it
   // false = show the "what did you have?" start screen (also when the link names a food we don't have)
   const [started, setStarted] = useState(!LINK_MISS && (HASH_T !== null || LINK_FOOD));
   const [missText, setMissText] = useState<string | null>(LINK_MISS ?? null);
@@ -241,7 +241,7 @@ export default function AppV4() {
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
       glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, bac: built.bac, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
       latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH),
-      mealLines: productId === 'food' ? mealLinesFor(foodParts, profile) : undefined });
+      mealLines: productId === 'food' ? mealLinesFor(foodParts, profile) : undefined, glucoseUnit: profile.glucoseUnit });
   }, [systems, profile, built, vYou, productId, foodParts]);
   // the current item as database parts (curated products too), its sugar peak, and a checked better swap
   const currentParts = useMemo(() => (productId === 'food' ? foodParts : parseMeal(({ cola: 'cola', espresso: 'espresso', water: 'glass of water' } as Record<string, string>)[productId] ?? productId)), [productId, foodParts]);
@@ -267,7 +267,7 @@ export default function AppV4() {
   const [vsParts, setVsParts] = useState<Part[] | null>(null); // the partner currently chosen inside Compare
   const answersBlock = (<>
     <Answers list={answers} onHow={() => setPanel('method')} onBody={() => setPanel('body')} />
-    {swap && peakNow !== null && <SwapCard swap={swap} peakNow={peakNow} onCompare={() => setCompare({ with: swap.parts })} />}
+    {swap && peakNow !== null && <SwapCard swap={swap} peakNow={peakNow} unit={profile.glucoseUnit} onCompare={() => setCompare({ with: swap.parts })} />}
   </>);
   const stageIndex = PRODUCT.stages.reduce((acc, s, i) => (minute >= s.min ? i : acc), 0);
   const stage = PRODUCT.stages[stageIndex];
@@ -276,6 +276,14 @@ export default function AppV4() {
   const story = built.story;
   const chapterIdx = story.chapters.reduce((acc, c, i) => (minute + 1e-6 >= c.min ? i : acc), 0);
   const chapter = story.chapters[chapterIdx];
+  // Full view: keep the current step visible in the scrolling row of steps at the bottom (phones show only 2–3)
+  useEffect(() => {
+    const nav = document.querySelector<HTMLElement>('nav.moments');
+    const on = nav?.querySelector<HTMLElement>('.moment.on');
+    if (!nav || !on || nav.scrollWidth <= nav.clientWidth) return;
+    const left = on.offsetLeft - (nav.clientWidth - on.offsetWidth) / 2;
+    try { nav.scrollTo({ left, behavior: prefersReducedMotion() ? 'auto' : 'smooth' }); } catch { nav.scrollLeft = left; }
+  }, [chapterIdx, mode, calm, productId]);
   const habit = habits[habitId] ?? { often: 'daily' as const, howLong: 'years' as const };
   const toBed = (profile.bedtimeMin - profile.drinkAtMin + 1440) % 1440;
 
@@ -321,7 +329,7 @@ export default function AppV4() {
     if (item.status !== 'ready' || !PRODUCTS[item.id]) { setNotice(item); return; }
     setPortion(1); setPortionBase(null);
     setProductId(item.id); setMissText(null);
-    setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(true);
+    setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
   };
   const chooseFood = (parts: Part[]) => {
     if (!parts.length) return;
@@ -329,7 +337,7 @@ export default function AppV4() {
     const one = parts.length === 1 ? parts[0] : null;
     if (one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
     setFoodParts(parts); setProductId('food'); setMissText(null);
-    setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(true);
+    setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
     try { history.replaceState(null, '', parts.length > 1 ? writeLink(linkFor(parts)) : `#q=${encodeURIComponent(canonical(parts))}`); } catch { /* sandboxed: fine */ }
   };
 
@@ -369,7 +377,7 @@ export default function AppV4() {
       // a range, never one number (Widmark ±20–40%, alcohol.md W6)
       if (bac >= 0.1) return { big: bacRangeText(bac).replace(' ‰', ''), small: '‰ blood alcohol', level: (bac >= 0.5 ? 2 : 1) as 0 | 1 | 2 };
       const g = built.effects.glucoseMgDl ? at(built.effects.glucoseMgDl, mi) / 18.016 : 0;
-      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeText(g) : g.toFixed(1), small: g > 0 ? 'mmol/L blood sugar rise (typical)' : 'mmol/L blood sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
+      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeTextIn(g, profile.glucoseUnit).replace(/ .*$/, '') : profile.glucoseUnit === 'mg/dL' ? `${Math.round(g * 18.016)}` : g.toFixed(1), small: `${profile.glucoseUnit} ${g > 0 ? 'blood sugar rise right now (typical)' : 'blood sugar dip right now'}`, level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
       const caf = built.caffeine.doseMg >= 10 ? at(built.caffeine.body, mi) : 0;
       if (caf >= 20) return { big: `${Math.round(caf)} mg`, small: 'caffeine in you', level: (caf >= 200 ? 1 : 0) as 0 | 1 | 2 };
       return undefined;
@@ -530,6 +538,9 @@ export default function AppV4() {
   // ---- accessibility: dialogs, sheets and the menu trap focus, close on Esc and give focus back (a11y.ts) ----
   const shareBox = useRef<HTMLDivElement>(null), noticeBox = useRef<HTMLDivElement>(null);
   const menuBox = useRef<HTMLElement>(null), ansBox = useRef<HTMLDivElement>(null);
+  // the two start screens are modal too: Tab stays inside them (not in the app behind); Esc does nothing (no way back yet)
+  const startBox = useRef<HTMLDivElement>(null);
+  useModal(startBox, !started, () => {});
   useModal(shareBox, !!share && share.state !== 'rec', () => setShare(null));
   useModal(noticeBox, !!notice, () => setNotice(null));
   useModal(menuBox, menuOpen, () => setMenuOpen(false));
@@ -613,7 +624,6 @@ export default function AppV4() {
 
         <section className="stage" aria-label="3D body" aria-describedby="stage-now"
           onPointerDown={(e) => { down.current = [e.clientX, e.clientY]; setTouched(true); }}>
-          <p id="stage-now" className="sr" aria-live={playing ? 'off' : 'polite'}>{started ? stageText : ''}</p>
           <ErrorBoundary fallback={(e) => <StageError error={e} />}>
             {sceneError ? <StageError error={sceneError} /> : !show3d ? null : (
               <Suspense fallback={null}><SafeCanvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
@@ -638,6 +648,8 @@ export default function AppV4() {
               </SafeCanvas></Suspense>
             )}
           </ErrorBoundary>
+          {/* after the canvas on purpose: CSS places the canvas wrapper as the stage's first child (.stage > div:first-child) */}
+          <p id="stage-now" className="sr" aria-live={playing ? 'off' : 'polite'}>{started ? stageText : ''}</p>
           {calmNow && <>
             {/* phones/tablets: the answers wait in a bottom sheet so the body stays visible; desktop: a column on the right */}
             <button className="anstoggle" aria-expanded={ansOpen} aria-controls="stageanswers" onClick={() => setAnsOpen(!ansOpen)}>
@@ -707,7 +719,7 @@ export default function AppV4() {
         </nav>
       )}
       {!started && !bodyAsked && (
-        <div className="start" role="dialog" aria-label="Tell us about you">
+        <div className="start" role="dialog" aria-modal="true" aria-label="Tell us about you" ref={startBox} tabIndex={-1} data-autofocus>
           <BodyStart profile={profile} setProfile={setProfile} onNext={() => setBodyAsked(true)} />
         </div>
       )}
@@ -716,7 +728,7 @@ export default function AppV4() {
         stages={PRODUCT.stages} stageIndex={stageIndex} jump={jump} toBed={toBed} bedLabel={hhmm(profile.bedtimeMin)} drinkAt={profile.drinkAtMin} />}
 
       {!started && bodyAsked && (
-        <div className="start" role="dialog" aria-label="Choose what you ate or drank">
+        <div className="start" role="dialog" aria-modal="true" aria-label="Choose what you ate or drank" ref={startBox} tabIndex={-1} data-autofocus>
           <div className="startbox">
             <div className="step">Step 2 of 2 · Choose</div>
             {missText && <MissNote text={missText} onPick={chooseFood} />}
@@ -725,14 +737,14 @@ export default function AppV4() {
             <div className="orpick">or pick one</div>
             <div className="tiles">
               {[
-                { q: 'cola', name: 'Cola', sub: '1 can · 330 ml', color: '#2a120a' },
+                { q: 'cola', name: 'Cola', sub: '1 can · 330 ml', color: '#2a120a' },
                 { q: 'espresso', name: 'Espresso', sub: '1 shot', color: '#2b1608' },
-                { q: 'water', name: 'Water', sub: '1 glass · 250 ml', color: '#cfe8ff' },
+                { q: 'water', name: 'Water', sub: '1 glass · 250 ml', color: '#cfe8ff' },
                 { q: '1 banana', name: 'Banana', sub: '1 medium', color: '#f1de8c' },
                 { q: 'beer', name: 'Beer', sub: '0.5 l', color: '#e5a823' },
                 { q: 'pizza', name: 'Pizza', sub: '1 slice', color: '#e8b04a' },
                 { q: '1 apple', name: 'Apple', sub: '1 medium', color: '#c8e06a' },
-                { q: 'glass of milk', name: 'Milk', sub: '1 glass · 250 ml', color: '#f4f1ea' },
+                { q: 'glass of milk', name: 'Milk', sub: '1 glass · 250 ml', color: '#f4f1ea' },
               ].map((t) => (
                 <button key={t.q} className={`tile ${['1 banana', 'pizza', '1 apple'].includes(t.q) ? 'solid' : ''}`} style={{ ['--tc' as string]: t.color }} onClick={() => chooseFood(parseMeal(t.q))}>
                   <i aria-hidden="true" /><b>{t.name}</b><span>{t.sub}</span>

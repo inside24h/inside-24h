@@ -86,6 +86,7 @@ export function StoryPanel({ story, chapterIdx, minute, vitals, profile, name, p
               );
             })}
           </div>
+          <p className="note mbnote">Each bar is a score out of 100 for a body like yours; the number shows how much this habit changes it.</p>
           <button className="everybtn" onClick={onEvery}><b>Every day for years?</b><span>Cholesterol, diabetes, weight, life expectancy →</span></button>
         </div>
       )}

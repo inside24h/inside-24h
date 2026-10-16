@@ -5,7 +5,7 @@ import { at, type Timeline } from '../science/espressoSim';
 import type { ColaSim } from '../science/colaSim';
 import type { WaterSim } from '../science/waterSim';
 import type { Vitals } from '../science/daily';
-import { formatGlucose, type Profile } from '../science/profile';
+import { formatGlucose, formatGlucoseRise, type Profile } from '../science/profile';
 import { GLUCOSE_SPREAD } from '../science/ranges';
 import volumesJson from '../assets/organ-volumes.json';
 
@@ -81,7 +81,7 @@ export function colaStory(s: ColaSim, p: Profile): Story {
       { min: 1, title: 'In your stomach', focus: 'stomach', claims: ['KG4', 'KG7'], text: 'Your stomach fills up. Because of the sugar, it lets the cola out slowly: half is still here after about 30 minutes. Water would leave twice as fast.' },
       { min: 6, title: 'Into the small intestine', focus: 'jejunum', claims: ['KA1', 'KA5'], text: 'In the first part of your small intestine the sugar is split into glucose and fructose and pulled into your blood within minutes.' },
       { min: 12, title: 'Straight to the liver', focus: 'liver', claims: ['KL1', 'KL2'], text: 'Blood from your gut goes to the liver first. The liver takes up about 85% of the fructose; the glucose passes on to the rest of your body.' },
-      { min: 20, title: 'Blood sugar peak', focus: 'pancreas', claims: ['KB2', 'KB4', 'KM1'], text: `Your blood sugar climbs from ${g(g0)} to about ${g(gPeak)} (a typical response, not personalised: most people land between ${formatGlucose(g0 + (gPeak - g0) * (1 - GLUCOSE_SPREAD), p.glucoseUnit)} and ${g(g0 + (gPeak - g0) * (1 + GLUCOSE_SPREAD))}). Your pancreas releases insulin to bring it back down.` },
+      { min: 20, title: 'Blood sugar peak', focus: 'pancreas', claims: ['KB2', 'KB4', 'KM1'], text: `Your blood sugar climbs from ${g(g0)} to about ${formatGlucoseRise(g0, gPeak - g0, p.glucoseUnit)} ${p.glucoseUnit} (a typical response, not personalised: most people land between ${formatGlucoseRise(g0, (gPeak - g0) * (1 - GLUCOSE_SPREAD), p.glucoseUnit)} and ${formatGlucoseRise(g0, (gPeak - g0) * (1 + GLUCOSE_SPREAD), p.glucoseUnit)} ${p.glucoseUnit}). Your pancreas releases insulin to bring it back down.` },
       { min: 45, title: 'A little caffeine', focus: 'brain', claims: ['KP5', 'F1', 'F3'], text: 'The caffeine (32 mg, about half an espresso) reaches your brain and blocks the “I’m tired” signal a little.' },
       { min: 75, title: 'The sugar dip', focus: 'brain', claims: ['KB4', 'KB10', 'KB9'], text: 'Insulin overshoots a little: your blood sugar drops just below where you started. This is when hunger and cravings tend to come back.' },
       { min: 180, title: 'The liver finishes', focus: 'liver', claims: ['KL3'], text: 'Over the next hours your liver burns about half of the fructose for energy and turns about 40% into glucose. Less than 1% becomes fat right away.' },

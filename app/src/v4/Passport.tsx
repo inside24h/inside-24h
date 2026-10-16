@@ -10,7 +10,7 @@ export interface Stay { id: SegId; from: number; to: number | null; peak: number
 
 const ORDER: SegId[] = ['swallow', 'stomach', 'duodenum', 'small', 'portal', 'blood', 'kidney', 'bladder', 'colon'];
 const FOCUS: Record<SegId, string> = { swallow: 'esophagus', stomach: 'stomach', duodenum: 'duodenum', small: 'jejunum', portal: 'liver', blood: 'heart', kidney: 'kidney_l', bladder: 'bladder', colon: 'colon_trans' };
-const ICON: Record<SegId, string> = { swallow: '👄', stomach: '🫃', duodenum: '🧪', small: '〰️', portal: '🟤', blood: '🩸', kidney: '🫘', bladder: '💧', colon: '🌀' };
+const ICON: Record<SegId, string> = { swallow: '👄', stomach: '🥣', duodenum: '🧪', small: '〰️', portal: '🟤', blood: '🩸', kidney: '🫘', bladder: '💧', colon: '🌀' };
 
 /** What happens in each place, in plain words; `kind` tunes a few lines. */
 export function whatHappens(id: SegId, kind: { drink: boolean; fat: boolean; sugar: boolean; alcohol: boolean; caffeine: boolean; fibre: boolean }): string {

@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { Profile } from '../science/profile';
 import { analyze, SWAPS } from './analyze';
 import { parseMeal, type Part } from './food/parse';
+import { glucoseRiseText } from '../science/ranges';
 
 export function useSwap(current: Part[], profile: Profile, peakNow: number | null) {
   return useMemo(() => {
@@ -22,11 +23,11 @@ export function useSwap(current: Part[], profile: Profile, peakNow: number | nul
   }, [current, profile, peakNow]);
 }
 
-export function SwapCard({ swap, peakNow, onCompare }: { swap: { name: string; peak: number }; peakNow: number; onCompare: () => void }) {
+export function SwapCard({ swap, peakNow, onCompare, unit = 'mmol/L' }: { swap: { name: string; peak: number }; peakNow: number; onCompare: () => void; unit?: 'mmol/L' | 'mg/dL' }) {
   return (
     <div className="swapcard">
       <span className="ai" aria-hidden="true">🔁</span>
-      <span><b>Better swap</b><em>{swap.name}: blood sugar {swap.peak < 0.3 ? 'stays steady' : `+${swap.peak.toFixed(1)}`} instead of +{peakNow.toFixed(1)} mmol/L.</em>
+      <span><b>Better swap</b><em>{swap.name}: blood sugar {swap.peak < 0.3 ? 'stays steady' : glucoseRiseText(swap.peak, unit)} instead of {glucoseRiseText(peakNow, unit)}.</em>
         <button className="link" onClick={onCompare}>Compare side by side<span aria-hidden="true"> →</span></button></span>
     </div>
   );

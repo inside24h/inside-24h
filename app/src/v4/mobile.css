@@ -243,6 +243,7 @@
   /* start screen tiles: same icon column for glasses and fruit, so the names line up */
   .startbox .tile { grid-template-columns: 30px minmax(0, 1fr); }
   .startbox .tile i { justify-self: center; }
+  .startbox .tile span { white-space: normal; text-overflow: clip; } /* "1 glass · 250 ml" wraps on 360 px instead of "250…" */
 
   /* calm bar: a tapped light replaces the long sentence instead of pushing the body off the screen */
   .calmbar:has(.calmexplain) .calmtext p, .calmbar:has(.calmexplain) .calmwhere { display: none; }

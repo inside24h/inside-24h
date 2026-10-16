@@ -105,6 +105,22 @@ function bestFoods(text: string, n = 8): { food: Food; score: number }[] {
     .slice(0, n);
 }
 
+/** Display only: the serving label in metric, without USDA's inch measurements ("1 medium (3" dia)" → "1 medium",
+ *  "3 oz" → "85 g", "1 can 8.4 fl oz" → "1 can (250 ml)"). The raw label stays in the data (and in mlPerGram). */
+export function servingText(f: Food): string {
+  let t = f.serving.label;
+  t = t.replace(/\s*\d+ servings per [\d.]+ oz package/, '');            // "1 serving 9 servings per 24 oz package"
+  t = t.replace(/of [\d.]+ oz cake/, 'of a cake');                       // "1 piece (1/12 of 16 oz cake)"
+  t = t.replace(/\s*\(1 NLEA serving\)/, '').replace(/^1 NLEA serving$/, '1 serving'); // US label jargon
+  t = t.replace(/^1 serving (\d.*)$/, '$1').replace(/\bTBSP\b/, 'tbsp').replace(/^1\/2 /, '½ '); // "1 serving 2 TBSP" → "2 tbsp"
+  t = t.replace(/\s*\([^)]*(?:"|\bdia\b)[^)]*\)/g, '');               // "(3\" dia)", "(7\" to 7-7/8\" long)"
+  t = t.replace(/\s(\d+(?:\.\d+)?) fl oz$/, (_m, x) => ` (${Math.round((Number(x) * 29.5735) / 5) * 5} ml)`);
+  t = t.replace(/(\d+(?:\.\d+)?) fl oz/g, (_m, x) => `${Math.round((Number(x) * 29.5735) / 5) * 5} ml`);
+  const ozCount = (t.match(/\d+(?:\.\d+)? oz\b/g) ?? []).length;
+  t = t.replace(/(\d+(?:\.\d+)?) oz\b/g, (_m, x) => `${ozCount === 1 ? Math.round(f.serving.grams) : Math.round(Number(x) * 28.35)} g`);
+  return t.trim();
+}
+
 const mlPerGram = (f: Food) => {
   const m = /([\d.]+)\s*ml/.exec(f.serving.label);
   return m ? Number(m[1]) / f.serving.grams : 1 / 1.03; // most drinks are close to water
@@ -142,7 +158,7 @@ function toPart(food: Food, q: Qty): Part {
     const g = servMl ? (food.serving.grams * q.spoonMl) / servMl : q.spoonMl / mlPerGram(food);
     return { food, grams: n * g, amountLabel: `${n} × ${q.label}`, assumed: !servMl };
   }
-  return { food, grams: n * food.serving.grams, amountLabel: n === 1 ? food.serving.label : /^1 /.test(food.serving.label) ? `${n} ${food.serving.label.slice(2)}` : `${n} × ${food.serving.label}`, assumed: !!food.assumedServing };
+  return { food, grams: n * food.serving.grams, amountLabel: n === 1 ? servingText(food) : /^1 /.test(servingText(food)) ? `${n} ${servingText(food).slice(2)}` : `${n} × ${servingText(food)}`, assumed: !!food.assumedServing };
 }
 
 const SPLIT = / (?:s|sa|i|and|with|uz|plus|\+) |,|\+|;/;
@@ -185,7 +201,7 @@ export function suggest(input: string, n = 7): Suggestion[] {
   return out.slice(0, n);
 }
 
-export const POPULAR = ['1 can of cola', 'espresso', 'glass of water', '1 apple', 'banana', 'slice of pizza', 'coffee with milk', 'beer', 'glass of red wine', 'white bread', 'orange juice', 'milk chocolate'];
+export const POPULAR = ['1 can of cola', 'espresso', 'glass of water', '1 apple', 'banana', 'slice of pizza', 'coffee with milk', 'beer', 'red wine', 'white bread', 'orange juice', 'milk chocolate'];
 
 export function macros(parts: Part[]): Macros {
   const sum = (f: (p: Per100) => number | null) => parts.reduce((s, x) => s + ((f(x.food.p) ?? 0) * x.grams) / 100, 0);

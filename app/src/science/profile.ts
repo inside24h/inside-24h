@@ -65,3 +65,10 @@ export function totalBodyWaterL(p: Pick<Profile, 'sex' | 'ageY' | 'heightCm' | '
 export const MG_DL_PER_MMOL_L = 18.016; // glucose molar mass 180.16 g/mol
 export const formatGlucose = (mgDl: number, unit: Profile['glucoseUnit']) =>
   unit === 'mg/dL' ? `${Math.round(mgDl)}` : (mgDl / MG_DL_PER_MMOL_L).toFixed(1);
+/** Display only: a level shown as (rounded start) + (rounded rise), so "from 5.0 to 7.3" always matches "+2.3"
+ *  shown elsewhere (rounding each total separately could print 7.2 next to +2.3). Same numbers, consistent rounding. */
+export const formatGlucoseRise = (baseMgDl: number, riseMgDl: number, unit: Profile['glucoseUnit']) => {
+  if (unit === 'mg/dL') return `${Math.round(baseMgDl) + Math.round(riseMgDl)}`;
+  const r1 = (x: number) => Math.round(x * 10) / 10;
+  return (r1(baseMgDl / MG_DL_PER_MMOL_L) + r1(riseMgDl / MG_DL_PER_MMOL_L)).toFixed(1);
+};

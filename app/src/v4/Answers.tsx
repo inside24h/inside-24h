@@ -4,7 +4,7 @@
 import type { System } from './status';
 import { worstMoment } from './status';
 import { at } from '../science/espressoSim';
-import { bacRangeText, glucoseRangeText } from '../science/ranges';
+import { bacRangeText, glucoseRangeTextIn } from '../science/ranges';
 import { TIPS } from '../content/tips';
 import { LEVEL_LABEL } from '../content/types';
 import { Disclaimer } from './HowWeKnow';
@@ -26,6 +26,8 @@ export interface AnswerInput {
   personal?: PersonalNotes;
   /** meal wording (food/mealWords.ts) when the food is a meal of 2+ items; see mealLinesFor */
   mealLines?: string[];
+  /** the blood sugar unit chosen in "Your body" (default mmol/L) */
+  glucoseUnit?: 'mmol/L' | 'mg/dL';
 }
 
 /** Whole-meal sentences (which item drives sugar, speed, alcohol, caffeine) for 2+ items; [] for a single food. */
@@ -53,7 +55,7 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     const SUGAR_WHY = 'Body size, age and habits don’t predict your own curve well; only a glucose sensor can.';
     if (mmol < 0.3) out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: 'No, it stays steady.', tone: 0, tag: 'typical' });
     // a range: ±1 SD between people ≈ ±40% (cola.md B1, digestion-generic.md GL8)
-    else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: about ${glucoseRangeText(mmol)} mmol/L around ${at0(peakAt)}${backAt > 0 ? `, normal again by about ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0,
+    else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: about ${glucoseRangeTextIn(mmol, x.glucoseUnit)} around ${at0(peakAt)}${backAt > 0 ? `, normal again by about ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0,
       note: 'Typical response, not personalised', title: SUGAR_WHY, tag: 'typical' });
     if (low / 18.016 <= -0.3) out.push({ icon: '🍽️', q: 'Will I get hungry again soon?', a: `Probably around ${at0(lowAt)}, when your blood sugar dips below where it started.`, tone: 1, tag: 'typical' });
   } else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: x.bac

@@ -17,7 +17,8 @@ export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; s
   const [build, setBuild] = useState<number | null>(null);
   const [exact, setExact] = useState(false);
   const weightFor = (h: number, bmi: number) => Math.round(bmi * (h / 100) ** 2);
-  // show which template the current numbers fall into, so something is always selected
+  // show which template the current numbers fall into, so something is always selected; that button shows the
+  // numbers actually in use, so it never disagrees with the summary line below (e.g. 175 cm, not the template's 179)
   const bandOf = (age: number) => (age < 30 ? 25 : age < 45 ? 37 : age < 60 ? 52 : 68);
   const nearestHeight = HEIGHTS[profile.sex].reduce((b, [, h]) => (Math.abs(h - profile.heightCm) < Math.abs(b - profile.heightCm) ? h : b), HEIGHTS[profile.sex][0][1]);
   const bmiNow = profile.weightKg / (profile.heightCm / 100) ** 2;
@@ -44,11 +45,11 @@ export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; s
       </div>
       <div className="pick">
         <span>Height</span>
-        <div className="chips2" role="group" aria-label="Height">{HEIGHTS[profile.sex].map(([l, h]) => <button key={l} aria-pressed={nearestHeight === h} onClick={() => setHeight(h)}>{l}<small>{h} cm</small></button>)}</div>
+        <div className="chips2" role="group" aria-label="Height">{HEIGHTS[profile.sex].map(([l, h]) => <button key={l} aria-pressed={nearestHeight === h} onClick={() => setHeight(h)}>{l}<small>{nearestHeight === h ? profile.heightCm : h} cm</small></button>)}</div>
       </div>
       <div className="pick">
         <span>Build</span>
-        <div className="chips2" role="group" aria-label="Build">{BUILDS.map(([l, b]) => <button key={l} aria-pressed={(build ?? nearestBuild) === b} onClick={() => setBuildBmi(b)}>{l}<small>{weightFor(profile.heightCm, b)} kg</small></button>)}</div>
+        <div className="chips2" role="group" aria-label="Build">{BUILDS.map(([l, b]) => <button key={l} aria-pressed={(build ?? nearestBuild) === b} onClick={() => setBuildBmi(b)}>{l}<small>{build === null && nearestBuild === b ? profile.weightKg : weightFor(profile.heightCm, b)} kg</small></button>)}</div>
       </div>
 
       <div className="pick">

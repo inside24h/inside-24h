@@ -26,7 +26,7 @@ export function useModal(ref: RefObject<HTMLElement | null>, active: boolean, on
     stack.push(me);
     const root = ref.current;
     if (root && !root.contains(document.activeElement)) {
-      const first = root.querySelector<HTMLElement>('[data-autofocus]') ?? focusables(root)[0];
+      const first = (root.matches('[data-autofocus]') ? root : root.querySelector<HTMLElement>('[data-autofocus]')) ?? focusables(root)[0];
       (first ?? root).focus({ preventScroll: true });
     }
     const onKey = (e: KeyboardEvent) => {

@@ -65,6 +65,11 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
             </select></span></label>
           <label>Oxygen saturation<span><NumberField id="spo2" value={p.spo2} min={80} max={100} onCommit={(v) => set('spo2', Math.round(v))} /> %</span></label>
         </div>
+        {/* thresholds: fasting glucose ≥ 7.0 mmol/L (126 mg/dL, ADA diabetes cut-off) or < 3.9 (70 mg/dL, ADA low);
+            blood pressure ≥ 180/120 (AHA: severe). The models assume a healthy adult (How we know). */}
+        {(p.glucoseMgDl >= 126 || p.glucoseMgDl < 70 || p.sbp >= 180 || p.dbp >= 120) && (
+          <p className="note readwarn" role="status">These readings are outside the healthy range this simulation is built for, so its numbers may not fit you. If they are real, please talk to a doctor.</p>
+        )}
         <button className="link" onClick={() => setProfile({ ...p, ...HEALTHY_VITALS })}>Use typical healthy readings</button>
       </fieldset>
 

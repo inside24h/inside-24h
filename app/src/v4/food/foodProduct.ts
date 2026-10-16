@@ -3,7 +3,7 @@
 // Model: science/foodSim.ts (level C on top of published numbers); claims: content/food.ts.
 import { at } from '../../science/espressoSim';
 import { simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
-import { formatGlucose, type Profile } from '../../science/profile';
+import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
 import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
 import { FOOD_CLAIMS } from '../../content/food';
 import { ESPRESSO } from '../../content/espresso';
@@ -198,7 +198,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (gl !== null && s.glucosePeakMmol >= 0.2) {
     const big = s.glucosePeakMmol >= 1.5;
     const who = isMeal ? mealSugarNote(s, meal) : '';
-    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucose(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD))} (a typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
+    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD), p.glucoseUnit)} ${p.glucoseUnit} (a typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
   }
   if (dipMin > 0) ch.push({ min: dipMin, title: 'The sugar dip', focus: 'brain', claims: ['GL7'], text: 'Your blood sugar drops a little below where you started. Many people feel hungry again around now.' });
   if (meal.alcoholG > 1) {

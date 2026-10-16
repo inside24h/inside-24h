@@ -125,8 +125,9 @@ export function verdict(systems: System[], drinkAt: number): string {
       }
     }
     if (!spans.length) { calm.push(NAME[s.key]); continue; }
-    const words = spans.slice(0, 2).map(([a, b, l]) => `${l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`);
-    parts.push(`${s.label}: ${words.join(', then ')}`);
+    // "mild stress 16:13–16:42 and again 17:15–18:17" (same level twice), "mild stress …, then high stress …" otherwise
+    const words = spans.slice(0, 2).map(([a, b, l], i) => `${i === 1 && l === spans[0][2] ? 'again' : l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`);
+    parts.push(`${s.label}: ${words.length === 2 && spans[1][2] === spans[0][2] ? words.join(' and ') : words.join(', then ')}`);
   }
   const calmTxt = calm.length ? `${calm.length === 4 ? 'Sugar, heart, water and brain' : calm.length > 2 ? `${cap(calm.slice(0, -1).join(', '))} and ${calm[calm.length - 1]}` : cap(calm.join(' and '))}: no real effect.` : '';
   return parts.length ? `${parts.join('. ')}. ${calmTxt}`.trim() : `Your body handles this easily. ${calmTxt}`;

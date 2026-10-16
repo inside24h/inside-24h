@@ -17,6 +17,15 @@ export function glucoseRangeText(peakMmol: number): string {
   const [lo, hi] = spread(peakMmol, GLUCOSE_SPREAD);
   return `+${lo.toFixed(1)}–${hi.toFixed(1)}`;
 }
+/** The same range with its unit, in the unit the person chose in "Your body" (display only), e.g. "+1.4–3.2 mmol/L" / "+25–58 mg/dL". */
+export function glucoseRangeTextIn(peakMmol: number, unit: 'mmol/L' | 'mg/dL' = 'mmol/L'): string {
+  if (unit === 'mmol/L') return `${glucoseRangeText(peakMmol)} mmol/L`;
+  const [lo, hi] = spread(peakMmol * 18.016, GLUCOSE_SPREAD);
+  return `+${Math.round(lo)}–${Math.round(hi)} mg/dL`;
+}
+/** One rise with its unit, e.g. "+2.3 mmol/L" / "+41 mg/dL" (display only). */
+export const glucoseRiseText = (mmol: number, unit: 'mmol/L' | 'mg/dL' = 'mmol/L') =>
+  unit === 'mmol/L' ? `+${mmol.toFixed(1)} mmol/L` : `+${Math.round(mmol * 18.016)} mg/dL`;
 
 /** Blood alcohol (g/L = ‰) as a range: −40% to +50% of the model value. Never a single number. */
 export const bacRange = (gPerL: number): [number, number] => [gPerL * (1 - BAC_SPREAD), gPerL * (1 + BAC_SPREAD_UP)];

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FOODS, fold, type Food, type Part } from './food/parse';
+import { FOODS, fold, servingText, type Food, type Part } from './food/parse';
 import { PRESETS, presetParts } from './food/meal';
 import './meals.css';
 import { useModal } from './a11y';
@@ -21,7 +21,7 @@ const GROUPS: { name: string; test: (f: Food) => boolean }[] = [
 const OTHER = 'More foods';
 const groupOf = (f: Food) => GROUPS.find((g) => g.test(f))?.name ?? OTHER;
 
-const one = (f: Food): Part[] => [{ food: f, grams: f.serving.grams, amountLabel: f.serving.label, assumed: !!f.assumedServing }];
+const one = (f: Food): Part[] => [{ food: f, grams: f.serving.grams, amountLabel: servingText(f), assumed: !!f.assumedServing }];
 
 /** `onAdd`: a small "+" on each row adds that food to the current meal instead of replacing it. */
 export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], text: string) => void; onClose: () => void; onAdd?: (parts: Part[], text: string) => void }) {
@@ -69,7 +69,7 @@ export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], tex
                 <li key={f.id} className={onAdd ? 'withadd' : ''}>
                   <button onClick={() => onPick(one(f), f.name)}>
                     <i style={{ background: f.color }} aria-hidden="true" />
-                    <span className="bn">{f.name}<small>{f.serving.label}</small></span>                  </button>
+                    <span className="bn">{f.name}<small>{servingText(f)}</small></span>                  </button>
                   {onAdd && <button className="badd" aria-label={`Add ${f.name} to the meal`} title="Add to the meal" onClick={() => onAdd(one(f), f.name)}>+</button>}
                 </li>
               ))}
