@@ -57,9 +57,10 @@ const claims: Claim[] = [
   c('VO1', 'A', 'Blood oxygen averages about 96.2% by day and 95.4% at night, lowest around midnight.', ['shapiro2023']),
   c('VS1', 'A', 'A meta-analysis found caffeine cuts sleep by 45 minutes on average, and that a 107 mg coffee should be drunk at least 8.8 hours before bed.', ['gardiner2023']),
   c('VS2', 'B', '100 mg taken 4, 8 or 12 hours before bed had no measurable effect. 400 mg four hours before bed added 14 minutes to falling asleep and cut sleep by 51 minutes.', ['gardiner2025']),
-  c('VS3', 'C', 'Your extra time to fall asleep is estimated from your blood caffeine at bedtime, placed between those two results.', [], { method: 'Linear interpolation on blood caffeine at bedtime: 0 min at the level left by 100 mg after 4 h, +14.2 min at the level left by 400 mg after 4 h (VS2). Below the first level we show no effect.' }),
+  c('VS3', 'C', 'Your extra time to fall asleep is estimated from your blood caffeine while you fall asleep, placed between those two results. Below that, we only call it "too little to affect your sleep" when it is also under the level the meta-analysis links to shorter sleep.', [], { method: 'Blood caffeine = the highest level from bedtime to 90 min after (a late drink is still rising at bedtime; 400 mg at bedtime disrupted sleep, Drake 2013). Linear interpolation: 0 min at the level left by 100 mg after 4 h, +14.2 min at the level left by 400 mg after 4 h (VS2). Between the level left by 107 mg after 8.8 h (VS1) and the 0-min level we say most people sleep normally but sensitive people may not (VS4). Below that: too little to affect sleep.' }),
+  c('VS4', 'B', 'People differ: those who say caffeine affects their sleep slept worse with their usual caffeine than people who do not, and a common variant of the adenosine A2A receptor gene (ADORA2A) is part of the reason.', ['retey2007']),
   c('S1', 'A', 'EFSA: 100 mg close to bedtime can make it harder to fall asleep and shorten sleep in some adults.', ['efsa2015']),
-  c('S2', 'A', '400 mg taken even 6 hours before bed disrupted sleep compared with placebo.', ['drake2013']),
+  c('S2', 'B', '400 mg taken even 6 hours before bed disrupted sleep compared with placebo.', ['drake2013']),
   c('S3', 'A', 'For healthy adults, up to 200 mg at once and 400 mg a day raise no safety concerns. In pregnancy the limit is 200 mg a day.', ['efsa2015']),
 ];
 

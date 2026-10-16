@@ -8,8 +8,9 @@ import { at, simulateEspresso, type Timeline } from '../science/espressoSim';
 import { COLA, simulateCola, type ColaSim } from '../science/colaSim';
 import { WATER, simulateWater, waterSbpDelta } from '../science/waterSim';
 import { WATER_PRODUCT, WATER_VITAL_CLAIMS } from '../content/water';
-import type { ProductEffects } from '../science/daily';
-import type { Profile } from '../science/profile';
+import { sleepRiskAt, sleepSentence, type ProductEffects } from '../science/daily';
+import { sleepAnchors } from '../science/anchors';
+import { formatGlucose, formatGlucoseRise, type Profile } from '../science/profile';
 import { BLOOD_SITES, BODY_WATER_SITES, GUT_SITES, ROUTE_GUT_TO_BODY, ROUTE_THROUGH_LIVER, type FlowLayer } from '../scene/flowSites';
 import { headline as espressoHeadline, type Headline } from './headlines';
 import { colaStory, espressoStory, waterStory, type Story } from './stories';
@@ -104,6 +105,7 @@ const espresso: ProductDef = {
 
 // ---- cola ----
 const colaCache = new WeakMap<Built, ColaSim>();
+const unitOf = new WeakMap<Built, Profile['glucoseUnit']>(); // the blood sugar unit picked in "Your body", for organ panels
 const cola: ProductDef = {
   id: 'cola', content: COLA_PRODUCT, vitalClaims: COLA_VITAL_CLAIMS, hasDose: false,
   build: (p) => {
@@ -156,23 +158,24 @@ const cola: ProductDef = {
       route: colaRoute(s),
       traits: { drink: true, fat: false, sugar: true, alcohol: false, caffeine: true, fibre: false },
     };
-    colaCache.set(built, s);
+    colaCache.set(built, s); unitOf.set(built, p.glucoseUnit);
     return built;
   },
   headline: (stageMin, b, p, extra) => {
     const s = colaCache.get(b)!;
     const toBed = (p.bedtimeMin - p.drinkAtMin + 1440) % 1440;
-    const mmol = (v: number) => (v / 18.016).toFixed(1);
+    const peakDelta = Math.max(...s.glucoseDeltaMgDl.slice(0, 60));
+    const sleep = sleepRiskAt(b.caffeine, toBed, sleepAnchors());
     switch (stageMin) {
       case 0: return { label: 'First sip', text: 'One can: 35 g of sugar, about 9 teaspoons, plus 32 mg of caffeine.', claims: ['KP1', 'KP2', 'KP5', 'KP7', 'KP9'] };
       case 1: return { label: 'Stomach', text: 'Sugar slows the stomach down: half the can is still here after about 30 minutes.', claims: ['KG1', 'KG4', 'KG7', 'KG5'] };
       case 6: return { label: 'Into the blood', text: 'The gut splits the sugar into glucose and fructose and absorbs both fast.', claims: ['KA1', 'KA5'] };
       case 12: return { label: 'Liver', text: 'Fructose goes straight to the liver, which captures about 85% of it.', claims: ['KL1', 'KL2'] };
-      case 20: return { label: 'Blood sugar peak', text: `Blood sugar rises to about ${mmol(p.glucoseMgDl + Math.max(...s.glucoseDeltaMgDl.slice(0, 60)))} mmol/L. Your pancreas releases insulin.`, claims: ['KB2', 'KB4', 'KM1', 'KB7', 'KK3'] };
+      case 20: return { label: 'Blood sugar peak', text: `Blood sugar rises to about ${formatGlucoseRise(p.glucoseMgDl, peakDelta, p.glucoseUnit)} ${p.glucoseUnit}. Your pancreas releases insulin.`, claims: ['KB2', 'KB4', 'KM1', 'KB7', 'KK3'] };
       case 60: return { label: 'Baseline', text: 'Insulin has pulled your blood sugar back to where it started.', claims: ['KB4', 'KM1'] };
       case 75: return { label: 'The dip', text: 'It overshoots: blood sugar falls below your starting level. This is when hunger tends to come back.', claims: ['KB4', 'KB10', 'KB9'] };
       case 180: return { label: 'Liver', text: 'The liver has burned or turned most of the fructose into glucose. Very little became fat.', claims: ['KL3'] };
-      case 420: return { label: 'Bedtime', text: `About ${Math.round(at(b.caffeine.body, toBed))} mg of caffeine is left at bedtime. ${extra < 1 ? 'Too little to delay your sleep.' : `You may need about ${Math.round(extra)} min longer to fall asleep.`}`, claims: ['VS1', 'VS2', 'VS3'] };
+      case 420: return { label: 'Bedtime', text: `About ${Math.round(at(b.caffeine.body, toBed))} mg of caffeine is left at bedtime. ${sleepSentence(sleep.risk, Math.max(sleep.extra, extra))}`, claims: ['VS1', 'VS2', 'VS3', 'VS4'] };
       default: return { label: 'Kidneys', text: 'No extra urine: a can of cola hydrates about as well as water.', claims: ['KW1', 'KT5'] };
     }
   },
@@ -183,7 +186,7 @@ const cola: ProductDef = {
       case 'stomach': return { name: 'Stomach', claims: ['KG4', 'KG7'], text: 'Sugar keeps the drink here longer than water.', lines: [{ label: 'Cola still here', value: `${at(s.stomachMl, m).toFixed(0)} ml` }, { label: 'Sugar here', value: g1(at(s.stomach, m)) }] };
       case 'duodenum': case 'jejunum': case 'ileum': return { name: 'Small intestine', claims: ['KA1', 'KA5'], text: 'Sucrose is split on the gut wall and both sugars are absorbed within minutes.', lines: [{ label: 'Sugar here', value: g1(at(s.intestine, m)) }] };
       case 'liver': case 'portal_vein': return { name: 'Liver', claims: ['KL1', 'KL2', 'KL3'], text: 'Most of the fructose stops here; the liver burns it or turns it into glucose.', lines: [{ label: 'Fructose in the liver now', value: g1(at(s.liverFructose, m)) }, { label: 'Fructose processed so far', value: g1(at(s.processedFructose, m)) }] };
-      case 'pancreas': return { name: 'Pancreas', claims: ['KB2', 'KK3'], text: 'It answers the sugar with insulin, which moves glucose into your cells.', lines: [{ label: 'Insulin above your baseline', value: `+${at(s.insulin, m).toFixed(0)} mU/L` }, { label: 'Blood sugar now', value: `${(at(s.glucoseMgDl, m) / 18.016).toFixed(1)} mmol/L` }] };
+      case 'pancreas': return { name: 'Pancreas', claims: ['KB2', 'KK3'], text: 'It answers the sugar with insulin, which moves glucose into your cells.', lines: [{ label: 'Insulin above your baseline', value: `+${at(s.insulin, m).toFixed(0)} mU/L` }, { label: 'Blood sugar now', value: `${formatGlucose(at(s.glucoseMgDl, m), unitOf.get(b) ?? 'mmol/L')} ${unitOf.get(b) ?? 'mmol/L'}` }] };
       case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: ['KH4', 'KH1'], text: 'Sugar can nudge your pulse up a little; it cancels the small blood-pressure rise from caffeine.', lines: [{ label: 'Extra sugar in the blood', value: g1(at(s.bloodGlucose, m)) }, { label: 'Pulse change (estimate)', value: `+${at(s.hr, m).toFixed(1)} bpm` }] };
       case 'tongue': case 'esophagus': return { name: 'Mouth and teeth', claims: ['KP7', 'KT3'], text: 'Cola is acidic (pH 2.4). Saliva brings the mouth back to normal within about half an hour.', lines: [] };
       case 'kidney_l': case 'kidney_r': case 'bladder': return { name: 'Kidneys', claims: ['KW1', 'KT5'], text: 'A can of cola makes no more urine than the same amount of water.', lines: [] };

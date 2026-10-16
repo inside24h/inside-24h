@@ -1,6 +1,7 @@
 // Game-style health bars (0–100). This is OUR simplified scale (level C), not a medical measurement.
 // Starting values come from the profile; each drink moves them by a rule tied to a researched number.
 // Every rule is listed in `rules` so the "How is this calculated?" panel can show it word for word.
+import { WALK_NET_KCAL_PER_KG_KM } from '../science/walking';
 import { simulateEspresso } from '../science/espressoSim';
 import { buildVitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
@@ -72,7 +73,7 @@ export const RULES: { bar: string; rule: string; source: string }[] = [
 /** Activity points per bar, from research/activity.md "Suggested bar rules" (relative to <5k steps, no exercise). */
 function activityPoints(p: Profile) {
   const s = { low: 0, mid: 1, high: 2 }[p.steps], e = { none: 0, some: 1, regular: 2 }[p.exercise];
-  const weeklyKcal = 0.5 * p.weightKg * p.kmPerWeek; // walking cost, conservative [E1–E2]
+  const weeklyKcal = WALK_NET_KCAL_PER_KG_KM * p.weightKg * p.kmPerWeek; // walking cost, net of rest, conservative [E1–E2]; same formula as the quick answer (science/walking.ts)
   const pick = (arr: number[], i: number) => arr[i];
   const chol = p.kmPerWeek > 0 ? 4 * Math.min(1, weeklyKcal / 900) : pick([0, 1, 3], e);
   return {
@@ -124,7 +125,9 @@ export function healthBars(p: Profile, counts: Counts, habits: Habits = {}): Bar
     const sim = simulateEspresso(caffeineMg, p);
     const v = buildVitals(p, sim, sleepAnchors());
     sleep = clamp(base.sleep - v.extraLatencyMin);
-    notes.sleep.push(v.extraLatencyMin >= 1 ? `≈ ${Math.round(v.extraLatencyMin)} min longer to fall asleep` : `${Math.round(v.mgAtBed)} mg caffeine at bedtime: too little to delay sleep`);
+    notes.sleep.push(v.sleepRisk === 'delay' ? `≈ ${Math.max(1, Math.round(v.extraLatencyMin))} min longer to fall asleep`
+      : v.sleepRisk === 'sensitive' ? `${Math.round(v.mgAtBed)} mg caffeine at bedtime: most people sleep normally, sensitive people may not`
+      : `${Math.round(v.mgAtBed)} mg caffeine at bedtime: too little to affect sleep`);
   }
   // cigarettes: smokers took 5.4 min longer to fall asleep and slept 14 min less (Zhang 2006) → −5 as a habit, −2 one-off
   const cig = counts.cigarettes ?? 0, cigH = habitual(counts, habits, 'cigarettes');

@@ -1,7 +1,7 @@
 // Plain-language status cards for the simple view. Every sentence is derived from the same models
 // and claims as the detailed view; the claim IDs go with each card so "Why?" still shows the evidence.
 import { at, type Timeline } from '../science/espressoSim';
-import type { Vitals } from '../science/daily';
+import { sleepSentence, type Vitals } from '../science/daily';
 import { formatGlucose, type Profile } from '../science/profile';
 import { LONG_TERM } from '../content/longterm';
 import type { Built } from './products';
@@ -19,9 +19,11 @@ export function simpleCards(productId: string, b: Built, v: Vitals, twin: Vitals
   // ---- brain ----
   let brain: Card;
   if (asleep) {
-    brain = v.extraLatencyMin >= 1
-      ? { key: 'brain', title: 'Your brain', big: 'Sleep a bit delayed', text: `Caffeine left at bedtime may make you fall asleep about ${Math.round(v.extraLatencyMin)} minutes later.`, tone: 'up', claims: ['VS1', 'VS2', 'VS3'] }
-      : { key: 'brain', title: 'Your brain', big: 'Sleeping normally', text: cafMg >= 1 ? `About ${Math.round(cafMg)} mg of caffeine is still in you, too little to disturb sleep.` : 'Nothing from this drink affects your sleep.', tone: 'calm', claims: ['VS2', 'VS3'] };
+    brain = v.sleepRisk === 'delay'
+      ? { key: 'brain', title: 'Your brain', big: 'Sleep a bit delayed', text: `Caffeine left at bedtime may make you fall asleep about ${Math.max(1, Math.round(v.extraLatencyMin))} minutes later.`, tone: 'up', claims: ['VS1', 'VS2', 'VS3'] }
+      : v.sleepRisk === 'sensitive'
+        ? { key: 'brain', title: 'Your brain', big: 'Probably sleeping normally', text: `About ${Math.round(cafMg)} mg of caffeine is still in you. ${sleepSentence('sensitive', 0)}`, tone: 'calm', claims: ['VS1', 'VS2', 'VS3', 'VS4'] }
+        : { key: 'brain', title: 'Your brain', big: 'Sleeping normally', text: cafMg >= 1 ? `About ${Math.round(cafMg)} mg of caffeine is still in you, too little to affect sleep.` : 'Nothing from this drink affects your sleep.', tone: 'calm', claims: ['VS1', 'VS2', 'VS3'] };
   } else if (productId === 'cola' && gDelta < -0.3 && m > 60 && m < 240) {
     brain = { key: 'brain', title: 'Your brain', big: 'May feel hungry', text: 'Your blood sugar has dropped a little below where it started. That dip is when hunger tends to come back.', tone: 'down', claims: ['KB4', 'KB9'] };
   } else if (cafMg >= 75) {

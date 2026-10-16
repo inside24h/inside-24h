@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useModal } from './a11y';
 import type { Profile } from '../science/profile';
-import { analyze, verdictOf, type Analysis } from './analyze';
+import { analyze, sugarPeakText, verdictOf, type Analysis } from './analyze';
 import { SmartSearch } from './SmartSearch';
 import { parseMeal, type Part } from './food/parse';
 import { worstMoment } from './status';
@@ -21,11 +21,11 @@ export const PAIRS: [string, string][] = [
   ['milk chocolate', 'dark chocolate'], ['white rice', 'lentils'], ['coffee with milk', 'cappuccino'],
 ];
 
-function Column({ a, k }: { a: Analysis; k: number }) {
+function Column({ a, k, unit }: { a: Analysis; k: number; unit: Profile['glucoseUnit'] }) {
   return (
     <div className="cmpcol">
       <div className="cmph"><i aria-hidden="true" style={{ background: a.color }} /><b>{a.name}</b><span className="cmpline" aria-hidden="true" style={{ background: LINE[k] }} /></div>
-      <div className="cmpkcal">{Math.round(a.kcal)} kcal · blood sugar {a.sugarPeak === null ? 'not measured' : a.sugarPeak < 0.3 ? 'steady' : `+${a.sugarPeak.toFixed(1)} mmol/L`}</div>
+      <div className="cmpkcal">{Math.round(a.kcal)} kcal · blood sugar {sugarPeakText(a.sugarPeak, unit)}</div>
       <div className="cmpdots">
         {a.systems.map((s) => { const l = s.levels[worstMoment(s)] as 0 | 1 | 2; return <span key={s.key}><i aria-hidden="true" style={{ background: s.unknown ? '#8292a7' : DOT[l] }} />{SHORT[s.key]} <em>{s.unknown ? 'not measured' : WORD[l]}</em></span>; })}
       </div>
@@ -36,7 +36,7 @@ function Column({ a, k }: { a: Analysis; k: number }) {
   );
 }
 
-function SugarChart({ a, b }: { a: Analysis; b: Analysis }) {
+function SugarChart({ a, b, unit }: { a: Analysis; b: Analysis; unit: Profile['glucoseUnit'] }) {
   const W = 900, H = 170, T = 240; // first 4 hours
   const lines = [a, b].map((x) => x.glucose ? Array.from({ length: T + 1 }, (_, m) => x.glucose![m] / 18.016) : x.sugarPeak === 0 ? new Array(T + 1).fill(0) : null);
   const vals = lines.flatMap((l) => l ?? [0]);
@@ -47,7 +47,7 @@ function SugarChart({ a, b }: { a: Analysis; b: Analysis }) {
     <div className="cmpchart">
       <div className="ctl">Blood sugar in the first 4 hours (change from your usual level)</div>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img"
-        aria-label={'Blood sugar in the first 4 hours. ' + [a, b].map((x) => `${x.name}: ${x.sugarPeak === null ? 'not measured' : x.sugarPeak < 0.3 ? 'steady' : `peak +${x.sugarPeak.toFixed(1)} mmol/L`}`).join('; ')}>
+        aria-label={'Blood sugar in the first 4 hours. ' + [a, b].map((x) => `${x.name}: ${x.sugarPeak !== null && x.sugarPeak >= 0.3 ? 'peak ' : ''}${sugarPeakText(x.sugarPeak, unit)}`).join('; ')}>
         <line x1={0} x2={W} y1={Y(0)} y2={Y(0)} className="zero" />
         {[60, 120, 180].map((m) => <text key={m} x={(m / T) * W} y={H - 3} className="tick">{m / 60} h</text>)}
         {lines.map((l, i) => l && <path key={i} d={path(l)} className="ln" style={{ stroke: LINE[i] }} />)}
@@ -87,8 +87,8 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
             {setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>about 1 min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>about 20 s</button></span>}
             <button className="primary" onClick={() => onVideo(a, b)}><span aria-hidden="true">🎬 </span>Make this a Reel (9:16)</button></>}</div>
           <div className="cmpverdict">{verdictOf(a, b)}</div>
-          <SugarChart a={a} b={b} />
-          <div className="cmpcols"><Column a={a} k={0} /><Column a={b} k={1} /></div>
+          <SugarChart a={a} b={b} unit={profile.glucoseUnit} />
+          <div className="cmpcols"><Column a={a} k={0} unit={profile.glucoseUnit} /><Column a={b} k={1} unit={profile.glucoseUnit} /></div>
         </>) : <p className="note big">Choose something for the right side, or tap one of the popular pairs above.</p>}
       </div>
     </div>

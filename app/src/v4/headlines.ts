@@ -2,6 +2,8 @@
 // listed with it; numbers that depend on the person are computed from the simulation.
 import { at, type Timeline } from '../science/espressoSim';
 import type { Profile } from '../science/profile';
+import { sleepRiskAt, sleepSentence } from '../science/daily';
+import { sleepAnchors } from '../science/anchors';
 
 export interface Headline { label: string; text: string; claims: string[] }
 
@@ -19,8 +21,8 @@ export function headline(stageMin: number, sim: Timeline, p: Profile, extraLaten
     case 180: return { label: 'Liver', text: `Your liver takes it apart: half is gone every ${sim.halfLifeH.toFixed(1)} hours.`, claims: ['M1', 'M2', 'X1', 'M4', 'M6', 'M7', 'M8', 'M9'] };
     case 420: return { label: 'Bedtime',
       text: `At ${hhmm(p.bedtimeMin)}, about ${Math.round(at(sim.body, toBed))} mg is still in your body. ` +
-        (extraLatencyMin < 1 ? 'Too little to delay your sleep.' : `You may need about ${Math.round(extraLatencyMin)} min longer to fall asleep.`),
-      claims: ['VS1', 'VS2', 'VS3', 'S1', 'S2', 'S3'] };
+        (() => { const r = sleepRiskAt(sim, toBed, sleepAnchors()); return sleepSentence(r.risk, Math.max(r.extra, extraLatencyMin)); })(),
+      claims: ['VS1', 'VS2', 'VS3', 'VS4', 'S1', 'S2', 'S3'] };
     default: return { label: 'Kidneys', text: 'Your kidneys flush out the breakdown products.', claims: ['M3', 'X1'] };
   }
 }

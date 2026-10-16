@@ -20,6 +20,7 @@ export const SOURCES: Record<string, Source> = {
   rao1998: { id: 'rao1998', cite: 'Rao SS et al. 1998, Eur J Gastroenterol Hepatol', url: pubmed('9581985') },
   mesas2011: { id: 'mesas2011', cite: 'Mesas AE et al. 2011, Am J Clin Nutr (meta-analysis)', url: pubmed('21880846') },
   drake2013: { id: 'drake2013', cite: 'Drake C et al. 2013, J Clin Sleep Med', url: pubmed('24235903') },
+  retey2007: { id: 'retey2007', cite: 'Rétey JV et al. 2007, Clin Pharmacol Ther', url: pubmed('17329997') },
   mudie2014: { id: 'mudie2014', cite: 'Mudie DM et al. 2014, Mol Pharm (MRI)', url: pubmed('25115349') },
   grimm2023: { id: 'grimm2023', cite: 'Grimm M et al. 2023, Eur J Pharm Biopharm (MRI)', url: pubmed('36736963') },
   watson1980: { id: 'watson1980', cite: 'Watson PE et al. 1980, Am J Clin Nutr', url: pubmed('6986753') },

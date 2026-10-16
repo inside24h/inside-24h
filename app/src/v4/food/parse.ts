@@ -3,6 +3,7 @@
 // (per 100 g) and GI from Atkinson 2008 (Table 1). Portion words without a USDA weight use OUR assumed sizes,
 // marked `assumed`, so the screen can say so.
 import raw from './fooddb.json';
+import { COLA } from '../../science/colaSim';
 
 export interface Per100 {
   kcal: number; carbs: number | null; sugars: number | null; freeSugars: number | null; fiber: number | null; fat: number | null;
@@ -33,7 +34,18 @@ const GI_ADD: Record<string, number> = {
   doughnut: 75, 'cake-sponge': 46, hamburger: 66, grapes: 59, cherries: 63, kiwi: 58, strawberries: 40,
   melon: 65, peas: 51, 'beans-white': 31, hummus: 6,
 };
-export const FOODS: Food[] = (raw as Food[]).map((f) => {
+// ONE source of truth for regular cola: the EU can label that the cola story uses (science/colaSim.ts COLA.eu,
+// research/cola.md P1, P5), not USDA's generic US cola. USDA gives 42 kcal per 100 g, the EU label 42 kcal per 100 ml,
+// so a 330 ml can (342.6 g) came out as 144 kcal in search and meals but 139 kcal in the story. Per-100 g values are
+// derived from the can: 139 kcal, 35 g sugar (all free sugar), 0 g fat, 32 mg caffeine.
+const labelFix = (f: Food): Food => {
+  if (f.id !== 'cola') return f;
+  const per100g = (perCan: number) => (perCan * 100) / f.serving.grams;
+  const sugar = per100g(COLA.eu.sugarG);
+  return { ...f, p: { ...f.p, kcal: per100g(COLA.eu.kcal), carbs: sugar, sugars: sugar, freeSugars: sugar, fat: 0, satFat: 0, caffeineMg: per100g(COLA.caffeineMg) } };
+};
+export const FOODS: Food[] = (raw as Food[]).map((f0) => {
+  const f = labelFix(f0);
   const g = f.gi === null && GI_ADD[f.id] !== undefined ? { ...f, gi: GI_ADD[f.id] } : f;
   return SERVING_FIX[g.id] ? { ...g, serving: SERVING_FIX[g.id], assumedServing: true } : g;
 });
@@ -57,11 +69,28 @@ const NUMBER_WORDS: Record<string, number> = {
 // Measures that are a weight or volume
 const MASS: [RegExp, number][] = [[/^(g|gr|gram|grama|grams|grami)$/, 1], [/^(kg|kila|kilo)$/, 1000], [/^(dag|deka)$/, 10]];
 const VOLUME: [RegExp, number][] = [[/^(ml|mililitara|mililitra)$/, 1], [/^(dl|decilitar|decilitra|deci)$/, 100], [/^(cl)$/, 10], [/^(l|lit|litra|litre|litru|liter|liters|litres)$/, 1000]];
-// Household portions: our own typical sizes (assumed), in ml for drinks
-const PORTION_ML: [RegExp, number][] = [
-  [/^(casa|case|casu|glass|glasses)$/, 250], [/^(salica|salice|salicu|cup|cups|soljica|soljicu)$/, 200], [/^(limenka|limenke|limenku|can|cans)$/, 330],
-  [/^(boca|boce|bocu|bottle|bottles)$/, 500], [/^(krigla|kriglu|pint)$/, 500], [/^(shot|cuga|cugu|casica|casicu)$/, 30],
+// Household portions: our own typical sizes (assumed), in ml for drinks. The default is per WORD; a few drinks are
+// poured differently, so the size also depends on the DRINK (PORTION_BY_FOOD below).
+type PortionWord = 'glass' | 'cup' | 'can' | 'bottle' | 'pint' | 'shot';
+const PORTION_ML: [RegExp, number, PortionWord][] = [
+  [/^(casa|case|casu|glass|glasses)$/, 250, 'glass'], [/^(salica|salice|salicu|cup|cups|soljica|soljicu)$/, 200, 'cup'], [/^(limenka|limenke|limenku|can|cans)$/, 330, 'can'],
+  [/^(boca|boce|bocu|bottle|bottles)$/, 500, 'bottle'], [/^(krigla|kriglu|pint)$/, 500, 'pint'], [/^(shot|cuga|cugu|casica|casicu)$/, 30, 'shot'],
 ];
+// A glass of wine is not a glass of water. Wine: 150 ml, the size our database already uses as one serving (UK pubs
+// pour 125/175/250 ml; a US "standard drink" of wine is 5 fl oz ≈ 148 ml). Beer: 300 ml (a small beer glass, 0.3 l).
+// Spirits (rakija): one pour, 40 ml, as in the database. A cup of espresso is one shot (30 ml), not a 200 ml mug.
+// All level C (our assumption) and shown as "≈ … ml" so people can type the exact amount instead.
+const PORTION_BY_FOOD: Record<string, Partial<Record<PortionWord, number>>> = {
+  'red-wine': { glass: 150, cup: 150 }, 'white-wine': { glass: 150, cup: 150 },
+  beer: { glass: 300 }, rakija: { glass: 40, cup: 40, shot: 40 }, espresso: { cup: 30, glass: 30 },
+};
+/** ml of one portion word for this food: a per-drink size, else the food's own can size (energy drink 250 ml), else the word's default. */
+function portionMlFor(food: Food, word: PortionWord, dflt: number): number {
+  const own = PORTION_BY_FOOD[food.id]?.[word];
+  if (own !== undefined) return own;
+  if (word === 'can' && /^1 can( |$)/.test(food.serving.label)) return Math.round((food.serving.grams * mlPerGram(food)) / 5) * 5;
+  return dflt;
+}
 // Pieces: use the USDA serving weight (one piece / slice / serving)
 const PIECE = /^(kom|komad|komada|komadic|piece|pieces|kriska|kriske|krisku|slice|slices|porcija|porcije|porciju|serving|servings|tanjur|tanjura|plate|zlica|zlice|zlicu|tbsp|zlicica|zlicice|tsp)$/;
 const SPOON: [RegExp, number][] = [[/^(zlica|zlice|zlicu|tbsp)$/, 15], [/^(zlicica|zlicice|tsp)$/, 5]];
@@ -126,7 +155,7 @@ const mlPerGram = (f: Food) => {
   return m ? Number(m[1]) / f.serving.grams : 1 / 1.03; // most drinks are close to water
 };
 
-interface Qty { count: number | null; grams?: number; ml?: number; portionMl?: number; piece?: boolean; spoonMl?: number; label?: string }
+interface Qty { count: number | null; grams?: number; ml?: number; portionMl?: number; portionWord?: PortionWord; piece?: boolean; spoonMl?: number; label?: string }
 
 /** Pull the amount out of one segment: returns what is left (the food words) and the quantity. */
 function readQty(seg: string): { rest: string; q: Qty } {
@@ -139,8 +168,8 @@ function readQty(seg: string): { rest: string; q: Qty } {
     if (num !== undefined && q.count === null) { q.count = num; continue; }
     const mass = MASS.find(([r]) => r.test(t)); if (mass) { q.grams = (q.count ?? 1) * mass[1]; q.label = `${q.count ?? 1} ${t}`; q.count = null; continue; }
     const vol = VOLUME.find(([r]) => r.test(t)); if (vol) { q.ml = (q.count ?? 1) * vol[1]; q.label = `${q.count ?? 1} ${t}`; q.count = null; continue; }
-    const por = PORTION_ML.find(([r]) => r.test(t)); if (por) { q.portionMl = por[1]; q.label = t; continue; }
-    const sp = SPOON.find(([r]) => r.test(t)); if (sp) { q.spoonMl = sp[1]; q.label = t; continue; }
+    const por = PORTION_ML.find(([r]) => r.test(t)); if (por) { q.portionMl = por[1]; q.portionWord = por[2]; q.label = por[2]; continue; } // English word on screen ("casa" → glass)
+    const sp = SPOON.find(([r]) => r.test(t)); if (sp) { q.spoonMl = sp[1]; q.label = sp[1] === 15 ? 'tbsp' : 'tsp'; continue; }
     if (PIECE.test(t)) { q.piece = true; q.label = t; continue; }
     rest.push(t);
   }
@@ -152,7 +181,10 @@ function toPart(food: Food, q: Qty): Part {
   const nice = (g: number) => Math.round(g);
   if (q.grams !== undefined) return { food, grams: q.grams, amountLabel: `${nice(q.grams)} g`, assumed: false };
   if (q.ml !== undefined) return { food, grams: q.ml / mlPerGram(food), amountLabel: `${nice(q.ml)} ml`, assumed: false };
-  if (q.portionMl !== undefined) return { food, grams: (n * q.portionMl) / mlPerGram(food), amountLabel: `${n === 1 ? '1' : n} × ${q.label} (≈ ${q.portionMl} ml)`, assumed: true };
+  if (q.portionMl !== undefined) {
+    const ml = q.portionWord ? portionMlFor(food, q.portionWord, q.portionMl) : q.portionMl;
+    return { food, grams: (n * ml) / mlPerGram(food), amountLabel: `${n === 1 ? '1' : n} × ${q.label} (≈ ${ml} ml)`, assumed: true };
+  }
   if (q.spoonMl !== undefined) {
     const servMl = food.serving.label.match(/tbsp|tablespoon/) ? 15 : food.serving.label.match(/tsp|teaspoon/) ? 5 : null;
     const g = servMl ? (food.serving.grams * q.spoonMl) / servMl : q.spoonMl / mlPerGram(food);

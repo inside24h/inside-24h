@@ -44,11 +44,50 @@ export function caffeineLatencyMin(concAtBed: number, anchors: { none: number; f
   return Math.min(1.5, (concAtBed - anchors.none) / (anchors.full - anchors.none)) * 14.2;
 }
 
+/** Minutes after lights-out over which we look at blood caffeine ("falling asleep"). */
+export const SLEEP_WINDOW_MIN = 90;
+/** Blood caffeine the brain sees while you fall asleep: the HIGHEST level from bedtime to 90 min after. Taken late,
+ *  caffeine is still rising at bedtime (it peaks ~45–60 min after drinking), and caffeine taken right at bedtime
+ *  disrupted sleep [S2 Drake 2013], so the level at the bedtime minute alone would miss it. For caffeine taken
+ *  hours earlier the level is already falling, so this equals the level at bedtime (the anchors are unchanged). */
+export function sleepConc(conc: ArrayLike<number>, toBed: number): number {
+  const last = conc.length - 1;
+  let hi = 0;
+  for (let m = Math.min(last, toBed); m <= Math.min(last, toBed + SLEEP_WINDOW_MIN); m++) hi = Math.max(hi, conc[m]);
+  return hi;
+}
+
+/** What caffeine left at bedtime means for sleep, one scale for every screen:
+ *  'delay'     the model predicts a longer time to fall asleep (above the "none" anchor, VS2/VS3);
+ *  'sensitive' below that, but above the level the meta-analysis says can already cut sleep (VS1): most people
+ *              sleep normally, caffeine-sensitive people may sleep less or more lightly (VS4);
+ *  'none'      below both. */
+export type SleepRisk = 'none' | 'sensitive' | 'delay';
+export function sleepRiskOf(extraLatencyMin: number, conc: number, anchors: { cautious?: number }): SleepRisk {
+  if (extraLatencyMin >= 1) return 'delay';
+  return anchors.cautious !== undefined && conc > anchors.cautious ? 'sensitive' : 'none';
+}
+/** Risk and extra minutes for a caffeine run and a bedtime (minutes after the drink): for screens without vitals. */
+export function sleepRiskAt(sim: Timeline, toBed: number, anchors: { none: number; full: number; cautious?: number }): { risk: SleepRisk; extra: number } {
+  if (sim.doseMg < 1) return { risk: 'none', extra: 0 };
+  const c = sleepConc(sim.conc, toBed);
+  const extra = caffeineLatencyMin(c, anchors);
+  return { risk: sleepRiskOf(extra, c, anchors), extra };
+}
+/** The sentence after "About N mg of caffeine is still in you", the same on every screen. */
+export function sleepSentence(risk: SleepRisk, extraLatencyMin: number): string {
+  if (risk === 'delay') return `You may need about ${Math.max(1, Math.round(extraLatencyMin))} min longer to fall asleep.`;
+  if (risk === 'sensitive') return 'Most people sleep normally with this much, but if caffeine affects you easily, you may sleep a little less or more lightly.';
+  return 'Too little to affect your sleep.';
+}
+
 export interface Vitals {
   hr: Float64Array; sbp: Float64Array; dbp: Float64Array; glucose: Float64Array; spo2: Float64Array;
   asleep: Float64Array; // 0..1 per minute, for shading
   effect: { hr: Float64Array; sbp: Float64Array; dbp: Float64Array; glucose: Float64Array; spo2: Float64Array };
   latencyMin: number; extraLatencyMin: number; mgAtBed: number;
+  /** what the caffeine left at bedtime means for sleep (sleepRiskOf) */
+  sleepRisk: SleepRisk;
 }
 
 /** Body rhythm + the drink's effect. `sim` provides the caffeine-driven changes (BP) and caffeine left at bedtime. */
@@ -56,16 +95,18 @@ export interface Vitals {
  *  (cola: sugar cancels caffeine's BP rise, cola.md H1 → 0). */
 export interface ProductEffects { hr?: Float64Array; glucoseMgDl?: Float64Array; bpScale?: number; bp?: Float64Array }
 
-export function buildVitals(p: Profile, sim: Timeline, anchors: { none: number; full: number }, withDrink = true, fx: ProductEffects = {}): Vitals {
+export function buildVitals(p: Profile, sim: Timeline, anchors: { none: number; full: number; cautious?: number }, withDrink = true, fx: ProductEffects = {}): Vitals {
   const n = sim.minutes + 1;
   const toBed = (p.bedtimeMin - p.drinkAtMin + 1440) % 1440;
   const mgAtBed = withDrink ? sim.body[Math.min(sim.minutes, toBed)] : 0;
   // compare blood concentration (what the brain sees), so body size is accounted for
-  const extra = withDrink ? caffeineLatencyMin(sim.conc[Math.min(sim.minutes, toBed)], anchors) : 0;
+  const concSleep = withDrink ? sleepConc(sim.conc, toBed) : 0;
+  const extra = withDrink ? caffeineLatencyMin(concSleep, anchors) : 0;
+  const sleepRisk = withDrink && sim.doseMg >= 1 ? sleepRiskOf(extra, concSleep, anchors) : 'none';
   const latency = SLEEP.baseLatencyMin + extra;
   const mk = () => new Float64Array(n);
   const v: Vitals = { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk(), asleep: mk(),
-    effect: { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk() }, latencyMin: latency, extraLatencyMin: extra, mgAtBed };
+    effect: { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk() }, latencyMin: latency, extraLatencyMin: extra, mgAtBed, sleepRisk };
   for (let m = 0; m < n; m++) {
     const h = clockH(p.drinkAtMin + m);
     const s = sleepFraction(p, m, latency, SLEEP.wakeRampMin);

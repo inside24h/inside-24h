@@ -2,6 +2,8 @@
 // guided story, liquid in each organ, plain-language changes, organ cards and traffic lights.
 // Model: science/foodSim.ts (level C on top of published numbers); claims: content/food.ts.
 import { at } from '../../science/espressoSim';
+import { sleepRiskAt, sleepSentence } from '../../science/daily';
+import { sleepAnchors } from '../../science/anchors';
 import { simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
 import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
@@ -43,6 +45,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
   const isDrink = meal.kind === 'liquid';
   const noun = parts.length > 1 ? 'meal' : isDrink ? 'drink' : 'food';
   const cache = new WeakMap<Built, FoodSim>();
+  const unitOf = new WeakMap<Built, Profile['glucoseUnit']>(); // the unit picked in "Your body", for organ panels
 
   const build = (p: Profile): Built => {
     const s = simulateFood(meal, p);
@@ -107,7 +110,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
       bac: meal.alcoholG > 1 ? s.bac : undefined,
       waterMl: meal.waterG,
     };
-    cache.set(built, s);
+    cache.set(built, s); unitOf.set(built, p.glucoseUnit);
     return built;
   };
 
@@ -139,7 +142,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
         case 'liver': case 'portal_vein': return meal.alcoholG > 1
           ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a fixed speed. Nothing speeds it up.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
           : { name: 'Liver', claims: ['TE1'], text: 'Blood from the gut passes the liver first: it stores sugar and sorts what you absorbed.', lines: [{ label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
-        case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: meal.alcoholG > 1 ? ['AL5'] : ['GL4', 'TG1'], text: 'Everything you absorb travels in your blood.', lines: [{ label: 'Blood sugar change', value: `${(at(s.glucoseDeltaMgDl, t) / 18.016).toFixed(1)} mmol/L` }, ...(meal.fat >= 5 ? [{ label: 'Blood fat change', value: `+${at(s.tgDelta, t).toFixed(2)} mmol/L` }] : [])] };
+        case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: meal.alcoholG > 1 ? ['AL5'] : ['GL4', 'TG1'], text: 'Everything you absorb travels in your blood.', lines: [{ label: 'Blood sugar change', value: (() => { const u = unitOf.get(b) ?? 'mmol/L', d = at(s.glucoseDeltaMgDl, t); return u === 'mg/dL' ? `${d >= 0.5 ? '+' : ''}${Math.round(d)} mg/dL` : `${d >= 0.05 ? '+' : ''}${(d / 18.016).toFixed(1)} mmol/L`; })() }, ...(meal.fat >= 5 ? [{ label: 'Blood fat change', value: `+${at(s.tgDelta, t).toFixed(2)} mmol/L` }] : [])] };
         case 'brain': return meal.alcoholG > 1
           ? { name: 'Brain', claims: ['AL3', 'AL4'], text: 'Alcohol reaches your brain with the blood: from 0.2 ‰ your attention is already worse.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
           : { name: 'Brain', claims: ['FC1'], text: 'Your brain runs on glucose. After a big meal many people feel sleepy for a while.', lines: [] };
@@ -233,8 +236,9 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (toBed > 30 && toBed < 1440) {
     const caf = at(s.caffeine.body, toBed), bac = at(s.bac, toBed);
     const alcoholMsg = (b: number) => `There is still alcohol in your blood (about ${bacRangeText(b)}): you may fall asleep faster, but you will sleep worse in the second half of the night.`;
-    const msg = bac > 0.02 ? alcoholMsg(bac) : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` : null;
-    if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1', 'M4', 'VS1'], text: msg,
+    const sl = sleepRiskAt(s.caffeine, toBed, sleepAnchors());
+    const msg = bac > 0.02 ? alcoholMsg(bac) : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}. ${sleepSentence(sl.risk, sl.extra)}` : null;
+    if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1', 'M4', 'VS1', 'VS2', 'VS3', 'VS4'], text: msg,
       ...(bac > 0.02 ? { live: (t: number) => (at(s.bac, t) > 0.02 ? alcoholMsg(at(s.bac, t)) : msg) } : {}) });
   }
   ch.push(...mealChapters(s, parts));

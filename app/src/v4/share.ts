@@ -216,7 +216,8 @@ function drawCmp(ctx: CanvasRenderingContext2D, W: number, H: number, src: HTMLC
     ctx.fillStyle = '#ffffff'; ctx.font = `400 58px ${SERIF}`; ctx.fillText(fit(ctx, s.name, colW - 40), cx, 225);
     // sugar chip
     const LIGHTC = ['#3ddc84', '#ffc83d', '#ff5a5a'];
-    ctx.font = `800 46px ${SANS}`;
+    let fs = 46; ctx.font = `800 ${fs}px ${SANS}`;
+    while (fs > 30 && ctx.measureText(s.sugar).width + 70 > colW - 30) { fs -= 2; ctx.font = `800 ${fs}px ${SANS}`; } // "Sugar +2.3 mmol/L" fits the half
     const sw2 = ctx.measureText(s.sugar).width + 70;
     ctx.fillStyle = 'rgba(8,16,26,.92)'; roundRect(ctx, cx - sw2 / 2, top + 14, sw2, 78, 39); ctx.fill();
     ctx.strokeStyle = LIGHTC[s.sugarLevel]; ctx.lineWidth = 5; ctx.stroke();

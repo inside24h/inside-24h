@@ -12,7 +12,7 @@ import { SOURCES } from '../content/sources';
 import { LEVEL_LABEL, type Claim, type Stage } from '../content/types';
 import { DEFAULT_PROFILE, formatGlucose, healthyTwin, type Profile } from '../science/profile';
 import { at, type Timeline } from '../science/espressoSim';
-import { buildVitals, caffeineLatencyMin, type Vitals } from '../science/daily';
+import { buildVitals, caffeineLatencyMin, sleepConc, sleepRiskOf, type Vitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { MAX_MIN, minutesFromU, uFromMinutes } from '../time';
 import { Drawer } from './Drawer';
@@ -45,7 +45,7 @@ import { videoSupportHere } from './share';
 import { bacRangeText, glucoseRangeTextIn } from '../science/ranges';
 import { Compare, EveryDay, Pro, VideoFallback, YourBody } from './lazyUi'; // loaded on first use
 import { isTouch } from './perf/device';
-import { analyze, verdictOf, type Analysis } from './analyze';
+import { analyze, sugarDeltaText, sugarPeakText, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
 import { formatTime, isCuratedServing, linkFor, mealText, own, resolveLink, writeLink } from './deeplink';
 import { MealBar } from './MealBar';
@@ -106,9 +106,13 @@ function latestForSleep(sim: Timeline, p: Profile): number | null {
   if (sim.doseMg < 10) return null;
   const anchors = sleepAnchors();
   let best: number | null = null;
+  // "best" = below the cautious level of the meta-analysis (VS1), not merely below a 5-min delay: the same scale as
+  // the sleep answer, so "Any time today" never sits next to "sensitive people may sleep less"
   for (let t = 6 * 60; t < p.bedtimeMin; t += 5) {
     const toBed = p.bedtimeMin - t;
-    if (caffeineLatencyMin(sim.conc[Math.min(sim.conc.length - 1, toBed)], anchors) < 5) best = t;
+    const c = sleepConc(sim.conc, toBed);
+    if (sleepRiskOf(caffeineLatencyMin(c, anchors), c, anchors) !== 'none') break; // later is never better
+    best = t;
   }
   return best;
 }
@@ -239,7 +243,7 @@ export default function AppV4() {
     const unknownSugar = !!m && m.gl === null && m.availCarbs >= 3;
     const g = built.effects.glucoseMgDl ?? (unknownSugar ? undefined : new Float64Array(1441));
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
-      glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, bac: built.bac, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
+      glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, sleepRisk: vYou.sleepRisk, bac: built.bac, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
       latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH),
       mealLines: productId === 'food' ? mealLinesFor(foodParts, profile) : undefined, glucoseUnit: profile.glucoseUnit });
   }, [systems, profile, built, vYou, productId, foodParts]);
@@ -443,9 +447,9 @@ export default function AppV4() {
       return {
         name: x.name, color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
         where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
-        sugar: x.sugarPeak === null ? 'Sugar ?' : Math.abs(dg) < 0.15 ? 'Sugar steady' : `Sugar ${dg > 0 ? '+' : ''}${dg.toFixed(1)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
+        sugar: x.sugarPeak === null ? 'Sugar ?' : Math.abs(dg) < 0.15 ? 'Sugar steady' : `Sugar ${sugarDeltaText(dg, profile.glucoseUnit)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
-        summary: { kcal: x.kcal, sugarPeak: x.sugarPeak === null ? 'not measured' : x.sugarPeak < 0.3 ? 'steady' : `+${x.sugarPeak.toFixed(1)} mmol/L`,
+        summary: { kcal: x.kcal, sugarPeak: sugarPeakText(x.sugarPeak, profile.glucoseUnit),
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'high stress'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
       };
     };

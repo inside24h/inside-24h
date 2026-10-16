@@ -10,6 +10,8 @@ import { LEVEL_LABEL } from '../content/types';
 import { Disclaimer } from './HowWeKnow';
 import { FACTORS, FED_PEAK_RATIO, type PersonalNotes } from '../science/personal';
 import { simulateFood } from '../science/foodSim';
+import { walkingKm, walkingMinutes } from '../science/walking';
+import type { SleepRisk } from '../science/daily';
 import type { Profile } from '../science/profile';
 import { toMeal } from './food/meal';
 import { mealAnswerLines } from './food/mealWords';
@@ -22,6 +24,8 @@ export interface AnswerInput {
   bac?: Float64Array; waterMl: number;
   /** latest clock minute to have it without delaying sleep (caffeine), if any */
   latestForSleep?: number | null;
+  /** what the caffeine left at bedtime means for sleep (science/daily.ts sleepRiskOf); from the vitals */
+  sleepRisk?: SleepRisk;
   /** what is known about this person (science/personal.ts); without it answers are labelled typical */
   personal?: PersonalNotes;
   /** meal wording (food/mealWords.ts) when the food is a meal of 2+ items; see mealLinesFor */
@@ -74,14 +78,17 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     : 'For your body. Typical half-life 6 h; people range from 2.5 to 10 h') : undefined;
   const sleepTag = pn && (hasCaffeine || x.bac) ? 'you' as const : undefined;
   if (bacBed > 0.02) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Not as well: alcohol is still in your blood at ${hh(x.bedtimeMin)}, so you’ll sleep more lightly in the second half of the night.`, tone: 1, tag: sleepTag });
-  else if (x.extraSleepMin >= 5) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `It may take you about ${Math.round(x.extraSleepMin)} min longer to fall asleep (${Math.round(x.caffeineAtBedMg)} mg of caffeine is still in you at ${hh(x.bedtimeMin)}).`, tone: 1, note: sleepNote, tag: sleepTag });
-  else out.push({ icon: '🌙', q: 'Will I sleep well?', a: x.caffeineAtBedMg >= 10 ? `Yes. The ${Math.round(x.caffeineAtBedMg)} mg of caffeine left at ${hh(x.bedtimeMin)} is too little to matter.` : 'Yes. It won’t affect your sleep.', tone: 0, note: sleepNote, tag: sleepTag });
+  else if (x.extraSleepMin >= 5) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `It may take you about ${Math.round(x.extraSleepMin)} min longer to fall asleep (${bedRel < 90 ? 'you had it shortly before bed, so it reaches your blood while you fall asleep' : `${Math.round(x.caffeineAtBedMg)} mg of caffeine is still in you at ${hh(x.bedtimeMin)}`}).`, tone: 1, note: sleepNote, tag: sleepTag });
+  // below the 5-min delay: "too little" only when it is also under the meta-analysis level (VS1); otherwise be honest
+  // that caffeine-sensitive people can still sleep less (VS4), e.g. an espresso at 20:45 leaves ≈ 51 mg at 23:00
+  else if (x.sleepRisk === 'sensitive' || (x.sleepRisk === 'delay' && x.extraSleepMin < 5)) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Probably, unless caffeine affects you easily. ${bedRel < 90 ? 'You had it shortly before bed, so the caffeine reaches your blood while you fall asleep' : `About ${Math.round(x.caffeineAtBedMg)} mg is still in you at ${hh(x.bedtimeMin)}`}: most people sleep normally with that much, but sensitive people may sleep a little less or more lightly.`, tone: 1, note: sleepNote, tag: sleepTag });
+  else out.push({ icon: '🌙', q: 'Will I sleep well?', a: x.caffeineAtBedMg >= 10 ? `Yes. The ${Math.round(x.caffeineAtBedMg)} mg of caffeine left at ${hh(x.bedtimeMin)} is too little to affect your sleep.` : 'Yes. It won’t affect your sleep.', tone: 0, note: sleepNote, tag: sleepTag });
   // Best time (caffeine): the latest time that leaves sleep untouched
   if (x.latestForSleep !== undefined && x.latestForSleep !== null) {
     const late = x.drinkAt > x.latestForSleep && x.drinkAt < x.bedtimeMin;
     const tag = pn ? 'you' as const : undefined;
-    if (x.bedtimeMin - x.latestForSleep <= 30) out.push({ icon: '⏰', q: 'When is the best time?', a: 'Any time today: this much caffeine won’t delay your sleep.', tone: 0, tag });
-    else out.push({ icon: '⏰', q: 'When is the best time?', a: `Before ${hh(x.latestForSleep)}, so the caffeine won’t delay your sleep at ${hh(x.bedtimeMin)}.${late ? ' You had it after that.' : ''}`, tone: late ? 1 : 0, tag });
+    if (x.bedtimeMin - x.latestForSleep <= 30) out.push({ icon: '⏰', q: 'When is the best time?', a: 'Any time today: this much caffeine is too little to affect your sleep.', tone: 0, tag });
+    else out.push({ icon: '⏰', q: 'When is the best time?', a: `Before ${hh(x.latestForSleep)}, so the caffeine is too low to cut into your sleep at ${hh(x.bedtimeMin)}.${late ? ' You had it after that.' : ''}`, tone: late ? 1 : 0, tag });
   }
   // Driving: never a "safe" time and never one exact number. Widmark estimates are off by 20–40% (alcohol.md W6),
   // and attention is already worse from 0.2 g/L (AL4), so the only honest answer is "don't".
@@ -96,11 +103,13 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     // pregnancy: WHO — alcohol in pregnancy raises the risk of FASD (alcohol.md L12)
     if (pn?.pregnant) out.push({ icon: '🤰', q: 'And in pregnancy?', a: 'Best to have none: alcohol reaches the baby and raises the risk of lasting harm (WHO).', tone: 2, tag: 'you' });
   }
-  // Energy as walking (Compendium of Physical Activities: walking ~5 km/h ≈ 3.5 MET; kcal/min = MET × 3.5 × kg / 200)
+  // Energy as walking: ACSM walking equation, net of rest, at 5 km/h (science/walking.ts; activity.md E1–E2).
+  // One formula everywhere; it falls as body weight rises and ignores age and height (they are not in the equation).
   if (x.kcal >= 5) {
-    const perMin = (3.5 * 3.5 * x.weightKg) / 200;
-    const min = Math.round(x.kcal / perMin);
-    out.push({ icon: '🚶', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal ≈ ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`} of brisk walking for you.`, tone: 0, tag: pn ? 'you' : undefined });
+    const min = Math.round(walkingMinutes(x.kcal, x.weightKg));
+    const km = walkingKm(x.kcal, x.weightKg);
+    out.push({ icon: '🚶', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal ≈ ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`} of brisk walking for you${km >= 1 ? ` (about ${km >= 10 ? Math.round(km) : km.toFixed(1).replace(/\.0$/, '')} km)` : ''}.`, tone: 0, tag: pn ? 'you' : undefined,
+      note: pn ? 'Energy used on top of sitting still, at 5 km/h, for your weight' : undefined });
   } else out.push({ icon: '🚶', q: 'How much energy is that?', a: 'Almost none.', tone: 0 });
   if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', a: `Yes: it gives your body about ${Math.round(x.waterMl)} ml of water.`, tone: 0, tag: pn ? 'typical' : undefined });
   const tip = nextStep(x.systems, !!x.bac);

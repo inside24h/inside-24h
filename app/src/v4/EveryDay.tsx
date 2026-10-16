@@ -39,7 +39,7 @@ export function EveryDay({ productId }: { productId: string }) {
           </div>
         );
       })}
-      <p className="note">These describe groups of people, not a prediction for you. “Link, not proof” means the people who have it also differ in other ways.</p>
+      <p className="note">These describe groups of people, not a prediction for you. “Link, not proof” means the people who have it also differ in other ways. The letter shows how solid the evidence is for what is written: A firm, B supported, C our own estimate. A link seen only by watching people is never above B, because watching cannot prove cause.</p>
     </div>
   );
 }

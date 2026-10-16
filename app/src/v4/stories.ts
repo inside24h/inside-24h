@@ -4,7 +4,8 @@
 import { at, type Timeline } from '../science/espressoSim';
 import type { ColaSim } from '../science/colaSim';
 import type { WaterSim } from '../science/waterSim';
-import type { Vitals } from '../science/daily';
+import { sleepRiskAt, sleepSentence, type Vitals } from '../science/daily';
+import { sleepAnchors } from '../science/anchors';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../science/profile';
 import { GLUCOSE_SPREAD } from '../science/ranges';
 import volumesJson from '../assets/organ-volumes.json';
@@ -85,7 +86,7 @@ export function colaStory(s: ColaSim, p: Profile): Story {
       { min: 45, title: 'A little caffeine', focus: 'brain', claims: ['KP5', 'F1', 'F3'], text: 'The caffeine (32 mg, about half an espresso) reaches your brain and blocks the “I’m tired” signal a little.' },
       { min: 75, title: 'The sugar dip', focus: 'brain', claims: ['KB4', 'KB10', 'KB9'], text: 'Insulin overshoots a little: your blood sugar drops just below where you started. This is when hunger and cravings tend to come back.' },
       { min: 180, title: 'The liver finishes', focus: 'liver', claims: ['KL3'], text: 'Over the next hours your liver burns about half of the fructose for energy and turns about 40% into glucose. Less than 1% becomes fat right away.' },
-      { min: toBed, title: 'Bedtime', focus: 'brain', claims: ['VS2', 'VS3'], text: `About ${Math.round(at(s.caffeine.body, toBed))} mg of caffeine is left in you: too little to keep you awake.` },
+      { min: toBed, title: 'Bedtime', focus: 'brain', claims: ['VS1', 'VS2', 'VS3', 'VS4'], text: (() => { const r = sleepRiskAt(s.caffeine, toBed, sleepAnchors()); return `About ${Math.round(at(s.caffeine.body, toBed))} mg of caffeine is left in you. ${sleepSentence(r.risk, r.extra)}`; })() },
       { min: 720, title: 'Kidneys', focus: 'kidney_l', claims: ['KW1'], text: 'No extra urine: a can of cola hydrates you about as well as the same amount of water.' },
     ].sort((a, b) => a.min - b.min),
     liquid: (m) => {
@@ -132,7 +133,7 @@ export function espressoStory(sim: Timeline, p: Profile, dose: number): Story {
       { min: 30, title: 'Reaching your brain', focus: 'brain', claims: ['D7', 'F1', 'F3'], text: 'Caffeine slips into your brain and blocks adenosine, the signal that builds up tiredness. You feel more alert.' },
       { min: Math.round(sim.tmaxMin), title: 'Peak', focus: 'heart', claims: ['G3', 'V1', 'F9'], text: `Caffeine in your blood is at its highest now. Your pulse doesn’t change; blood pressure rises only a little.` },
       { min: 180, title: 'The liver breaks it down', focus: 'liver', claims: ['M1', 'M2', 'M4'], text: `Your liver takes the caffeine apart: half of it is gone every ${sim.halfLifeH.toFixed(1)} hours.` },
-      { min: toBed, title: 'Bedtime', focus: 'brain', claims: ['VS1', 'VS2', 'VS3'], text: `About ${Math.round(at(sim.body, toBed))} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` },
+      { min: toBed, title: 'Bedtime', focus: 'brain', claims: ['VS1', 'VS2', 'VS3', 'VS4'], text: (() => { const r = sleepRiskAt(sim, toBed, sleepAnchors()); return `About ${Math.round(at(sim.body, toBed))} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}. ${sleepSentence(r.risk, r.extra)}`; })() },
       { min: 720, title: 'Out through the kidneys', focus: 'kidney_l', claims: ['M3', 'X1'], text: 'Your kidneys flush out the breakdown products.' },
     ].sort((a, b) => a.min - b.min),
     liquid: (m) => {

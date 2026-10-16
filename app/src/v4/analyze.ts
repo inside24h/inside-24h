@@ -3,7 +3,7 @@
 import { buildVitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { simulateHydration } from '../science/hydration';
-import type { Profile } from '../science/profile';
+import { MG_DL_PER_MMOL_L, type Profile } from '../science/profile';
 import { bodyStatus } from './status';
 import { quickAnswers } from './Answers';
 import { climateNow, findCity, cityLabel } from './climate/cities';
@@ -30,13 +30,25 @@ export function analyze(parts: Part[], p: Profile) {
   const answers = quickAnswers({
     systems, drinkAt: p.drinkAtMin, bedtimeMin: p.bedtimeMin, weightKg: p.weightKg, kcal: built.energy.total,
     glucoseDeltaMgDl: unknownSugar ? undefined : built.effects.glucoseMgDl ?? new Float64Array(1441),
-    extraSleepMin: v.extraLatencyMin, caffeineAtBedMg: v.mgAtBed, bac: built.bac, waterMl,
+    extraSleepMin: v.extraLatencyMin, caffeineAtBedMg: v.mgAtBed, sleepRisk: v.sleepRisk, bac: built.bac, waterMl,
+    glucoseUnit: p.glucoseUnit, // Compare shows the unit picked in "Your body"
   });
   const g = built.effects.glucoseMgDl;
   const sugarPeak = unknownSugar ? null : g ? Math.max(0, ...Array.from(g.subarray(0, 600))) / 18.016 : 0;
   return { name: def.content.name, color: built.story.color, built, systems, answers, sugarPeak, glucose: unknownSugar ? undefined : g, kcal: built.energy.total, macros: m };
 }
 export type Analysis = ReturnType<typeof analyze>;
+
+type Unit = Profile['glucoseUnit'];
+/** "+2.3 mmol/L" or "+41 mg/dL": a sugar CHANGE (given in mmol/L) in the unit picked in "Your body". */
+export function sugarDeltaText(mmol: number, unit: Unit = 'mmol/L', withUnit = true): string {
+  const sign = mmol > 0 ? '+' : mmol < 0 ? '−' : '';
+  const v = unit === 'mg/dL' ? `${Math.round(Math.abs(mmol) * MG_DL_PER_MMOL_L)}` : Math.abs(mmol).toFixed(1);
+  return `${sign}${v}${withUnit ? ` ${unit}` : ''}`;
+}
+/** The peak for Compare and the comparison video: "not measured", "steady" or "+2.3 mmol/L" / "+41 mg/dL". */
+export const sugarPeakText = (peakMmol: number | null, unit: Unit = 'mmol/L') =>
+  peakMmol === null ? 'not measured' : peakMmol < 0.3 ? 'steady' : sugarDeltaText(peakMmol, unit);
 
 /**
  * Which one is easier on the body over the day, in one plain sentence. Score = minutes any system is under stress
