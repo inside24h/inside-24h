@@ -54,26 +54,35 @@ function integrate(doseMg: number, r: Rates, minutes: number) {
     metabolites: new Float64Array(n), cleared: new Float64Array(n),
   };
   let S = doseMg, I = 0, B = 0, C = 0;
-  const M = r.km.map(() => 0);
+  // Same RK4 arithmetic in the same order as before, without allocating arrays in the inner loop (audit 2026-10-16:
+  // the old version spent most of a food simulation creating short arrays).
+  const K = r.km.length, share = METABOLITES.map((x) => x.share);
+  const M = new Float64Array(K), mt = new Float64Array(K);
+  const d = [new Float64Array(K), new Float64Array(K), new Float64Array(K), new Float64Array(K)];
+  const ds = [0, 0, 0, 0], di = [0, 0, 0, 0], db = [0, 0, 0, 0], dcs = [0, 0, 0, 0];
   const sub = 20, h = 1 / sub; // 3-second steps, explicit RK4 on the linear system
-  const deriv = (s: number, i: number, b: number, m: number[]) => {
-    const dm = m.map((x, k) => r.ke * b * METABOLITES[k].share - r.km[k] * x);
-    const dc = m.reduce((acc, x, k) => acc + r.km[k] * x, 0);
-    return { s: -r.kg * s, i: r.kg * s - r.ki * i, b: r.ki * i - r.ke * b, m: dm, c: dc };
+  const deriv = (q: number, s: number, i: number, b: number, m: Float64Array) => {
+    const dm = d[q];
+    let dc = 0;
+    for (let k = 0; k < K; k++) { dm[k] = r.ke * b * share[k] - r.km[k] * m[k]; }
+    for (let k = 0; k < K; k++) dc = dc + r.km[k] * m[k];
+    ds[q] = -r.kg * s; di[q] = r.kg * s - r.ki * i; db[q] = r.ki * i - r.ke * b; dcs[q] = dc;
   };
+  const shift = (q: number, f: number) => { for (let j = 0; j < K; j++) mt[j] = M[j] + f * d[q][j]; return mt; };
   for (let t = 0; t < n; t++) {
     out.stomach[t] = S; out.intestine[t] = I; out.body[t] = B;
-    out.metabolites[t] = M.reduce((a, b) => a + b, 0); out.cleared[t] = C;
+    let msum = 0; for (let j = 0; j < K; j++) msum = msum + M[j];
+    out.metabolites[t] = msum; out.cleared[t] = C;
     for (let k = 0; k < sub; k++) {
-      const k1 = deriv(S, I, B, M);
-      const k2 = deriv(S + h / 2 * k1.s, I + h / 2 * k1.i, B + h / 2 * k1.b, M.map((x, j) => x + h / 2 * k1.m[j]));
-      const k3 = deriv(S + h / 2 * k2.s, I + h / 2 * k2.i, B + h / 2 * k2.b, M.map((x, j) => x + h / 2 * k2.m[j]));
-      const k4 = deriv(S + h * k3.s, I + h * k3.i, B + h * k3.b, M.map((x, j) => x + h * k3.m[j]));
-      S += h / 6 * (k1.s + 2 * k2.s + 2 * k3.s + k4.s);
-      I += h / 6 * (k1.i + 2 * k2.i + 2 * k3.i + k4.i);
-      B += h / 6 * (k1.b + 2 * k2.b + 2 * k3.b + k4.b);
-      for (let j = 0; j < M.length; j++) M[j] += h / 6 * (k1.m[j] + 2 * k2.m[j] + 2 * k3.m[j] + k4.m[j]);
-      C += h / 6 * (k1.c + 2 * k2.c + 2 * k3.c + k4.c);
+      deriv(0, S, I, B, M);
+      deriv(1, S + h / 2 * ds[0], I + h / 2 * di[0], B + h / 2 * db[0], shift(0, h / 2));
+      deriv(2, S + h / 2 * ds[1], I + h / 2 * di[1], B + h / 2 * db[1], shift(1, h / 2));
+      deriv(3, S + h * ds[2], I + h * di[2], B + h * db[2], shift(2, h));
+      S += h / 6 * (ds[0] + 2 * ds[1] + 2 * ds[2] + ds[3]);
+      I += h / 6 * (di[0] + 2 * di[1] + 2 * di[2] + di[3]);
+      B += h / 6 * (db[0] + 2 * db[1] + 2 * db[2] + db[3]);
+      for (let j = 0; j < K; j++) M[j] += h / 6 * (d[0][j] + 2 * d[1][j] + 2 * d[2][j] + d[3][j]);
+      C += h / 6 * (dcs[0] + 2 * dcs[1] + 2 * dcs[2] + dcs[3]);
     }
   }
   return out;

@@ -20,7 +20,7 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
           {(['female', 'male'] as const).map((s) => (
             <button key={s} id={`sex-${s}`} aria-pressed={p.sex === s}
               onClick={() => setProfile({ ...p, sex: s, ...(s === 'male' ? { oralContraceptives: false, latePregnancy: false } : {}) })}>
-              {s === 'female' ? 'Female' : 'Male'}
+              {s === 'female' ? 'Woman' : 'Man'}
             </button>
           ))}
         </div>

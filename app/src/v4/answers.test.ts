@@ -15,7 +15,7 @@ describe('quick answers: honest about what we cannot know', () => {
     const a = quickAnswers({ ...base, bac }).find((x) => x.q === 'Can I drive?')!;
     expect(a.a).toMatch(/Don’t drive after drinking — this can’t tell you when you’re safe/);
     expect(a.a).not.toMatch(/\d{2}:\d{2}/); // no "safe from 21:40"
-    expect(a.a).toMatch(/0\.36–0\.84 ‰/); // ±40% range around the 0.6 peak
+    expect(a.a).toMatch(/0\.36–0\.90 ‰/); // −40% / +50% range around the 0.6 peak (alcohol.md A12)
     expect(a.tone).toBe(2);
   });
   it('sugar: a range and a "typical, not personalised" label', () => {

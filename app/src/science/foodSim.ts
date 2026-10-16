@@ -12,8 +12,10 @@ export interface Meal {
   kind: 'liquid' | 'semi' | 'solid';
   /** drink with a meal (alcohol): slower absorption, faster elimination [alcohol A2, K1] */
   fed?: boolean;
-  /** alcohol drink type sets absorption speed [alcohol A1: beer 62, wine 54, spirits 36 min to peak] */
+  /** alcohol drink type sets absorption speed, per min (ALCOHOL_DRINKS; alcohol.md A1, A9: beer 62, wine 54, spirits 36 min to peak) */
   alcoholKa?: number;
+  /** alcohol reaching the blood relative to spirits (ALCOHOL_DRINKS; Mitchell 2014: wine 0.96, beer 0.90) */
+  alcoholF?: number;
   /** The separate things eaten together (a MEAL, e.g. burger + fries + cola). Two or more items, with at least one
    *  drink and one food, switch on the two-phase stomach (drinks leave faster than food, but slower than alone) and the
    *  per-item sugar curves. Absent or one item = the single-food model, unchanged. research/meals.md */
@@ -65,7 +67,7 @@ export const FOOD_MODEL = {
   fibreFactor: (fibrePer1000: number) => 1 + 0.0156 * (Math.min(25, Math.max(0, fibrePer1000)) - 4), // [GE13] Benini 1995
   absorbHalf: { carbs: 10, protein: 40, fat: 90, water: 12 }, // min in the small intestine [SI8; AA peak 2–3 h; TG peak 3–4 h] (C)
   kidneyHalfMin: 60, // [water B6–B8]
-  siTransit: 240, // residue: mouth-to-caecum ≈ 5–8 h for solids [SI7, C] → 2 × 120 min after leaving the stomach
+  siTransit: 240, // residue: 2 × 120 min after leaving the stomach; healthy capsules 3.3–7 h (Nandhra 2023) [SI7, SI7b]
   // Colon: right, left, rectosigmoid ≈ 11, 11, 12 h by markers (Metcalf 1987, mean 35 h) [CO3]. The first stool
   // with a meal's dye comes earlier (median 28.7 h, 34% before 24 h; Asnicar 2021) because that is the leading edge.
   colonMin: [660, 660, 720],
@@ -76,10 +78,31 @@ export const FOOD_MODEL = {
   // (GL 50 → ≈ +3.0 mmol/L, typical OGTT peak; C). Solids peak lower at the same GL [GL9] (C, ±50%).
   glucosePmax: 3.14, glucoseG0: 16, kindFactor: { liquid: 1, semi: 0.9, solid: 0.8 },
   tgPer50gFat: 0.77, tgPeakMin: 210, // [TG] Wilson 2021: median +0.77 mmol/L after 50 g fat, peak 3–4 h
-  // kaFed 1.5/h: fitted (C) so that a drink taken right after a meal peaks at ≈ 45–55% of the same drink fasted,
-  // as measured (Jones 1997: 13.3–17.7 vs 30.8 mg/dl; Kechagias 1999: 17.5 vs 43.8 mg/dl) [alcohol PF1, beer H1–H2]
-  alcohol: { kaFasted: 2.5 / 60, kaFed: 1.5 / 60, betaFasted: 0.12 / 60, betaFed: 0.17 / 60, F: 0.94 }, // [alcohol §3–4] per min
+  // Alcohol, two compartments (alcohol.md A9–A11, C fitted to A1 Mitchell 2014): the blood we measure first sees only
+  // part of the body water (central fraction 0.6 of the Widmark volume), the rest fills over ≈ 30 min (exchange
+  // 0.35 × Widmark volume per hour). That gives the early overshoot seen after fast drinks (vodka-tonic peaked at
+  // 77 mg/dl, above the Widmark value of 72 for 0.5 g/kg); a single Widmark volume cannot reach it. Elimination
+  // (β per litre of the whole Widmark volume, zero-order) is shared by both parts in proportion to their alcohol, so
+  // after distribution the curve falls at β exactly as before.
+  // kaFed 1.35/h: fitted (C) so that a drink taken right after a meal peaks at ≈ 40–57% of the same drink fasted, as
+  // measured (Jones 1997: 13.3–17.7 vs 30.8 mg/dl; Kechagias 1999: 17.5 vs 43.8 mg/dl) [alcohol PF1–PF2, beer H1–H2].
+  // With no drink type given, the spirits class is used (the highest peak: the cautious side, C).
+  alcohol: { kaFasted: 3.6 / 60, kaFed: 1.35 / 60, betaFasted: 0.12 / 60, betaFed: 0.17 / 60, F: 1, central: 0.6, exchangePerMin: 0.35 / 60 }, // per min
 };
+
+/** Absorption by drink class, fasted (alcohol.md A9–A10). ka per min (C: fitted so the 0.5 g/kg fasted drinks of
+ *  Mitchell 2014 peak at the measured time and height within 3%: beer 50.3 mg/dl at 62 min, wine 61.7 at 54, vodka-
+ *  tonic 77.4 at 36; 82.7 kg men, BMI 26.4); F = bioavailability relative to spirits, measured in the same study
+ *  (wine 0.96 ± 0.13, beer 0.90 ± 0.02, A). Classes by grams of alcohol per 100 g of drink (C): < 7 beer-like (beer,
+ *  cider, alcopops ≈ 4–5%), 7–13 wine-like (≈ 9–16% vol), ≥ 13 spirits and mixed drinks (≥ ≈ 16% vol; Mitchell's
+ *  vodka-tonic was 20% vol ≈ 16 g/100 g). Neat spirits (rakija 40%) were not measured; they get the fastest class. */
+export const ALCOHOL_DRINKS = {
+  beer: { ka: 1.6 / 60, F: 0.9 },
+  wine: { ka: 2.0 / 60, F: 0.96 },
+  spirits: { ka: 3.6 / 60, F: 1 },
+} as const;
+export type AlcoholClass = keyof typeof ALCOHOL_DRINKS;
+export const alcoholClass = (gPer100g: number): AlcoholClass => (gPer100g < 7 ? 'beer' : gPer100g < 13 ? 'wine' : 'spirits');
 
 export interface FoodSim {
   minutes: number;
@@ -237,18 +260,24 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   // PF1]. The drink type sets the fasted speed; with food the slower fed rate wins (peak ≈ 40–57% of fasted).
   const fed = fedForAlcohol(meal.fed, p);
   const a = M.alcohol, ka = fed ? Math.min(meal.alcoholKa ?? a.kaFed, a.kaFed) : meal.alcoholKa ?? a.kaFasted, beta = fed ? a.betaFed : a.betaFasted;
-  // Widmark factor from BMI (Forrest, alcohol W3)
-  const bmi = p.weightKg / Math.pow(p.heightCm / 100, 2);
+  const aF = meal.alcoholF ?? a.F;
+  // Widmark factor from BMI (Forrest, alcohol W3). The straight line only holds for ordinary BMIs: the screen accepts
+  // 35–200 kg and 130–220 cm (BMI ≈ 7–118), where it would give r ≤ 0 and a negative or infinite blood alcohol.
+  // BMI is held inside 16–45 (C, audit 2026-10-16); at BMI 45 r = 0.47 (men) / 0.38 (women), a little below Watson
+  // body water ÷ (0.8 × weight) for a 150 kg, 182 cm body (0.58 / 0.45, alcohol.md W4–W5): the cautious side.
+  const bmi = Math.min(45, Math.max(16, p.weightKg / Math.pow(p.heightCm / 100, 2)));
   const r = p.sex === 'female' ? 0.9367 - 0.0124 * bmi : 1.0181 - 0.01213 * bmi;
   const vd = r * p.weightKg; // L
+  const vc = a.central * vd, vp = vd - vc, q = a.exchangePerMin * vd; // central / peripheral litres, exchange L/min
 
   const out = { stomachG: mk(), intestineG: mk(), c0: mk(), c1: mk(), c2: mk(), exitedG: mk(), bodyWater: mk(), bladder: mk(), kcalAbsorbed: mk(), bac: mk(), carbsInBlood: mk() };
   // state in the small intestine
   // Alcohol: the fitted absorption rate (Mitchell 2014 peak times) already includes the stomach, so it starts at once.
+  // Balc = alcohol in the central part (the blood we show), Bper = in the rest of the body water.
   let Ic = 0, Ip = 0, If = 0, Iw = 0, Ir1 = 0, Ir2 = 0, Ia = meal.alcoholG;
   const C = new Array(3 * M.colonStages).fill(0);
   const kst = C.map((_, j) => M.colonStages / M.colonMin[Math.floor(j / M.colonStages)]);
-  let X = 0, Bw = 0, U = 0, kcalAbs = 0, Balc = 0, Bc = 0, Dg = 0;
+  let X = 0, Bw = 0, U = 0, kcalAbs = 0, Balc = 0, Bper = 0, Bc = 0, Dg = 0;
   const drinkStomachG = mk(), foodStomachG = mk(), drinkIntestineG = mk();
   for (let t = 0; t < n; t++) {
     out.stomachG[t] = meal.grams * R[t];
@@ -256,7 +285,7 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
     out.intestineG[t] = Ic + Ip + If + Iw + Ir1 + Ir2 + Ia;
     const S = M.colonStages, seg = (q: number) => C.slice(q * S, (q + 1) * S).reduce((a2, b2) => a2 + b2, 0);
     out.c0[t] = seg(0); out.c1[t] = seg(1); out.c2[t] = seg(2); out.exitedG[t] = X;
-    out.bodyWater[t] = Bw; out.bladder[t] = U; out.kcalAbsorbed[t] = kcalAbs; out.bac[t] = Balc / vd; out.carbsInBlood[t] = Bc;
+    out.bodyWater[t] = Bw; out.bladder[t] = U; out.kcalAbsorbed[t] = kcalAbs; out.bac[t] = Balc / vc; out.carbsInBlood[t] = Bc;
     if (t === n - 1) break;
     const emptied = phases.map((q) => (q.R[t] - q.R[t + 1]) * h);
     for (let s = 0; s < sub; s++) {
@@ -268,10 +297,12 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
       Dg -= kw * Dg * h; // the drink part is absorbed about as fast as water (visual only, C)
       const ac = kc * Ic * h, ap = kp * Ip * h, af = kf * If * h, aw = kw * Iw * h, aa = ka * Ia * h;
       Ic -= ac; Ip -= ap; If -= af; Iw -= aw; Ia -= aa;
-      kcalAbs += 4 * ac + 4 * ap + 9 * af + 7 * aa * a.F;
+      kcalAbs += 4 * ac + 4 * ap + 9 * af + 7 * aa * aF;
       Bc += ac - (Math.LN2 / 15) * Bc * h; // extra glucose taken up by cells (as colaSim, C)
       Bw += aw - ku * Bw * h; U += ku * Bw * h;
-      Balc += aa * a.F - Math.min(Balc, beta * vd * h);
+      const flow = q * (Balc / vc - Bper / vp) * h, total = Balc + Bper, el = Math.min(total, beta * vd * h);
+      const elC = total > 0 ? (el * Balc) / total : 0;
+      Balc = Math.max(0, Balc + aa * aF - flow - elC); Bper = Math.max(0, Bper + flow - (el - elC));
       const r1 = ks * Ir1 * h, r2 = ks * Ir2 * h;
       Ir1 -= r1; Ir2 += r1 - r2;
       let inflowC = r2;
@@ -281,7 +312,7 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   }
 
   // Label calories (USDA) include some energy from fibre; scale so "absorbed" ends at the label value (C).
-  const atwater = 4 * meal.availCarbs + 4 * meal.protein + 9 * meal.fat + 7 * meal.alcoholG * a.F;
+  const atwater = 4 * meal.availCarbs + 4 * meal.protein + 9 * meal.fat + 7 * meal.alcoholG * aF;
   if (atwater > 0) { const f = meal.kcal / atwater; for (let t = 0; t < n; t++) out.kcalAbsorbed[t] *= f; }
 
   const multi = !!meal.items && meal.items.length > 1;
@@ -293,15 +324,19 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   const glucoseDeltaMgDl = mk(), insulin = mk(), tg = mk(), hr = mk(), sbp = mk();
   const bacPeak = Math.max(...out.bac);
   const tgAmp = Math.min(1.2, (M.tgPer50gFat * meal.fat) / 50);
+  // Alcohol on pulse and blood pressure within 6 h (Tasnim 2020 Cochrane, abstract read 2026-10-16): 14–28 g HR +4.6,
+  // SBP −5.6; > 30 g HR +5.8, SBP −3.5 (the fall is smaller at high doses). Ramp up to 20 g, blend 28 → 30 g (C).
+  const ag = meal.alcoholG, hiW = Math.min(1, Math.max(0, (ag - 28) / 2));
+  const alcHr = Math.min(1, ag / 20) * ((1 - hiW) * 4.8 + hiW * 5.8);
+  const alcSbp = Math.min(1, ag / 20) * ((1 - hiW) * -5.6 + hiW * -3.5);
   for (let t = 0; t < n; t++) {
     glucoseDeltaMgDl[t] = g.fn(t) * 18.016;
     insulin[t] = insulinAt(t);
     const x = t / M.tgPeakMin; tg[t] = tgAmp * Math.pow(x, 3) * Math.exp(3 * (1 - x));
     // Alcohol: HR +4.6–5.1 bpm and SBP −5.6 mmHg within 6 h after 14–28 g [alcohol S3]; scaled by blood alcohol (C)
     const bacFrac = bacPeak > 0 ? out.bac[t] / bacPeak : 0;
-    const dose = Math.min(1, meal.alcoholG / 20);
-    hr[t] = 4.8 * dose * bacFrac + (3 * insulin[t]) / 30; // sugar part as cola [H2, H4]
-    sbp[t] = -5.6 * dose * bacFrac;
+    hr[t] = alcHr * bacFrac + (3 * insulin[t]) / 30; // sugar part as cola [H2, H4]
+    sbp[t] = alcSbp * bacFrac;
   }
   // Caffeine leaves the stomach with the phase it is in. In a meal the coffee's caffeine is held back by the food:
   // tmax 29 → 65–69 min with a 500–1000 kcal meal, same total amount absorbed [ML3, Wildgrube 2026].

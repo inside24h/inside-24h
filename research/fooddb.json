@@ -2617,7 +2617,6 @@
   "id": "fries",
   "name": "French fries",
   "aliases": [
-   "chips",
    "french fries",
    "fries",
    "pomfrit",
@@ -2629,34 +2628,34 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "10 fries",
-   "grams": 76.0,
-   "source": "USDA SR Legacy food_portion (fries)"
+   "label": "1 small portion",
+   "grams": 71.0,
+   "source": "USDA SR Legacy food_portion (serving small) = 71 g"
   },
   "per100g": {
-   "kcal": 158.0,
-   "carbs": 25.55,
-   "sugars": 0.37,
+   "kcal": 312.0,
+   "carbs": 41.44,
+   "sugars": 0.3,
    "freeSugars": 0.0,
-   "fiber": 2.0,
-   "fat": 5.48,
-   "satFat": 0.85,
-   "protein": 2.75,
-   "sodiumMg": 324.0,
+   "fiber": 3.8,
+   "fat": 14.73,
+   "satFat": 2.34,
+   "protein": 3.43,
+   "sodiumMg": 210.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 64.4
+   "waterG": 38.5
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": 63,
   "giSource": "Atkinson 2008 (PMC2584181) Table 1: Potato, french fries, mean of multiple studies",
   "color": "#e9b844",
-  "usdaFdcId": 169264,
-  "usdaDescription": "Potatoes, french fried, all types, salt added in processing, frozen, home-prepared, oven heated",
+  "usdaFdcId": 170698,
+  "usdaDescription": "Fast foods, potato, french fried in vegetable oil",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "USDA fast-food record (fried in vegetable oil). Oven-baked frozen fries have about half the fat and calories."
  },
  {
   "id": "oatmeal",
@@ -2833,7 +2832,7 @@
  },
  {
   "id": "pancake",
-  "name": "Pancakes (palačinke)",
+  "name": "Pancakes (crêpes)",
   "aliases": [
    "palacinka",
    "palacinke",
@@ -2841,8 +2840,8 @@
    "palačinke",
    "pancake",
    "pancakes",
-   "pancakes (palacinke)",
-   "pancakes (palačinke)"
+   "pancakes (crepes)",
+   "pancakes (crêpes)"
   ],
   "kind": "solid",
   "serving": {

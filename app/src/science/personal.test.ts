@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROFILE, type Profile } from './profile';
 import { simulateEspresso } from './espressoSim';
-import { simulateFood, type Meal } from './foodSim';
+import { ALCOHOL_DRINKS, simulateFood, type Meal } from './foodSim';
 import { buildVitals } from './daily';
 import { sleepAnchors } from './anchors';
 import { activeFactors, FED_PEAK_RATIO, personalNotes } from './personal';
@@ -12,9 +12,9 @@ const her: Profile = { ...P, sex: 'female', heightCm: 165, weightKg: 60 };
 const peak = (a: Float64Array) => a.reduce((m, v) => Math.max(m, v), 0);
 // one 0.5 l beer (19.7 g alcohol, alcohol.md P2), as a drink on its own
 const beer: Meal = { grams: 500, kcal: 215, availCarbs: 18, fiber: 0, fat: 0, protein: 2, waterG: 460, caffeineMg: 0, alcoholG: 19.7, gl: null,
-  kind: 'liquid', alcoholKa: 2.5 / 60, fed: false };
+  kind: 'liquid', alcoholKa: ALCOHOL_DRINKS.beer.ka, alcoholF: ALCOHOL_DRINKS.beer.F, fed: false };
 // Jones 1997 set-up: 0.30 g/kg as a ~20% cocktail drunk in 15 min
-const cocktail = (kg: number): Meal => ({ ...beer, grams: 150, kcal: 7 * 0.3 * kg, availCarbs: 0, protein: 0, waterG: 110, alcoholG: 0.3 * kg, alcoholKa: 5 / 60 });
+const cocktail = (kg: number): Meal => ({ ...beer, grams: 150, kcal: 7 * 0.3 * kg, availCarbs: 0, protein: 0, waterG: 110, alcoholG: 0.3 * kg, alcoholKa: ALCOHOL_DRINKS.spirits.ka, alcoholF: ALCOHOL_DRINKS.spirits.F });
 
 describe('caffeine: half-life factors (espresso.md M6–M9)', () => {
   const left = (p: Profile) => simulateEspresso(100, p, 1440).body[7 * 60]; // mg still in the body 7 h later

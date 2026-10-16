@@ -171,9 +171,11 @@
 }
 /* Compare at any width: columns may shrink, never push the page wider */
 .cmpfull { grid-template-columns: minmax(0, 1fr); }
-.cmppick { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+@media (min-width: 721px) { /* (verify 2026-10-16: unwrapped, these beat the phone rules above and Compare stayed 2 columns) */
+  .cmppick { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .cmpcols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .cmppick .side, .cmpcol, .cmpbar, .cmpbody { min-width: 0; }
-.cmpcols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .cmpverdict { overflow-wrap: anywhere; }
 
 /* Share dialog: the picture first, the video behind one button, small handle field */
@@ -198,4 +200,113 @@
   .calmtrack input[type="range"] { height: 44px; }
   .calmtrack input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
   .moment { min-height: 44px; }
+}
+
+/* ==== browser-verify pass 2026-10-16: what the screenshots still showed ==== */
+
+/* the touch hint goes away by itself, so it never sits on organ labels or the legend for long */
+.stage .hint { animation: hintaway .6s ease 6s forwards; }
+@keyframes hintaway { to { opacity: 0; visibility: hidden; } }
+
+/* share dialog has a title */
+.sharebox .sharetitle { margin: 0 0 6px; font: 400 28px/1.1 var(--display); }
+
+@media (max-width: 1100px) {
+  .stageanswers.open .answers .ctl { display: none; } /* "Your body" is in the header already: no orphan button row */
+}
+
+@media (max-width: 720px) {
+  /* header: search and "+ Add" share one row; a meal is one scrolling row of chips */
+  .mealbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; }
+  .mealbar > .search { min-width: 0; max-width: none; }
+  .mealbar > .search.adding { grid-column: 1 / -1; }
+  .mealchips { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; max-width: none; gap: 6px; }
+  .mealchips::-webkit-scrollbar { display: none; }
+  .mealchips:has(.mchip) { grid-column: 1 / -1; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent); padding-right: 20px; }
+  .mealchips li { flex: none; }
+  .madd { min-height: 44px; padding: 0 14px; font-size: 14px; }
+  .madd .maddmore { display: none; }
+  .mchip { min-height: 40px; }
+  .mchip .mname { max-width: 11ch; }
+  .mchip button { min-width: 36px; }
+
+  /* search dropdown: reaches the bottom of the screen and dims what is behind it */
+  .topsearch .results { max-height: calc(100dvh - 130px); box-shadow: 0 0 0 100vmax rgba(2, 5, 9, .62), 0 18px 40px rgba(0, 0, 0, .5); }
+  /* result rows: name gets the width, the sugar word goes under it */
+  .search.smart .results li[role="option"], .search.smart .results li.canadd[role="option"] { grid-template-columns: auto minmax(0, 1fr) auto auto; row-gap: 4px; }
+  .search.smart .results li .sdots { grid-row: 1 / span 2; }
+  .search.smart .results li .rname { grid-column: 2; grid-row: 1; }
+  .search.smart .results li .rgi, .search.smart .results li.canadd .rgi { display: inline-block; grid-column: 2; grid-row: 2; justify-self: start; }
+  .search.smart .results li .rkcal { grid-column: 3; grid-row: 1 / span 2; }
+  .search.smart .results li .radd { grid-column: 4; grid-row: 1 / span 2; }
+
+  /* start screen tiles: same icon column for glasses and fruit, so the names line up */
+  .startbox .tile { grid-template-columns: 30px minmax(0, 1fr); }
+  .startbox .tile i { justify-self: center; }
+
+  /* calm bar: a tapped light replaces the long sentence instead of pushing the body off the screen */
+  .calmbar:has(.calmexplain) .calmtext p, .calmbar:has(.calmexplain) .calmwhere { display: none; }
+  .calmctl .eatenat { display: grid; justify-items: center; gap: 0; }
+  .calmctl .eatenat .plabel { display: block; margin: 0; font: 10px var(--mono); letter-spacing: .04em; color: var(--mute); }
+  .eatenat input { min-height: 40px; }
+
+  /* FULL view on a phone: the body on top (no cards over it), then the lights, the trip and the story below */
+  .grid.simple:not(.calm) .stage { height: auto; min-height: 0; padding: calc(52dvh + 10px) 0 14px; display: flex; flex-direction: column; gap: 10px; }
+  .grid.simple:not(.calm) .stage > div:first-child:not(.lights):not(.stagetrip) { inset: 0 0 auto 0; height: 52dvh !important; } /* the canvas div has an inline height: 100% */
+  .grid.simple:not(.calm) .stage .hint { top: calc(52dvh - 48px); bottom: auto; }
+  .grid.simple:not(.calm) .legend { top: 10px; bottom: auto; left: 12px; right: 12px; align-items: center; }
+  .grid.simple:not(.calm) .organ { top: 52px; bottom: auto; z-index: 5; }
+  .grid.simple:not(.calm) .lights { position: static; width: auto; margin: 0 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .grid.simple:not(.calm) .lights .weather, .grid.simple:not(.calm) .lights .lrules { grid-column: 1 / -1; }
+  .grid.simple:not(.calm) .lights .lrules { justify-self: start; }
+  .grid.simple:not(.calm) .light { grid-template-columns: 28px minmax(0, 1fr); grid-template-rows: auto; align-content: start; row-gap: 6px; padding: 10px; }
+  .grid.simple:not(.calm) .light .li { grid-row: 1; width: 28px; height: 28px; font-size: 14px; box-shadow: 0 0 10px var(--lc); }
+  .grid.simple:not(.calm) .light .lt { flex-direction: column; gap: 0; min-width: 0; }
+  .grid.simple:not(.calm) .light .ls, .grid.simple:not(.calm) .light .ltip { grid-column: 1 / -1; font-size: 12.5px; }
+  .grid.simple:not(.calm) .light .ls { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .grid.simple:not(.calm) .stagetrip { position: static; width: auto; margin: 4px 14px 0; overflow: visible; }
+  .sticks span:nth-child(3), .sticks span:nth-child(5) { display: none; } /* 0 · 1 h · 6 h · 24 h: no overlapping clock times */
+  .strips { padding: 10px 14px 2px; }
+
+  /* first-visit guide: one bubble above the player, never off screen */
+  .tour, .tour-l, .tour-r, .tour-b { left: 12px; right: 12px; top: auto; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); width: auto; }
+  .tour::before { display: none; }
+
+  /* DETAILED view on a phone: what is happening now right under the body, then the readings */
+  .grid.detailed { grid-template-areas: "stage" "now" "read"; }
+  .readings .state, .readings .rnote, .readings .reading.energy { grid-column: 1 / -1; }
+  .now .clock { font-size: 52px; }
+  .now .headline { font-size: 22px; }
+}
+
+/* timeline dots are small on purpose; on touch screens their hit area is not */
+@media (pointer: coarse) {
+  .mark::after { content: ''; position: absolute; inset: -14px -5px; }
+}
+
+/* Compare on a phone: the verdict and the chart first, the Reel button after them, the two foods last */
+@media (max-width: 720px) {
+  .cmpbody { display: flex; flex-direction: column; }
+  .cmpbody > * { margin-left: 0; margin-right: 0; }
+  .cmpbody > .cmpverdict { order: -3; }
+  .cmpbody > .cmpchart { order: -2; }
+  .cmpbody > .cmpactions { order: -1; margin-bottom: 18px; }
+  .cmppick .side { grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 8px; }
+  .cmppick .vs { display: none; }
+}
+
+/* long meal names in the body legend: one line with "…", the "Show whole body" button stays on the same row */
+@media (max-width: 1100px) {
+  .v4.calmlay .legend, .grid.simple:not(.calm) .legend { flex-wrap: nowrap; }
+  .v4.calmlay .legend > span:first-child, .grid.simple:not(.calm) .legend > span:first-child { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v4.calmlay .legend .wholebody, .grid.simple:not(.calm) .legend .wholebody { flex: none; margin-left: auto; }
+}
+@media (max-width: 720px) {
+  .mealchips:has(.mchip) { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent); padding-right: 40px; }
+  .mchip .mname { max-width: 9ch; }
+}
+@media (max-width: 720px) {
+  /* while the search list is open it gets the whole width (the "+ Add" button and chips step aside) */
+  .mealbar:has(.results) > .search { grid-column: 1 / -1; }
+  .mealbar:has(.results) > .mealchips { display: none; }
 }

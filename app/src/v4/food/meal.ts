@@ -1,7 +1,7 @@
 // MEALS: several things eaten together (burger + fries + cola) followed as ONE 24 h story.
 // Pure helpers for the meal builder (chips, "+ add"), the deep-link code and the popular presets.
 // Science: science/foodSim.ts (two-phase stomach, per-item sugar curves); evidence: research/meals.md.
-import type { Meal, MealItem } from '../../science/foodSim';
+import { ALCOHOL_DRINKS, alcoholClass, type Meal, type MealItem } from '../../science/foodSim';
 import { FOOD_BY_ID, gramsPart, macros, servingPart, type Food, type Macros, type Part } from './parse';
 
 /** More than ~5 things stops being "a meal" on a phone screen. */
@@ -33,13 +33,14 @@ export function mealKind(parts: Part[]): Meal['kind'] {
 /** Parts → the model input. Two or more parts also carry `items` (the meal model). */
 export function toMeal(parts: Part[], m: Macros = macros(parts)): Meal {
   const kind = mealKind(parts);
-  const drink = parts.find((p) => (p.food.p.alcoholG ?? 0) > 0);
-  const abv = drink ? drink.food.p.alcoholG ?? 0 : 0; // g alcohol per 100 g
-  // [AL1] Mitchell 2014 peak times: beer 62, wine 54, spirits 36 min → absorption rates 2.5, 3.3 and ≈ 5 per hour (C)
-  const alcoholKa = abv === 0 ? undefined : (abv < 6 ? 2.5 : abv < 20 ? 3.3 : 5) / 60;
+  // g alcohol per 100 g of the strongest drink: with two drinks the faster class is used (the higher peak, C)
+  const abv = parts.reduce((m, p) => Math.max(m, p.food.p.alcoholG ?? 0), 0);
+  // [AL1, alcohol.md A9–A10] Mitchell 2014: beer 62, wine 54, spirits 36 min to the peak → class rates and F
+  const cls = abv > 0 ? ALCOHOL_DRINKS[alcoholClass(abv)] : undefined;
+  const alcoholKa = cls?.ka, alcoholF = cls?.F;
   // with food: ≥ 100 kcal of something that is not a drink in the same meal [alcohol A2, PF1]
   const fed = parts.some((p) => !isDrink(p.food) && ((p.food.p.kcal ?? 0) * p.grams) / 100 >= 100);
-  return { ...m, kind, alcoholKa, fed, ...(parts.length > 1 ? { items: mealItems(parts) } : {}) };
+  return { ...m, kind, alcoholKa, alcoholF, fed, ...(parts.length > 1 ? { items: mealItems(parts) } : {}) };
 }
 
 /** Servings of this part (1 = one USDA/typical serving). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { simulateFood, stomachRetention, type Meal } from './foodSim';
+import { ALCOHOL_DRINKS, simulateFood, stomachRetention, type Meal } from './foodSim';
 import { DEFAULT_PROFILE } from './profile';
 import { macros, parseMeal } from '../v4/food/parse';
 
@@ -60,7 +60,7 @@ describe('generic food model', () => {
     expect(s.exitedG[1440] / s.residueG).toBeLessThan(0.34);
   });
   it('one beer fasted: blood alcohol peak 0.2–0.35 g/L at 40–75 min, gone by ~5 h (alcohol.md worked example)', () => {
-    const s = simulateFood(meal('beer'), DEFAULT_PROFILE);
+    const s = simulateFood(meal('beer', { alcoholKa: ALCOHOL_DRINKS.beer.ka, alcoholF: ALCOHOL_DRINKS.beer.F }), DEFAULT_PROFILE);
     const peak = Math.max(...s.bac), tPeak = s.bac.indexOf(peak);
     expect(peak).toBeGreaterThan(0.2);
     expect(peak).toBeLessThan(0.35);

@@ -375,7 +375,7 @@ export default function AppV4() {
       // a range, never one number (Widmark ±20–40%, alcohol.md W6)
       if (bac >= 0.1) return { big: bacRangeText(bac).replace(' ‰', ''), small: '‰ blood alcohol', level: (bac >= 0.5 ? 2 : 1) as 0 | 1 | 2 };
       const g = built.effects.glucoseMgDl ? built.effects.glucoseMgDl[mi] / 18.016 : 0;
-      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeText(g) : g.toFixed(1), small: g > 0 ? 'blood sugar, typical' : 'sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
+      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeText(g) : g.toFixed(1), small: g > 0 ? 'mmol/L blood sugar rise, typical' : 'mmol/L sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
       const caf = built.caffeine.doseMg >= 10 ? built.caffeine.body[mi] : 0;
       if (caf >= 20) return { big: `${Math.round(caf)} mg`, small: 'caffeine in you', level: (caf >= 200 ? 1 : 0) as 0 | 1 | 2 };
       return undefined;
@@ -751,6 +751,7 @@ export default function AppV4() {
       {share && share.state !== 'rec' && (
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setShare(null); }}>
           <div className="noticebox sharebox" role="dialog" aria-label="Share">
+            {share.state === 'choose' && !videoOpen && <h2 className="sharetitle">Share</h2>}
             {share.state !== 'ready' && <MomentShare make={makeMoment} label="Share this moment" />}
             {share.state === 'choose' && !videoOpen && (
               <button className="ghost videoopen" aria-expanded={false} onClick={() => setVideoOpen(true)}>🎬 Or make a 24 h video (Reel / TikTok) ▾</button>

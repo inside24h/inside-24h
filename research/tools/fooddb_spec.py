@@ -148,8 +148,11 @@ add("potato-boiled", "Potato (boiled)", ["krumpir", "kuhani krumpir", "boiled po
     "Potatoes, boiled, cooked in skin, flesh, without salt", "#ecd9a0", "none", ('p', r'^potato'), gi="potato_boiled")
 add("potato-mashed", "Mashed potato (milk and butter)", ["pire", "pire krumpir", "mashed potato", "potato", "krumpir"], "semi",
     "Potatoes, mashed, home-prepared, whole milk and butter added", "#f3e5ad", "none", ('p', r'cup'), gi=None)
-add("fries", "French fries", ["pomfrit", "pommes frites", "french fries", "fries", "pržen krumpir", "prženi krumpir", "chips"], "solid",
-    "Potatoes, french fried, all types, salt added in processing, frozen, home-prepared, oven heated", "#e9b844", "none", ('p', r'.'), gi="fries")
+# Audit 2026-10-16: was the oven-heated frozen record (169264, 158 kcal/100 g, 5.5 g fat). "Fries" as people mean it
+# (and in the burger + fries preset) are deep-fried: USDA fast-food record 170698, 312 kcal/100 g, 14.7 g fat; serving
+# "small" 71 g. "chips" stays with potato crisps only (it was on both; British chips = fries is the rarer reading here).
+add("fries", "French fries", ["pomfrit", "pommes frites", "french fries", "fries", "pržen krumpir", "prženi krumpir"], "solid",
+    170698, "#e9b844", "none", ('g', 71.0, "1 small portion", "USDA SR Legacy food_portion (serving small) = 71 g"), gi="fries", note="USDA fast-food record (fried in vegetable oil). Oven-baked frozen fries have about half the fat and calories.")
 add("oatmeal", "Oatmeal / porridge (cooked)", ["zobena kaša", "zobena kasa", "zobene pahuljice", "kaša", "kasa", "porridge", "oatmeal", "oats", "owsianka"], "semi",
     173905, "#d9c7a3", "none", ('p', r'cup'), gi="porridge", note="Cooked with water, no sugar or milk.")
 add("cornflakes", "Cornflakes", ["kukuruzne pahuljice", "corn flakes", "cornflakes", "pahuljice", "žitarice", "zitarice", "cereal"], "solid",
@@ -160,7 +163,7 @@ add("muesli", "Muesli", ["müsli", "musli", "muesli", "žitarice", "zitarice", "
     note="Contains dried fruit (not free sugars) plus possibly added sugar; no split available, null.")
 add("crackers", "Crackers (saltines)", ["krekeri", "slani keksi", "cracker", "crackers", "grisini"], "solid",
     "Crackers, saltines (includes oyster, soda, soup)", "#e4cf9a", "null", ('p', r'.'))
-add("pancake", "Pancakes (palačinke)", ["palačinke", "palacinke", "pancakes", "pancake", "palačinka"], "solid",
+add("pancake", "Pancakes (crêpes)", ["palačinke", "palacinke", "pancakes", "pancake", "palačinka"], "solid",
     "Pancakes, plain, prepared from recipe", "#e9c98a", "upper", ('p', r'4" dia|medium|\d'), note="Plain pancakes from recipe; upper-bound rule (sugar in recipe).")
 
 # ---------------- MEAT / FISH ----------------

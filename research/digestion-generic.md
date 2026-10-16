@@ -44,6 +44,7 @@ Honest headline: we have good numbers for **liquid** emptying, for **one standar
 | SI5 | Capsule endoscopy, 336 patients (not healthy controls): mean small-bowel transit **282 ± 132 min**; ageing and stenosis lengthen it; the same person varies by SD ≈ 98 min between studies. | B (patients) | Tominaga K 2020, Ann Transl Med. PMID 32355792 (abstract) |
 | SI6 | Liquid scintigraphy in 35 healthy adults: reference liquid T½ **10–60 min**; "rapid" small-bowel transit = first activity in caecum/ascending colon within **1 h**. | B (n=35, 28 women) | Dhukia S 2024, PMC11232722 (abstract) |
 | SI7 | **C estimate, healthy small-bowel transit for a solid meal:** no healthy-control capsule or scintigraphy median was retrieved. From SI1 (60–180 min mouth-to-caecum for a liquid test) and SI5 (patients, 282 min) we set the model value for the **unabsorbed residue: median 3 h from gastric exit to caecum, range 1.5–4.5 h**. | C | SI1, SI5 |
+| SI7b | **Updated 2026-10-16 (supersedes the 3 h above):** systematic review of ingestible capsules in **healthy volunteers** (22 studies, 1,885 people): small-intestinal transit **3.3–7 h** across studies (gastric emptying 0.4–15.3 h, colon 15.9–28.9 h, whole gut 23.0–37.4 h); protocol (meal or not) changes the values. The model keeps **4 h** (2 × 120 min after gastric exit, `foodSim.ts` siTransit 240), inside this range; claim SI7 says the same. The old 3 h (1.5–4.5) was below the healthy capsule range. | B (non-digestible capsule, not food residue) | Nandhra GK et al. 2023, J Clin Med. PMID 37629314 (PMC10455695, abstract + full-text grep) |
 | SI8 | Carbohydrate: sucrose is split at the brush border (sucrase-isomaltase); glucose enters by SGLT1, fructose by GLUT5; sugars are absorbed within ≈ 5–20 min of reaching the duodenum (not rate-limiting). | A (mechanism) · C (timing) | cola.md A1, A2, A5; banana.md A2 |
 | SI9 | Segment of absorption (duodenum vs jejunum vs ileum) for carbohydrate, protein, fat (with bile) and water: **not obtained in a read source**. Mudie 2014 shows water moving through the small bowel in pockets and absorbed at ta½ ≈ 12 min (water.md A2, A5). | ? | open question 5 |
 | SI10 | Dietary fibre (non-starch polysaccharide) is **completely recovered** at the ileum; resistant starch from unripe banana reached the ileum at up to 90% (ileostomy) / 83.7% (green banana flour, intubation). | A | Englyst HN, Cummings JH 1986, PMID 3014853; Faisant N 1995, PMID 7857906 (banana.md R1, A1) |
@@ -180,7 +181,7 @@ Amino acids: `AA(t)` same form, peak at 1 h (liquid fast protein) or 2–3 h (so
 | Fibre factor | +25% at 20 g/1000 kcal | GE13 |
 | Fat factor | unsourced, direction only | GE15, GE16 |
 | Sugar absorption | 10–20 min | SI8 |
-| Residue to caecum | +3 h (1.5–4.5) after gastric exit | SI1, SI5, SI7 |
+| Residue to caecum | +4 h (capsules 3.3–7 h) after gastric exit (was +3 h, 1.5–4.5; changed 2026-10-16) | SI7b |
 | First stool | lognormal, median 28.7 h, σ 0.43 | CO1, CO8 |
 | Colon segments | 11.3 / 11.4 / 12.4 h | CO3 |
 | Glucose slope | 0.11 mmol/l per GL (liquid) | GL4 |

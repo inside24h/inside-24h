@@ -38,7 +38,7 @@ export function MealBar({ parts, current, onPick, onChange }: {
             );
           })}
           {!adding && parts.length > 0 && !full && (
-            <li><button type="button" className="madd" onClick={() => setAdding(true)} title="Eat or drink several things together and see one combined story">+ Add something</button></li>
+            <li><button type="button" className="madd" onClick={() => setAdding(true)} title="Eat or drink several things together and see one combined story">+ Add<span className="maddmore"> something</span></button></li>
           )}
           {full && <li className="mfull">Max {MAX_ITEMS} things</li>}
         </ul>

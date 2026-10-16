@@ -14,7 +14,7 @@ export const TIPS: Record<TipKey, Tip> = {
     why: 'Light walking lowered the rise in blood sugar after meals compared with sitting (7 crossover trials, mostly adults with overweight). Walking 10 min after each meal beat one 30 min walk a day in people with type 2 diabetes.',
   },
   sugarDip: {
-    key: 'sugarDip', level: 'A', sources: ['kim2025', 'wyatt2021'],
+    key: 'sugarDip', level: 'B', sources: ['kim2025', 'wyatt2021'], // one 66-person study for the meal effect: B, not A
     text: 'Have sugary drinks with a meal, not on their own: with food, the dip went away.',
     why: 'Cola drunk with a muffin did not cause the dip (66 adults on glucose sensors). Bigger dips come with more hunger and eating sooner (1,070 people).',
   },
@@ -30,8 +30,8 @@ export const TIPS: Record<TipKey, Tip> = {
   },
   caffeine: {
     key: 'caffeine', level: 'B', sources: ['drake2013', 'efsa2015'],
-    text: 'No more caffeine today. Even 6 hours before bed, a strong dose cut sleep.',
-    why: '400 mg taken 0, 3 or 6 hours before bed all disturbed sleep (small trial, 12 adults). EFSA calls up to 400 mg a day safe for healthy adults.',
+    text: 'If you want good sleep, skip more caffeine today: even 6 hours before bed, a strong dose (400 mg) cut sleep.',
+    why: '400 mg taken 0, 3 or 6 hours before bed all disturbed sleep (small trial, 12 adults). For healthy adults EFSA sees no safety concern up to 400 mg a day.',
   },
   alcohol: {
     key: 'alcohol', level: 'A', sources: ['jones2010', 'jongen2014'],

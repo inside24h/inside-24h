@@ -49,7 +49,7 @@ export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], tex
         <button className="bclose" onClick={onClose} aria-label="Close">✕</button>
       </header>
       <label className="bfilter">
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter, e.g. coffee, kruh, apple" aria-label="Filter the list" />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter, e.g. coffee, bread, apple" aria-label="Filter the list" />
       </label>
       <div className="bscroll">
         {!q && (

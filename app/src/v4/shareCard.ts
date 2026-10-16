@@ -64,11 +64,12 @@ export function drawMomentCard(src: HTMLCanvasElement | null, c: MomentCard): HT
   let y = 470;
   if (c.pop) {
     let fs = 120; ctx.font = `800 ${fs}px ${SANS}`;
-    while (fs > 48 && ctx.measureText(c.pop.big).width > 480) { fs -= 4; ctx.font = `800 ${fs}px ${SANS}`; }
+    while (fs > 48 && ctx.measureText(c.pop.big).width > 440) { fs -= 4; ctx.font = `800 ${fs}px ${SANS}`; }
     ctx.fillStyle = LIGHT[c.pop.level]; ctx.fillText(c.pop.big, 60, y + 40);
     ctx.fillStyle = '#e6edf5'; ctx.font = `600 34px ${SANS}`;
-    wrap(ctx, c.pop.small, 480, 2).forEach((ln, i) => ctx.fillText(ln, 60, y + 100 + i * 42));
-    y += 200;
+    const small = wrap(ctx, c.pop.small, 440, 2);
+    small.forEach((ln, i) => ctx.fillText(ln, 60, y + 100 + i * 42));
+    y += 170 + (small.length - 1) * 42;
   }
   if (c.where) {
     ctx.fillStyle = '#8292a7'; ctx.font = `600 24px ${SANS}`; ctx.fillText('WHERE IT IS NOW', 60, y);
@@ -77,13 +78,13 @@ export function drawMomentCard(src: HTMLCanvasElement | null, c: MomentCard): HT
     ctx.fillStyle = c.color ?? '#ffffff'; ctx.beginPath(); ctx.arc(76, y + 38, 14, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = '#ffffff'; lines.forEach((ln, i) => ctx.fillText(ln, 104, y + 50 + i * 46));
-    y += 60 + lines.length * 46 + 40;
+    y += 60 + lines.length * 46 + 30;
   }
   // the four lights at this minute fill the left column (same words as the app)
   if (c.lights?.length) {
     const WORDS = ['fine', 'mild stress', 'overload'];
     ctx.fillStyle = '#8292a7'; ctx.font = `600 24px ${SANS}`; ctx.fillText('YOUR BODY NOW', 60, y);
-    const rowH = Math.min(52, Math.max(36, (950 - y) / c.lights.length));
+    const rowH = Math.min(52, Math.max(36, (948 - y - 34) / Math.max(1, c.lights.length - 1)));
     c.lights.forEach((l, i) => {
       const cy = y + 34 + i * rowH;
       ctx.fillStyle = l.unknown ? '#8292a7' : LIGHT[l.level]; ctx.beginPath(); ctx.arc(76, cy - 10, 12, 0, Math.PI * 2); ctx.fill();
@@ -104,6 +105,7 @@ export function drawMomentCard(src: HTMLCanvasElement | null, c: MomentCard): HT
   ctx.fillStyle = '#5cd3ff'; ctx.font = `600 26px ${MONO}`; ctx.fillText(fit(ctx, `▶ ${linkLabel(c.link)}`, W - 300), 60, 1262);
   ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; ctx.font = `700 30px ${SANS}`; ctx.fillText('inside24h', W - 60, 1262);
   ctx.textAlign = 'left'; ctx.fillStyle = '#56657a'; ctx.font = `20px ${SANS}`;
-  ctx.fillText(fit(ctx, `Simulation for a typical body${c.pop && /–/.test(c.pop.big) ? ' · ranges show how much people differ' : ''} · not medical advice · anatomy BodyParts3D CC BY 4.0`, W - 120), 60, 1306);
+  ctx.fillText(fit(ctx, `Simulation for a typical body${c.pop && /–/.test(c.pop.big) ? ' · ranges show how much people differ' : ''} · not medical advice`, W - 120), 60, 1298);
+  ctx.fillText('Anatomy: BodyParts3D © DBCLS, CC BY 4.0', 60, 1326);
   return out;
 }
