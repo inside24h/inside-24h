@@ -51,14 +51,14 @@ export function verdictOf(a: Analysis, b: Analysis): string {
   const skip = a.sugarPeak === null || b.sugarPeak === null; // compare like with like
   const score = (x: Analysis) => stress(x, skip) + x.kcal / 50;
   const sa = score(a), sb = score(b);
-  if (Math.abs(sa - sb) < Math.max(3, 0.1 * Math.max(sa, sb))) return `It's close: ${a.name} and ${b.name} affect your body about the same.`;
+  if (Math.abs(sa - sb) < Math.max(3, 0.1 * Math.max(sa, sb))) return `It’s close: ${a.name} and ${b.name} affect your body about the same.`;
   const [w, l] = sa < sb ? [a, b] : [b, a];
   const why: string[] = [];
   if (!skip && w.sugarPeak !== null && l.sugarPeak !== null && l.sugarPeak - w.sugarPeak >= 0.4)
-    why.push(w.sugarPeak < 0.3 ? 'no sugar spike' : `a smaller sugar spike (+${w.sugarPeak.toFixed(1)} vs +${l.sugarPeak.toFixed(1)})`);
-  if (l.kcal - w.kcal >= 30) why.push(`${Math.round(l.kcal - w.kcal)} kcal less`);
+    why.push(w.sugarPeak < 0.3 ? 'no blood sugar peak' : `a smaller blood sugar peak (+${w.sugarPeak.toFixed(1)} vs +${l.sugarPeak.toFixed(1)})`);
+  if (l.kcal - w.kcal >= 30) why.push(`${Math.round(l.kcal - w.kcal)} fewer kcal`);
   const lBac = l.built.bac ? Math.max(...Array.from(l.built.bac)) : 0, wBac = w.built.bac ? Math.max(...Array.from(w.built.bac)) : 0;
-  if (lBac - wBac >= 0.05) why.push(wBac < 0.01 ? 'no alcohol' : 'a lower peak of alcohol in your blood');
+  if (lBac - wBac >= 0.05) why.push(wBac < 0.01 ? 'no alcohol' : 'a lower blood alcohol peak');
   return `🏆 ${w.name} wins${why.length ? `: ${why.slice(0, 2).join(', ')}` : ''}.`;
 }
 

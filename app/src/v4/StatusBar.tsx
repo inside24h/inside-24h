@@ -9,7 +9,7 @@ import { TIPS } from '../content/tips';
 import './safety.css';
 
 const ICON: Record<System['key'], string> = { energy: '⚡', heart: '❤', water: '💧', brain: '🧠' };
-const WORD: Record<Level, string> = { 0: 'Good', 1: 'Mild stress', 2: 'Overload' };
+const WORD: Record<Level, string> = { 0: 'Fine', 1: 'Mild stress', 2: 'High stress' };
 const lvlAt = (s: System, m: number) => s.levels[Math.max(0, Math.min(1440, Math.round(m)))] as Level;
 
 export interface WeatherChip { city: string; range: string; month: string; extra: number; onChange: () => void }
@@ -18,11 +18,11 @@ export function StatusLights({ systems, minute, onJump, onRules, weather }: {
   systems: System[]; minute: number; onJump: (minute: number, organ: string) => void; onRules: () => void; weather?: WeatherChip;
 }) {
   return (
-    <div className="lights" aria-label="How your body is doing now">
+    <div className="lights" role="group" aria-label="How your body is doing now">
       {weather && (
         <button className="weather" onClick={weather.onChange} title="Change city">
-          <span>📍 <b>{weather.city}</b> · typical {weather.month} day {weather.range}</span>
-          <em>{weather.extra >= 100 ? `Heat today: drink about ${weather.extra} ml more than on a mild day` : 'No extra water needed for the weather'}</em>
+          <span><span aria-hidden="true">📍 </span><b>{weather.city}</b> · a typical {weather.month} day, {weather.range}</span>
+          <em>{weather.extra >= 100 ? `Hot today: drink about ${weather.extra} ml more than on a mild day` : 'No extra water needed for this weather'}</em>
         </button>
       )}
       {systems.map((s) => {
@@ -40,7 +40,7 @@ export function StatusLights({ systems, minute, onJump, onRules, weather }: {
           </button>
         );
       })}
-      <button className="link lrules" onClick={onRules}>How are the colours decided?</button>
+      <button className="link lrules" onClick={onRules}>How the colours work</button>
     </div>
   );
 }
@@ -55,12 +55,12 @@ export function StatusStrips({ systems, minute, onSeek, clock }: { systems: Syst
     return w as Level;
   })), [systems]);
   return (
-    <div className="strips" onClick={(e) => {
+    <div className="strips" role="group" aria-label="The colours across 24 hours" onClick={(e) => {
       const r = e.currentTarget.getBoundingClientRect();
       onSeek(minutesFromU(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))));
     }}>
       {systems.map((s, k) => (
-        <div key={s.key} className="strip" aria-label={`${s.label} over 24 hours`}>
+        <div key={s.key} className="strip" role="img" aria-label={`${s.label} across 24 hours`}>
           <span className="sl" aria-hidden="true">{ICON[s.key]}</span>
           <svg viewBox={`0 0 ${SEG} 1`} preserveAspectRatio="none">
             {cells[k].map((l, i) => <rect key={i} x={i} width={1.05} y={0} height={1} className={`c${l}`} />)}

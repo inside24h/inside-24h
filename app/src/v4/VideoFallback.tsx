@@ -13,18 +13,18 @@ export function VideoFallback({ reason, makeImage, onSave }: {
   useEffect(() => () => { if (img) URL.revokeObjectURL(img.url); }, [img]);
   const copy = async () => {
     try { await navigator.clipboard.writeText(link); setCopied(true); }
-    catch { setCopied(false); setMsg('Copying is blocked here: press and hold the link above to copy it.'); }
+    catch { setCopied(false); setMsg('Copying is blocked here. Press and hold the link above to copy it.'); }
   };
   const still = async () => {
     const blob = await makeImage();
-    if (!blob) { setMsg('Could not draw the picture. Try again when the body has loaded.'); return; }
+    if (!blob) { setMsg('We couldn’t draw the picture. Please try again once the body has loaded.'); return; }
     setImg({ url: URL.createObjectURL(blob), blob });
     setMsg(await onSave(blob));
   };
   return (
     <div className="fallback">
       <h2>Open this in your browser</h2>
-      <p>Video export needs Chrome or Safari — open this page in your browser.</p>
+      <p>Making a video needs Chrome or Safari. Please open this page in your browser.</p>
       {reason && <p className="note">{reason}</p>}
       <p className="note">In Instagram or TikTok: tap ⋯ (top right) and choose “Open in browser”, or copy the link.</p>
       <div className="linkrow">
@@ -33,7 +33,7 @@ export function VideoFallback({ reason, makeImage, onSave }: {
       </div>
       <button className="ghost" onClick={still}>Save a picture of this moment instead (PNG)</button>
       {img && <img src={img.url} alt="Picture of this moment" style={{ maxWidth: '100%', maxHeight: '50vh', borderRadius: 10, justifySelf: 'center' }} />}
-      {msg && <p className="note">{msg}</p>}
+      {msg && <p className="note" role="status">{msg}</p>}
     </div>
   );
 }

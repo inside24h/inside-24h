@@ -4,11 +4,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { MeshoptDecoder as MeshoptDecoderJS } from './meshoptDecoderReference.js';
-import anatomyData from '../assets/anatomy.meshopt.glb?inline';
+import { anatomyBytes } from './anatomySource';
 import type { OrganKey } from '../content/types';
 
-// The model ships inside the bundle as a base64 data URL and is decoded in memory.
-// No fetch: sandboxed hosts (e.g. claude.ai previews) may block network requests, data: URLs included.
+// Single-file build: the model ships inside the bundle as a base64 data URL and is decoded in memory (no fetch:
+// sandboxed hosts may block network requests). Hosted build: a separate .glb file. See ./anatomySource.
 // It is meshopt-compressed (pipeline/compress-anatomy.mjs, ~2.6x smaller). The fast decoder is WebAssembly,
 // embedded in the JS (no fetch); where WebAssembly is blocked, the slower pure-JS decoder takes over.
 async function meshoptDecoder() {
@@ -22,12 +22,13 @@ async function meshoptDecoder() {
 let anatomyPromise: Promise<THREE.Group> | null = null;
 function loadAnatomy(): Promise<THREE.Group> {
   if (!anatomyPromise) {
-    anatomyPromise = meshoptDecoder().then((decoder) => new Promise((resolve, reject) => {
-      const bin = atob(anatomyData.slice(anatomyData.indexOf(',') + 1));
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      new GLTFLoader().setMeshoptDecoder(decoder as typeof MeshoptDecoder).parse(bytes.buffer, '', (gltf) => resolve(gltf.scene), reject);
+    anatomyPromise = Promise.all([meshoptDecoder(), anatomyBytes()]).then(([decoder, buffer]) => new Promise<THREE.Group>((resolve, reject) => {
+      new GLTFLoader().setMeshoptDecoder(decoder as typeof MeshoptDecoder).parse(buffer, '', (gltf) => {
+        try { performance.mark('i24-anatomy'); } catch { /* old browsers */ }
+        resolve(gltf.scene);
+      }, reject);
     }));
+    anatomyPromise.catch(() => { anatomyPromise = null; }); // e.g. a dropped connection: try again on the next mount
   }
   return anatomyPromise;
 }

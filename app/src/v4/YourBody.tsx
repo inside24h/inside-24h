@@ -34,20 +34,20 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
 
       <fieldset className="pf">
         <legend>What changes it for you</legend>
-        <p className="note">All optional. Tap what’s true today; only things studies show to matter are here.</p>
+        <p className="note">All optional. Tick what’s true today. We only list things that studies show make a difference.</p>
         <Factor id="smoker" label="I smoke" on={p.smoker} set={(v) => set('smoker', v)} />
         {p.sex === 'female' && <Factor id="pill" label="I take the contraceptive pill" on={p.oralContraceptives} set={(v) => set('oralContraceptives', v)} />}
         {p.sex === 'female' && <Factor id="latePregnancy" label="I’m in the last month of pregnancy" on={p.latePregnancy} set={(v) => set('latePregnancy', v)} />}
         <Factor id="caffeineDaily" label="I have coffee or tea most days" on={!!p.caffeineDaily} set={(v) => set('caffeineDaily', v)} />
         <Factor id="withMeal" label="I’ve just eaten a meal (last hour or so)" on={!!p.withMeal} set={(v) => set('withMeal', v)} />
-        <p className="pf-device">🔒 Stays on your device: saved only in this browser, never sent anywhere.</p>
-        <p className="note">Not changed by these: your sugar curve (only a glucose sensor can personalise it) and how fast caffeine leaves with age (the same at 20 and 70).</p>
+        <p className="pf-device"><span aria-hidden="true">🔒 </span>Stays on your device: saved only in this browser, never sent anywhere.</p>
+        <p className="note">These don’t change your blood sugar curve (only a glucose sensor can personalise it) or how fast caffeine leaves your body with age (it’s the same at 20 and at 70).</p>
       </fieldset>
 
       <fieldset>
         <legend>Where you are today</legend>
         <CityField value={p.city} onPick={(city) => set('city', city)} />
-        <label className="check"><input type="checkbox" checked={!!p.airCon} onChange={(e) => set('airCon', e.target.checked)} /> Mostly indoors with air-conditioning</label>
+        <label className="check"><input type="checkbox" checked={!!p.airCon} onChange={(e) => set('airCon', e.target.checked)} /> Mostly indoors with air conditioning</label>
         <p className="note">Temperature comes from real weather records for your city in this month (ERA5 reanalysis 2015–2024 via Open-Meteo, or NASA POWER for some cities). It is a typical day, not a live forecast.</p>
       </fieldset>
 
@@ -57,10 +57,10 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
         <div className="fields">
           <label>Resting pulse<span><NumberField id="hr" value={p.restingHr} min={35} max={130} onCommit={(v) => set('restingHr', Math.round(v))} /> bpm</span></label>
           <label>Blood pressure<span><NumberField id="sbp" label="Systolic" value={p.sbp} min={80} max={220} onCommit={(v) => set('sbp', Math.round(v))} /> / <NumberField id="dbp" label="Diastolic" value={p.dbp} min={40} max={140} onCommit={(v) => set('dbp', Math.round(v))} /> mmHg</span></label>
-          <label>Fasting glucose<span>
+          <label>Fasting blood sugar<span>
             <NumberField id="glu" value={mmol ? +(p.glucoseMgDl / MG_DL_PER_MMOL_L).toFixed(1) : Math.round(p.glucoseMgDl)} min={mmol ? 2 : 36} max={mmol ? 25 : 450}
               onCommit={(v) => set('glucoseMgDl', mmol ? v * MG_DL_PER_MMOL_L : v)} />
-            <select id="gunit" value={p.glucoseUnit} aria-label="Glucose unit" onChange={(e) => set('glucoseUnit', e.target.value as Profile['glucoseUnit'])}>
+            <select id="gunit" value={p.glucoseUnit} aria-label="Blood sugar unit" onChange={(e) => set('glucoseUnit', e.target.value as Profile['glucoseUnit'])}>
               <option value="mmol/L">mmol/L</option><option value="mg/dL">mg/dL</option>
             </select></span></label>
           <label>Oxygen saturation<span><NumberField id="spo2" value={p.spo2} min={80} max={100} onCommit={(v) => set('spo2', Math.round(v))} /> %</span></label>
@@ -80,9 +80,9 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
           </div>
         </>}
         <div className="fields">
-          <label>Drunk at<span><input id="drinkAt" type="time" value={hhmm(p.drinkAtMin)} onChange={(e) => e.target.value && set('drinkAtMin', fromHhmm(e.target.value))} /></span></label>
+          <label>Had it at<span><input id="drinkAt" type="time" value={hhmm(p.drinkAtMin)} onChange={(e) => e.target.value && set('drinkAtMin', fromHhmm(e.target.value))} /></span></label>
           <label>Bedtime<span><input id="bedtime" type="time" value={hhmm(p.bedtimeMin)} onChange={(e) => e.target.value && set('bedtimeMin', fromHhmm(e.target.value))} /></span></label>
-          <label>Wake up<span><input id="wake" type="time" value={hhmm(p.wakeMin)} onChange={(e) => e.target.value && set('wakeMin', fromHhmm(e.target.value))} /></span></label>
+          <label>Wake-up time<span><input id="wake" type="time" value={hhmm(p.wakeMin)} onChange={(e) => e.target.value && set('wakeMin', fromHhmm(e.target.value))} /></span></label>
         </div>
       </fieldset>
     </div>

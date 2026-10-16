@@ -13,7 +13,7 @@ export interface Overlay {
   pop?: { big: string; small: string; level: 0 | 1 | 2 }; // headline number of this moment
 }
 const LIGHT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
-const WORD = ['Good', 'Mild stress', 'Overload'];
+const WORD = ['Fine', 'Mild stress', 'High stress'];
 const SANS = 'system-ui, "Segoe UI", Roboto, sans-serif';
 const SERIF = 'Georgia, "Times New Roman", serif';
 export const SIZE: Record<Format, [number, number]> = { reel: [1080, 1920], feed: [1080, 1350] };
@@ -32,7 +32,7 @@ export function pickMime(): { mime: string; ext: 'mp4' | 'webm' } | null {
  */
 export function record(source: HTMLCanvasElement, format: Format, overlay: () => Overlay, onPlay: () => void, done: () => boolean): Promise<{ blob: Blob; ext: string }> {
   const fmt = pickMime();
-  if (!fmt) return Promise.reject(new Error('This browser cannot record video.'));
+  if (!fmt) return Promise.reject(new Error('This browser can’t record video.'));
   const [W, H] = SIZE[format];
   const out = document.createElement('canvas');
   out.width = W; out.height = H;
@@ -43,7 +43,7 @@ export function record(source: HTMLCanvasElement, format: Format, overlay: () =>
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   return new Promise((resolve, reject) => {
     rec.onstop = () => resolve({ blob: new Blob(chunks, { type: fmt.mime.split(';')[0] }), ext: fmt.ext });
-    rec.onerror = () => reject(new Error('Recording failed.'));
+    rec.onerror = () => reject(new Error('The recording failed. Please try again.'));
     const t0 = performance.now();
     let played = false, endAt = 0, raf = 0;
     const frame = (now: number) => {

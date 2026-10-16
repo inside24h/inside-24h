@@ -74,8 +74,8 @@ export function mealAnswerLines(s: FoodSim, meal: Meal, parts: Part[]): string[]
   const sugar = mealSugarNote(s, meal);
   if (sugar) out.push(sugar);
   const ph = s.meal?.phases;
-  if (ph?.drink && ph.food) out.push(`Drink first, food later: half of the drink is out of your stomach in ≈ ${r0(ph.drink.t50)} min, half of the food in ≈ ${r0(s.meal!.foodT50)} min.`);
-  if (meal.alcoholG > 1 && meal.fed) out.push('Eating with the alcohol: the peak is lower and later (roughly half of an empty stomach), but it is not zero. Don’t drive.');
+  if (ph?.drink && ph.food) out.push(`Drink first, food later: half of the drink is out of your stomach in about ${r0(ph.drink.t50)} min, half of the food in about ${r0(s.meal!.foodT50)} min.`);
+  if (meal.alcoholG > 1 && meal.fed) out.push('Eating with the alcohol makes the peak lower and later (roughly half of the peak on an empty stomach), but not zero. Don’t drive.');
   const caf = mealCaffeineNote(s).trim();
   if (caf) out.push(caf);
   return out;
@@ -90,4 +90,4 @@ export function mealChapters(s: FoodSim, parts: Part[]): Chapter[] {
 }
 
 /** "drink" note for the organ card. */
-export const mealDrinkNote = (s: FoodSim) => (s.meal?.phases.drink ? `The drink part leaves first (half in ≈ ${r0(s.meal.phases.drink.t50)} min), the food part later (half in ≈ ${r0(s.meal.foodT50)} min).` : '');
+export const mealDrinkNote = (s: FoodSim) => (s.meal?.phases.drink ? `The drink leaves first (half in about ${r0(s.meal.phases.drink.t50)} min), the food later (half in about ${r0(s.meal.foodT50)} min).` : '');

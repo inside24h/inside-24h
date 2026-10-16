@@ -8,7 +8,7 @@ const FREE = [
 const PRO = [
   ['📅', 'Your history', 'Everything you ate this week in one view, with your sugar and sleep day by day.'],
   ['👨‍👩‍👧', 'Family profiles', 'Separate bodies for you, your partner, your kids or your parents.'],
-  ['🍲', 'Your own meals', 'Save your recipes and favourite meals; see them in one tap.'],
+  ['🍲', 'Your own meals', 'Save your recipes and favourite meals and open them in one tap.'],
   ['⇄', 'Bigger comparisons', 'Compare up to four foods or whole meals at once.'],
   ['🎬', 'Clean videos', 'Videos without the Inside 24h mark, with your own name or logo.'],
   ['📄', 'Report for your doctor', 'A one-page PDF of a day or a week to take to your doctor or dietitian.'],
@@ -21,12 +21,12 @@ export function Pro() {
       <div className="probadge">Coming soon · €8 / month</div>
       <p>Inside 24h stays free. <b>Pro</b> is for people who want to use it every day for themselves and their family.</p>
       <h3>Always free</h3>
-      <ul className="profree">{FREE.map((f) => <li key={f}>✓ {f}</li>)}</ul>
+      <ul className="profree">{FREE.map((f) => <li key={f}><span aria-hidden="true">✓ </span>{f}</li>)}</ul>
       <h3>Pro adds</h3>
       <div className="prolist">
         {PRO.map(([i, t, d]) => <div key={t} className="proitem"><span aria-hidden="true">{i}</span><span><b>{t}</b><em>{d}</em></span></div>)}
       </div>
-      <p className="note">Not available yet. Follow @inside24h to know when it launches.</p>
+      <p className="note">Not available yet. Follow @inside24h to hear when it launches.</p>
     </div>
   );
 }

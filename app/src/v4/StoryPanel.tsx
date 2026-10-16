@@ -3,7 +3,7 @@ import { useState } from 'react';
 // right now, and how this product moves your health bars at the frequency you have it.
 import type { Vitals } from '../science/daily';
 import type { Profile } from '../science/profile';
-import type { Chapter, Story } from './stories';
+import { chapterText, type Chapter, type Story } from './stories';
 import { healthBars, HOW_LONG, ITEM_FX, OFTEN, type Habit } from './healthBars';
 
 // What everyone understands stays visible; lab values (insulin, blood fat…) sit behind 'More details'.
@@ -25,7 +25,7 @@ export function StoryPanel({ story, chapterIdx, minute, vitals, profile, name, p
     <section className="spanel story" aria-label="What is happening in your body">
       <div className="shead">
         <div><div className="sclock">{clock}</div><div className="since">{since}</div></div>
-        <button className="youchip" onClick={onBody}>{name} · {profile.weightKg} kg · {profile.heightCm} cm<span>change</span></button>
+        <button className="youchip" onClick={onBody} aria-label={`${name}, ${profile.weightKg} kg, ${profile.heightCm} cm. Change your body`}>{name} · {profile.weightKg} kg · {profile.heightCm} cm<span>Change</span></button>
       </div>
 
       {verdict && <div className="verdict"><b>In 24 hours</b>{verdict}</div>}
@@ -33,12 +33,12 @@ export function StoryPanel({ story, chapterIdx, minute, vitals, profile, name, p
       <article className="chapter" aria-live="polite">
         <div className="chnav">
           <button onClick={onPrev} aria-label="Previous step" disabled={chapterIdx === 0}>‹</button>
-          <span>Step {chapterIdx + 1} of {story.chapters.length}</span>
+          <span aria-hidden="true">Step {chapterIdx + 1} of {story.chapters.length}</span>
           <button onClick={onNext} aria-label="Next step" disabled={chapterIdx === story.chapters.length - 1}>›</button>
         </div>
         <h2>{ch.title}</h2>
-        <p>{ch.text}</p>
-        {ch.claims.length > 0 && <button className="why" onClick={() => onWhy(ch)}>How do we know? →</button>}
+        <p>{chapterText(ch, minute)}</p>
+        {ch.claims.length > 0 && <button className="why" onClick={() => onWhy(ch)}>How do we know?<span aria-hidden="true"> →</span></button>}
       </article>
 
       {passport}
@@ -59,7 +59,7 @@ export function StoryPanel({ story, chapterIdx, minute, vitals, profile, name, p
 
       {productId !== 'water' && !ITEM_FX[productId] && (
         <div className="habitbox"><div className="ctl">If you have it every day…</div>
-          <p className="note">Long-term effects of this food are still in research. We’ll only show them once every number has a source.</p></div>
+          <p className="note">The long-term effects of this food are still being researched. We’ll show them once every number has a source.</p></div>
       )}
       {productId !== 'water' && ITEM_FX[productId] && (
         <div className="habitbox">
@@ -86,7 +86,7 @@ export function StoryPanel({ story, chapterIdx, minute, vitals, profile, name, p
               );
             })}
           </div>
-          <button className="everybtn" onClick={onEvery}><b>Every day for years?</b><span>cholesterol, diabetes, weight, life expectancy →</span></button>
+          <button className="everybtn" onClick={onEvery}><b>Every day for years?</b><span>Cholesterol, diabetes, weight, life expectancy →</span></button>
         </div>
       )}
     </section>

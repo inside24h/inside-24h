@@ -20,7 +20,7 @@ function Studies({ ids }: { ids: string[] }) {
   const list = ids.map(claim).filter((c): c is Claim => !!c);
   return (
     <details>
-      <summary>The studies behind it ({list.length})</summary>
+      <summary>The studies behind this ({list.length})</summary>
       <ul className="claims">{list.map((c) => <ClaimRow key={c.id} claim={c} />)}</ul>
     </details>
   );
@@ -44,21 +44,21 @@ export function HowWeKnow() {
             '?': 'Nobody has measured it yet. We say so instead of guessing.',
           }[l]}</span></div>
       ))}
-      <p>Every step in the app has a “How do we know?” link with its level and the studies.</p>
+      <p>Every step in the app has a “How do we know?” link that shows its level and the studies behind it.</p>
 
       <h3>The main models</h3>
       <ul className="models">
-        <li><b>Stomach emptying.</b> Drinks leave fast (water: half in about 13 minutes); calories, fibre and solid food slow it down. A normal solid meal is about 69% still in the stomach after 1 hour, 24% after 2 hours and almost gone after 4. <em>Assumes</em> a healthy stomach and that you have it all at once.
+        <li><b>Stomach emptying.</b> Drinks leave fast (water: half in about 13 minutes); calories, fibre and solid food slow this down. A normal solid meal is about 69% still in the stomach after 1 hour, 24% after 2 hours and almost gone after 4. <em>Assumes</em> a healthy stomach and that you have it all at once.
           <Studies ids={['G1', 'GE1', 'GE12', 'GE5', 'GE13']} /></li>
         <li><b>Absorption and removal.</b> Caffeine spreads through your body water and the liver halves it about every 6 hours (2.5–10 h between people; faster in smokers, slower on the pill). Alcohol follows the Widmark formula: your liver removes it at a fixed speed. <em>Assumes</em> a healthy liver and kidneys and your typed weight.
           <Studies ids={['D5', 'M4', 'M6', 'M7', 'AL2', 'AL3']} /></li>
-        <li><b>Blood sugar.</b> How high sugar rises follows the glycaemic index times the carbohydrate (the glycaemic load), anchored on measured results for a can of cola and a glucose drink. Foods without a measured glycaemic index get no curve rather than a guess. <em>Assumes</em> no diabetes and a normal fasting level. It is a typical response, not yours.
+        <li><b>Blood sugar.</b> How high blood sugar rises follows the glycaemic index times the carbohydrate (the glycaemic load), anchored on measured results for a can of cola and a glucose drink. Foods without a measured glycaemic index get no curve rather than a guess. <em>Assumes</em> no diabetes and a normal fasting level. It is a typical response, not yours.
           <Studies ids={['DB3', 'GL1', 'GL4', 'GL7']} /></li>
       </ul>
 
       <h3>Ranges, not single numbers</h3>
-      <p>Where people differ a lot we show a range. Blood sugar: about 40% lower or higher than the typical curve (one standard deviation in the studies; the same meal can raise sugar twice as much in one person as in another). Blood alcohol: about 40% lower or higher (Widmark estimates are off by 20–40%), and we never show a time when you are “safe to drive”.</p>
-      <p>The traffic lights and health bars are our own simple scales (level C), built on official categories that each panel names.</p>
+      <p>Where people differ a lot, we show a range. Blood sugar: about 40% lower or higher than the typical curve (one standard deviation in the studies; the same meal can raise blood sugar twice as much in one person as in another). Blood alcohol: from 40% below to 50% above our estimate (Widmark estimates are off by 20–40%, and peaks in some people run higher still), shown in ‰, which is grams of alcohol per litre of blood. We never show a time when you are “safe to drive”.</p>
+      <p>The traffic lights and health bars are our own simple scales (level C), built on the official categories that each panel names.</p>
 
       <h3>Next-step tips</h3>
       <ul className="tiplist">

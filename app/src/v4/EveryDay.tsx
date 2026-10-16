@@ -6,11 +6,11 @@ import { SOURCES } from '../content/sources';
 export function EveryDay({ productId }: { productId: string }) {
   const data = LONG_TERM[productId];
   const [open, setOpen] = useState<string | null>(null);
-  if (!data) return <p className="note">Long-term research for this product is not finished yet.</p>;
+  if (!data) return <p className="note">Our long-term research for this food or drink isn’t finished yet.</p>;
   return (
     <div className="ed">
       <p className="edintro">{data.intro}</p>
-      <div className="edkey"><span><i className="worse" />worse for health</span><span><i className="better" />better</span></div>
+      <div className="edkey" aria-hidden="true"><span><i className="worse" />worse for health</span><span><i className="better" />better for health</span></div>
       {data.items.map((it) => {
         const isOpen = open === it.marker;
         const w = it.pct === null ? 0 : Math.min(50, Math.abs(it.pct)) * 2; // % of half-width
@@ -39,7 +39,7 @@ export function EveryDay({ productId }: { productId: string }) {
           </div>
         );
       })}
-      <p className="note">These describe groups of people, not a prediction for you. “Link, not proof” means people who drink it differ in other ways too.</p>
+      <p className="note">These describe groups of people, not a prediction for you. “Link, not proof” means the people who have it also differ in other ways.</p>
     </div>
   );
 }

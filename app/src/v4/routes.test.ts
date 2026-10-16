@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseMeal } from './food/parse';
 import { makeFoodProduct } from './food/foodProduct';
 import { DEFAULT_PROFILE } from '../science/profile';
+import { chapterText } from './stories';
 
 // QA 2026-10-15 #10: during "Alcohol peak" the blood label said "4.1 g sugar". For drinks with alcohol the blood
 // shows blood alcohol (as a range, never one number) while there is any.
@@ -11,6 +12,14 @@ describe('liquid route labels', () => {
     const peak = built.story.chapters.find((c) => c.title === 'Alcohol peak')!;
     const blood = built.route!.segs(peak.min).blood!;
     expect(blood.text).toMatch(/^alcohol \d\.\d\d–\d\.\d\d ‰$/);
+  });
+  it('beer: the chapter text and the body label show the same range at every minute (copy pass 2026-10-16)', () => {
+    const built = makeFoodProduct(parseMeal('beer'), 'food').build(DEFAULT_PROFILE, 63);
+    const peak = built.story.chapters.find((c) => c.title === 'Alcohol peak')!;
+    for (const m of [peak.min, 60, peak.min + 30, 110.5]) {
+      const label = built.route!.segs(m).blood!.text!.replace('alcohol ', '');
+      expect(chapterText(peak, m)).toContain(label);
+    }
   });
   it('banana: blood still shows sugar', () => {
     const built = makeFoodProduct(parseMeal('banana'), 'food').build(DEFAULT_PROFILE, 63);

@@ -137,7 +137,7 @@ export function healthBars(p: Profile, counts: Counts, habits: Habits = {}): Bar
     const r = p.sex === 'male' ? 0.7 : 0.6;
     const hoursToBed = (((p.bedtimeMin - p.drinkAtMin) % 1440 + 1440) % 1440) / 60;
     const bacBed = Math.max(0, alcToday / (r * p.weightKg) - 0.15 * Math.max(0, hoursToBed - 1));
-    if (bacBed > 0) { sleep = clamp(sleep - Math.min(12, 4 * (bacBed / 0.2))); notes.sleep.push(`≈ ${bacBed.toFixed(2)} g/L alcohol in your blood at bedtime: worse second half of the night`); }
+    if (bacBed > 0) { sleep = clamp(sleep - Math.min(12, 4 * (bacBed / 0.2))); notes.sleep.push(`≈ ${bacBed.toFixed(2)} ‰ alcohol in your blood at bedtime: worse sleep in the second half of the night`); }
     else notes.sleep.push('alcohol is gone by bedtime');
     notes.health.push('Alcohol: no level is risk-free (WHO)');
   }

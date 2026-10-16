@@ -13,14 +13,14 @@ describe('quick answers: honest about what we cannot know', () => {
   it('driving: never a clock time or a single blood-alcohol number; always "don’t drive"', () => {
     const bac = curve((m) => Math.max(0, Math.min(0.6, m / 60) - 0.12 * Math.max(0, m - 60) / 60)); // peak 0.6 at 1 h
     const a = quickAnswers({ ...base, bac }).find((x) => x.q === 'Can I drive?')!;
-    expect(a.a).toMatch(/Don’t drive after drinking — this can’t tell you when you’re safe/);
+    expect(a.a).toMatch(/Don’t drive after drinking: this app can’t tell you when you’re safe/);
     expect(a.a).not.toMatch(/\d{2}:\d{2}/); // no "safe from 21:40"
     expect(a.a).toMatch(/0\.36–0\.90 ‰/); // −40% / +50% range around the 0.6 peak (alcohol.md A12)
     expect(a.tone).toBe(2);
   });
   it('sugar: a range and a "typical, not personalised" label', () => {
     const g = curve((m) => 2.3 * 18.016 * Math.exp(-(((m - 30) / 15) ** 2)));
-    const a = quickAnswers({ ...base, glucoseDeltaMgDl: g }).find((x) => x.q === 'Will my blood sugar jump?')!;
+    const a = quickAnswers({ ...base, glucoseDeltaMgDl: g }).find((x) => x.q === 'Will my blood sugar rise?')!;
     expect(a.a).toMatch(/\+1\.4–3\.2 mmol\/L/);
     expect(a.note).toBe('Typical response, not personalised');
   });

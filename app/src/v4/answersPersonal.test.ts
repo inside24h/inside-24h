@@ -19,7 +19,7 @@ describe('quick answers say when they are personalised', () => {
   });
   it('sugar always stays "typical" even with a profile', () => {
     const g = curve((m) => 2.3 * 18.016 * Math.exp(-(((m - 30) / 15) ** 2)));
-    const a = find(quickAnswers({ ...base, glucoseDeltaMgDl: g, personal: personalNotes(DEFAULT_PROFILE, 6) }), 'Will my blood sugar jump?');
+    const a = find(quickAnswers({ ...base, glucoseDeltaMgDl: g, personal: personalNotes(DEFAULT_PROFILE, 6) }), 'Will my blood sugar rise?');
     expect(a.tag).toBe('typical');
   });
   it('alcohol after a meal: the driving answer says the peak is about half; pregnancy adds a clear warning', () => {

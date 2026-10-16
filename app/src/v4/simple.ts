@@ -25,7 +25,7 @@ export function simpleCards(productId: string, b: Built, v: Vitals, twin: Vitals
   } else if (productId === 'cola' && gDelta < -0.3 && m > 60 && m < 240) {
     brain = { key: 'brain', title: 'Your brain', big: 'May feel hungry', text: 'Your blood sugar has dropped a little below where it started. That dip is when hunger tends to come back.', tone: 'down', claims: ['KB4', 'KB9'] };
   } else if (cafMg >= 75) {
-    brain = { key: 'brain', title: 'Your brain', big: 'More alert', text: `About ${Math.round(cafMg)} mg of caffeine is blocking the “I’m tired” signal. That is enough for a noticeable boost.`, tone: 'up', claims: ['F1', 'F2'] };
+    brain = { key: 'brain', title: 'Your brain', big: 'More alert', text: `About ${Math.round(cafMg)} mg of caffeine is blocking the “I’m tired” signal. That’s enough for a noticeable boost.`, tone: 'up', claims: ['F1', 'F2'] };
   } else if (cafMg >= 10) {
     brain = { key: 'brain', title: 'Your brain', big: 'A little more alert', text: `About ${Math.round(cafMg)} mg of caffeine is reaching your brain. Even small amounts sharpen reaction time slightly.`, tone: 'up', claims: ['F1', 'F3'] };
   } else if (sim.doseMg >= 1 && m < sim.tmaxMin) {
@@ -42,7 +42,7 @@ export function simpleCards(productId: string, b: Built, v: Vitals, twin: Vitals
   cards.push({
     key: 'heart', title: 'Your heart', big: heartAffected ? 'Slightly up, harmless' : 'Not affected',
     text: `Pulse ${hr}, blood pressure ${sbp}/${dbp}.` + (heartAffected
-      ? ` The drink adds about ${Math.abs(dHr) >= 1 ? `${dHr.toFixed(0)} beats` : `${dBp.toFixed(0)} mmHg`} for now.`
+      ? ` The drink adds about ${Math.abs(dHr) >= 1 ? `${dHr.toFixed(0)} beats a minute` : `${dBp.toFixed(0)} mmHg`} for now.`
       : asleep ? ' Lower than by day because you are asleep — that is normal.' : ' These are your normal values for this time of day.'),
     tone: heartAffected ? 'up' : 'good', claims: heartAffected ? (productId === 'cola' ? ['KH4', 'KH1'] : productId === 'water' ? ['WV2', 'WV6'] : ['V2', 'F9']) : ['VC1', 'VH1'],
   });
@@ -55,11 +55,11 @@ export function simpleCards(productId: string, b: Built, v: Vitals, twin: Vitals
     const inBody = b.where.find((r) => r.organ === 'heart')?.value(m) ?? 0;
     sugar = { key: 'sugar', title: 'Water & energy', big: inBody > 5 ? `+${Math.round(inBody)} ml in your body` : 'Passed through', text: 'No sugar, no calories. Your blood sugar stays where it was.', tone: 'good', claims: ['WA5', 'WB8'] };
   } else if (gDelta > 0.5) {
-    sugar = { key: 'sugar', title: 'Sugar & energy', big: 'Sugar rush', text: `Blood sugar is up to ${glu} ${p.glucoseUnit}. ${kcal} of ${b.energy.total} kcal have reached your blood; insulin is bringing it back down.`, tone: 'up', claims: ['KB2', 'KB4', 'KM1'] };
+    sugar = { key: 'sugar', title: 'Sugar & energy', big: 'Blood sugar peak', text: `Blood sugar is up to ${glu} ${p.glucoseUnit}. ${kcal} of ${b.energy.total} kcal have reached your blood; insulin is bringing it back down.`, tone: 'up', claims: ['KB2', 'KB4', 'KM1'] };
   } else if (gDelta < -0.3) {
-    sugar = { key: 'sugar', title: 'Sugar & energy', big: 'Sugar dip', text: `Blood sugar ${glu} ${p.glucoseUnit}, a little below where you started. It comes back on its own within a few hours.`, tone: 'down', claims: ['KB4', 'KB10'] };
+    sugar = { key: 'sugar', title: 'Sugar & energy', big: 'Blood sugar dip', text: `Blood sugar is ${glu} ${p.glucoseUnit}, a little below where you started. It comes back on its own within a few hours.`, tone: 'down', claims: ['KB4', 'KB10'] };
   } else {
-    sugar = { key: 'sugar', title: 'Sugar & energy', big: 'Steady', text: `Blood sugar ${glu} ${p.glucoseUnit}.` + (b.energy.total >= 10 ? ` ${kcal} of ${b.energy.total} kcal from the drink have reached your blood.` : ' This drink has almost no calories.'), tone: 'good', claims: productId === 'cola' ? ['KB4', 'KM1'] : ['V3', 'VG1'] };
+    sugar = { key: 'sugar', title: 'Sugar & energy', big: 'Steady', text: `Blood sugar is ${glu} ${p.glucoseUnit}.` + (b.energy.total >= 10 ? ` ${kcal} of ${b.energy.total} kcal from the drink have reached your blood.` : ' This drink has almost no calories.'), tone: 'good', claims: productId === 'cola' ? ['KB4', 'KM1'] : ['V3', 'VG1'] };
   }
   cards.push(sugar);
 
@@ -76,7 +76,7 @@ export function simpleCards(productId: string, b: Built, v: Vitals, twin: Vitals
 }
 
 export const MOMENTS = (toBed: number, toWake: number): { label: string; min: number }[] => [
-  { label: 'Just drunk', min: 0 },
+  { label: 'Just now', min: 0 },
   { label: '20 min', min: 20 },
   { label: '1 hour', min: 60 },
   { label: '2 hours', min: 120 },

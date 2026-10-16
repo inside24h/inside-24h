@@ -51,14 +51,14 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     const mmol = peak / 18.016;
     // sugar curves can't be personalised from body facts (Zeevi 2015, digestion-generic.md GL10): always typical
     const SUGAR_WHY = 'Body size, age and habits don’t predict your own curve well; only a glucose sensor can.';
-    if (mmol < 0.3) out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: 'No, it stays steady.', tone: 0, tag: 'typical' });
+    if (mmol < 0.3) out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: 'No, it stays steady.', tone: 0, tag: 'typical' });
     // a range: ±1 SD between people ≈ ±40% (cola.md B1, digestion-generic.md GL8)
-    else out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: about ${glucoseRangeText(mmol)} mmol/L around ${at0(peakAt)}${backAt > 0 ? `, normal again by about ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0,
+    else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: about ${glucoseRangeText(mmol)} mmol/L around ${at0(peakAt)}${backAt > 0 ? `, normal again by about ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0,
       note: 'Typical response, not personalised', title: SUGAR_WHY, tag: 'typical' });
-    if (low / 18.016 <= -0.3) out.push({ icon: '🍽️', q: 'Will I get hungry again soon?', a: `Likely around ${at0(lowAt)}: sugar dips below where you started.`, tone: 1, tag: 'typical' });
-  } else out.push({ icon: '⚡', q: 'Will my blood sugar jump?', a: x.bac
+    if (low / 18.016 <= -0.3) out.push({ icon: '🍽️', q: 'Will I get hungry again soon?', a: `Probably around ${at0(lowAt)}, when your blood sugar dips below where it started.`, tone: 1, tag: 'typical' });
+  } else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: x.bac
     ? 'Hard to say: alcohol changes how your liver handles sugar, so we don’t draw a curve.'
-    : 'Not known: its glycaemic index has not been measured.', tone: 0 });
+    : 'We can’t say: its glycaemic index hasn’t been measured yet.', tone: 0 });
   // Meal as a whole: names the item behind each effect (food/mealWords.ts); the single-food answers stay as they are
   if (x.mealLines?.length) out.push({ icon: '🍱', q: 'How does this meal work?', a: x.mealLines.join(' '), tone: 0, note: 'The meal as a whole, estimated from its parts' });
   // Sleep
@@ -69,30 +69,30 @@ export function quickAnswers(x: AnswerInput): Answer[] {
   // caffeine: the clock is this person's half-life (smoking, pill, pregnancy) and body water (espresso.md M6–M9, D4)
   const sleepNote = pn && hasCaffeine ? (pn.halfLifeWhy
     ? `For you: caffeine half-life ≈ ${pn.halfLifeH.toFixed(1)} h (${pn.halfLifeWhy}); typical 6 h`
-    : `For your body; typical half-life 6 h, people range 2.5–10 h`) : undefined;
+    : 'For your body. Typical half-life 6 h; people range from 2.5 to 10 h') : undefined;
   const sleepTag = pn && (hasCaffeine || x.bac) ? 'you' as const : undefined;
-  if (bacBed > 0.02) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Not as well: alcohol is still in your blood at ${hh(x.bedtimeMin)}, so the second half of the night is lighter.`, tone: 1, tag: sleepTag });
-  else if (x.extraSleepMin >= 5) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `About ${Math.round(x.extraSleepMin)} min longer to fall asleep (${Math.round(x.caffeineAtBedMg)} mg caffeine left at ${hh(x.bedtimeMin)}).`, tone: 1, note: sleepNote, tag: sleepTag });
-  else out.push({ icon: '🌙', q: 'Will I sleep well?', a: x.caffeineAtBedMg >= 10 ? `Yes. ${Math.round(x.caffeineAtBedMg)} mg caffeine left at ${hh(x.bedtimeMin)} is too little to matter.` : 'Yes, no effect on your sleep.', tone: 0, note: sleepNote, tag: sleepTag });
+  if (bacBed > 0.02) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Not as well: alcohol is still in your blood at ${hh(x.bedtimeMin)}, so you’ll sleep more lightly in the second half of the night.`, tone: 1, tag: sleepTag });
+  else if (x.extraSleepMin >= 5) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `It may take you about ${Math.round(x.extraSleepMin)} min longer to fall asleep (${Math.round(x.caffeineAtBedMg)} mg of caffeine is still in you at ${hh(x.bedtimeMin)}).`, tone: 1, note: sleepNote, tag: sleepTag });
+  else out.push({ icon: '🌙', q: 'Will I sleep well?', a: x.caffeineAtBedMg >= 10 ? `Yes. The ${Math.round(x.caffeineAtBedMg)} mg of caffeine left at ${hh(x.bedtimeMin)} is too little to matter.` : 'Yes. It won’t affect your sleep.', tone: 0, note: sleepNote, tag: sleepTag });
   // Best time (caffeine): the latest time that leaves sleep untouched
   if (x.latestForSleep !== undefined && x.latestForSleep !== null) {
     const late = x.drinkAt > x.latestForSleep && x.drinkAt < x.bedtimeMin;
     const tag = pn ? 'you' as const : undefined;
-    if (x.bedtimeMin - x.latestForSleep <= 30) out.push({ icon: '⏰', q: 'When is the best time?', a: 'Any time today: this little caffeine won’t delay your sleep.', tone: 0, tag });
-    else out.push({ icon: '⏰', q: 'When is the best time?', a: `Before ${hh(x.latestForSleep)}: then the caffeine won't delay your sleep at ${hh(x.bedtimeMin)}.${late ? ' You had it later than that.' : ''}`, tone: late ? 1 : 0, tag });
+    if (x.bedtimeMin - x.latestForSleep <= 30) out.push({ icon: '⏰', q: 'When is the best time?', a: 'Any time today: this much caffeine won’t delay your sleep.', tone: 0, tag });
+    else out.push({ icon: '⏰', q: 'When is the best time?', a: `Before ${hh(x.latestForSleep)}, so the caffeine won’t delay your sleep at ${hh(x.bedtimeMin)}.${late ? ' You had it after that.' : ''}`, tone: late ? 1 : 0, tag });
   }
   // Driving: never a "safe" time and never one exact number. Widmark estimates are off by 20–40% (alcohol.md W6),
   // and attention is already worse from 0.2 g/L (AL4), so the only honest answer is "don't".
   if (x.bac) {
     let peak = 0;
     for (let m = 0; m < x.bac.length; m++) peak = Math.max(peak, x.bac[m]);
-    out.push({ icon: '🚗', q: 'Can I drive?', a: `No. Don’t drive after drinking — this can’t tell you when you’re safe. Your peak could be about ${bacRangeText(peak)}; real values differ by up to 40%.`, tone: 2,
+    out.push({ icon: '🚗', q: 'Can I drive?', a: `No. Don’t drive after drinking: this app can’t tell you when you’re safe. Your peak is likely about ${bacRangeText(peak)}. The range runs from 40% below to 50% above our estimate, because bodies differ.`, tone: 2,
       tag: pn ? 'you' : undefined,
       note: pn ? (pn.withMeal
-        ? `For you: after a meal the peak is about ${Math.round(FED_PEAK_RATIO[0] * 100)}–${Math.round(FED_PEAK_RATIO[1] * 100)}% of an empty stomach (evidence ${FACTORS.withMeal.level})`
+        ? `For you: after a meal the peak is about ${Math.round(FED_PEAK_RATIO[0] * 100)}–${Math.round(FED_PEAK_RATIO[1] * 100)}% of the peak on an empty stomach (evidence ${FACTORS.withMeal.level})`
         : 'For your sex, height and weight, on an empty stomach') : undefined });
     // pregnancy: WHO — alcohol in pregnancy raises the risk of FASD (alcohol.md L12)
-    if (pn?.pregnant) out.push({ icon: '🤰', q: 'And in pregnancy?', a: 'Better none: alcohol reaches the baby and raises the risk of lasting harm (WHO).', tone: 2, tag: 'you' });
+    if (pn?.pregnant) out.push({ icon: '🤰', q: 'And in pregnancy?', a: 'Best to have none: alcohol reaches the baby and raises the risk of lasting harm (WHO).', tone: 2, tag: 'you' });
   }
   // Energy as walking (Compendium of Physical Activities: walking ~5 km/h ≈ 3.5 MET; kcal/min = MET × 3.5 × kg / 200)
   if (x.kcal >= 5) {
@@ -100,7 +100,7 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     const min = Math.round(x.kcal / perMin);
     out.push({ icon: '🚶', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal ≈ ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`} of brisk walking for you.`, tone: 0, tag: pn ? 'you' : undefined });
   } else out.push({ icon: '🚶', q: 'How much energy is that?', a: 'Almost none.', tone: 0 });
-  if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', a: `Yes: about ${Math.round(x.waterMl)} ml of water for your body.`, tone: 0, tag: pn ? 'typical' : undefined });
+  if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', a: `Yes: it gives your body about ${Math.round(x.waterMl)} ml of water.`, tone: 0, tag: pn ? 'typical' : undefined });
   const tip = nextStep(x.systems, !!x.bac);
   if (tip) out.push({ icon: '👣', q: 'What can I do?', a: tip.text, tone: 0, note: `Evidence ${tip.level}: ${LEVEL_LABEL[tip.level].toLowerCase()}`, title: tip.why });
   return out;
@@ -121,8 +121,8 @@ export function nextStep(systems: System[], hasAlcohol: boolean) {
 const TONE = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 export function Answers({ list, onHow, onBody }: { list: Answer[]; onHow?: () => void; /** opens the "Your body" sheet */ onBody?: () => void }) {
   return (
-    <div className="answers" aria-label="Quick answers">
-      <div className="ctl">Quick answers{onBody && <button className="ans-body" onClick={onBody}>Your body ›</button>}</div>
+    <div className="answers" role="group" aria-label="Quick answers">
+      <div className="ctl">Quick answers{onBody && <button className="ans-body" onClick={onBody}>Your body<span aria-hidden="true"> ›</span></button>}</div>
       {list.map((x) => (
         <div key={x.q} className="ans" style={{ ['--t' as string]: TONE[x.tone] }} title={x.title}>
           <span className="ai" aria-hidden="true">{x.icon}</span>

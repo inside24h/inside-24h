@@ -10,7 +10,7 @@ import { WATER, simulateWater, waterSbpDelta } from '../science/waterSim';
 import { WATER_PRODUCT, WATER_VITAL_CLAIMS } from '../content/water';
 import type { ProductEffects } from '../science/daily';
 import type { Profile } from '../science/profile';
-import { BLOOD_SITES, BODY_WATER_SITES, GUT_SITES, ROUTE_GUT_TO_BODY, ROUTE_THROUGH_LIVER, type FlowLayer } from '../scene/Flow';
+import { BLOOD_SITES, BODY_WATER_SITES, GUT_SITES, ROUTE_GUT_TO_BODY, ROUTE_THROUGH_LIVER, type FlowLayer } from '../scene/flowSites';
 import { headline as espressoHeadline, type Headline } from './headlines';
 import { colaStory, espressoStory, waterStory, type Story } from './stories';
 import { colaRoute, espressoRoute, waterRoute } from './routes';
@@ -168,11 +168,11 @@ const cola: ProductDef = {
       case 1: return { label: 'Stomach', text: 'Sugar slows the stomach down: half the can is still here after about 30 minutes.', claims: ['KG1', 'KG4', 'KG7', 'KG5'] };
       case 6: return { label: 'Into the blood', text: 'The gut splits the sugar into glucose and fructose and absorbs both fast.', claims: ['KA1', 'KA5'] };
       case 12: return { label: 'Liver', text: 'Fructose goes straight to the liver, which captures about 85% of it.', claims: ['KL1', 'KL2'] };
-      case 20: return { label: 'Sugar peak', text: `Blood sugar jumps to about ${mmol(p.glucoseMgDl + Math.max(...s.glucoseDeltaMgDl.slice(0, 60)))} mmol/L. Your pancreas releases insulin.`, claims: ['KB2', 'KB4', 'KM1', 'KB7', 'KK3'] };
+      case 20: return { label: 'Blood sugar peak', text: `Blood sugar rises to about ${mmol(p.glucoseMgDl + Math.max(...s.glucoseDeltaMgDl.slice(0, 60)))} mmol/L. Your pancreas releases insulin.`, claims: ['KB2', 'KB4', 'KM1', 'KB7', 'KK3'] };
       case 60: return { label: 'Baseline', text: 'Insulin has pulled your blood sugar back to where it started.', claims: ['KB4', 'KM1'] };
       case 75: return { label: 'The dip', text: 'It overshoots: blood sugar falls below your starting level. This is when hunger tends to come back.', claims: ['KB4', 'KB10', 'KB9'] };
       case 180: return { label: 'Liver', text: 'The liver has burned or turned most of the fructose into glucose. Very little became fat.', claims: ['KL3'] };
-      case 420: return { label: 'Bedtime', text: `About ${Math.round(at(b.caffeine.body, toBed))} mg of caffeine left at bedtime. ${extra < 1 ? 'Too little to delay sleep.' : `About ${Math.round(extra)} min longer to fall asleep.`}`, claims: ['VS1', 'VS2', 'VS3'] };
+      case 420: return { label: 'Bedtime', text: `About ${Math.round(at(b.caffeine.body, toBed))} mg of caffeine is left at bedtime. ${extra < 1 ? 'Too little to delay your sleep.' : `You may need about ${Math.round(extra)} min longer to fall asleep.`}`, claims: ['VS1', 'VS2', 'VS3'] };
       default: return { label: 'Kidneys', text: 'No extra urine: a can of cola hydrates about as well as water.', claims: ['KW1', 'KT5'] };
     }
   },

@@ -1,5 +1,5 @@
 // Traffic-light status per body system, minute by minute, so nobody has to read numbers.
-// green = working optimally, yellow = mild stress, red = overload. The cut-offs are OUR simplified scale
+// green = fine, yellow = mild stress, red = high stress. The cut-offs are OUR simplified scale
 // (level C), anchored on published categories where they exist (noted per system), and shown in "How is this decided?".
 import { at, type Timeline } from '../science/espressoSim';
 import type { Vitals } from '../science/daily';
@@ -59,23 +59,22 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
     return pc <= 0.5 ? 2 : pc <= 50 ? 1 : 0;
   });
 
-  const word = ['working well', 'under mild stress', 'overloaded'];
   return [
     {
       key: 'energy', label: 'Energy & sugar', organ: 'pancreas', levels: energy, unknown: sugarUnknown,
       rule: 'Green: blood sugar within 1.5 mmol/L of where you started. Yellow: a jump of 1.5–3 mmol/L, a dip of 0.5–1 mmol/L, or above 7.8. Red: a jump over 3, a dip over 1, or above 10 mmol/L.',
       says: (l, m) => {
         const d = at(v.effect.glucose, m) / 18;
-        if (sugarUnknown) return 'Not measured for this food (no glycaemic index yet), so we don’t judge it.';
-        if (l === 0) return 'Steady energy: your blood sugar is where it should be.';
-        return d > 0 ? `Sugar spike: your energy is ${word[l]}. Insulin is working to bring it down.` : `Energy dip: blood sugar below where you started. You may feel hungry or tired.`;
+        if (sugarUnknown) return 'Not measured for this food (no glycaemic index yet), so we don’t rate it.';
+        if (l === 0) return 'Steady energy: your blood sugar is in its normal range.';
+        return d > 0 ? `Blood sugar peak: ${l === 2 ? 'a big rise' : 'a moderate rise'}. Insulin is bringing it back down.` : 'Energy dip: your blood sugar is below where you started. You may feel hungry or tired.';
       },
       tip: (l, m) => (l === 0 || sugarUnknown ? null : at(v.effect.glucose, m) >= 0 ? 'sugarSpike' : 'sugarDip'),
     },
     {
       key: 'heart', label: 'Heart & pressure', organ: 'heart', levels: heart,
-      rule: 'Green: the drink adds under 5 mmHg / 5 beats and your pressure is below 130. Yellow: +5–10 or 130–139 (AHA stage 1). Red: over +10 or 140 and above (AHA stage 2).',
-      says: (l) => (l === 0 ? 'Your heart is working normally.' : l === 1 ? 'Slightly raised pressure or pulse: mild stress.' : 'High pressure or a fast pulse: your heart is overloaded right now.'),
+      rule: 'Green: this adds less than 5 mmHg or 5 beats a minute, and your pressure is below 130. Yellow: +5–10, or 130–139 (AHA stage 1). Red: more than +10, or 140 and above (AHA stage 2).',
+      says: (l) => (l === 0 ? 'Your heart is working normally.' : l === 1 ? 'Pulse or blood pressure slightly up: mild stress that your body handles easily.' : 'Pulse or blood pressure clearly up: your heart is working harder for now.'),
       tip: (l) => (l === 0 ? null : 'heart'),
     },
     {
@@ -85,16 +84,16 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
         const T = hyd ? Math.round(at(hyd.temp, m)) : null;
         const inYou = hyd ? at(hyd.drinkMl, m) : 0;
         const where = hyd && T !== null ? `${hyd.city.split(',')[0]} now ≈ ${T} °C. ` : '';
-        if (l === 2) return `${where}You’re short of water: your cells are drying out. Drink now.`;
-        if (l === 1) return `${where}Heat is draining water: you may feel thirsty. Have a glass of water.`;
+        if (l === 2) return `${where}You’re short of water: attention and coordination can start to suffer. Have some water now.`;
+        if (l === 1) return `${where}The heat is costing you water, so you may feel thirsty. Have a glass of water.`;
         if (inYou >= 20) return `${where}+${Math.round(inYou)} ml of water from this is in you right now.`;
-        return `${where}${waterMl >= 1 ? 'Water levels normal.' : 'Almost no water in this; levels normal.'}`;
+        return `${where}${waterMl >= 1 ? 'Water levels are normal.' : 'Almost no water in this; your levels are normal.'}`;
       },
       tip: (l) => (l === 0 ? null : 'water'),
     },
     {
       key: 'brain', label: 'Brain & sleep', organ: 'brain', levels: brain,
-      rule: 'By day: green under 200 mg caffeine in your body (EFSA: safe single dose), yellow 200–400, red over 400. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by 5–20 minutes or alcohol is still in your blood, red if more.',
+      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by 5–20 minutes or alcohol is still in your blood, red if more.',
       says: (l, m) => {
         const a = alc(m);
         // a range, never one number: Widmark estimates are off by 20–40% (alcohol.md W6)
@@ -103,13 +102,14 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
         if (asleep(m) && a > 0.02) return 'Alcohol is still in your blood: lighter, more broken sleep later in the night.';
         if (a > 0.02) return `A little alcohol (about ${bacRangeText(a)}). Not zero: don’t drive.`;
         if (asleep(m)) return l === 0 ? 'Sleeping normally.' : `Caffeine is delaying your sleep by about ${Math.round(v.extraLatencyMin)} minutes.`;
-        return l === 0 ? (caffeine.doseMg >= 1 && at(caffeine.body, m) >= 10 ? 'A little more alert, nothing to worry about.' : 'Your brain is working normally.') : l === 1 ? 'A lot of caffeine: you may feel jittery.' : 'Too much caffeine: racing heart and anxiety are likely.';
+        return l === 0 ? (caffeine.doseMg >= 1 && at(caffeine.body, m) >= 10 ? 'A little more alert. Nothing to worry about.' : 'Your brain is working normally.') : l === 1 ? 'A lot of caffeine: you may feel jittery.' : 'A very high caffeine level: a racing heart and anxiety are likely.';
       },
       tip: (l, m) => (alc(m) > 0.02 ? 'alcohol' : l === 0 ? null : 'caffeine'),
     },
   ];
 }
 
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 /** The day in one or two plain sentences: which parts of you are affected, when, and which are not. */
 export function verdict(systems: System[], drinkAt: number): string {
   const hh = (m: number) => `${String(Math.floor((drinkAt + m) / 60) % 24).padStart(2, '0')}:${String(Math.floor(drinkAt + m) % 60).padStart(2, '0')}`;
@@ -125,10 +125,10 @@ export function verdict(systems: System[], drinkAt: number): string {
       }
     }
     if (!spans.length) { calm.push(NAME[s.key]); continue; }
-    const words = spans.slice(0, 2).map(([a, b, l]) => `${l === 2 ? 'overload' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`);
+    const words = spans.slice(0, 2).map(([a, b, l]) => `${l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`);
     parts.push(`${s.label}: ${words.join(', then ')}`);
   }
-  const calmTxt = calm.length ? `${calm.length === 4 ? 'Sugar, heart, water and brain' : calm.map((c, i) => (i ? c : c[0].toUpperCase() + c.slice(1))).join(calm.length > 2 ? ', ' : ' and ')}: no real effect.` : '';
+  const calmTxt = calm.length ? `${calm.length === 4 ? 'Sugar, heart, water and brain' : calm.length > 2 ? `${cap(calm.slice(0, -1).join(', '))} and ${calm[calm.length - 1]}` : cap(calm.join(' and '))}: no real effect.` : '';
   return parts.length ? `${parts.join('. ')}. ${calmTxt}`.trim() : `Your body handles this easily. ${calmTxt}`;
 }
 

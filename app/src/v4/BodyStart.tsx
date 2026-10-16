@@ -30,25 +30,25 @@ export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; s
   };
   return (
     <div className="startbox body">
-      <div className="step">Step 1 of 2 · you</div>
+      <div className="step">Step 1 of 2 · You</div>
       <h1>Tell us about you</h1>
-      <p className="then">Tap what fits best. It changes how strongly food and drink hit your body.</p>
+      <p className="then">Tap what fits you best. It changes how strongly food and drink affect your body.</p>
 
       <div className="pick">
         <span>I am a</span>
-        <div className="chips2">{(['female', 'male'] as const).map((s) => <button key={s} aria-pressed={profile.sex === s} onClick={() => setSex(s)}>{s === 'female' ? 'Woman' : 'Man'}</button>)}</div>
+        <div className="chips2" role="group" aria-label="I am a">{(['female', 'male'] as const).map((s) => <button key={s} aria-pressed={profile.sex === s} onClick={() => setSex(s)}>{s === 'female' ? 'Woman' : 'Man'}</button>)}</div>
       </div>
       <div className="pick">
         <span>Age</span>
-        <div className="chips2">{AGES.map(([l, a]) => <button key={l} aria-pressed={bandOf(profile.ageY) === a} onClick={() => setProfile({ ...profile, ageY: a })}>{l}</button>)}</div>
+        <div className="chips2" role="group" aria-label="Age">{AGES.map(([l, a]) => <button key={l} aria-pressed={bandOf(profile.ageY) === a} onClick={() => setProfile({ ...profile, ageY: a })}>{l}</button>)}</div>
       </div>
       <div className="pick">
         <span>Height</span>
-        <div className="chips2">{HEIGHTS[profile.sex].map(([l, h]) => <button key={l} aria-pressed={nearestHeight === h} onClick={() => setHeight(h)}>{l}<small>{h} cm</small></button>)}</div>
+        <div className="chips2" role="group" aria-label="Height">{HEIGHTS[profile.sex].map(([l, h]) => <button key={l} aria-pressed={nearestHeight === h} onClick={() => setHeight(h)}>{l}<small>{h} cm</small></button>)}</div>
       </div>
       <div className="pick">
         <span>Build</span>
-        <div className="chips2">{BUILDS.map(([l, b]) => <button key={l} aria-pressed={(build ?? nearestBuild) === b} onClick={() => setBuildBmi(b)}>{l}<small>{weightFor(profile.heightCm, b)} kg</small></button>)}</div>
+        <div className="chips2" role="group" aria-label="Build">{BUILDS.map(([l, b]) => <button key={l} aria-pressed={(build ?? nearestBuild) === b} onClick={() => setBuildBmi(b)}>{l}<small>{weightFor(profile.heightCm, b)} kg</small></button>)}</div>
       </div>
 
       <div className="pick">
@@ -66,7 +66,7 @@ export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; s
       )}
       <div className="summary">{profile.sex === 'female' ? 'Woman' : 'Man'} · {profile.ageY} years · {profile.heightCm} cm · {profile.weightKg} kg{profile.city ? ` · ${profile.city.split(',')[0]}` : ''}</div>
       <button className="primary big" onClick={onNext}>Next: what did you have?</button>
-      <p className="fine">Free · educational simulation, not medical advice · nothing you enter leaves your device</p>
+      <p className="fine">Free · An educational simulation, not medical advice · Nothing you enter leaves your device</p>
     </div>
   );
 }

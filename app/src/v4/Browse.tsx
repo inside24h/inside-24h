@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { FOODS, fold, type Food, type Part } from './food/parse';
 import { PRESETS, presetParts } from './food/meal';
 import './meals.css';
+import { useModal } from './a11y';
 
 // "See all": every food and drink in one scrollable list, grouped, with a filter. Picking works exactly like picking from search.
 const GROUPS: { name: string; test: (f: Food) => boolean }[] = [
@@ -26,13 +27,12 @@ const one = (f: Food): Part[] => [{ food: f, grams: f.serving.grams, amountLabel
 export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], text: string) => void; onClose: () => void; onAdd?: (parts: Part[], text: string) => void }) {
   const [q, setQ] = useState('');
   const box = useRef<HTMLDivElement>(null);
+  // focus into the list's filter, Tab stays inside, Esc closes, focus returns to the opener (a11y.ts)
+  useModal(box, true, onClose);
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
-    window.addEventListener('keydown', key, true);
     const prev = document.body.style.overflow; document.body.style.overflow = 'hidden';
-    box.current?.focus();
-    return () => { window.removeEventListener('keydown', key, true); document.body.style.overflow = prev; };
-  }, [onClose]);
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   const groups = useMemo(() => {
     const t = fold(q);
@@ -45,11 +45,11 @@ export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], tex
   return (
     <div className="browse" role="dialog" aria-modal="true" aria-label="All foods and drinks" ref={box} tabIndex={-1}>
       <header className="bhead">
-        <div className="btitle"><b>All foods &amp; drinks</b><span>{q ? `${shown} of ${FOODS.length}` : `${FOODS.length} items`}</span></div>
+        <div className="btitle"><b>All foods and drinks</b><span aria-live="polite">{q ? `${shown} of ${FOODS.length}` : `${FOODS.length} items`}</span></div>
         <button className="bclose" onClick={onClose} aria-label="Close">✕</button>
       </header>
       <label className="bfilter">
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter, e.g. coffee, bread, apple" aria-label="Filter the list" />
+        <input type="search" data-autofocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter, e.g. coffee, bread or apple" aria-label="Filter the list" />
       </label>
       <div className="bscroll">
         {!q && (

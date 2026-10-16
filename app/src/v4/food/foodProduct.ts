@@ -139,9 +139,9 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
         case 'liver': case 'portal_vein': return meal.alcoholG > 1
           ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a fixed speed. Nothing speeds it up.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
           : { name: 'Liver', claims: ['TE1'], text: 'Blood from the gut passes the liver first: it stores sugar and sorts what you absorbed.', lines: [{ label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
-        case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: meal.alcoholG > 1 ? ['AL5'] : ['GL4', 'TG1'], text: 'Everything you absorb travels in your blood.', lines: [{ label: 'Sugar change', value: `${(at(s.glucoseDeltaMgDl, t) / 18.016).toFixed(1)} mmol/L` }, ...(meal.fat >= 5 ? [{ label: 'Blood fat change', value: `+${at(s.tgDelta, t).toFixed(2)} mmol/L` }] : [])] };
+        case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: meal.alcoholG > 1 ? ['AL5'] : ['GL4', 'TG1'], text: 'Everything you absorb travels in your blood.', lines: [{ label: 'Blood sugar change', value: `${(at(s.glucoseDeltaMgDl, t) / 18.016).toFixed(1)} mmol/L` }, ...(meal.fat >= 5 ? [{ label: 'Blood fat change', value: `+${at(s.tgDelta, t).toFixed(2)} mmol/L` }] : [])] };
         case 'brain': return meal.alcoholG > 1
-          ? { name: 'Brain', claims: ['AL3', 'AL4'], text: 'Alcohol reaches the brain with the blood: from 0.2 g/L your attention is already worse.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
+          ? { name: 'Brain', claims: ['AL3', 'AL4'], text: 'Alcohol reaches your brain with the blood: from 0.2 ‰ your attention is already worse.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
           : { name: 'Brain', claims: ['FC1'], text: 'Your brain runs on glucose. After a big meal many people feel sleepy for a while.', lines: [] };
         case 'kidney_l': case 'kidney_r': case 'bladder': return { name: 'Kidneys and bladder', claims: meal.alcoholG > 1 ? ['WK1', 'AL7'] : ['WK1'], text: 'Extra water leaves through your kidneys within a few hours.', lines: [{ label: 'In the bladder from this', value: `${r0(at(s.bladder, t))} ml` }] };
         default: return null;
@@ -181,10 +181,10 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     : m.missingGi.length ? ' Its glycaemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
     { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
-    { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow; it slides down your food pipe into your stomach.' },
+    { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow, and it slides down your food pipe into your stomach.' },
     { min: 1, title: 'In your stomach', focus: 'stomach', claims: mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
       text: mixed ? mealStomachText(s, parts) : isDrink
-        ? `Half of it leaves your stomach within about ${s.t50} minutes${meal.kcal > 30 ? ': calories slow the stomach down, water would be gone in 13' : ''}.`
+        ? `Half of it leaves your stomach within about ${s.t50} minutes${meal.kcal > 30 ? ': calories slow the stomach down (water would be gone in about 13)' : ''}.`
         : `Your stomach churns it into a paste and lets it out slowly: half has moved on after about ${s.t50} minutes, almost all of it by 4 hours.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
     { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1'],
       text: (() => {
@@ -198,17 +198,24 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (gl !== null && s.glucosePeakMmol >= 0.2) {
     const big = s.glucosePeakMmol >= 1.5;
     const who = isMeal ? mealSugarNote(s, meal) : '';
-    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucose(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD))} (typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
+    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucose(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${g(p.glucoseMgDl + s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD))} (a typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
   }
   if (dipMin > 0) ch.push({ min: dipMin, title: 'The sugar dip', focus: 'brain', claims: ['GL7'], text: 'Your blood sugar drops a little below where you started. Many people feel hungry again around now.' });
   if (meal.alcoholG > 1) {
     // a range, never one number or a "safe" time: Widmark estimates are off by 20–40% [AL3, alcohol.md W6]
-    const drive = bacPeak >= 0.5 ? 'Reaction time and balance are worse. Don’t drive.' : bacPeak >= 0.2 ? 'Attention is already worse. Don’t drive.' : 'Low, but not zero. Don’t drive.'; // [AL4]
-    ch.push({ min: bacPeakMin, title: 'Alcohol peak', focus: 'brain', claims: ['AL1', 'AL3', 'AL4'], text: `Blood alcohol is highest now: about ${bacRangeText(bacPeak)}${meal.fed ? ', lower than on an empty stomach' : ''}. ${drive}` });
+    const drive = (b: number) => (b >= 0.5 ? 'Reaction time and balance are worse. Don’t drive.' : b >= 0.2 ? 'Attention is already worse. Don’t drive.' : 'Low, but not zero. Don’t drive.'); // [AL4]
+    const fedNote = meal.fed ? ', lower than on an empty stomach' : '';
+    // `live`: the number follows the clock with the same formatter as the label on the body (routes.ts), so both always match
+    ch.push({ min: bacPeakMin, title: 'Alcohol peak', focus: 'brain', claims: ['AL1', 'AL3', 'AL4'], text: `Blood alcohol is at its highest now: about ${bacRangeText(bacPeak)}${fedNote}. ${drive(bacPeak)}`,
+      live: (t) => {
+        const b = at(s.bac, t);
+        return t - bacPeakMin < 5 ? `Blood alcohol is at its highest now: about ${bacRangeText(b)}${fedNote}. ${drive(b)}`
+          : `Blood alcohol is now about ${bacRangeText(b)}, slowly coming down from its peak${fedNote}. ${drive(b)}`;
+      } });
     let zero = bacPeakMin; while (zero < 1440 && s.bac[zero] > 0.005) zero++;
     // a very large amount is not gone within the 24 h we show: say so instead of "gone" (audit 2026-10-16)
     if (s.bac[zero] > 0.005) ch.push({ min: 1440, title: 'Still alcohol after 24 h', focus: 'liver', claims: ['AL2'], text: `A day later there is still alcohol in your blood (about ${bacRangeText(s.bac[zero])}). Your liver works at a fixed speed: coffee, water or fresh air don’t speed it up. Don’t drive.` });
-    else ch.push({ min: zero, title: 'Alcohol gone', focus: 'liver', claims: ['AL2'], text: 'In a typical body the alcohol is gone by now, but some people need hours longer. Your liver works at a fixed speed: coffee, water or fresh air don’t speed it up. This can’t tell you when you’re safe to drive.' });
+    else ch.push({ min: zero, title: 'Alcohol gone', focus: 'liver', claims: ['AL2'], text: 'In a typical body the alcohol is gone by now, but some people need hours longer. Your liver works at a fixed speed: coffee, water or fresh air don’t speed it up. This app can’t tell you when you’re safe to drive.' });
   }
   const nutrientKcal = meal.kcal - 7 * meal.alcoholG; // calories slow the stomach, so caffeine peaks later [GE12, C]
   if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: s.meal?.caffeineInDrink ? ['DB1', 'D2', 'ML3'] : nutrientKcal > 30 ? ['DB1', 'D2', 'GE12'] : ['DB1', 'D2'], text: `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain and blocks the tiredness signal a little.${mealCaffeineNote(s)}` });
@@ -221,12 +228,14 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (hasFibre) {
     ch.push({ min: cecumMin, title: 'Into the large intestine', focus: 'cecum', claims: ['SI10', 'SI7'], text: `What you can’t digest, ${r1(s.residueG)} g of fibre, reaches the start of your large intestine. Your gut bacteria start fermenting it.` });
     ch.push({ min: 720, title: 'Through the colon', focus: 'colon_trans', claims: ['CO3'], text: 'The leftovers creep along your large intestine while water is taken back. This is the slowest part of the journey.' });
-    ch.push({ min: 1440, title: '24 hours later', focus: 'colon_desc', claims: ['CO1', 'CO3'], text: `${r0((100 * s.exitedG[1440]) / s.residueG)}% has left your body so far. Typically food takes about 29 hours from mouth to toilet (the middle value), and anywhere from 14 to 58 hours is normal.` });
+    ch.push({ min: 1440, title: '24 hours later', focus: 'colon_desc', claims: ['CO1', 'CO3'], text: `${r0((100 * s.exitedG[1440]) / s.residueG)}% has left your body so far. Food typically takes about 29 hours from mouth to toilet (the middle value); anywhere from 14 to 58 hours is normal.` });
   }
   if (toBed > 30 && toBed < 1440) {
     const caf = at(s.caffeine.body, toBed), bac = at(s.bac, toBed);
-    const msg = bac > 0.02 ? `There is still alcohol in your blood (about ${bacRangeText(bac)}): you may fall asleep faster, but the second half of the night will be worse.` : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` : null;
-    if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1', 'M4', 'VS1'], text: msg });
+    const alcoholMsg = (b: number) => `There is still alcohol in your blood (about ${bacRangeText(b)}): you may fall asleep faster, but you will sleep worse in the second half of the night.`;
+    const msg = bac > 0.02 ? alcoholMsg(bac) : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}.` : null;
+    if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1', 'M4', 'VS1'], text: msg,
+      ...(bac > 0.02 ? { live: (t: number) => (at(s.bac, t) > 0.02 ? alcoholMsg(at(s.bac, t)) : msg) } : {}) });
   }
   ch.push(...mealChapters(s, parts));
   ch.sort((a, b) => a.min - b.min);
@@ -269,8 +278,8 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
       if (m.fat >= 5) { const tg = at(s.tgDelta, t); out.push({ label: 'Blood fat', dir: tg > 0.05 ? 'up' : 'same', value: tg > 0.05 ? `+${tg.toFixed(2)} mmol/L` : 'normal', note: tg > 0.05 ? 'fat from the meal' : t < 120 ? 'arrives in 2–4 h' : 'back to normal' }); }
       if (hasFibre) { const c = s.colonG.reduce((a, x) => a + at(x, t), 0); out.push({ label: 'Fibre in your large intestine', dir: c > 0.1 ? 'up' : 'same', value: `${r1(c)} g`, note: c > 0.1 ? 'feeding your gut bacteria' : t < 200 ? 'still on its way' : 'mostly passed' }); }
       const dHr = at(v.effect.hr, t), dBp = at(v.effect.sbp, t);
-      out.push({ label: 'Pulse', dir: dirOf(dHr, 0.5), value: `${r0(at(v.hr, t))} bpm`, note: Math.abs(dHr) >= 0.5 ? `${dHr > 0 ? '+' : ''}${dHr.toFixed(0)} from this ${noun}` : `not changed by this ${noun}` });
-      out.push({ label: 'Blood pressure', dir: dirOf(dBp, 0.5), value: `${r0(at(v.sbp, t))}/${r0(at(v.dbp, t))}`, note: Math.abs(dBp) >= 0.5 ? `${dBp > 0 ? '+' : ''}${dBp.toFixed(1)} mmHg` : `not changed by this ${noun}` });
+      out.push({ label: 'Pulse', dir: dirOf(dHr, 0.5), value: `${r0(at(v.hr, t))} bpm`, note: Math.abs(dHr) >= 0.5 ? `${dHr > 0 ? '+' : ''}${dHr.toFixed(0)} from this ${noun}` : `unchanged by this ${noun}` });
+      out.push({ label: 'Blood pressure', dir: dirOf(dBp, 0.5), value: `${r0(at(v.sbp, t))}/${r0(at(v.dbp, t))}`, note: Math.abs(dBp) >= 0.5 ? `${dBp > 0 ? '+' : ''}${dBp.toFixed(1)} mmHg` : `unchanged by this ${noun}` });
       void p2;
       return out;
     },

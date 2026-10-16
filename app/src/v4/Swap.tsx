@@ -26,8 +26,8 @@ export function SwapCard({ swap, peakNow, onCompare }: { swap: { name: string; p
   return (
     <div className="swapcard">
       <span className="ai" aria-hidden="true">🔁</span>
-      <span><b>Better swap</b><em>{swap.name}: sugar {swap.peak < 0.3 ? 'stays steady' : `+${swap.peak.toFixed(1)}`} instead of +{peakNow.toFixed(1)} mmol/L.</em>
-        <button className="link" onClick={onCompare}>Compare side by side →</button></span>
+      <span><b>Better swap</b><em>{swap.name}: blood sugar {swap.peak < 0.3 ? 'stays steady' : `+${swap.peak.toFixed(1)}`} instead of +{peakNow.toFixed(1)} mmol/L.</em>
+        <button className="link" onClick={onCompare}>Compare side by side<span aria-hidden="true"> →</span></button></span>
     </div>
   );
 }

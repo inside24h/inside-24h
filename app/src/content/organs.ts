@@ -15,7 +15,7 @@ export function organInfo(key: string, sim: Timeline, m: number): OrganInfo | nu
   const gone = at(sim.metabolites, m) + at(sim.cleared, m);
   switch (key) {
     case 'tongue': case 'esophagus':
-      return { name: key === 'tongue' ? 'Tongue' : 'Esophagus', lines: [], claims: ['P1'],
+      return { name: key === 'tongue' ? 'Tongue' : 'Oesophagus (food pipe)', lines: [], claims: ['P1'],
         text: 'The shot passes through in seconds on its way to the stomach.' };
     case 'stomach':
       return { name: 'Stomach', claims: ['G1', 'G2', 'F4'], text: 'Liquid leaves the stomach fast: half of it within about 13 minutes.',
@@ -32,11 +32,11 @@ export function organInfo(key: string, sim: Timeline, m: number): OrganInfo | nu
         lines: [{ label: 'Caffeine in liver tissue now', value: `≈ ${mg(inTissue(sim, m, 'liver'))}` }, { label: 'Broken down so far', value: mg(gone) }, { label: 'Half-life for this person', value: `${sim.halfLifeH.toFixed(1)} h` }] };
     case 'brain':
       return { name: 'Brain', claims: ['D7', 'F1', 'F2', 'F3', 'S1'], text: 'Caffeine blocks adenosine, the signal that builds up tiredness. Brain levels follow blood levels.',
-        lines: [{ label: 'Caffeine in the brain now', value: `≈ ${mg(inTissue(sim, m, 'brain'))}` }, { label: 'Blood level', value: `${at(sim.conc, m).toFixed(2)} mg/L` }] };
+        lines: [{ label: 'Caffeine in the brain now', value: `≈ ${mg(inTissue(sim, m, 'brain'))}` }, { label: 'Level in the blood', value: `${at(sim.conc, m).toFixed(2)} mg/L` }] };
     case 'heart': case 'aorta': case 'vena_cava':
       return { name: { heart: 'Heart', aorta: 'Aorta', vena_cava: 'Inferior vena cava' }[key]!, claims: ['V1', 'V2', 'F9'],
-        text: 'Blood carries caffeine to every tissue. At this dose resting heart rate does not change; blood pressure rises a little.',
-        lines: [{ label: 'Blood level', value: `${at(sim.conc, m).toFixed(2)} mg/L` }, { label: 'Systolic change', value: `+${(at(sim.sbp, m) - sim.sbp[0]).toFixed(1)} mmHg` }] };
+        text: 'Blood carries caffeine to every tissue. At this dose your resting pulse doesn’t change; blood pressure rises a little.',
+        lines: [{ label: 'Level in the blood', value: `${at(sim.conc, m).toFixed(2)} mg/L` }, { label: 'Systolic change', value: `+${(at(sim.sbp, m) - sim.sbp[0]).toFixed(1)} mmHg` }] };
     case 'kidney_l': case 'kidney_r': case 'bladder':
       return { name: key === 'bladder' ? 'Bladder' : 'Kidney', claims: ['M3', 'X1'], text: 'The kidneys remove the breakdown products. Only 3% or less of the caffeine leaves unchanged.',
         lines: [{ label: 'Removed from the blood so far', value: mg(at(sim.cleared, m)) }, { label: 'Breakdown products in blood', value: mg(at(sim.metabolites, m)) }] };

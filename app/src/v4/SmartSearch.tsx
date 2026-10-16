@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Browse } from './Browse';
+import { Browse } from './lazyUi'; // loaded on first use
 import './browse.css';
 import './meals.css';
 import { FOODS, macros, suggest, type Part, type Suggestion } from './food/parse';
@@ -8,7 +8,7 @@ import { PRESETS, presetParts } from './food/meal';
 
 // Type like you talk: "1 jabuka", "2 slices of bread", "kava s mlijekom", "pizza and a beer".
 // Each suggestion already shows the amount, calories and how fast it raises blood sugar, so nobody needs a nutrition table.
-const giWord = (gi: number | null, carbs: number) => (carbs < 5 ? { w: 'almost no sugar', c: 'g0' } : gi === null ? { w: 'sugar effect not measured', c: 'gq' } : gi >= 70 ? { w: 'fast sugar', c: 'g2' } : gi >= 56 ? { w: 'medium sugar', c: 'g1' } : { w: 'slow sugar', c: 'g0' });
+const giWord = (gi: number | null, carbs: number) => (carbs < 5 ? { w: 'almost no sugar', c: 'g0' } : gi === null ? { w: 'sugar effect not measured', c: 'gq' } : gi >= 70 ? { w: 'fast sugar', c: 'g2' } : gi >= 56 ? { w: 'medium-speed sugar', c: 'g1' } : { w: 'slow sugar', c: 'g0' });
 
 /** `onAdd`: each result also gets a small "+" that adds it to the current meal instead of replacing it.
  *  `mode="add"`: the whole search adds (used by "+ Add something"); `onDone` runs after an add or on Escape/blur. */
@@ -33,7 +33,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
 
   const seeAll = (cls: string) => (
     <li className={`seeall ${cls}`} role="presentation" onMouseDown={(e) => e.preventDefault()}>
-      <button type="button" onClick={() => { setOpen(false); setBrowse(true); }}>{q ? `See all ${FOODS.length} foods & drinks →` : `Browse all ${FOODS.length} foods & drinks →`}</button>
+      <button type="button" onClick={() => { setOpen(false); setBrowse(true); }}>{q ? `See all ${FOODS.length} foods and drinks →` : `Browse all ${FOODS.length} foods and drinks →`}</button>
     </li>
   );
 
@@ -42,7 +42,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
       <label className="sfield">
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6" /><path d="M13 13l5 5" /></svg>
         <input ref={input} type="search" value={q}
-          placeholder={adding ? 'Add to your meal, e.g. fries, cola…' : big ? 'e.g. apple, pizza, latte' : current ? (current.includes(' + ') ? 'Search something else…' : `${current} · try something else…`) : 'Search food or drink'}
+          placeholder={adding ? 'Add to your meal, e.g. fries or cola…' : big ? 'e.g. apple, pizza, latte' : current ? (current.includes(' + ') ? 'Search for something else…' : `${current} · Try something else…`) : 'Search for a food or drink'}
           role="combobox" aria-expanded={open} aria-controls={listId} aria-autocomplete="list" aria-label={adding ? 'Add something to your meal' : 'What did you eat or drink?'}
           aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
           onFocus={() => setOpen(true)}
@@ -65,8 +65,8 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
               ))}</div>
             </li>
           )}
-          {!q && <li className="hintrow" aria-hidden="true">Popular — or type anything, with an amount if you like</li>}
-          {results.length === 0 && <li className="empty">We don’t know “{q}” yet. Try a simpler word, like “bread” or “juice”.</li>}
+          {!q && <li className="hintrow" aria-hidden="true">Popular picks, or type anything, with an amount if you like</li>}
+          {results.length === 0 && <li className="empty" role="status">We don’t know “{q}” yet. Try a simpler word, like “bread” or “juice”.</li>}
           {results.map((s, i) => {
             const m = macros(s.parts);
             const gw = giWord(m.gi, m.availCarbs);
@@ -76,11 +76,11 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
                 className={`${i === active ? 'active' : ''} ${onAdd && !adding ? 'canadd' : ''}`} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(s)}>
                 <span className="sdots" aria-hidden="true">{s.parts.map((p) => <i key={p.food.id} style={{ background: p.food.color }} />)}</span>
                 <span className="rname">{s.parts.map((p) => p.food.name).join(' + ')}
-                  <small>{s.parts.map((p) => p.amountLabel).join(' + ')}{assumed ? ' · typical size' : ''}</small></span>
+                  <small>{s.parts.map((p) => p.amountLabel).join(' + ')}{assumed ? ' · typical serving' : ''}</small></span>
                 <span className="rkcal">{Math.round(m.kcal)} kcal</span>
                 <span className={`rgi ${gw.c}`}>{gw.w}</span>
                 {onAdd && !adding && (
-                  <button type="button" className="radd" aria-label={`Add ${s.text} to the meal`} title="Add to the meal (keep what you have)"
+                  <button type="button" className="radd" aria-label={`Add ${s.text} to the meal`} title="Add to the meal (keeps what you have)"
                     onClick={(e) => { e.stopPropagation(); add(s); }}>+</button>
                 )}
               </li>

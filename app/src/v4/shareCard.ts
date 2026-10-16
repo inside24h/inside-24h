@@ -82,7 +82,7 @@ export function drawMomentCard(src: HTMLCanvasElement | null, c: MomentCard): HT
   }
   // the four lights at this minute fill the left column (same words as the app)
   if (c.lights?.length) {
-    const WORDS = ['fine', 'mild stress', 'overload'];
+    const WORDS = ['fine', 'mild stress', 'high stress'];
     ctx.fillStyle = '#8292a7'; ctx.font = `600 24px ${SANS}`; ctx.fillText('YOUR BODY NOW', 60, y);
     const rowH = Math.min(52, Math.max(36, (948 - y - 34) / Math.max(1, c.lights.length - 1)));
     c.lights.forEach((l, i) => {

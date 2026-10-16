@@ -3,7 +3,7 @@
 :root {
   color-scheme: dark;
   --bg: #04070c; --surface: #08101a; --raised: #0c1522; --line: rgba(140, 170, 210, .11); --line2: rgba(140, 170, 210, .2);
-  --text: #e6edf5; --mute: #8292a7; --faint: #56657a;
+  --text: #e6edf5; --mute: #8292a7; --faint: #7a899d; /* faint ≥ 4.5:1 on --bg and --raised (WCAG AA small text); was #56657a */
   --accent: #5cd3ff; --caf: #ffc46b; --met: #b48cff; --gone: #8fa3b8; --up: #ffb070;
   --lvA: #4fe3a0; --lvB: #6fb6ff; --lvC: #ffc15c; --lvQ: #9aa7b8;
   --display: "Instrument Serif", Georgia, "Times New Roman", serif;
@@ -17,6 +17,11 @@ body { font: 14px/1.5 var(--body); }
 button { font: inherit; color: inherit; }
 a { color: var(--accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* inside lists and chips the ring sits inside the item so it is never clipped (WCAG 2.4.7 / 2.4.11) */
+.bscroll li button:focus-visible, .mchip button:focus-visible, .madd:focus-visible, .results .radd:focus-visible,
+.mealpresets button:focus-visible, .topmenu > button:focus-visible, .misspicks button:focus-visible, .calmlight:focus-visible {
+  outline: 2px solid var(--accent) !important; outline-offset: -2px; }
+.sfield:focus-within, .bfilter input:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 
 .v4 { height: 100%; min-height: 560px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; overflow-x: clip; }
 body { overflow-x: clip; } /* hidden tooltips near the edges must never widen the page */
@@ -426,7 +431,11 @@ details p { font: 12.5px/1.55 var(--mono) !important; color: var(--mute) !import
 .noticebox p { margin: 0; color: #c8d3df; }
 .nbtns { display: flex; gap: 8px; flex-wrap: wrap; }
 
-@media (prefers-reduced-motion: reduce) { .drawer { animation: none; } .wbar i { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .drawer { animation: none; } .wbar i { transition: none; }
+  /* every UI animation and transition is kept still (sheets, hints, bars, lights); the 3D view has its own setting */
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
 
 /* ---- traffic lights: how each part of you is doing, no numbers needed ---- */
 .v4 { --g: #3ddc84; --y: #ffc83d; --r: #ff5a5a; }

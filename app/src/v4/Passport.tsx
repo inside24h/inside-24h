@@ -3,7 +3,7 @@
 // and the timeline always agree. Tapping a row jumps the body and the clock to that place.
 import { useMemo } from 'react';
 import type { Route, SegId, SegState } from '../scene/LiquidRoute';
-import { SEG_LABEL } from '../scene/LiquidRoute';
+import { SEG_LABEL } from '../scene/segments';
 import { uFromMinutes } from '../time';
 
 export interface Stay { id: SegId; from: number; to: number | null; peak: number; peakAmount: number; unit: string; halfGone?: number }
@@ -15,9 +15,9 @@ const ICON: Record<SegId, string> = { swallow: '👄', stomach: '🫃', duodenum
 /** What happens in each place, in plain words; `kind` tunes a few lines. */
 export function whatHappens(id: SegId, kind: { drink: boolean; fat: boolean; sugar: boolean; alcohol: boolean; caffeine: boolean; fibre: boolean }): string {
   switch (id) {
-    case 'swallow': return 'You swallow and it slides down the food pipe into your stomach.';
+    case 'swallow': return 'You swallow, and it slides down your food pipe into your stomach.';
     case 'stomach': return kind.drink
-      ? `Stomach acid mixes with it and lets it out in small squirts.${kind.sugar ? ' Sugar makes it wait longer.' : ''}`
+      ? `It mixes with stomach acid and is let out in small squirts.${kind.sugar ? ' Sugar makes it wait longer.' : ''}`
       : `Muscles churn it with acid into a paste and let it out bit by bit.${kind.fat ? ' Fat makes this slower.' : ''}`;
     case 'duodenum': return 'Bile and juices from the pancreas start breaking it apart.';
     case 'small': return `This is where almost everything is absorbed into your blood${kind.sugar ? ': sugars within minutes' : ''}${kind.fibre ? '. Fibre passes on untouched' : ''}.`;
@@ -25,7 +25,7 @@ export function whatHappens(id: SegId, kind: { drink: boolean; fat: boolean; sug
     case 'blood': return kind.caffeine ? 'Your blood carries it to every organ, including your brain.' : 'Your blood carries the energy and water to every cell.';
     case 'kidney': return 'Your kidneys filter out the extra water and waste.';
     case 'bladder': return 'It collects as urine until you go to the toilet.';
-    case 'colon': return 'Gut bacteria ferment the fibre and water is taken back. It slowly becomes stool and leaves in 1–2 days.';
+    case 'colon': return 'Gut bacteria ferment the fibre while water is taken back. It slowly becomes stool and leaves within 1–2 days.';
   }
 }
 
@@ -83,7 +83,7 @@ export function Passport({ route, minute, drinkAt, kind, onJump, compact = false
   const lead = (Object.entries(now) as [SegId, SegState][]).filter(([id]) => stays.some((x) => x.id === id)).sort((p, q) => q[1].frac * (BODY_WIDE.has(q[0]) ? 0.3 : 1) - p[1].frac * (BODY_WIDE.has(p[0]) ? 0.3 : 1))[0]?.[0];
   return (
     <div className={`passport ${compact ? 'compact' : ''}`}>
-      <div className="ctl">{compact ? 'Its trip through you' : 'The whole trip · tap a place'}</div>
+      <div className="ctl">{compact ? 'Its trip through you' : 'The whole trip · Tap a place'}</div>
       {stays.map((s) => {
         const v = now[s.id];
         const isNow = (minute >= s.from && minute < (s.to ?? 1441) && !!v && v.amount > 0) || (s.id === 'swallow' && minute < 0.8);
@@ -93,8 +93,8 @@ export function Passport({ route, minute, drinkAt, kind, onJump, compact = false
           <button key={s.id} className={`pp ${isNow ? 'now' : minute > end ? 'past' : ''}`} onClick={() => onJump(s.id === 'swallow' ? 0.1 : s.peak, FOCUS[s.id])}>
             <span className="ppi" aria-hidden="true">{ICON[s.id]}</span>
             <span className="ppm">
-              <span className="pph"><b>{SEG_LABEL[s.id]}</b>{isNow && <em>NOW · {fmt(v!.amount)} {v!.unit ?? route.unit}</em>}</span>
-              <span className="ppt">{s.id === 'swallow' ? `${clock(drinkAt)} · a few seconds` : `${clock(drinkAt + s.from)} – ${s.to === null ? 'still there after 24 h' : clock(drinkAt + s.to)} · ${duration(end - s.from)}${s.halfGone !== undefined && HALF_SHOWN.has(s.id) && (!compact || isNow) ? ` · half gone by ${clock(drinkAt + s.halfGone)}` : ''}`}</span>
+              <span className="pph"><b>{SEG_LABEL[s.id]}</b>{isNow && <em>Now · {fmt(v!.amount)} {v!.unit ?? route.unit}</em>}</span>
+              <span className="ppt">{s.id === 'swallow' ? `${clock(drinkAt)} · a few seconds` : `${clock(drinkAt + s.from)}–${s.to === null ? 'still there after 24 h' : clock(drinkAt + s.to)} · ${duration(end - s.from)}${s.halfGone !== undefined && HALF_SHOWN.has(s.id) && (!compact || isNow) ? ` · half gone by ${clock(drinkAt + s.halfGone)}` : ''}`}</span>
               {(!compact || (isNow && (s.id === lead || (s.id === 'swallow' && minute < 0.8)))) && <span className="ppw">{whatHappens(s.id, kind)}</span>}
               <span className="ppbar" aria-hidden="true"><i style={{ left: `${a}%`, width: `${b - a}%` }} /><s style={{ left: `${uFromMinutes(minute) * 100}%` }} /></span>
             </span>

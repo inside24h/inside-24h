@@ -22,9 +22,9 @@ export function MomentShare({ make, label }: { make: () => Promise<Moment | null
     setBusy(true); setMsg(null);
     try {
       const r = await make();
-      if (!r) { setMsg('Could not draw this moment. Try again in a second.'); return; }
+      if (!r) { setMsg('We couldn’t draw this moment. Please try again in a second.'); return; }
       setM({ ...r, url: URL.createObjectURL(r.blob) });
-    } catch { setMsg('Could not draw this moment.'); } finally { setBusy(false); }
+    } catch { setMsg('We couldn’t draw this moment. Please try again.'); } finally { setBusy(false); }
   };
 
   const file = m ? new File([m.blob], m.fileName, { type: 'image/png' }) : null;
@@ -47,9 +47,9 @@ export function MomentShare({ make, label }: { make: () => Promise<Moment | null
 
   if (!m) return (
     <div className="momentshare">
-      <button className="primary momentbtn" onClick={build} disabled={busy}>{busy ? 'Drawing…' : `📸 ${label}`}</button>
-      <span className="momentsub">A picture of this minute + a link that opens exactly here.</span>
-      {msg && <p className="note">{msg}</p>}
+      <button className="primary momentbtn" onClick={build} disabled={busy}>{busy ? 'Drawing…' : <><span aria-hidden="true">📸 </span>{label}</>}</button>
+      <span className="momentsub">A picture of this minute, plus a link that opens right here.</span>
+      {msg && <p className="note" role="status">{msg}</p>}
     </div>
   );
   return (
@@ -62,7 +62,7 @@ export function MomentShare({ make, label }: { make: () => Promise<Moment | null
       </div>
       <input className="momentlink" readOnly value={m.link} aria-label="Link to this moment" title={linkLabel(m.link)}
         onFocus={(e) => e.currentTarget.select()} onClick={async () => { if (await copy(m.link)) setMsg('Link copied.'); }} />
-      {msg && <p className="note">{msg}</p>}
+      {msg && <p className="note" role="status">{msg}</p>}
     </div>
   );
 }

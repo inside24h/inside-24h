@@ -1,11 +1,11 @@
 // Build 0.4 layout: one screen. Left: what is happening now. Centre: the body. Right: your readings.
 // Bottom: the 24 h timeline. Evidence and the profile open in side panels on demand.
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { advance, useThree, type RootState } from '@react-three/fiber';
+import type { RootState } from '@react-three/fiber';
 import { flushSync } from 'react-dom';
-import { OrbitControls } from '@react-three/drei';
-import { Body, type Glow } from '../scene/Body';
-import { Flow } from '../scene/Flow';
+// three.js / r3f / drei and the scene load lazily (hosted build: a separate chunk), see ./lazy3d
+import { advance, Body, CameraRig, CompareScene, ExposeState, Flow, FlowPaths, LiquidRoute, OrbitControls, SafeCanvas } from './lazy3d';
+import type { Glow } from '../scene/Body';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { ClaimRow } from '../ui/ClaimRow';
 import { SOURCES } from '../content/sources';
@@ -16,15 +16,13 @@ import { buildVitals, caffeineLatencyMin, type Vitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { MAX_MIN, minutesFromU, uFromMinutes } from '../time';
 import { Drawer } from './Drawer';
-import { YourBody } from './YourBody';
 import { CATALOG, type CatalogItem } from './catalog';
 import { PRODUCTS, type WhereRow } from './products';
-import { EveryDay } from './EveryDay';
 import { BodyStart } from './BodyStart';
 import { StoryPanel } from './StoryPanel';
-import { CameraRig } from '../scene/CameraRig';
-import { FlowPaths } from '../scene/FlowPaths';
-import { LiquidRoute, SEG_LABEL, type SegId, type SegState } from '../scene/LiquidRoute';
+import { chapterText } from './stories';
+import { useModal } from './a11y';
+import { SEG_LABEL, type SegId, type SegState } from '../scene/segments';
 import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
@@ -38,18 +36,14 @@ import { cityLabel, climateNow, findCity } from './climate/cities';
 import { simulateHydration } from '../science/hydration';
 import { SUPPORT } from './support';
 import { Passport } from './Passport';
-import { Pro } from './Pro';
 import { Tour } from './Tour';
 import { CalmBar } from './CalmBar';
 import { Answers, mealLinesFor, quickAnswers } from './Answers';
 import { personalNotes } from '../science/personal';
 import { Disclaimer, HowWeKnow } from './HowWeKnow';
-import { VideoFallback } from './VideoFallback';
 import { videoSupportHere } from './share';
 import { bacRangeText, glucoseRangeText } from '../science/ranges';
-import { Compare } from './Compare';
-import { CompareScene } from './CompareVideo';
-import { SafeCanvas } from './perf/SafeCanvas';
+import { Compare, EveryDay, Pro, VideoFallback, YourBody } from './lazyUi'; // loaded on first use
 import { isTouch } from './perf/device';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
@@ -146,7 +140,7 @@ export default function AppV4() {
   const [started, setStarted] = useState(!LINK_MISS && (HASH_T !== null || LINK_FOOD));
   const [missText, setMissText] = useState<string | null>(LINK_MISS ?? null);
   // a short note at the top when a link asked for something we could not open (e.g. an unknown comparison partner)
-  const [linkNote, setLinkNote] = useState<string | null>(RESOLVED.vsMiss ? `We don’t have “${RESOLVED.vsMiss.slice(0, 40)}” yet, so there is nothing to compare with. Showing the first food on its own.` : null);
+  const [linkNote, setLinkNote] = useState<string | null>(RESOLVED.vsMiss ? `We don’t have “${RESOLVED.vsMiss.slice(0, 40)}” yet, so there’s nothing to compare it with. Showing the first food on its own.` : null);
   useEffect(() => { if (!linkNote) return; const id = setTimeout(() => setLinkNote(null), 9000); return () => clearTimeout(id); }, [linkNote]);
   const [notice, setNotice] = useState<CatalogItem | null>(null);
   const [dose, setDose] = useState(HASH_DOSE);
@@ -368,15 +362,15 @@ export default function AppV4() {
     hook: `What does ${hookWhat} really do inside your body?`,
     title: PRODUCT.name,
     sub: `${profile.sex === 'female' ? 'Woman' : 'Man'}, ${profile.ageY} · ${profile.heightCm} cm · ${profile.weightKg} kg${city ? ` · ${city.name}` : ''}`,
-    clock: hhmm(profile.drinkAtMin + recStop), step: recChapter.title, caption: captionOf(recChapter.text), color: story.color, progress: u, handle, stamp: stampFor(recStop),
+    clock: hhmm(profile.drinkAtMin + recStop), step: recChapter.title, caption: captionOf(chapterText(recChapter, recStop)), color: story.color, progress: u, handle, stamp: stampFor(recStop),
     pop: (() => {
-      const mi = Math.round(Math.min(1440, minute));
-      const bac = built.bac ? built.bac[mi] : 0;
+      const mi = Math.min(1440, minute);
+      const bac = built.bac ? at(built.bac, mi) : 0; // same minute and formatter as the body label and the chapter
       // a range, never one number (Widmark ±20–40%, alcohol.md W6)
       if (bac >= 0.1) return { big: bacRangeText(bac).replace(' ‰', ''), small: '‰ blood alcohol', level: (bac >= 0.5 ? 2 : 1) as 0 | 1 | 2 };
-      const g = built.effects.glucoseMgDl ? built.effects.glucoseMgDl[mi] / 18.016 : 0;
-      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeText(g) : g.toFixed(1), small: g > 0 ? 'mmol/L blood sugar rise, typical' : 'mmol/L sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
-      const caf = built.caffeine.doseMg >= 10 ? built.caffeine.body[mi] : 0;
+      const g = built.effects.glucoseMgDl ? at(built.effects.glucoseMgDl, mi) / 18.016 : 0;
+      if (Math.abs(g) >= 0.5 && peakNow !== null) return { big: g > 0 ? glucoseRangeText(g) : g.toFixed(1), small: g > 0 ? 'mmol/L blood sugar rise (typical)' : 'mmol/L blood sugar dip', level: (g >= 3 || g <= -1 ? 2 : 1) as 0 | 1 | 2 };
+      const caf = built.caffeine.doseMg >= 10 ? at(built.caffeine.body, mi) : 0;
       if (caf >= 20) return { big: `${Math.round(caf)} mg`, small: 'caffeine in you', level: (caf >= 200 ? 1 : 0) as 0 | 1 | 2 };
       return undefined;
     })(),
@@ -389,7 +383,7 @@ export default function AppV4() {
     lights: systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2 })),
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
-      return { icon: ICON_OF[s.key], label: s.label, level: lvl, note: lvl === 0 ? 'Steady all day' : `${lvl === 1 ? 'Mild stress' : 'Overload'} at ${hhmm(profile.drinkAtMin + at0)}` };
+      return { icon: ICON_OF[s.key], label: s.label, level: lvl, note: lvl === 0 ? 'Fine all day' : `${lvl === 1 ? 'Mild stress' : 'High stress'} at ${hhmm(profile.drinkAtMin + at0)}` };
     }),
   };
   const startShare = (format: Format) => {
@@ -439,12 +433,12 @@ export default function AppV4() {
       const dg = x.glucose ? x.glucose[mi] / 18.016 : 0;
       const en = x.systems.find((s) => s.key === 'energy')!;
       return {
-        name: x.name, color: x.color, step: ch.title, caption: captionOf(ch.text, 95),
+        name: x.name, color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
         where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
         sugar: x.sugarPeak === null ? 'Sugar ?' : Math.abs(dg) < 0.15 ? 'Sugar steady' : `Sugar ${dg > 0 ? '+' : ''}${dg.toFixed(1)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
         summary: { kcal: x.kcal, sugarPeak: x.sugarPeak === null ? 'not measured' : x.sugarPeak < 0.3 ? 'steady' : `+${x.sugarPeak.toFixed(1)} mmol/L`,
-          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'overload'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
+          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'high stress'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
       };
     };
     cmpOverlayRef.current = { hook: `${cmpRec.a.name} or ${cmpRec.b.name}: which is better for your body?`, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b), a: side(cmpRec.a), b: side(cmpRec.b) };
@@ -453,7 +447,7 @@ export default function AppV4() {
     setCompare(null); setCmpRec({ a, b, u: 0 }); setShare({ state: 'rec', format: 'reel' }); setRecPct(0);
     setTimeout(async () => {
       const ca = document.querySelector<HTMLCanvasElement>('.stage canvas');
-      if (!ca) { setShare({ state: 'error', msg: 'Could not prepare the two bodies.' }); setCmpRec(null); return; }
+      if (!ca) { setShare({ state: 'error', msg: 'We couldn’t prepare the two bodies. Please try again.' }); setCmpRec(null); return; }
       try {
         flushSync(() => setCmpNever(true)); // bodies are loaded: from now on only the recorder draws frames
         const frames = shortVid ? storyFrames(CMP_SHORT, uFromMinutes, minutesFromU, 3.6, 1.0, 0) : storyFrames(CMP_STOPS, uFromMinutes, minutesFromU, 4.8, 1.2, 0); // ≈ 22 s or ≈ 58 s (Reels limit 61 s)
@@ -521,7 +515,7 @@ export default function AppV4() {
     const stamp = stampFor(minute);
     const card = drawMomentCard(canvas, {
       name: PRODUCT.name, amount: productId === 'food' && foodParts.length === 1 ? foodParts[0].amountLabel : hookWhat,
-      stamp, clock: hhmm(profile.drinkAtMin + minute), step: chapter.title, caption: captionOf(chapter.text, 150),
+      stamp, clock: hhmm(profile.drinkAtMin + minute), step: chapter.title, caption: captionOf(chapterText(chapter, minute), 150),
       pop: o.pop, where: o.where, color: story.color, link,
       lights: systems.map((x) => ({ label: SHORT_OF[x.key], level: x.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2, unknown: x.unknown })),
     });
@@ -532,6 +526,24 @@ export default function AppV4() {
 
   // A drag on the canvas must not count as "clicked empty space".
   const down = useRef<[number, number] | null>(null);
+
+  // ---- accessibility: dialogs, sheets and the menu trap focus, close on Esc and give focus back (a11y.ts) ----
+  const shareBox = useRef<HTMLDivElement>(null), noticeBox = useRef<HTMLDivElement>(null);
+  const menuBox = useRef<HTMLElement>(null), ansBox = useRef<HTMLDivElement>(null);
+  useModal(shareBox, !!share && share.state !== 'rec', () => setShare(null));
+  useModal(noticeBox, !!notice, () => setNotice(null));
+  useModal(menuBox, menuOpen, () => setMenuOpen(false));
+  useModal(ansBox, ansOpen && calmNow, () => setAnsOpen(false));
+  useEffect(() => { // the organ card closes on Esc too
+    if (!info) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !panel && !evidence && !share && !compare) setSelected(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [info, panel, evidence, share, compare]);
+  // A text version of the 3D body for screen readers ("20 min after your cola: Stomach 214 ml. Blood sugar peak."),
+  // spoken when paused or scrubbed, not on every frame while playing.
+  const stageWhere = overlayRef.current?.where;
+  const stageText = `${sinceText(minute, lower)}${stageWhere ? `: ${stageWhere.replace(' · ', ' ')}` : ''}. ${chapter.title}.`;
 
   return (
     <div className={`v4 ${calmNow ? 'calmlay' : ''} ${ansOpen && calmNow ? 'ansopen' : ''}`}>
@@ -548,28 +560,28 @@ export default function AppV4() {
             <button aria-pressed={mode === 'simple' && !calm} onClick={() => { setMode('simple'); setCalm(false); }}>Full</button>
             <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
           </div>
-          {started && <button className="ghost hdr" onClick={() => setCompare({})}>⇄ Compare</button>}
+          {started && <button className="ghost hdr" onClick={() => setCompare({})}><span aria-hidden="true">⇄ </span>Compare</button>}
           {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setVideoOpen(false); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
-          <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>soon</small></button>
-          <button className="ghost hdr support" onClick={() => setPanel('support')}>♥ Support</button>
+          <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>coming soon</small></button>
+          <button className="ghost hdr support" onClick={() => setPanel('support')}><span aria-hidden="true">♥ </span>Support</button>
           <button className="primary" onClick={() => setPanel('body')}>Your body</button>
           {/* phones: everything that doesn't fit the header, in one menu */}
           <button className="menubtn" aria-label="Menu" aria-expanded={menuOpen} aria-controls="topmenu" onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
         </div>
         {menuOpen && <>
           <div className="sheetback menuback" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-          <nav id="topmenu" className="topmenu" aria-label="Menu" onClick={(e) => { if ((e.target as HTMLElement).closest('button')) setMenuOpen(false); }}>
+          <nav id="topmenu" ref={menuBox} className="topmenu" aria-label="Menu" onClick={(e) => { if ((e.target as HTMLElement).closest('button')) setMenuOpen(false); }}>
             <div className="seg2 mode" role="group" aria-label="View">
               <button aria-pressed={mode === 'simple' && calm} onClick={() => { setMode('simple'); setCalm(true); }}>Simple</button>
               <button aria-pressed={mode === 'simple' && !calm} onClick={() => { setMode('simple'); setCalm(false); }}>Full</button>
               <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
             </div>
-            {started && <button onClick={() => setCompare({})}>⇄ Compare two foods</button>}
+            {started && <button onClick={() => setCompare({})}><span aria-hidden="true">⇄ </span>Compare two foods</button>}
             <button onClick={() => setPanel('method')}>How we know</button>
             <button onClick={() => setPanel('about')}>About · not medical advice</button>
-            <button onClick={() => setPanel('support')}>♥ Support</button>
-            <button onClick={() => setPanel('pro')}>Pro <small>soon</small></button>
+            <button onClick={() => setPanel('support')}><span aria-hidden="true">♥ </span>Support</button>
+            <button onClick={() => setPanel('pro')}>Pro <small>coming soon</small></button>
           </nav>
         </>}
       </header>
@@ -590,20 +602,21 @@ export default function AppV4() {
           <div className="stagelabel" aria-live="polite">{head.label}</div>
           <p className="headline">{head.text}</p>
           <button className="evlink" onClick={() => setEvidence({ title: head.label, claims: head.claims })}>
-            <Levels ids={head.claims} claims={PRODUCT.claims} /> Why we know this
+            <Levels ids={head.claims} claims={PRODUCT.claims} /> How do we know?
           </button>
           <button className="everybtn" onClick={() => setPanel('every')}>
-            <b>If you have this every day</b><span>cholesterol, diabetes, weight and more →</span>
+            <b>If you have this every day</b><span>Cholesterol, diabetes, weight and more →</span>
           </button>
           <Where rows={built.where} title={({ cola: 'Where the sugar is', water: 'Where the water is', espresso: 'Where the caffeine is' } as Record<string, string>)[productId] ?? `Where the ${lower} is`} minute={minute} selected={selected} onPick={setSelected} />
           <Disclaimer onHow={() => setPanel('method')} />
         </section>}
 
-        <section className="stage" aria-label="3D body"
+        <section className="stage" aria-label="3D body" aria-describedby="stage-now"
           onPointerDown={(e) => { down.current = [e.clientX, e.clientY]; setTouched(true); }}>
+          <p id="stage-now" className="sr" aria-live={playing ? 'off' : 'polite'}>{started ? stageText : ''}</p>
           <ErrorBoundary fallback={(e) => <StageError error={e} />}>
             {sceneError ? <StageError error={sceneError} /> : !show3d ? null : (
-              <SafeCanvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
+              <Suspense fallback={null}><SafeCanvas camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
                 onPointerMissed={(e) => {
                   const d = down.current;
                   if (!d || Math.hypot(e.clientX - d[0], e.clientY - d[1]) < 5) setSelected(null);
@@ -622,7 +635,7 @@ export default function AppV4() {
                 </Suspense>
                 <OrbitControls makeDefault target={[0, 1.15, 0]} enablePan={false} minDistance={0.3} maxDistance={3.2} />
                 {mode === 'simple' && !cmpRec && <CameraRig focus={share?.state === 'rec' ? liquidFocus ?? 'torso' : selected ?? (wholeBody ? null : liquidFocus ?? chapter.focus)} bounds={bounds} minDist={share?.state === 'rec' ? 1.05 : !selected && liquidFocus ? 0.95 : 0.5} flightKey={`${productId}-${chapterIdx}-${selected}-${flightKey}`} />}
-              </SafeCanvas>
+              </SafeCanvas></Suspense>
             )}
           </ErrorBoundary>
           {calmNow && <>
@@ -631,7 +644,7 @@ export default function AppV4() {
               <span aria-hidden="true">💬</span> Quick answers <b>{answers.length}</b><span className="chev" aria-hidden="true">▴</span>
             </button>
             {ansOpen && <div className="sheetback" onClick={() => setAnsOpen(false)} aria-hidden="true" />}
-            <div id="stageanswers" className={`stageanswers ${ansOpen ? 'open' : ''}`} role="region" aria-label="Quick answers">
+            <div id="stageanswers" ref={ansBox} className={`stageanswers ${ansOpen ? 'open' : ''}`} role="region" aria-label="Quick answers">
               <div className="sheethead"><b>Quick answers</b><button className="x" aria-label="Close quick answers" onClick={() => setAnsOpen(false)}>×</button></div>
               {answersBlock}
             </div>
@@ -657,7 +670,7 @@ export default function AppV4() {
             </div>
           ) : (
             <div className="legend"><span><i style={{ background: story.color }} />{PRODUCT.name} in your body</span>
-              {(selected || (chapter.focus && !wholeBody)) && <button className="wholebody" onClick={() => { setSelected(null); setWholeBody(true); setFlightKey((k) => k + 1); }}>Show whole body</button>}
+              {(selected || (chapter.focus && !wholeBody)) && <button className="wholebody" onClick={() => { setSelected(null); setWholeBody(true); setFlightKey((k) => k + 1); }}>Show the whole body</button>}
             </div>
           )}
           <div className="credit">Anatomy: BodyParts3D © DBCLS · CC BY 4.0</div>
@@ -666,7 +679,7 @@ export default function AppV4() {
               <div className="ohead"><b>{info.name}</b><button className="x" aria-label="Close" onClick={() => setSelected(null)}>×</button></div>
               {info.lines.map((l) => <div key={l.label} className="oline"><span>{l.label}</span><b>{l.value}</b></div>)}
               <p>{info.text}</p>
-              <button className="evlink" onClick={() => setEvidence({ title: info.name, claims: info.claims })}><Levels ids={info.claims} claims={PRODUCT.claims} /> Evidence</button>
+              <button className="evlink" onClick={() => setEvidence({ title: info.name, claims: info.claims })}><Levels ids={info.claims} claims={PRODUCT.claims} /> How do we know?</button>
             </div>
           )}
         </section>
@@ -676,7 +689,7 @@ export default function AppV4() {
       </main>
 
       {calmNow && (
-        <CalmBar title={chapter.title} text={captionOf(chapter.text, 170)} clock={hhmm(profile.drinkAtMin + minute)} since={sinceText(minute, lower)}
+        <CalmBar title={chapter.title} text={captionOf(chapterText(chapter, minute), 170)} clock={hhmm(profile.drinkAtMin + minute)} since={sinceText(minute, lower)}
           playing={playing} onPlay={togglePlay} u={u} setU={(v) => { setU(v); setPlaying(false); }} systems={systems} minute={minute}
           where={overlayRef.current?.where} onMore={() => setCalm(false)}
           eatenAt={profile.drinkAtMin} setEatenAt={(m) => setProfile({ ...profile, drinkAtMin: m })} noun={lower}
@@ -705,7 +718,7 @@ export default function AppV4() {
       {!started && bodyAsked && (
         <div className="start" role="dialog" aria-label="Choose what you ate or drank">
           <div className="startbox">
-            <div className="step">Step 2 of 2 · choose</div>
+            <div className="step">Step 2 of 2 · Choose</div>
             {missText && <MissNote text={missText} onPick={chooseFood} />}
             <h1>What should we follow through your body?</h1>
             <SmartSearch onPick={chooseFood} big />
@@ -732,7 +745,7 @@ export default function AppV4() {
       )}
       {notice && (
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setNotice(null); }}>
-          <div className="noticebox" role="alertdialog" aria-label={`${notice.name} is not ready yet`}>
+          <div ref={noticeBox} className="noticebox" role="alertdialog" aria-modal="true" aria-label={`${notice.name} is not ready yet`}>
             <h2>{notice.name} is still in research</h2>
             <p>We only show numbers we can back with scientific studies, so {notice.name.toLowerCase()} isn’t ready yet. Espresso and cola are ready now.</p>
             <div className="nbtns">
@@ -750,16 +763,16 @@ export default function AppV4() {
       {share?.state === 'rec' && <div className="recbadge" role="status">● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</div>}
       {share && share.state !== 'rec' && (
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setShare(null); }}>
-          <div className="noticebox sharebox" role="dialog" aria-label="Share">
+          <div ref={shareBox} className="noticebox sharebox" role="dialog" aria-modal="true" aria-label="Share">
             {share.state === 'choose' && !videoOpen && <h2 className="sharetitle">Share</h2>}
             {share.state !== 'ready' && <MomentShare make={makeMoment} label="Share this moment" />}
             {share.state === 'choose' && !videoOpen && (
-              <button className="ghost videoopen" aria-expanded={false} onClick={() => setVideoOpen(true)}>🎬 Or make a 24 h video (Reel / TikTok) ▾</button>
+              <button className="ghost videoopen" aria-expanded={false} onClick={() => setVideoOpen(true)}><span aria-hidden="true">🎬 </span>Or make a 24-hour video (Reel / TikTok)<span aria-hidden="true"> ▾</span></button>
             )}
             {share.state === 'choose' && videoOpen && (<>
               <h2>Make a video</h2>
-              <p className="note">The whole 24 hours with a hook title, a pause at each key moment, captions for silent viewing, the liquid moving through the body, and a summary at the end.</p>
-              <label className="handle">Name in the corner <small>(optional — our brand @inside24h, or your own handle)</small><input value={handle} placeholder="@yourname" onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
+              <p className="note">The whole 24 hours: an opening question, a pause at each key moment, captions for silent viewing, the food or drink moving through the body, and a summary at the end.</p>
+              <label className="handle">Name in the corner <small>(optional: @inside24h or your own handle)</small><input value={handle} placeholder="@yourname" onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
               <div className="lenpick" role="group" aria-label="Length">Length:
                 <button aria-pressed={!shortVid} onClick={() => setShortVid(false)}>Full · about 1 min</button>
                 <button aria-pressed={shortVid} onClick={() => setShortVid(true)}>Short · about 20 s</button>
@@ -769,11 +782,11 @@ export default function AppV4() {
                 <button className="fmt" onClick={() => startShare('feed')}><i className="r45" /><b>Feed post</b><span>4:5 · 1080×1350</span></button>
               </div>
             </>)}
-            {share.state === 'error' && (<><h2>Could not make the video</h2><p>{share.msg}</p></>)}
+            {share.state === 'error' && (<><h2>We couldn’t make the video</h2><p>{share.msg}</p></>)}
             {share.state === 'nosupport' && <VideoFallback makeImage={stillImage}
               onSave={async (b) => { const r = await saveFile(`${fileName}-moment.png`, b); return r === 'saved' ? 'Saved. If nothing downloaded, press and hold the picture to save it.' : r === 'declined' ? 'Not saved.' : 'Press and hold the picture to save it.'; }} />}
             {share.state === 'ready' && (<>
-              <h2>Your 24 h video</h2>
+              <h2>Your 24-hour video</h2>
               <video src={share.url} autoPlay loop muted playsInline controls className={share.format === 'reel' ? 'v916' : 'v45'} />
               <p className="note">Suggested caption: “{share.caption ?? `What ${hookWhat} does inside your body in 24 hours 👀 Which food should we test tomorrow? 👇 #Inside24h #health #nutrition`}”</p>
               {share.msg && <p className="note">{share.msg}</p>}
@@ -781,7 +794,7 @@ export default function AppV4() {
             <div className="nbtns">
               {share.state === 'ready' && <button className="primary" onClick={async () => {
                 const r = await saveFile(`${fileName}-${share.format === 'reel' ? 'reel' : 'feed'}.${share.ext}`, share.blob!);
-                setShare({ ...share, msg: r === 'saved' ? 'Saved. Post it as a Reel, Story or TikTok.' : r === 'declined' ? 'Not saved.' : 'Saving files is not available here. Right-click the video and choose “Save video as…”.' });
+                setShare({ ...share, msg: r === 'saved' ? 'Saved. Post it as a Reel, Story or TikTok.' : r === 'declined' ? 'Not saved.' : 'Saving files isn’t available here. Right-click the video and choose “Save video as…”.' });
               }}>Save video ({share.ext?.toUpperCase()}, {((share.blob?.size ?? 0) / 1e6).toFixed(1)} MB)</button>}
               {share.state === 'ready' && <button className="ghost" onClick={() => setShare({ state: 'choose' })}>Make another</button>}
               {share.state === 'choose' && videoOpen && <button className="ghost" onClick={saveCover}>Save cover image (PNG)</button>}
@@ -802,11 +815,11 @@ export default function AppV4() {
         <EveryDay productId={productId} />
       </Drawer>
       <Drawer open={panel === 'rules'} title="How the bars work" onClose={() => setPanel(null)}>
-        <p className="note">The bars are our own simplified 0–100 scale, made so you can compare choices at a glance. Each rule below is tied to a study or official guideline.</p>
+        <p className="note">The bars are our own simplified 0–100 scale, made so you can compare choices at a glance. Each rule below is tied to a study or an official guideline.</p>
         <ul className="rules">{RULES.map((r) => <li key={r.rule}><b>{r.bar}</b><span>{r.rule}</span><small>{r.source}</small></li>)}</ul>
       </Drawer>
       <Drawer open={panel === 'colours'} title="How the colours work" onClose={() => setPanel(null)}>
-        <p className="note"><b className="g">Green</b> your body is working normally. <b className="y">Yellow</b> mild stress it handles easily. <b className="r">Red</b> overload: a big swing your body has to fight. These cut-offs are our own simple scale (level C), built on the official categories named below.</p>
+        <p className="note"><b className="g">Green:</b> fine, your body is working normally. <b className="y">Yellow:</b> mild stress that your body handles easily. <b className="r">Red:</b> high stress, a bigger swing that your body works harder to even out. These cut-offs are our own simple scale (level C), built on the official categories named below.</p>
         <ul className="rules">{systems.map((s) => <li key={s.key}><b>{s.label}</b><span>{s.rule}</span></li>)}</ul>
       </Drawer>
       <Drawer open={panel === 'pro'} title="Inside 24h Pro" onClose={() => setPanel(null)}>
@@ -823,12 +836,6 @@ export default function AppV4() {
       </Drawer>
     </div>
   );
-}
-
-/** Hands the R3F root state to the recorder, which renders frames itself while making a video. */
-function ExposeState({ into }: { into: React.MutableRefObject<RootState | null> }) {
-  into.current = useThree();
-  return null;
 }
 
 function Levels({ ids, claims }: { ids: string[]; claims: Record<string, Claim> }) {
@@ -918,12 +925,12 @@ function Readings({ you, sim, twin, profile, minute, onOpen, vitalClaims, name, 
   const caf = at(sim.conc, minute);
   return (
     <section className="readings" aria-label="Your readings">
-      <div className="rtitle">Your readings <span><i className="you" />you <i className="tw" />healthy, same size</span></div>
+      <div className="rtitle">Your readings <span><i className="you" />you <i className="tw" />a healthy person your size</span></div>
       <div className={`state ${asleep ? 'sleep' : ''}`}>{asleep ? 'Asleep · your body’s night rhythm' : 'Awake · resting'}</div>
       <div className="reading energy">
         <span className="rl">Energy from this {name}</span>
         <span className="rv">{Math.round(energy.absorbed(minute))}<small>/ {energy.total} kcal</small></span>
-        <span className="rd">{energy.total === 0 ? 'no calories' : energy.total < 10 ? 'almost none' : 'reached your blood so far'}</span>
+        <span className="rd">{energy.total === 0 ? 'no calories' : energy.total < 10 ? 'almost none' : 'has reached your blood so far'}</span>
         <span className="rt" />
         <span className="ebar2"><i style={{ width: `${energy.total ? (100 * energy.absorbed(minute)) / energy.total : 0}%` }} /></span>
       </div>
@@ -1029,7 +1036,7 @@ function TimelineBar({ u, minute, playing, togglePlay, setU, stages, stageIndex,
             <span className="tip">Bedtime {bedLabel}</span>
           </button>
         )}
-        <input type="range" min={0} max={1000} value={Math.round(u * 1000)} aria-label="Time after drinking" aria-valuetext={sinceText(minute, 'drink')}
+        <input type="range" min={0} max={1000} value={Math.round(u * 1000)} aria-label="Time since you had it" aria-valuetext={sinceText(minute, 'drink')}
           onChange={(e) => setU(+e.target.value / 1000)} />
         <div className="ticks">{TICKS.map(([m, l]) => <span key={l} style={{ left: `${uFromMinutes(m) * 100}%` }}>{l}</span>)}</div>
       </div>
@@ -1051,11 +1058,11 @@ function About({ onMethod }: { onMethod: () => void }) {
       <p><button className="link" onClick={() => window.dispatchEvent(new Event('i24-tour'))}>Show the quick guide again</button> · <button className="link" onClick={onMethod}>How we know: models, evidence levels, sources →</button></p>
       <p><b>Inside 24h</b> shows what one food or drink does inside a body like yours, minute by minute for a whole day: where it goes, how much is where, and what it changes. It is free.</p>
       <h3>Not medical advice</h3>
-      <p>This is an educational simulation of a typical healthy adult with your size, age and city. Real people differ a lot (the same meal can raise blood sugar twice as much in one person as in another). Do not use it to diagnose, treat, dose medicine, or decide whether you can drive. If you have diabetes, a heart, kidney or liver condition, are pregnant or take medication, ask your doctor.</p>
+      <p>This is an educational simulation of a typical healthy adult of your sex, age, height and weight, in your city. Real people differ a lot (the same meal can raise blood sugar twice as much in one person as in another). Do not use it to diagnose, treat, dose medicine, or decide whether you can drive. If you have diabetes, a heart, kidney or liver condition, are pregnant or take medication, ask your doctor.</p>
       <h3>Your privacy</h3>
       <p>Everything is calculated in your browser. What you type (your body, your city, your food) is not sent anywhere and is not stored by us.</p>
       <h3>How sure are we?</h3>
-      <p>Every statement carries a level of evidence and its sources (tap “How do we know?”). Estimates show how we calculated them, and anything not yet studied says so.</p>
+      <p>Every statement carries a level of evidence and its sources (tap “How do we know?”). Our estimates show how we calculated them, and anything not yet studied says so.</p>
       <LevelKey />
       <p><b>A</b> rests on consistent human studies or official bodies such as EFSA. <b>B</b> rests on human studies that are small or vary a lot. <b>C</b> is our own calculation from published numbers. <b>?</b> means nobody has measured it yet.</p>
       <h3>Data</h3>
@@ -1101,8 +1108,8 @@ function MissNote({ text, onPick }: { text: string; onPick: (parts: Part[]) => v
 function StageError({ error }: { error: unknown }) {
   return (
     <div className="stage-error" role="alert">
-      <b>{/webgl/i.test(String(error instanceof Error ? error.message : error)) ? 'Your browser can’t show 3D — try opening in Chrome/Safari.' : 'The 3D body could not load.'}</b>
-      <p>Everything else still works. Technical detail: {error instanceof Error ? error.message : String(error)}</p>
+      <b>{/webgl/i.test(String(error instanceof Error ? error.message : error)) ? 'Your browser can’t show 3D. Try opening this page in Chrome or Safari.' : 'The 3D body couldn’t load.'}</b>
+      <p>Everything else still works. Technical details: {error instanceof Error ? error.message : String(error)}</p>
     </div>
   );
 }
