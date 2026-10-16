@@ -20,12 +20,12 @@ export function whatHappens(id: SegId, kind: { drink: boolean; fat: boolean; sug
       ? `It mixes with stomach acid and is let out in small squirts.${kind.sugar ? ' Sugar makes it wait longer.' : ''}`
       : `Muscles churn it with acid into a paste and let it out bit by bit.${kind.fat ? ' Fat makes this slower.' : ''}`;
     case 'duodenum': return 'Bile and juices from the pancreas start breaking it apart.';
-    case 'small': return `This is where almost everything is absorbed into your blood${kind.sugar ? ': sugars within minutes' : ''}${kind.fibre ? '. Fibre passes on untouched' : ''}.`;
+    case 'small': return `This is where almost everything is absorbed into your blood${kind.sugar ? ': sugars within minutes' : ''}${kind.fibre ? '. Fiber passes on untouched' : ''}.`;
     case 'portal': return kind.alcohol ? 'Blood from the gut goes to the liver first, which starts removing the alcohol.' : 'Blood from the gut goes straight to the liver, which stores sugar and sorts what you absorbed.';
     case 'blood': return kind.caffeine ? 'Your blood carries it to every organ, including your brain.' : 'Your blood carries the energy and water to every cell.';
     case 'kidney': return 'Your kidneys filter out the extra water and waste.';
     case 'bladder': return 'It collects as urine until you go to the toilet.';
-    case 'colon': return 'Gut bacteria ferment the fibre while water is taken back. It slowly becomes stool and leaves within 1–2 days.';
+    case 'colon': return 'Gut bacteria ferment the fiber while water is taken back. It slowly becomes stool and leaves within 1–2 days.';
   }
 }
 

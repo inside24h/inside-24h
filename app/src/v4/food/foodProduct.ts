@@ -86,7 +86,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
       where: [
         g('In the stomach', s.stomachG, 'caf', 'stomach', meal.grams),
         g('In the small intestine', s.intestineG, 'caf', 'jejunum', meal.grams),
-        ...(s.residueG > 0.3 ? [{ label: 'Fibre in the large intestine', value: colon, unit: 'g', max: s.residueG, cls: 'met', organ: 'colon_trans' } as WhereRow] : []),
+        ...(s.residueG > 0.3 ? [{ label: 'Fiber in the large intestine', value: colon, unit: 'g', max: s.residueG, cls: 'met', organ: 'colon_trans' } as WhereRow] : []),
         { label: 'Energy in your blood so far', value: (t) => at(s.kcalAbsorbed, t), unit: 'kcal', max: Math.max(1, meal.kcal), cls: 'glu', organ: 'heart' },
       ],
       legend: mix
@@ -136,8 +136,8 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
         case 'stomach': return s.meal?.phases.drink && s.meal.phases.food
           ? { name: 'Stomach', claims: ['GE1', 'ML1', 'ML2', 'ML3'], text: mealDrinkNote(s), lines: [{ label: 'Drink still here', value: grams(at(s.meal.drinkStomachG, t)) }, { label: 'Food still here', value: grams(at(s.meal.foodStomachG, t)) }] }
           : { name: 'Stomach', claims: ['GE1', 'GE12'], text: `Half of this ${noun} has left your stomach after about ${s.t50} minutes.`, lines: [{ label: 'Still here', value: grams(at(s.stomachG, t)) }] };
-        case 'duodenum': case 'jejunum': case 'ileum': return { name: 'Small intestine', claims: ['SI10', 'TE1'], text: 'Here sugars, protein and fat are taken apart and absorbed into your blood and lymph. Fibre passes through untouched.', lines: [{ label: 'Being digested here', value: grams(at(s.intestineG, t)) }, { label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
-        case 'cecum': case 'colon_asc': case 'colon_trans': case 'colon_desc': case 'rectum': return { name: 'Large intestine', claims: ['SI10', 'CO1', 'CO3'], text: 'Fibre and leftovers arrive here. Bacteria ferment part of it while water is taken back. The trip through takes about 1–2 days.', lines: [{ label: 'Fibre here now', value: grams(s.colonG.reduce((a, c) => a + at(c, t), 0)) }, { label: 'Already out', value: grams(at(s.exitedG, t)) }] };
+        case 'duodenum': case 'jejunum': case 'ileum': return { name: 'Small intestine', claims: ['SI10', 'TE1'], text: 'Here sugars, protein and fat are taken apart and absorbed into your blood and lymph. Fiber passes through untouched.', lines: [{ label: 'Being digested here', value: grams(at(s.intestineG, t)) }, { label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
+        case 'cecum': case 'colon_asc': case 'colon_trans': case 'colon_desc': case 'rectum': return { name: 'Large intestine', claims: ['SI10', 'CO1', 'CO3'], text: 'Fiber and leftovers arrive here. Bacteria ferment part of it while water is taken back. The trip through takes about 1–2 days.', lines: [{ label: 'Fiber here now', value: grams(s.colonG.reduce((a, c) => a + at(c, t), 0)) }, { label: 'Already out', value: grams(at(s.exitedG, t)) }] };
         case 'pancreas': return { name: 'Pancreas', claims: ['GL1', 'GL4'], text: 'It answers sugar in your blood with insulin.', lines: [{ label: 'Insulin above baseline', value: `+${r0(at(s.insulin, t))} mU/L` }] };
         case 'liver': case 'portal_vein': return meal.alcoholG > 1
           ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a fixed speed. Nothing speeds it up.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
@@ -178,10 +178,10 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     return `${amount} ${name}`;
   };
   const what = parts.map((x) => amountWith(x.amountLabel, x.food.name.replace(/\s*\(.*\)$/, '').toLowerCase())).join(' + ');
-  const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fibre` : ''}.`;
-  const giLine = m.gi !== null && m.availCarbs >= 5 ? ` Glycaemic index ${m.gi} (${m.gi >= 70 ? 'high' : m.gi >= 56 ? 'medium' : 'low'}).`
-    : m.missingGi.length && gl !== null ? ` The glycaemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`
-    : m.missingGi.length ? ' Its glycaemic index has not been measured, so we don’t draw a sugar curve.' : '';
+  const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fiber` : ''}.`;
+  const giLine = m.gi !== null && m.availCarbs >= 5 ? ` Glycemic index ${m.gi} (${m.gi >= 70 ? 'high' : m.gi >= 56 ? 'medium' : 'low'}).`
+    : m.missingGi.length && gl !== null ? ` The glycemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`
+    : m.missingGi.length ? ' Its glycemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
     { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
     { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow, and it slides down your food pipe into your stomach.' },
@@ -194,14 +194,14 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         const steps = [m.availCarbs >= 2 && 'starch and sugar become glucose', m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
         return steps.length
-          ? `In the small intestine it is taken apart: ${steps.join(', ')}. These pass into your blood.${hasFibre ? ' Fibre goes on undigested.' : ''}`
+          ? `In the small intestine it is taken apart: ${steps.join(', ')}. These pass into your blood.${hasFibre ? ' Fiber goes on undigested.' : ''}`
           : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.`;
       })() },
   ];
   if (gl !== null && s.glucosePeakMmol >= 0.2) {
     const big = s.glucosePeakMmol >= 1.5;
     const who = isMeal ? mealSugarNote(s, meal) : '';
-    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD), p.glucoseUnit)} ${p.glucoseUnit} (a typical response, not personalised). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
+    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4'], text: `${who ? `${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD), p.glucoseUnit)} ${p.glucoseUnit} (a typical response, not personalized). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}` });
   }
   if (dipMin > 0) ch.push({ min: dipMin, title: 'The sugar dip', focus: 'brain', claims: ['GL7'], text: 'Your blood sugar drops a little below where you started. Many people feel hungry again around now.' });
   if (meal.alcoholG > 1) {
@@ -229,7 +229,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const beerOnly = meal.alcoholG > 1 && parts.every((x) => (x.food.p.alcoholG ?? 0) === 0 || (x.food.p.alcoholG ?? 0) < 6);
   if (meal.waterG >= 100) ch.push({ min: 120, title: 'Kidneys', focus: 'bladder', claims: beerOnly ? ['WK1', 'AL7'] : ['WK1'], text: `The extra water (${r0(meal.waterG)} ml) is filtered by your kidneys into your bladder over the next few hours.${beerOnly ? ' A beer does not make you lose more water than you drank.' : ''}` });
   if (hasFibre) {
-    ch.push({ min: cecumMin, title: 'Into the large intestine', focus: 'cecum', claims: ['SI10', 'SI7'], text: `What you can’t digest, ${r1(s.residueG)} g of fibre, reaches the start of your large intestine. Your gut bacteria start fermenting it.` });
+    ch.push({ min: cecumMin, title: 'Into the large intestine', focus: 'cecum', claims: ['SI10', 'SI7'], text: `What you can’t digest, ${r1(s.residueG)} g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it.` });
     ch.push({ min: 720, title: 'Through the colon', focus: 'colon_trans', claims: ['CO3'], text: 'The leftovers creep along your large intestine while water is taken back. This is the slowest part of the journey.' });
     ch.push({ min: 1440, title: '24 hours later', focus: 'colon_desc', claims: ['CO1', 'CO3'], text: `${r0((100 * s.exitedG[1440]) / s.residueG)}% has left your body so far. Food typically takes about 29 hours from mouth to toilet (the middle value); anywhere from 14 to 58 hours is normal.` });
   }
@@ -280,7 +280,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
       if (meal.alcoholG > 1) { const b = at(s.bac, t); out.push({ label: 'Blood alcohol', dir: b > 0.01 ? 'up' : 'same', value: b > 0.01 ? bacRangeText(b) : '0', note: b >= 0.2 ? 'attention worse: don’t drive' : b > 0.01 ? 'low, not zero: don’t drive' : 'none' }); }
       if (meal.caffeineMg >= 10) { const mg = at(s.caffeine.body, t); out.push({ label: 'Caffeine', dir: mg > 3 ? 'up' : 'same', value: `${r0(mg)} mg`, note: mg >= 75 ? 'clear boost' : mg >= 10 ? 'mild lift' : 'almost gone' }); }
       if (m.fat >= 5) { const tg = at(s.tgDelta, t); out.push({ label: 'Blood fat', dir: tg > 0.05 ? 'up' : 'same', value: tg > 0.05 ? `+${tg.toFixed(2)} mmol/L` : 'normal', note: tg > 0.05 ? 'fat from the meal' : t < 120 ? 'arrives in 2–4 h' : 'back to normal' }); }
-      if (hasFibre) { const c = s.colonG.reduce((a, x) => a + at(x, t), 0); out.push({ label: 'Fibre in your large intestine', dir: c > 0.1 ? 'up' : 'same', value: `${r1(c)} g`, note: c > 0.1 ? 'feeding your gut bacteria' : t < 200 ? 'still on its way' : 'mostly passed' }); }
+      if (hasFibre) { const c = s.colonG.reduce((a, x) => a + at(x, t), 0); out.push({ label: 'Fiber in your large intestine', dir: c > 0.1 ? 'up' : 'same', value: `${r1(c)} g`, note: c > 0.1 ? 'feeding your gut bacteria' : t < 200 ? 'still on its way' : 'mostly passed' }); }
       const dHr = at(v.effect.hr, t), dBp = at(v.effect.sbp, t);
       out.push({ label: 'Pulse', dir: dirOf(dHr, 0.5), value: `${r0(at(v.hr, t))} bpm`, note: Math.abs(dHr) >= 0.5 ? `${dHr > 0 ? '+' : ''}${dHr.toFixed(0)} from this ${noun}` : `unchanged by this ${noun}` });
       out.push({ label: 'Blood pressure', dir: dirOf(dBp, 0.5), value: `${r0(at(v.sbp, t))}/${r0(at(v.dbp, t))}`, note: Math.abs(dBp) >= 0.5 ? `${dBp > 0 ? '+' : ''}${dBp.toFixed(1)} mmHg` : `unchanged by this ${noun}` });

@@ -834,7 +834,7 @@ export default function AppV4() {
         <p className="note">The bars are our own simplified 0–100 scale, made so you can compare choices at a glance. Each rule below is tied to a study or an official guideline.</p>
         <ul className="rules">{RULES.map((r) => <li key={r.rule}><b>{r.bar}</b><span>{r.rule}</span><small>{r.source}</small></li>)}</ul>
       </Drawer>
-      <Drawer open={panel === 'colours'} title="How the colours work" onClose={() => setPanel(null)}>
+      <Drawer open={panel === 'colours'} title="How the colors work" onClose={() => setPanel(null)}>
         <p className="note"><b className="g">Green:</b> fine, your body is working normally. <b className="y">Yellow:</b> mild stress that your body handles easily. <b className="r">Red:</b> high stress, a bigger swing that your body works harder to even out. These cut-offs are our own simple scale (level C), built on the official categories named below.</p>
         <ul className="rules">{systems.map((s) => <li key={s.key}><b>{s.label}</b><span>{s.rule}</span></li>)}</ul>
       </Drawer>
@@ -987,7 +987,7 @@ function Readings({ you, sim, twin, profile, minute, onOpen, vitalClaims, name, 
           </button>
         );
       })}
-      <p className="rnote">Lines follow your body’s natural day and night. Blood sugar is a typical response, not personalised. Tap a reading to see why.</p>
+      <p className="rnote">Lines follow your body’s natural day and night. Blood sugar is a typical response, not personalized. Tap a reading to see why.</p>
     </section>
   );
 }
@@ -1082,7 +1082,7 @@ function About({ onMethod }: { onMethod: () => void }) {
       <LevelKey />
       <p><b>A</b> rests on consistent human studies or official bodies such as EFSA. <b>B</b> rests on human studies that are small or vary a lot. <b>C</b> is our own calculation from published numbers. <b>?</b> means nobody has measured it yet.</p>
       <h3>Data</h3>
-      <p>Food values: USDA FoodData Central (SR Legacy). Glycaemic index: international GI tables (Atkinson 2008). Weather: ERA5 reanalysis via Open-Meteo and NASA POWER (typical day for the month, not a live forecast).</p>
+      <p>Food values: USDA FoodData Central (SR Legacy). Glycemic index: international GI tables (Atkinson 2008). Weather: ERA5 reanalysis via Open-Meteo and NASA POWER (typical day for the month, not a live forecast).</p>
       <p>Anatomy: <a href={SOURCES.bodyparts3d.url} target="_blank" rel="noreferrer">BodyParts3D, © The Database Center for Life Science, licensed under CC Attribution 4.0 International</a>.</p>
     </div>
   );

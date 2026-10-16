@@ -26,12 +26,12 @@ const claims: Claim[] = [
   c('KB4', 'A', 'With a sensor, cola peaked at 20 minutes, was back to baseline at 60, and dropped below baseline after 75 minutes. Eating it with food removed the dip.', ['kim2025']),
   c('KB10', 'C', 'That dip is about −0.7 mmol/L at two hours for a fasting value of 5.0.', ['kim2025'], { method: '−13.7% at 120 min (KB4) × 5.0 mmol/L = −0.69 mmol/L.' }),
   c('KB9', 'A', 'Bigger dips 2–3 hours after eating predicted more hunger and eating more later (1,070 people).', ['wyatt2021']),
-  c('KB7', 'A', 'Glycaemic index of soft drinks: 59 (international tables); one UK cola tested at 77.', ['atkinson2008']),
+  c('KB7', 'A', 'Glycemic index of soft drinks: 59 (international tables); one UK cola tested at 77.', ['atkinson2008']),
   c('KM1', 'C', 'Our blood-sugar curve is fitted to those measurements: +2.2 mmol/L at 30 min, baseline at ~60 min, ≈ −0.7 at 2 h.', [], { method: 'Difference of two gamma-shaped curves fitted to KB2, KB4, KB10; tested in colaSim.test.ts. Real people vary by about ±1 mmol/L at the peak.' }),
   c('KK3', 'A', 'Caffeine raises the blood-sugar response dose by dose; at cola’s 0.45 mg/kg that is only about +7% (our scaling).', ['beaudoin2013']),
-  c('KH1', 'B', 'In a cola-like drink, the sugar cancelled the blood-pressure rise from the caffeine.', ['ravussin2022']),
+  c('KH1', 'B', 'In a cola-like drink, the sugar canceled the blood-pressure rise from the caffeine.', ['ravussin2022']),
   c('KH4', 'C', 'Sugar may raise pulse by 0–6 bpm for about 2 hours; we show +3.', ['eckstein2022'], { method: 'A double dose of sugar raised average pulse by 6 bpm over 2 h (65 vs 59); one can is about half that dose.' }),
-  c('KW1', 'A', '1 litre of cola produced no more urine over 4 hours than 1 litre of water. One can does not dehydrate you.', ['maughan2016']),
+  c('KW1', 'A', '1 liter of cola produced no more urine over 4 hours than 1 liter of water. One can does not dehydrate you.', ['maughan2016']),
   c('KT5', 'A', 'Phosphoric acid did not increase calcium loss in urine; only the caffeine did, slightly, and that was made up later.', ['heaney2001']),
 ];
 

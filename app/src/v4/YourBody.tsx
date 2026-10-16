@@ -41,7 +41,7 @@ export function YourBody({ profile: p, setProfile, dose, setDose, showDose = tru
         <Factor id="caffeineDaily" label="I have coffee or tea most days" on={!!p.caffeineDaily} set={(v) => set('caffeineDaily', v)} />
         <Factor id="withMeal" label="I’ve just eaten a meal (last hour or so)" on={!!p.withMeal} set={(v) => set('withMeal', v)} />
         <p className="pf-device"><span aria-hidden="true">🔒 </span>Stays on your device: saved only in this browser, never sent anywhere.</p>
-        <p className="note">These don’t change your blood sugar curve (only a glucose sensor can personalise it) or how fast caffeine leaves your body with age (it’s the same at 20 and at 70).</p>
+        <p className="note">These don’t change your blood sugar curve (only a glucose sensor can personalize it) or how fast caffeine leaves your body with age (it’s the same at 20 and at 70).</p>
       </fieldset>
 
       <fieldset>

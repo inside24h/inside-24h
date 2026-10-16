@@ -57,9 +57,9 @@ add("iced-tea", "Iced tea (sweetened)", ["ledeni čaj", "ledeni caj", "iced tea"
     171888, "#c98a2b", "all", ('ml', 250, r'cup'), note="Black tea ready-to-drink, lemon, sweetened.")
 add("milk-whole", "Milk (whole)", ["mlijeko", "punomasno mlijeko", "mlijeko 3.2", "whole milk", "milk", "mleko", "mlijeko punomasno"], "liquid",
     171265, "#f4f1ea", "none", ('ml', 250, r'cup'), gi="milk_full", note="3.25% fat, with added vitamin D.")
-add("milk-semi-skimmed", "Milk (semi-skimmed, 2%)", ["polumasno mlijeko", "mlijeko 1.5", "mlijeko 2", "semi-skimmed milk", "reduced fat milk", "2% milk", "milk", "mlijeko"], "liquid",
+add("milk-semi-skimmed", "Milk (2%, reduced-fat)", ["milk (semi-skimmed, 2%)", "polumasno mlijeko", "mlijeko 1.5", "mlijeko 2", "semi-skimmed milk", "reduced fat milk", "2% milk", "milk", "mlijeko"], "liquid",
     171267, "#f4f1ea", "none", ('ml', 250, r'cup'), gi="milk_full", note="2% fat. GI: Table 1 gives full-fat 39 and skim 37; the full-fat value is shown here as nearest tested class.")
-add("milk-skimmed", "Milk (skimmed)", ["obrano mlijeko", "mlijeko 0.5", "skim milk", "skimmed milk", "nonfat milk", "milk", "mlijeko"], "liquid",
+add("milk-skimmed", "Milk (skim)", ["milk (skimmed)", "obrano mlijeko", "mlijeko 0.5", "skim milk", "skimmed milk", "nonfat milk", "milk", "mlijeko"], "liquid",
     171269, "#f0f0ea", "none", ('ml', 250, r'cup'), gi="milk_skim")
 add("chocolate-milk", "Chocolate milk", ["čokoladno mlijeko", "cokoladno mlijeko", "chocolate milk", "kakao"], "liquid",
     170880, "#8a5a3c", "minusLactose", ('ml', 250, r'cup'))
@@ -153,7 +153,7 @@ add("potato-mashed", "Mashed potato (milk and butter)", ["pire", "pire krumpir",
 # "small" 71 g. "chips" stays with potato crisps only (it was on both; British chips = fries is the rarer reading here).
 add("fries", "French fries", ["pomfrit", "pommes frites", "french fries", "fries", "pržen krumpir", "prženi krumpir"], "solid",
     170698, "#e9b844", "none", ('g', 71.0, "1 small portion", "USDA SR Legacy food_portion (serving small) = 71 g"), gi="fries", note="USDA fast-food record (fried in vegetable oil). Oven-baked frozen fries have about half the fat and calories.")
-add("oatmeal", "Oatmeal / porridge (cooked)", ["zobena kaša", "zobena kasa", "zobene pahuljice", "kaša", "kasa", "porridge", "oatmeal", "oats", "owsianka"], "semi",
+add("oatmeal", "Oatmeal (cooked)", ["oatmeal / porridge (cooked)", "oatmeal / porridge", "zobena kaša", "zobena kasa", "zobene pahuljice", "kaša", "kasa", "porridge", "oatmeal", "oats", "owsianka"], "semi",
     173905, "#d9c7a3", "none", ('p', r'cup'), gi="porridge", note="Cooked with water, no sugar or milk.")
 add("cornflakes", "Cornflakes", ["kukuruzne pahuljice", "corn flakes", "cornflakes", "pahuljice", "žitarice", "zitarice", "cereal"], "solid",
     174648, "#e8b94a", "upper", ('p', r'cup|NLEA'), gi="cornflakes",
@@ -171,7 +171,7 @@ add("chicken-breast", "Chicken breast (roasted)", ["piletina", "pileća prsa", "
     "Chicken, broilers or fryers, breast, meat only, cooked, roasted", "#f0dcc0", "none", ('p', r'breast|half'))
 add("beef-steak", "Beef steak (grilled)", ["biftek", "goveđi odrezak", "govedi odrezak", "steak", "govedina", "beef", "odrezak", "beef steak"], "solid",
     168727, "#8a4a2a", "none", ('p', r'steak|oz'))
-add("cevapi", "Ćevapi (grilled minced meat)", ["ćevapi", "cevapi", "ćevapčići", "cevapcici", "ćevap", "cevap", "minced meat", "mljeveno meso"], "solid",
+add("cevapi", "Ćevapi (grilled ground meat)", ["ćevapi (grilled minced meat)", "ground meat", "ćevapi", "cevapi", "ćevapčići", "cevapcici", "ćevap", "cevap", "minced meat", "mljeveno meso"], "solid",
     "Beef, ground, 80% lean meat / 20% fat, patty, cooked, pan-broiled", "#a35a35", "none", ('p', r'oz'), proxy=True,
     note="PROXY: USDA has no ćevapi record. Ground beef 80/20 pan-broiled patty is the closest class (real ćevapi are usually beef-lamb-pork with spices and salt).")
 add("pork-chop", "Pork chop / loin (roasted)", ["svinjetina", "svinjski kotlet", "kotlet", "pork", "svinjsko meso", "pork chop", "svinjski"], "solid",
@@ -319,7 +319,7 @@ add("chocolate-dark", "Dark chocolate (70-85% cacao)", ["tamna čokolada", "tamn
     "Chocolate, dark, 70-85% cacao solids", "#3a1c10", "minusLactose", ('p', r'bar|oz|piece'), gi="chocolate", note="GI is the generic Table 1 'chocolate' value (40).")
 add("ice-cream", "Ice cream (vanilla)", ["sladoled", "ice cream", "vanilla ice cream", "sladoled vanilija"], "semi",
     167575, "#f6ecc8", "minusLactose", ('p', r'cup|scoop|bar'), gi="ice_cream")
-add("biscuits", "Butter biscuits / cookies", ["keksi", "biskvit", "cookies", "biscuits", "keks", "kolačići", "kolacici", "petit beurre"], "solid",
+add("biscuits", "Butter cookies", ["butter biscuits / cookies", "keksi", "biskvit", "cookies", "biscuits", "keks", "kolačići", "kolacici", "petit beurre"], "solid",
     "Cookies, butter, commercially prepared, enriched", "#e0b878", "upper", ('p', r'cookie|oz'))
 add("croissant", "Croissant", ["kroasan", "croissant", "kroasani", "pecivo"], "solid",
     "Croissants, butter", "#e2b25e", "null", ('p', r'medium'), note="Contains added sugar in dough but USDA gives no split; null.")
@@ -333,7 +333,7 @@ add("sugar", "Sugar (white)", ["šećer", "secer", "sugar", "bijeli šećer", "k
     "Sugars, granulated", "#f8f8f4", "all", ('p', r'^tsp'), gi="sucrose")
 add("jam", "Jam / preserves", ["džem", "dzem", "marmelada", "jam", "preserves", "pekmez"], "semi",
     "Jams and preserves", "#a8283a", "all", ('p', r'tbsp'), gi="jam", note="GI is Table 1 'strawberry jam/jelly'.")
-add("potato-chips", "Potato chips (crisps)", ["čips", "cips", "chips", "crisps", "potato chips", "grickalice"], "solid",
+add("potato-chips", "Potato chips", ["potato chips (crisps)", "čips", "cips", "chips", "crisps", "potato chips", "grickalice"], "solid",
     169677, "#e8c060", "null", ('p', r'oz|cup|10 chips'), gi="crisps")
 add("popcorn", "Popcorn (air-popped)", ["kokice", "kokice zrnje", "popcorn"], "solid",
     167959, "#f5ecc8", "none", ('p', r'cup'), gi="popcorn")

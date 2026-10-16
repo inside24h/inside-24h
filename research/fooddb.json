@@ -851,8 +851,8 @@
  },
  {
   "id": "milk-semi-skimmed",
-  "name": "Milk (semi-skimmed, 2%)",
-  "aliases": [
+  "name": "Milk (2%, reduced-fat)",
+  "aliases": ["milk (2%, reduced-fat)", 
    "2% milk",
    "milk",
    "milk (semi-skimmed, 2%)",
@@ -896,8 +896,8 @@
  },
  {
   "id": "milk-skimmed",
-  "name": "Milk (skimmed)",
-  "aliases": [
+  "name": "Milk (skim)",
+  "aliases": ["milk (skim)", 
    "milk",
    "milk (skimmed)",
    "mlijeko",
@@ -2659,8 +2659,8 @@
  },
  {
   "id": "oatmeal",
-  "name": "Oatmeal / porridge (cooked)",
-  "aliases": [
+  "name": "Oatmeal (cooked)",
+  "aliases": ["oatmeal (cooked)", "oatmeal / porridge", 
    "kasa",
    "kaša",
    "oatmeal",
@@ -2967,8 +2967,8 @@
  },
  {
   "id": "cevapi",
-  "name": "Ćevapi (grilled minced meat)",
-  "aliases": [
+  "name": "Ćevapi (grilled ground meat)",
+  "aliases": ["ćevapi (grilled ground meat)", "ground meat", 
    "cevap",
    "cevapcici",
    "cevapi",
@@ -5856,8 +5856,8 @@
  },
  {
   "id": "biscuits",
-  "name": "Butter biscuits / cookies",
-  "aliases": [
+  "name": "Butter cookies",
+  "aliases": ["butter cookies", 
    "biscuits",
    "biskvit",
    "butter biscuits / cookies",
@@ -6154,7 +6154,7 @@
  },
  {
   "id": "potato-chips",
-  "name": "Potato chips (crisps)",
+  "name": "Potato chips",
   "aliases": [
    "chips",
    "cips",

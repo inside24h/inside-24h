@@ -89,7 +89,7 @@ export function foodRoute(s: FoodSim, grams: number, waterMl: number, isDrink: b
       blood: alcohol && s.bac && at(s.bac, m) >= 0.01 ? { ...st(Math.max(at(s.carbsInBlood, m), abs(m) * grams * 0.08), peakCarb > 0.3 ? peakCarb * 2 : grams, 0.4 + 0.6 * abs(m)), frac: Math.max(0.3, Math.min(1, at(s.bac, m) / peakBac)), text: `alcohol ${bacRangeText(at(s.bac, m))}` }
         : peakCarb > 0.3 ? st(at(s.carbsInBlood, m), peakCarb * 2, 0.4 + 0.6 * abs(m), 'g sugar') : st(abs(m) * grams * 0.08, grams, abs(m)),
       ...(waterMl >= 50 ? { kidney: st(k(m) * waterMl * 0.1, waterMl, k(m), 'ml'), bladder: st(recent(s.bladder, m), waterMl, k(m), 'ml urine') } : {}),
-      ...(s.residueG > 0.3 ? { colon: { ...st(colon(m), s.residueG * 0.8, Math.max(cIn(m), cOut(m), colon(m) > 0.05 ? 0.15 : 0), 'g fibre'), front: colonFront(m) } } : {}),
+      ...(s.residueG > 0.3 ? { colon: { ...st(colon(m), s.residueG * 0.8, Math.max(cIn(m), cOut(m), colon(m) > 0.05 ? 0.15 : 0), 'g fiber'), front: colonFront(m) } } : {}),
     }),
   };
 }

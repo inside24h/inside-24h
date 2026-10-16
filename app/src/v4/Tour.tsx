@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 const STEPS = [
   { cls: 'tour-l', title: 'How you are doing', text: 'These lights show how each part of you is doing. Green: fine. Yellow: mild stress. Red: high stress. Tap one to see its hardest moment.' },
   { cls: 'tour-r', title: 'Where it goes', text: 'This is the trip through your body: which organ, when, for how long and how much. Tap a place to fly there.' },
-  { cls: 'tour-b', title: 'Watch the whole day', text: 'Press ▶ to play the 24 hours, or tap a step. The coloured strips show when something happens.' },
+  { cls: 'tour-b', title: 'Watch the whole day', text: 'Press ▶ to play the 24 hours, or tap a step. The colored strips show when something happens.' },
 ];
 const KEY = 'i24-tour-done';
 

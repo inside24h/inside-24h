@@ -70,7 +70,7 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
           <p>{sys.says(lvl, m)}</p>
           {tipKey && lvl > 0 && <p className="calmtip"><span aria-hidden="true">→ </span>{TIPS[tipKey].text}</p>}
           <div className="calmexplainbtns">
-            {onRules && <button className="link" onClick={onRules}>How the colours work</button>}
+            {onRules && <button className="link" onClick={onRules}>How the colors work</button>}
             <button className="link" onClick={() => setOpen(null)}>Close</button>
           </div>
         </div>

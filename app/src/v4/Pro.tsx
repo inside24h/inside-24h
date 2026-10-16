@@ -8,7 +8,7 @@ const FREE = [
 const PRO = [
   ['📅', 'Your history', 'Everything you ate this week in one view, with your sugar and sleep day by day.'],
   ['👨‍👩‍👧', 'Family profiles', 'Separate bodies for you, your partner, your kids or your parents.'],
-  ['🍲', 'Your own meals', 'Save your recipes and favourite meals and open them in one tap.'],
+  ['🍲', 'Your own meals', 'Save your recipes and favorite meals and open them in one tap.'],
   ['⇄', 'Bigger comparisons', 'Compare up to four foods or whole meals at once.'],
   ['🎬', 'Clean videos', 'Videos without the Inside 24h mark, with your own name or logo.'],
   ['📄', 'Report for your doctor', 'A one-page PDF of a day or a week to take to your doctor or dietitian.'],

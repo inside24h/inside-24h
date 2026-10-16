@@ -15,7 +15,7 @@ export function organInfo(key: string, sim: Timeline, m: number): OrganInfo | nu
   const gone = at(sim.metabolites, m) + at(sim.cleared, m);
   switch (key) {
     case 'tongue': case 'esophagus':
-      return { name: key === 'tongue' ? 'Tongue' : 'Oesophagus (food pipe)', lines: [], claims: ['P1'],
+      return { name: key === 'tongue' ? 'Tongue' : 'Esophagus (food pipe)', lines: [], claims: ['P1'],
         text: 'The shot passes through in seconds on its way to the stomach.' };
     case 'stomach':
       return { name: 'Stomach', claims: ['G1', 'G2', 'F4'], text: 'Liquid leaves the stomach fast: half of it within about 13 minutes.',

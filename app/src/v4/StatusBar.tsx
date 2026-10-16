@@ -40,7 +40,7 @@ export function StatusLights({ systems, minute, onJump, onRules, weather }: {
           </button>
         );
       })}
-      <button className="link lrules" onClick={onRules}>How the colours work</button>
+      <button className="link lrules" onClick={onRules}>How the colors work</button>
     </div>
   );
 }
@@ -55,7 +55,7 @@ export function StatusStrips({ systems, minute, onSeek, clock }: { systems: Syst
     return w as Level;
   })), [systems]);
   return (
-    <div className="strips" role="group" aria-label="The colours across 24 hours" onClick={(e) => {
+    <div className="strips" role="group" aria-label="The colors across 24 hours" onClick={(e) => {
       const r = e.currentTarget.getBoundingClientRect();
       onSeek(minutesFromU(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))));
     }}>

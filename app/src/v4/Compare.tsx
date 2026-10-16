@@ -52,7 +52,7 @@ function SugarChart({ a, b, unit }: { a: Analysis; b: Analysis; unit: Profile['g
         {[60, 120, 180].map((m) => <text key={m} x={(m / T) * W} y={H - 3} className="tick">{m / 60} h</text>)}
         {lines.map((l, i) => l && <path key={i} d={path(l)} className="ln" style={{ stroke: LINE[i] }} />)}
       </svg>
-      {lines.some((l) => !l) && <div className="note">Foods without a measured glycaemic index get no curve.</div>}
+      {lines.some((l) => !l) && <div className="note">Foods without a measured glycemic index get no curve.</div>}
     </div>
   );
 }

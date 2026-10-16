@@ -84,7 +84,7 @@ export const SOURCES: Record<string, Source> = {
   choi2008: { id: 'choi2008', cite: 'Choi HK, Curhan G 2008, BMJ', url: pubmed('18244959') },
   tucker2006: { id: 'tucker2006', cite: 'Tucker KL et al. 2006, Am J Clin Nutr (Framingham)', url: pubmed('17023723') },
   wang2022: { id: 'wang2022', cite: 'Wang Y et al. 2022, Nutrients (meta-analysis)', url: pubmed('35215425') },
-  peronnet2012: { id: 'peronnet2012', cite: 'Péronnet F et al. 2012, Eur J Appl Physiol (labelled water)', url: pubmed('21997675') },
+  peronnet2012: { id: 'peronnet2012', cite: 'Péronnet F et al. 2012, Eur J Appl Physiol (labeled water)', url: pubmed('21997675') },
   liska2019: { id: 'liska2019', cite: 'Liska D et al. 2019, Nutrients (review)', url: 'https://europepmc.org/article/PMC/PMC6356561' },
   calvi2024: { id: 'calvi2024', cite: 'Calvi A et al. 2024, Front Endocrinol', url: pubmed('38982989') },
   oyewunmi2023: { id: 'oyewunmi2023', cite: 'Oyewunmi OA et al. 2023, J Am Heart Assoc (meta-analysis)', url: pubmed('37929748') },

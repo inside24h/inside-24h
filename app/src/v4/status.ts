@@ -14,7 +14,7 @@ export interface System {
   levels: Uint8Array; // one per minute, 0..1440
   says: (lvl: Level, m: number) => string; // plain sentence for that moment
   rule: string; // how the colour is decided
-  unknown?: boolean; // no data to judge (e.g. a food without a measured glycaemic index)
+  unknown?: boolean; // no data to judge (e.g. a food without a measured glycemic index)
   /** next step for that moment (content/tips.ts), only when the light is yellow or red */
   tip?: (lvl: Level, m: number) => TipKey | null;
 }
@@ -65,7 +65,7 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
       rule: 'Green: blood sugar within 1.5 mmol/L of where you started. Yellow: a jump of 1.5–3 mmol/L, a dip of 0.5–1 mmol/L, or above 7.8. Red: a jump over 3, a dip over 1, or above 10 mmol/L.',
       says: (l, m) => {
         const d = at(v.effect.glucose, m) / 18;
-        if (sugarUnknown) return 'Not measured for this food (no glycaemic index yet), so we don’t rate it.';
+        if (sugarUnknown) return 'Not measured for this food (no glycemic index yet), so we don’t rate it.';
         if (l === 0) return 'Steady energy: your blood sugar is in its normal range.';
         return d > 0 ? `Blood sugar peak: ${l === 2 ? 'a big rise' : 'a moderate rise'}. Insulin is bringing it back down.` : 'Energy dip: your blood sugar is below where you started. You may feel hungry or tired.';
       },

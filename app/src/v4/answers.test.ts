@@ -18,11 +18,11 @@ describe('quick answers: honest about what we cannot know', () => {
     expect(a.a).toMatch(/0\.36–0\.90 ‰/); // −40% / +50% range around the 0.6 peak (alcohol.md A12)
     expect(a.tone).toBe(2);
   });
-  it('sugar: a range and a "typical, not personalised" label', () => {
+  it('sugar: a range and a "typical, not personalized" label', () => {
     const g = curve((m) => 2.3 * 18.016 * Math.exp(-(((m - 30) / 15) ** 2)));
     const a = quickAnswers({ ...base, glucoseDeltaMgDl: g }).find((x) => x.q === 'Will my blood sugar rise?')!;
     expect(a.a).toMatch(/\+1\.4–3\.2 mmol\/L/);
-    expect(a.note).toBe('Typical response, not personalised');
+    expect(a.note).toBe('Typical response, not personalized');
   });
   it('next step: the worst light’s tip; the alcohol tip is not repeated next to the driving answer', () => {
     const energy = sys('energy', 1, () => 'sugarSpike');

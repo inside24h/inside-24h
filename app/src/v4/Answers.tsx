@@ -60,11 +60,11 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     if (mmol < 0.3) out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: 'No, it stays steady.', tone: 0, tag: 'typical' });
     // a range: ±1 SD between people ≈ ±40% (cola.md B1, digestion-generic.md GL8)
     else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: `${mmol >= 1.5 ? 'Yes' : 'A little'}: about ${glucoseRangeTextIn(mmol, x.glucoseUnit)} around ${at0(peakAt)}${backAt > 0 ? `, normal again by about ${at0(backAt)}` : ''}.`, tone: mmol >= 1.5 ? 1 : 0,
-      note: 'Typical response, not personalised', title: SUGAR_WHY, tag: 'typical' });
+      note: 'Typical response, not personalized', title: SUGAR_WHY, tag: 'typical' });
     if (low / 18.016 <= -0.3) out.push({ icon: '🍽️', q: 'Will I get hungry again soon?', a: `Probably around ${at0(lowAt)}, when your blood sugar dips below where it started.`, tone: 1, tag: 'typical' });
   } else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: x.bac
     ? 'Hard to say: alcohol changes how your liver handles sugar, so we don’t draw a curve.'
-    : 'We can’t say: its glycaemic index hasn’t been measured yet.', tone: 0 });
+    : 'We can’t say: its glycemic index hasn’t been measured yet.', tone: 0 });
   // Meal as a whole: names the item behind each effect (food/mealWords.ts); the single-food answers stay as they are
   if (x.mealLines?.length) out.push({ icon: '🍱', q: 'How does this meal work?', a: x.mealLines.join(' '), tone: 0, note: 'The meal as a whole, estimated from its parts' });
   // Sleep

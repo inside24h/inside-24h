@@ -24,6 +24,9 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
   const results = useMemo(() => suggest(q, 30), [q]);
   const listId = useId();
   const input = useRef<HTMLInputElement>(null);
+  // After a pick in Browse, the dialog hands focus back to this input; that must not reopen the list over the result.
+  const quiet = useRef(false);
+  const hush = () => { quiet.current = true; window.setTimeout(() => { quiet.current = false; }, 400); };
   const pick = (s: Suggestion) => {
     if (adding) onAdd!(s.parts, s.text); else onPick(s.parts, q.trim() || s.text);
     setQ(''); setOpen(false); input.current?.blur(); if (adding) onDone?.();
@@ -45,7 +48,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
           placeholder={adding ? 'Add to your meal, e.g. fries or cola…' : big ? 'e.g. apple, pizza, latte' : current ? (current.includes(' + ') ? 'Search for something else…' : `${current} · Try something else…`) : 'Search for a food or drink'}
           role="combobox" aria-expanded={open} aria-controls={listId} aria-autocomplete="list" aria-label={adding ? 'Add something to your meal' : 'What did you eat or drink?'}
           aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
-          onFocus={() => setOpen(true)}
+          onFocus={() => { if (!quiet.current) setOpen(true); }}
           onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }}
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(results.length - 1, a + 1)); }
@@ -90,8 +93,8 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
         </ul>
       )}
       {browse && createPortal(<Browse onClose={() => { setBrowse(false); if (adding) onDone?.(); }}
-        onPick={(parts, text) => { setBrowse(false); setQ(''); if (adding) { onAdd!(parts, text); onDone?.(); } else onPick(parts, text); }}
-        onAdd={onAdd ? (parts, text) => { setBrowse(false); setQ(''); onAdd(parts, text); onDone?.(); } : undefined} />, document.body)}
+        onPick={(parts, text) => { hush(); setBrowse(false); setQ(''); if (adding) { onAdd!(parts, text); onDone?.(); } else onPick(parts, text); }}
+        onAdd={onAdd ? (parts, text) => { hush(); setBrowse(false); setQ(''); onAdd(parts, text); onDone?.(); } : undefined} />, document.body)}
     </div>
   );
 }
