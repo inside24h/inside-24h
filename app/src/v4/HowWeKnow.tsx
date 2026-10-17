@@ -1,7 +1,8 @@
 // "How we know": the methodology page in plain English, plus the one-line disclaimer shown next to the estimates.
 // It reuses the claims (with their levels and sources) that the evidence drawers already show.
 import { ESPRESSO } from '../content/espresso';
-import { FOOD_CLAIMS } from '../content/food';
+import { FOOD_CLAIMS, foodSourceClaims } from '../content/food';
+import { FOODS } from './food/parse';
 import { SOURCES } from '../content/sources';
 import { LEVEL_LABEL, type Claim } from '../content/types';
 import { TIPS, tipSource } from '../content/tips';
@@ -70,6 +71,8 @@ export function HowWeKnow() {
 
       <h3>Data</h3>
       <p>Food values: <a href="https://fdc.nal.usda.gov/" target="_blank" rel="noreferrer">USDA FoodData Central</a> (SR Legacy). Glycemic index: international GI tables (Atkinson 2008). Everything else: the published studies linked on each statement.</p>
+      <p>Where USDA does not match what is sold in Europe, we use the product label instead:</p>
+      <ul className="claims">{FOODS.flatMap((f) => foodSourceClaims(f.id)).map((id) => FOOD_CLAIMS[id]).filter((c): c is Claim => !!c).map((c) => <ClaimRow key={c.id} claim={c} />)}</ul>
       <p>Anatomy: <a href={SOURCES.bodyparts3d.url} target="_blank" rel="noreferrer">BodyParts3D, © The Database Center for Life Science, licensed under CC Attribution 4.0 International</a>.</p>
     </div>
   );

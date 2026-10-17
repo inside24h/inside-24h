@@ -2,53 +2,30 @@
 // "pizza and a cola". Returns the foods with their amount in grams and the macros, computed from USDA SR Legacy
 // (per 100 g) and GI from Atkinson 2008 (Table 1). Portion words without a USDA weight use OUR assumed sizes,
 // marked `assumed`, so the screen can say so.
+// DATA: ./fooddb.json is GENERATED (research/tools/build_fooddb.py build → sync_app_fooddb.py); never edit it or patch
+// it here. Typical servings (`assumedServing`), the Atkinson Supplementary-Table GI values and the label overrides
+// (cola EU can, Red Bull, Nutella …, each with its source in `src`) all live in research/tools/fooddb_spec.py now.
+// Beer has no GI on purpose (Atkinson A1 lists 66): alcohol changes how the liver handles glucose.
 import raw from './fooddb.json';
-import { COLA } from '../../science/colaSim';
 
 export interface Per100 {
   kcal: number; carbs: number | null; sugars: number | null; freeSugars: number | null; fiber: number | null; fat: number | null;
   satFat: number | null; protein: number | null; sodiumMg: number | null; caffeineMg: number | null; alcoholG: number | null; waterG: number | null;
 }
+/** A value that is not from USDA: which fields, the evidence level, the sentence for "How do we know?" and the source. */
+export interface FoodSource { fields: string[]; level: 'A' | 'B' | 'C'; text: string; cite: string; url: string }
 export interface Food {
   id: string; name: string; aliases: string[]; kind: 'liquid' | 'semi' | 'solid';
   serving: { label: string; grams: number }; p: Per100; gi: number | null; color: string; proxy: boolean; recipe: boolean; fdc: number | null;
+  /** a typical size we chose (level C), not a USDA or label portion */
   assumedServing?: boolean;
+  /** one countable piece: "5 ćevapi", "10 olives" */
+  piece?: { label: string; grams: number };
+  /** a brand alias with its own pack: "monster" → 1 can (500 ml) */
+  aliasServing?: Record<string, { label: string; grams: number }>;
+  src?: FoodSource[];
 }
-// A few USDA portions are odd for everyday use (a 139 g "slice" of baguette, 1/9 of a frozen pizza, a cup of seeds).
-// These get a typical serving instead, marked `assumedServing` so the screen says "typical size" (level C).
-const SERVING_FIX: Record<string, { label: string; grams: number }> = {
-  'bread-french': { label: '1 slice', grams: 30 },
-  pizza: { label: '1 slice', grams: 107 }, // one slice of a 14-inch pizza, about 1/8
-  'sunflower-seeds': { label: '1 handful', grams: 30 },
-  muesli: { label: '1 bowl', grams: 60 },
-  'dried-apricots': { label: '1 handful', grams: 40 },
-  'dried-figs': { label: '1 handful', grams: 40 },
-  'chocolate-dark': { label: '4 squares', grams: 40 },
-  'cheese-cottage': { label: '1/2 cup', grams: 105 },
-  burek: { label: '1 piece', grams: 200 }, // a bakery piece of burek is far larger than the USDA turnover
-};
-// GI added from Atkinson 2008 Supplementary Table A1 (healthy subjects) — research/gi-additions.md. Only foods with
-// one value for the same food; ranges and "nearest food only" (pizza, burek, croissant…) stay unmeasured. Beer (66 in
-// the table) is left out on purpose: alcohol changes how the liver handles glucose, so a GL curve would mislead.
-const GI_ADD: Record<string, number> = {
-  doughnut: 75, 'cake-sponge': 46, hamburger: 66, grapes: 59, cherries: 63, kiwi: 58, strawberries: 40,
-  melon: 65, peas: 51, 'beans-white': 31, hummus: 6,
-};
-// ONE source of truth for regular cola: the EU can label that the cola story uses (science/colaSim.ts COLA.eu,
-// research/cola.md P1, P5), not USDA's generic US cola. USDA gives 42 kcal per 100 g, the EU label 42 kcal per 100 ml,
-// so a 330 ml can (342.6 g) came out as 144 kcal in search and meals but 139 kcal in the story. Per-100 g values are
-// derived from the can: 139 kcal, 35 g sugar (all free sugar), 0 g fat, 32 mg caffeine.
-const labelFix = (f: Food): Food => {
-  if (f.id !== 'cola') return f;
-  const per100g = (perCan: number) => (perCan * 100) / f.serving.grams;
-  const sugar = per100g(COLA.eu.sugarG);
-  return { ...f, p: { ...f.p, kcal: per100g(COLA.eu.kcal), carbs: sugar, sugars: sugar, freeSugars: sugar, fat: 0, satFat: 0, caffeineMg: per100g(COLA.caffeineMg) } };
-};
-export const FOODS: Food[] = (raw as Food[]).map((f0) => {
-  const f = labelFix(f0);
-  const g = f.gi === null && GI_ADD[f.id] !== undefined ? { ...f, gi: GI_ADD[f.id] } : f;
-  return SERVING_FIX[g.id] ? { ...g, serving: SERVING_FIX[g.id], assumedServing: true } : g;
-});
+export const FOODS: Food[] = raw as Food[];
 export const FOOD_BY_ID: Record<string, Food> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
 
 export interface Part { food: Food; grams: number; amountLabel: string; assumed: boolean }
@@ -80,17 +57,28 @@ const PORTION_ML: [RegExp, number, PortionWord][] = [
 // pour 125/175/250 ml; a US "standard drink" of wine is 5 fl oz ≈ 148 ml). Beer: 300 ml (a small beer glass, 0.3 l).
 // Spirits (rakija): one pour, 40 ml, as in the database. A cup of espresso is one shot (30 ml), not a 200 ml mug.
 // All level C (our assumption) and shown as "≈ … ml" so people can type the exact amount instead.
+// A bottle of wine is 750 ml (EU nominal quantity for still wine, Directive 2007/45/EC). Croatian beer cans and bottles
+// are mainly 0.5 l (Ožujsko, Karlovačko), so a can of beer is 500 ml; 0.33 l exists too and can be typed as "330 ml".
 const PORTION_BY_FOOD: Record<string, Partial<Record<PortionWord, number>>> = {
-  'red-wine': { glass: 150, cup: 150 }, 'white-wine': { glass: 150, cup: 150 },
-  beer: { glass: 300 }, rakija: { glass: 40, cup: 40, shot: 40 }, espresso: { cup: 30, glass: 30 },
+  'red-wine': { glass: 150, cup: 150, bottle: 750 }, 'white-wine': { glass: 150, cup: 150, bottle: 750 },
+  beer: { glass: 300, can: 500 }, rakija: { glass: 40, cup: 40, shot: 40 }, espresso: { cup: 30, glass: 30 },
 };
-/** ml of one portion word for this food: a per-drink size, else the food's own can size (energy drink 250 ml), else the word's default. */
-function portionMlFor(food: Food, word: PortionWord, dflt: number): number {
+/** ml of one portion word for this food: a per-drink size, else the food's own can size (energy drink 250 ml, a
+ *  Monster 500 ml via its alias), else the word's default. */
+function portionMlFor(food: Food, word: PortionWord, dflt: number, alias?: { label: string; grams: number }): number {
   const own = PORTION_BY_FOOD[food.id]?.[word];
   if (own !== undefined) return own;
-  if (word === 'can' && /^1 can( |$)/.test(food.serving.label)) return Math.round((food.serving.grams * mlPerGram(food)) / 5) * 5;
+  const can = alias && /^1 can( |$)/.test(alias.label) ? alias : /^1 can( |$)/.test(food.serving.label) ? food.serving : null;
+  if (word === 'can' && can) return Math.round((can.grams * mlPerGram(food)) / 5) * 5;
   return dflt;
 }
+/** The brand alias typed ("monster", "1 can of monster"), if this food has a pack size for it. */
+const aliasServingFor = (food: Food, rest: string) => {
+  if (!food.aliasServing) return undefined;
+  const words = rest.split(' ');
+  const key = Object.keys(food.aliasServing).find((k) => rest === k || words.includes(k));
+  return key ? food.aliasServing[key] : undefined;
+};
 // Pieces: use the USDA serving weight (one piece / slice / serving)
 const PIECE = /^(kom|komad|komada|komadic|piece|pieces|kriska|kriske|krisku|slice|slices|porcija|porcije|porciju|serving|servings|tanjur|tanjura|plate|zlica|zlice|zlicu|tbsp|zlicica|zlicice|tsp)$/;
 const SPOON: [RegExp, number][] = [[/^(zlica|zlice|zlicu|tbsp)$/, 15], [/^(zlicica|zlicice|tsp)$/, 5]];
@@ -127,6 +115,14 @@ export function matchScore(text: string, food: Food): number {
   return best;
 }
 
+/** Below this a match is too loose to log or suggest. One stem-matched word against a two-word alias scores 3.7
+ *  ("maline" ~ "mala kava" → espresso, "cockta" ~ "coca cola", "smokvi" ~ "suhe smokve"); a whole word of a
+ *  two-word alias scores 4 ("kava" in "filter kava"). Audit 2026-10-17: was 2.5. A "not found" beats a wrong food. */
+export const MIN_SCORE = 3.8;
+/** To LOG a food from typed text it must also beat one word of a two-word alias (4.0): "smokve" is fresh figs, not
+ *  "suhe smokve"; "macchiato" is not "late macchiato". Those still show in the dropdown as an option. */
+export const MIN_LOG = 4.1;
+
 function bestFoods(text: string, n = 8): { food: Food; score: number }[] {
   return FOODS.map((food) => ({ food, score: matchScore(text, food) }))
     .filter((x) => x.score > 0)
@@ -155,7 +151,9 @@ const mlPerGram = (f: Food) => {
   return m ? Number(m[1]) / f.serving.grams : 1 / 1.03; // most drinks are close to water
 };
 
-interface Qty { count: number | null; grams?: number; ml?: number; portionMl?: number; portionWord?: PortionWord; piece?: boolean; spoonMl?: number; label?: string }
+/** `typed`: the number came from the text ("5 ćevapa"), not from a serving step; `pieceWord`: "komada", "pieces". */
+interface Qty { count: number | null; grams?: number; ml?: number; portionMl?: number; portionWord?: PortionWord; piece?: boolean; pieceWord?: boolean; spoonMl?: number; label?: string; typed?: boolean }
+const PIECE_WORD = /^(kom|komad|komada|komadic|piece|pieces)$/;
 
 /** Pull the amount out of one segment: returns what is left (the food words) and the quantity. */
 function readQty(seg: string): { rest: string; q: Qty } {
@@ -165,24 +163,30 @@ function readQty(seg: string): { rest: string; q: Qty } {
   for (let i = 0; i < toks.length; i++) {
     const t = toks[i];
     const num = /^\d+(\.\d+)?$/.test(t) ? Number(t) : Object.prototype.hasOwnProperty.call(NUMBER_WORDS, t) ? NUMBER_WORDS[t] : undefined;
-    if (num !== undefined && q.count === null) { q.count = num; continue; }
+    if (num !== undefined && q.count === null) { q.count = num; q.typed = true; continue; }
     const mass = MASS.find(([r]) => r.test(t)); if (mass) { q.grams = (q.count ?? 1) * mass[1]; q.label = `${q.count ?? 1} ${t}`; q.count = null; continue; }
     const vol = VOLUME.find(([r]) => r.test(t)); if (vol) { q.ml = (q.count ?? 1) * vol[1]; q.label = `${q.count ?? 1} ${t}`; q.count = null; continue; }
     const por = PORTION_ML.find(([r]) => r.test(t)); if (por) { q.portionMl = por[1]; q.portionWord = por[2]; q.label = por[2]; continue; } // English word on screen ("casa" → glass)
     const sp = SPOON.find(([r]) => r.test(t)); if (sp) { q.spoonMl = sp[1]; q.label = sp[1] === 15 ? 'tbsp' : 'tsp'; continue; }
-    if (PIECE.test(t)) { q.piece = true; q.label = t; continue; }
+    if (PIECE.test(t)) { q.piece = true; q.pieceWord = PIECE_WORD.test(t); q.label = t; continue; }
     rest.push(t);
   }
   return { rest: rest.join(' '), q };
 }
 
-function toPart(food: Food, q: Qty): Part {
+/** "1 slice" → "2 slices"? Only for plain labels; "1 bowl, 245 g" or "1 steak (200 g raw)" become "2 × …". */
+const NOUN_PLURAL = /^(slice|piece|can|bowl|fillet|chop|cookie|cake|date|doughnut|frankfurter|croissant|pancake|handful|portion|sub|steak|avocado|bar|container|link|leaf|stalk|fruit|olive|sandwich|cracker|egg)\b/;
+const plural = (rest: string) => rest.replace(NOUN_PLURAL, (w) => (/(ch|sh)$/.test(w) ? `${w}es` : `${w}s`));
+const countLabel = (n: number, one: string) => (n === 1 ? one : /^1 /.test(one) && !/, |\(\d+ g/.test(one) ? `${n} ${n > 1 ? plural(one.slice(2)) : one.slice(2)}` : `${n} × ${one}`);
+
+function toPart(food: Food, q: Qty, rest = ''): Part {
   const n = q.count ?? 1;
   const nice = (g: number) => Math.round(g);
+  const brand = aliasServingFor(food, rest);
   if (q.grams !== undefined) return { food, grams: q.grams, amountLabel: `${nice(q.grams)} g`, assumed: false };
   if (q.ml !== undefined) return { food, grams: q.ml / mlPerGram(food), amountLabel: `${nice(q.ml)} ml`, assumed: false };
   if (q.portionMl !== undefined) {
-    const ml = q.portionWord ? portionMlFor(food, q.portionWord, q.portionMl) : q.portionMl;
+    const ml = q.portionWord ? portionMlFor(food, q.portionWord, q.portionMl, brand) : q.portionMl;
     return { food, grams: (n * ml) / mlPerGram(food), amountLabel: `${n === 1 ? '1' : n} × ${q.label} (≈ ${ml} ml)`, assumed: true };
   }
   if (q.spoonMl !== undefined) {
@@ -190,7 +194,13 @@ function toPart(food: Food, q: Qty): Part {
     const g = servMl ? (food.serving.grams * q.spoonMl) / servMl : q.spoonMl / mlPerGram(food);
     return { food, grams: n * g, amountLabel: `${n} × ${q.label}`, assumed: !servMl };
   }
-  return { food, grams: n * food.serving.grams, amountLabel: n === 1 ? servingText(food) : /^1 /.test(servingText(food)) ? `${n} ${servingText(food).slice(2)}` : `${n} × ${servingText(food)}`, assumed: !!food.assumedServing };
+  // a typed whole number of a countable food counts pieces ("5 ćevapa", "10 komada ćevapa", "8 maslina"); "2 porcije" stays servings
+  if (food.piece && q.typed && Number.isInteger(n) && n >= 1 && (!q.piece || q.pieceWord)) {
+    const pl = n === 1 ? food.piece.label : `${food.piece.label}s`.replace(/ss$/, 's');
+    return { food, grams: n * food.piece.grams, amountLabel: `${n} ${pl}`, assumed: true };
+  }
+  if (brand) return { food, grams: n * brand.grams, amountLabel: countLabel(n, brand.label), assumed: false };
+  return { food, grams: n * food.serving.grams, amountLabel: countLabel(n, servingText(food)), assumed: !!food.assumedServing };
 }
 
 const SPLIT = / (?:s|sa|i|and|with|uz|plus|\+) |,|\+|;/;
@@ -201,14 +211,14 @@ export function parseMeal(input: string): Part[] {
   if (!text) return [];
   const whole = readQty(text);
   const top = bestFoods(whole.rest, 1)[0];
-  if (top && top.score >= 8) return [toPart(top.food, whole.q)];
+  if (top && top.score >= 8) return [toPart(top.food, whole.q, whole.rest)];
   const parts: Part[] = [];
   for (const seg of text.split(SPLIT).map((s) => s.trim()).filter(Boolean)) {
     const { rest, q } = readQty(seg);
     const f = bestFoods(rest, 1)[0];
-    if (f && f.score >= 2.5) parts.push(toPart(f.food, q));
+    if (f && f.score >= MIN_LOG) parts.push(toPart(f.food, q, rest));
   }
-  if (!parts.length && top && top.score >= 2.5) return [toPart(top.food, whole.q)];
+  if (!parts.length && top && top.score >= MIN_LOG) return [toPart(top.food, whole.q, whole.rest)];
   return parts;
 }
 
@@ -229,7 +239,7 @@ export function suggest(input: string, n = 7): Suggestion[] {
     seen.add(key); out.push({ parts, text: parts.map((p) => p.food.name).join(' + ') });
   };
   push(main);
-  for (const { food } of bestFoods(last.rest || text, n * 2)) push([...head, toPart(food, last.q)]);
+  for (const { food } of bestFoods(last.rest || text, n * 2).filter((x) => x.score >= MIN_SCORE)) push([...head, toPart(food, last.q, last.rest)]);
   return out.slice(0, n);
 }
 

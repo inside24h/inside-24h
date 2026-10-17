@@ -14,8 +14,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 250.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 0.0,
    "carbs": 0.0,
@@ -58,8 +62,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 250.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 0.0,
    "carbs": 0.0,
@@ -96,27 +104,63 @@
    "gazirani sok",
    "kola",
    "pepsi",
-   "soda",
-   "soft drink",
-   "sok"
+   "soft drink"
   ],
   "kind": "liquid",
   "serving": {
    "label": "330 ml",
    "grams": 342.6,
+   "assumed": false,
    "source": "volume 330 ml x USDA density 1.038 g/ml (from portion 'fl oz' = 30.7 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "caffeineMg",
+     "carbs",
+     "fat",
+     "kcal",
+     "satFat",
+     "sugars"
+    ],
+    "basis": "perServing",
+    "label": {
+     "kcal": 139,
+     "carbs": 35,
+     "sugars": 35,
+     "fat": 0,
+     "satFat": 0,
+     "caffeineMg": 32
+    },
+    "usdaBefore": {
+     "kcal": 42.0,
+     "carbs": 10.36,
+     "sugars": 9.94,
+     "fat": 0.25,
+     "satFat": 0.0,
+     "caffeineMg": 9.0
+    },
+    "level": "A",
+    "text": "Cola: calories, sugar and caffeine are from the EU can label (139 kcal, 35 g sugar, 32 mg caffeine per 330 ml), not from USDA’s US cola.",
+    "source": "Coca-Cola Original Taste product sheet (CCEP GB); caffeine research/cola.md P5",
+    "url": "https://a.storyblok.com/f/43212/x/4a44e4815b/coca-cola-original-taste-8x330ml-product-information.pdf",
+    "note": "Moved from the app (parse.ts labelFix, science/colaSim.ts COLA.eu) on 2026-10-17; a test keeps both equal.",
+    "rangesPer100g": {}
+   }
+  ],
   "per100g": {
-   "kcal": 42.0,
-   "carbs": 10.36,
-   "sugars": 9.94,
-   "freeSugars": 9.94,
+   "kcal": 40.572,
+   "carbs": 10.216,
+   "sugars": 10.216,
+   "freeSugars": 10.216,
    "fiber": 0.0,
-   "fat": 0.25,
+   "fat": 0.0,
    "satFat": 0.0,
    "protein": 0.0,
    "sodiumMg": 3.0,
-   "caffeineMg": 9.0,
+   "caffeineMg": 9.34,
    "alcoholG": 0.0,
    "waterG": 89.4
   },
@@ -126,10 +170,10 @@
   "color": "#2a120a",
   "usdaFdcId": 174852,
   "usdaDescription": "Beverages, carbonated, cola, regular",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Free sugars rule: all sugars in a soft drink are added sugars."
+  "notes": "Free sugars rule: all sugars in a soft drink are added sugars. Energy, sugar, fat and caffeine: EU can label (override below)."
  },
  {
   "id": "diet-cola",
@@ -148,8 +192,12 @@
   "serving": {
    "label": "330 ml",
    "grams": 330.3,
+   "assumed": false,
    "source": "volume 330 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 2.0,
    "carbs": 0.29,
@@ -193,8 +241,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 262.9,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.052 g/ml (from portion 'fl oz' = 31.1 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 49.0,
    "carbs": 11.54,
@@ -227,18 +279,18 @@
    "apple juice",
    "jabucni sok",
    "jabučni sok",
-   "juice",
-   "sok",
-   "sok od jabuke",
-   "vocni sok",
-   "voćni sok"
+   "sok od jabuke"
   ],
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
    "grams": 262.1,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.048 g/ml (from portion 'fl oz' = 31 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 46.0,
    "carbs": 11.3,
@@ -276,9 +328,13 @@
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
-   "grams": 257.0,
-   "source": "volume 250 ml x USDA density 1.028 g/ml (from portion 'fl oz' = 30.4 g)"
+   "grams": 256.4,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.026 g/ml (from portion 'fl oz' = 182 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 17.0,
    "carbs": 3.53,
@@ -288,7 +344,7 @@
    "fat": 0.29,
    "satFat": 0.02,
    "protein": 0.85,
-   "sodiumMg": 10.0,
+   "sodiumMg": 253.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
    "waterG": 94.2
@@ -297,8 +353,8 @@
   "gi": null,
   "giSource": null,
   "color": "#b8321f",
-  "usdaFdcId": 170545,
-  "usdaDescription": "Tomato juice, canned, without salt added",
+  "usdaFdcId": 170458,
+  "usdaDescription": "Tomato juice, canned, with salt added",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
@@ -315,8 +371,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 253.6,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.014 g/ml (from portion 'cup' = 240 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 19.0,
    "carbs": 3.71,
@@ -356,21 +416,59 @@
   ],
   "kind": "liquid",
   "serving": {
-   "label": "1 can 8.4 fl oz",
-   "grams": 258.0,
-   "source": "USDA SR Legacy food_portion (can 8.4 fl oz)"
+   "label": "1 can (250 ml)",
+   "grams": 259.6,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.039 g/ml (from portion 'can 8.4 fl oz' = 258 g)"
   },
+  "piece": null,
+  "aliasServing": {
+   "monster": {
+    "label": "1 can (500 ml)",
+    "grams": 519.2,
+    "source": "label: Monster Energy EU/UK can is 500 ml"
+   }
+  },
+  "overrides": [
+   {
+    "fields": [
+     "caffeineMg",
+     "carbs",
+     "kcal",
+     "sugars"
+    ],
+    "basis": "per100ml",
+    "label": {
+     "kcal": 46,
+     "carbs": 11,
+     "sugars": 11,
+     "caffeineMg": 32
+    },
+    "usdaBefore": {
+     "kcal": 43.0,
+     "carbs": 10.23,
+     "sugars": 10.22,
+     "caffeineMg": 29.0
+    },
+    "level": "A",
+    "text": "Energy drink: calories, sugar and caffeine are from the Red Bull EU label (46 kcal, 11 g sugar per 100 ml; 80 mg caffeine per 250 ml can). USDA lists 75 mg per can.",
+    "source": "Red Bull Energy Drink 250 ml label (A.F. Blakemore foodservice sheet): 46.6 kcal, 11 g carbohydrate, 11 g sugars per 100 ml; 80 mg caffeine per 250 ml",
+    "url": "https://foodservice.afblakemore.net/energy-drinks/592279/red-bull-energy-drink-250ml/",
+    "note": "Monster (500 ml can, alias_serving): Monster Energy UK/EU label 47 kcal, 12 g carbohydrate, 11 g sugars per 100 ml (onestop.co.uk sheet, EAN 5060166690007) and 32 mg/100 ml caffeine (kifli.hu listing), i.e. the same per 100 ml within 1 kcal / 1 g.",
+    "rangesPer100g": {}
+   }
+  ],
   "per100g": {
-   "kcal": 43.0,
-   "carbs": 10.23,
-   "sugars": 10.22,
-   "freeSugars": 10.22,
+   "kcal": 44.299,
+   "carbs": 10.593,
+   "sugars": 10.593,
+   "freeSugars": 10.593,
    "fiber": 0.0,
    "fat": 0.0,
    "satFat": 0.0,
    "protein": 0.46,
    "sodiumMg": 39.0,
-   "caffeineMg": 29.0,
+   "caffeineMg": 30.817,
    "alcoholG": 0.0,
    "waterG": 89.2
   },
@@ -380,10 +478,10 @@
   "color": "#e8e34a",
   "usdaFdcId": 173210,
   "usdaDescription": "Beverages, Energy drink, RED BULL",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "USDA record is Red Bull. GI value is the Table 1 'soft drink/soda' average, not tested on energy drinks."
+  "notes": "USDA record is Red Bull; energy, sugar and caffeine from the Red Bull EU label (override below). GI value is the Table 1 'soft drink/soda' average, not tested on energy drinks. 'monster' uses a 500 ml can: the Monster EU label gives 47 kcal, 11 g sugar and 32 mg caffeine per 100 ml, the same as Red Bull within 1 kcal."
  },
  {
   "id": "espresso",
@@ -400,8 +498,12 @@
   "serving": {
    "label": "30 ml",
    "grams": 30.0,
+   "assumed": false,
    "source": "volume 30 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 9.0,
    "carbs": 1.67,
@@ -434,19 +536,19 @@
    "brewed coffee",
    "coffee",
    "coffee (filter / brewed)",
-   "crna kava",
    "filter coffee",
-   "filter kava",
-   "kafa",
-   "kava",
-   "turska kava"
+   "filter kava"
   ],
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
    "grams": 250.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 1.0,
    "carbs": 0.0,
@@ -480,16 +582,18 @@
    "coffee with milk",
    "kava s mlekom",
    "kava s mlijekom",
-   "kava sa mlijekom",
-   "macchiato",
-   "makijato"
+   "kava sa mlijekom"
   ],
   "kind": "liquid",
   "serving": {
    "label": "1 cup, 200 g",
    "grams": 200,
-   "source": "our assumption"
+   "source": "our assumption",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 16.0,
    "carbs": 1.2,
@@ -504,7 +608,7 @@
    "alcoholG": 0.0,
    "waterG": 96.6
   },
-  "freeSugarsBasis": "whole milk lactose and coffee: no free sugars (WHO definition)",
+  "freeSugarsBasis": "computed mix: its sugars are milk lactose only (the other ingredients have 0 g sugar in USDA), so no free sugars (WHO definition)",
   "gi": null,
   "giSource": null,
   "color": "#9a6b44",
@@ -539,8 +643,12 @@
   "serving": {
    "label": "1 cup, 150 g",
    "grams": 150,
-   "source": "our assumption"
+   "source": "our assumption",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 51.0,
    "carbs": 4.17,
@@ -555,7 +663,7 @@
    "alcoholG": 0.0,
    "waterG": 90.1
   },
-  "freeSugarsBasis": "whole milk lactose and coffee: no free sugars (WHO definition)",
+  "freeSugarsBasis": "computed mix: its sugars are milk lactose only (the other ingredients have 0 g sugar in USDA), so no free sugars (WHO definition)",
   "gi": null,
   "giSource": null,
   "color": "#b88a5e",
@@ -593,8 +701,12 @@
   "serving": {
    "label": "1 glass, 250 g",
    "grams": 250,
-   "source": "our assumption"
+   "source": "our assumption",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 55.0,
    "carbs": 4.42,
@@ -609,7 +721,7 @@
    "alcoholG": 0.0,
    "waterG": 89.3
   },
-  "freeSugarsBasis": "whole milk lactose and coffee: no free sugars (WHO definition)",
+  "freeSugarsBasis": "computed mix: its sugars are milk lactose only (the other ingredients have 0 g sugar in USDA), so no free sugars (WHO definition)",
   "gi": null,
   "giSource": null,
   "color": "#c9a47c",
@@ -647,8 +759,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 250.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 1.0,
    "carbs": 0.3,
@@ -678,19 +794,20 @@
   "id": "green-tea",
   "name": "Green tea",
   "aliases": [
-   "caj",
    "green tea",
-   "tea",
    "zeleni caj",
-   "zeleni čaj",
-   "čaj"
+   "zeleni čaj"
   ],
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
    "grams": 250.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 1.0,
    "carbs": 0.0,
@@ -722,21 +839,22 @@
   "aliases": [
    "biljni caj",
    "biljni čaj",
-   "caj",
    "herbal tea",
    "kamilica",
    "menta",
-   "tea",
    "vocni caj",
-   "voćni čaj",
-   "čaj"
+   "voćni čaj"
   ],
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
    "grams": 250.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 1.0,
    "carbs": 0.2,
@@ -777,9 +895,13 @@
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
-   "grams": 286.4,
-   "source": "volume 250 ml x USDA density 1.145 g/ml (from portion 'cup' = 271 g)"
+   "grams": 258.7,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.035 g/ml (from portion 'fl oz' = 30.6 g of USDA 175111 Beverages, LIPTON BRISK, tea, black, ready-to-drink, lemon)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 45.0,
    "carbs": 10.8,
@@ -803,7 +925,7 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Black tea ready-to-drink, lemon, sweetened."
+  "notes": "Black tea ready-to-drink, lemon, sweetened. Density from USDA 175111 (Lipton Brisk lemon tea, 1 fl oz = 30.6 g, 1.035 g/ml): this record's only portion, 1 cup = 271 g (1.145 g/ml), is impossible for a ~10% sugar drink."
  },
  {
   "id": "milk-whole",
@@ -822,8 +944,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 257.8,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.031 g/ml (from portion 'cup' = 244 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 61.0,
    "carbs": 4.8,
@@ -852,11 +978,10 @@
  {
   "id": "milk-semi-skimmed",
   "name": "Milk (2%, reduced-fat)",
-  "aliases": ["milk (2%, reduced-fat)", 
+  "aliases": [
    "2% milk",
-   "milk",
+   "milk (2%, reduced-fat)",
    "milk (semi-skimmed, 2%)",
-   "mlijeko",
    "mlijeko 1.5",
    "mlijeko 2",
    "polumasno mlijeko",
@@ -867,8 +992,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 257.8,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.031 g/ml (from portion 'cup' = 244 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 50.0,
    "carbs": 4.8,
@@ -897,10 +1026,9 @@
  {
   "id": "milk-skimmed",
   "name": "Milk (skim)",
-  "aliases": ["milk (skim)", 
-   "milk",
+  "aliases": [
+   "milk (skim)",
    "milk (skimmed)",
-   "mlijeko",
    "mlijeko 0.5",
    "nonfat milk",
    "obrano mlijeko",
@@ -911,8 +1039,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 258.9,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.036 g/ml (from portion 'cup' = 245 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 34.0,
    "carbs": 4.96,
@@ -951,8 +1083,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 264.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.057 g/ml (from portion 'cup' = 250 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 76.0,
    "carbs": 12.13,
@@ -985,7 +1121,6 @@
    "hot chocolate",
    "hot chocolate (homemade, with milk)",
    "hot cocoa",
-   "kakao",
    "topla cokolada",
    "topla čokolada",
    "vruca cokolada",
@@ -995,8 +1130,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 264.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.057 g/ml (from portion 'cup' = 250 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 77.0,
    "carbs": 10.74,
@@ -1036,8 +1175,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 256.8,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.027 g/ml (from portion 'cup' = 243 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 54.0,
    "carbs": 6.28,
@@ -1069,16 +1212,18 @@
   "aliases": [
    "almond milk",
    "almond milk (unsweetened)",
-   "bademovo mlijeko",
-   "biljno mlijeko",
-   "plant milk"
+   "bademovo mlijeko"
   ],
   "kind": "liquid",
   "serving": {
    "label": "250 ml",
-   "grams": 276.9,
-   "source": "volume 250 ml x USDA density 1.107 g/ml (from portion 'cup' = 262 g)"
+   "grams": 253.6,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.014 g/ml (from portion 'cup' = 240 g of USDA 168751 Beverages, almond milk, sweetened, vanilla flavor, ready-to-drink)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 15.0,
    "carbs": 1.31,
@@ -1102,14 +1247,12 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Unsweetened, shelf-stable."
+  "notes": "Unsweetened, shelf-stable. Density from USDA 168751 (almond milk ready-to-drink, 1 cup = 240 g, 1.014 g/ml): this record's 1 cup = 262 g (1.107 g/ml) is out of line with every other USDA almond milk."
  },
  {
   "id": "rice-milk",
   "name": "Rice milk (unsweetened)",
   "aliases": [
-   "biljno mlijeko",
-   "plant milk",
    "rice milk",
    "rice milk (unsweetened)",
    "rizino mlijeko",
@@ -1119,8 +1262,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 253.6,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.014 g/ml (from portion 'fl oz (approximate weight, 1 serving)' = 240 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 47.0,
    "carbs": 9.17,
@@ -1162,8 +1309,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 258.9,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.036 g/ml (from portion 'cup' = 245 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 40.0,
    "carbs": 4.79,
@@ -1202,8 +1353,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 256.8,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.027 g/ml (from portion 'cup' = 243 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 43.0,
    "carbs": 4.77,
@@ -1243,8 +1398,12 @@
   "serving": {
    "label": "500 ml",
    "grams": 502.1,
+   "assumed": false,
    "source": "volume 500 ml x USDA density 1.004 g/ml (from portion 'fl oz' = 29.7 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 43.0,
    "carbs": 3.55,
@@ -1284,8 +1443,12 @@
   "serving": {
    "label": "150 ml",
    "grams": 149.1,
+   "assumed": false,
    "source": "volume 150 ml x USDA density 0.994 g/ml (from portion 'fl oz' = 29.4 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 85.0,
    "carbs": 2.61,
@@ -1317,16 +1480,18 @@
   "aliases": [
    "bijelo",
    "bijelo vino",
-   "vino",
-   "white wine",
-   "wine"
+   "white wine"
   ],
   "kind": "liquid",
   "serving": {
    "label": "150 ml",
    "grams": 149.1,
+   "assumed": false,
    "source": "volume 150 ml x USDA density 0.994 g/ml (from portion 'fl oz' = 29.4 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 82.0,
    "carbs": 2.6,
@@ -1373,8 +1538,12 @@
   "serving": {
    "label": "40 ml",
    "grams": 37.6,
+   "assumed": false,
    "source": "volume 40 ml x USDA density 0.940 g/ml (from portion 'fl oz' = 27.8 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 231.0,
    "carbs": 0.0,
@@ -1413,9 +1582,13 @@
   "kind": "semi",
   "serving": {
    "label": "250 ml",
-   "grams": 240.9,
-   "source": "volume 250 ml x USDA density 0.964 g/ml (from portion 'cup' = 228 g)"
+   "grams": 262.1,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.048 g/ml (from portion 'fl oz' = 31 g of USDA 173933 Apple juice, canned or bottled, unsweetened, without added ascorbic acid)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 50.0,
    "carbs": 11.66,
@@ -1439,7 +1612,7 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Branded Naked Juice strawberry-banana, a juice-based smoothie. WHO counts sugars in fruit juices as free sugars."
+  "notes": "Branded Naked Juice strawberry-banana, a juice-based smoothie. WHO counts sugars in fruit juices as free sugars. Density from USDA 173933 (apple juice, 1 fl oz = 31 g, 1.048 g/ml): every USDA smoothie 'cup' weight is below 1 g/ml (a fill weight, not a density)."
  },
  {
   "id": "protein-shake",
@@ -1456,13 +1629,17 @@
   "serving": {
    "label": "1 shaker, 280 g",
    "grams": 280,
-   "source": "our assumption"
+   "source": "our assumption",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 82.0,
    "carbs": 4.96,
    "sugars": 4.52,
-   "freeSugars": null,
+   "freeSugars": 0.0,
    "fiber": 0.33,
    "fat": 1.93,
    "satFat": 1.21,
@@ -1472,7 +1649,7 @@
    "alcoholG": 0.0,
    "waterG": 80.0
   },
-  "freeSugarsBasis": "not determined",
+  "freeSugarsBasis": "computed mix: its sugars are milk lactose only (the other ingredients have 0 g sugar in USDA), so no free sugars (WHO definition)",
   "gi": null,
   "giSource": null,
   "color": "#e9dfc9",
@@ -1506,8 +1683,12 @@
   "serving": {
    "label": "250 ml",
    "grams": 261.2,
+   "assumed": false,
    "source": "volume 250 ml x USDA density 1.045 g/ml (from portion 'fl oz' = 30.9 g)"
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 40.0,
    "carbs": 10.42,
@@ -1540,7 +1721,6 @@
    "bijeli jogurt",
    "jogurt",
    "kiselo mlijeko",
-   "navlaka",
    "plain yogurt",
    "yoghurt",
    "yogurt",
@@ -1548,10 +1728,14 @@
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup (8 fl oz)",
+   "label": "1 bowl, 245 g",
    "grams": 245.0,
-   "source": "USDA SR Legacy food_portion (cup (8 fl oz))"
+   "source": "USDA SR Legacy food_portion (1 cup (8 fl oz) = 245 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 61.0,
    "carbs": 4.66,
@@ -1581,21 +1765,22 @@
   "id": "yogurt-lowfat",
   "name": "Yogurt (plain, low fat)",
   "aliases": [
-   "jogurt",
    "jogurt 1.5",
    "low fat yogurt",
    "lowfat yogurt",
    "nemasni jogurt",
-   "yoghurt",
-   "yogurt",
    "yogurt (plain, low fat)"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup (8 fl oz)",
+   "label": "1 bowl, 245 g",
    "grams": 245.0,
-   "source": "USDA SR Legacy food_portion (cup (8 fl oz))"
+   "source": "USDA SR Legacy food_portion (1 cup (8 fl oz) = 245 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 63.0,
    "carbs": 7.04,
@@ -1629,15 +1814,18 @@
    "grcki jogurt",
    "greek yogurt",
    "greek yogurt (plain, low fat)",
-   "grčki jogurt",
-   "jogurt"
+   "grčki jogurt"
   ],
   "kind": "semi",
   "serving": {
    "label": "1 container (7 oz)",
    "grams": 200.0,
-   "source": "USDA SR Legacy food_portion (container (7 oz))"
+   "source": "USDA SR Legacy food_portion (1 container (7 oz) = 200 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 73.0,
    "carbs": 3.94,
@@ -1668,20 +1856,22 @@
   "name": "Yogurt (fruit, low fat)",
   "aliases": [
    "fruit yogurt",
-   "jogurt",
    "jogurt s vocem",
    "jogurt s voćem",
    "vocni jogurt",
    "voćni jogurt",
-   "yogurt",
    "yogurt (fruit, low fat)"
   ],
   "kind": "semi",
   "serving": {
    "label": "1 container (6 oz)",
    "grams": 170.0,
-   "source": "USDA SR Legacy food_portion (container (6 oz))"
+   "source": "USDA SR Legacy food_portion (1 container (6 oz) = 170 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 99.0,
    "carbs": 18.64,
@@ -1713,20 +1903,18 @@
   "aliases": [
    "cheddar",
    "cheese",
-   "cheese (cheddar)",
-   "ementaler",
-   "gouda",
-   "sir",
-   "trapist",
-   "zuti sir",
-   "žuti sir"
+   "cheese (cheddar)"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 slice (1 oz)",
    "grams": 28.0,
-   "source": "USDA SR Legacy food_portion (slice (1 oz))"
+   "source": "USDA SR Legacy food_portion (1 slice (1 oz) = 28 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 410.0,
    "carbs": 2.13,
@@ -1756,19 +1944,25 @@
   "id": "cheese-gouda",
   "name": "Cheese (gouda)",
   "aliases": [
-   "cheese",
    "cheese (gouda)",
    "edamer",
    "gauda",
    "gouda",
-   "sir"
+   "sir",
+   "trapist",
+   "zuti sir",
+   "žuti sir"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 oz",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (1 oz = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 356.0,
    "carbs": 2.22,
@@ -1798,19 +1992,21 @@
   "id": "cheese-mozzarella",
   "name": "Cheese (mozzarella)",
   "aliases": [
-   "cheese",
    "cheese (mozzarella)",
    "mocarela",
    "mozzarela",
-   "mozzarella",
-   "sir"
+   "mozzarella"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 oz",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (1 oz = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 299.0,
    "carbs": 2.4,
@@ -1840,20 +2036,19 @@
   "id": "cheese-feta",
   "name": "Cheese (feta)",
   "aliases": [
-   "bijeli sir",
-   "cheese",
    "cheese (feta)",
-   "feta",
-   "ovcji sir",
-   "ovčji sir",
-   "sir"
+   "feta"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 oz",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (1 oz = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 265.0,
    "carbs": 3.88,
@@ -1883,21 +2078,22 @@
   "id": "cheese-cottage",
   "name": "Cottage cheese (creamed)",
   "aliases": [
-   "cheese",
    "cottage cheese",
    "cottage cheese (creamed)",
-   "sir",
    "skuta",
    "svjezi sir",
-   "svježi sir",
-   "vrhnje sir"
+   "svježi sir"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup, large curd (not packed)",
-   "grams": 210.0,
-   "source": "USDA SR Legacy food_portion (cup, large curd (not packed))"
+   "label": "1 portion, 105 g",
+   "grams": 105,
+   "source": "our assumption: half of the USDA 'cup, large curd' (210 g)",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 98.0,
    "carbs": 3.38,
@@ -1927,19 +2123,40 @@
   "id": "cheese-parmesan",
   "name": "Cheese (parmesan)",
   "aliases": [
-   "cheese",
    "cheese (parmesan)",
    "parmesan",
    "parmezan",
-   "sir",
    "tvrdi sir"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 oz",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (1 oz = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "sodiumMg"
+    ],
+    "basis": "per100g",
+    "label": {
+     "sodiumMg": 650
+    },
+    "usdaBefore": {
+     "sodiumMg": 1175.0
+    },
+    "level": "A",
+    "text": "Parmesan: sodium is the Parmigiano Reggiano Consortium value (650 mg per 100 g). USDA’s US parmesan has 1,175 mg.",
+    "source": "Parmigiano Reggiano Consortium, Nutritional features: per 100 g salt 1.6 g, sodium 650 mg",
+    "url": "https://www.parmigianoreggiano.com/made/nutritional_features/default.aspx",
+    "note": "Only sodium is replaced. The Consortium also gives 402 kcal, 32.4 g protein, 29.7 g fat (19.6 g saturated) vs USDA 392 / 35.8 / 25.0 (14.8).",
+    "rangesPer100g": {}
+   }
+  ],
   "per100g": {
    "kcal": 392.0,
    "carbs": 3.22,
@@ -1949,7 +2166,7 @@
    "fat": 25.0,
    "satFat": 14.85,
    "protein": 35.75,
-   "sodiumMg": 1175.0,
+   "sodiumMg": 650.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
    "waterG": 30.0
@@ -1960,10 +2177,10 @@
   "color": "#f0dd9a",
   "usdaFdcId": 170848,
   "usdaDescription": "Cheese, parmesan, hard",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "Sodium: Parmigiano Reggiano Consortium value (override below); USDA US parmesan has nearly twice the sodium."
  },
  {
   "id": "egg-boiled",
@@ -1982,8 +2199,12 @@
   "serving": {
    "label": "1 large",
    "grams": 50.0,
-   "source": "USDA SR Legacy food_portion (large)"
+   "source": "USDA SR Legacy food_portion (1 large = 50 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 155.0,
    "carbs": 1.12,
@@ -2013,22 +2234,22 @@
   "id": "egg-fried",
   "name": "Egg (fried)",
   "aliases": [
-   "egg",
    "egg (fried)",
-   "eggs",
    "fried egg",
-   "jaja",
    "jaje na oko",
    "peceno jaje",
-   "pečeno jaje",
-   "pohano jaje"
+   "pečeno jaje"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 large",
    "grams": 46.0,
-   "source": "USDA SR Legacy food_portion (large)"
+   "source": "USDA SR Legacy food_portion (1 large = 46 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 196.0,
    "carbs": 0.83,
@@ -2056,10 +2277,10 @@
  },
  {
   "id": "butter",
-  "name": "Butter (salted)",
+  "name": "Butter (unsalted)",
   "aliases": [
    "butter",
-   "butter (salted)",
+   "butter (unsalted)",
    "maslac",
    "puter"
   ],
@@ -2067,8 +2288,12 @@
   "serving": {
    "label": "1 tbsp",
    "grams": 14.2,
-   "source": "USDA SR Legacy food_portion (tbsp)"
+   "source": "USDA SR Legacy food_portion (1 tbsp = 14.2 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 717.0,
    "carbs": 0.06,
@@ -2076,9 +2301,9 @@
    "freeSugars": 0.0,
    "fiber": 0.0,
    "fat": 81.11,
-   "satFat": 51.37,
+   "satFat": 50.49,
    "protein": 0.85,
-   "sodiumMg": 643.0,
+   "sodiumMg": 11.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
    "waterG": 16.2
@@ -2087,8 +2312,8 @@
   "gi": null,
   "giSource": null,
   "color": "#f2dc7a",
-  "usdaFdcId": 173410,
-  "usdaDescription": "Butter, salted",
+  "usdaFdcId": 173430,
+  "usdaDescription": "Butter, without salt",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
@@ -2102,6 +2327,7 @@
    "bread",
    "kruh",
    "kruh bijeli",
+   "polubijeli kruh",
    "struca",
    "tost",
    "white bread",
@@ -2111,8 +2337,12 @@
   "serving": {
    "label": "1 slice",
    "grams": 29.0,
-   "source": "USDA SR Legacy food_portion (slice)"
+   "source": "USDA SR Legacy food_portion (1 slice = 29 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 266.0,
    "carbs": 49.42,
@@ -2129,7 +2359,7 @@
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
   "gi": 75,
-  "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, mean of multiple studies",
+  "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, mean of multiple studies; Table 1 notes that low-GI varieties were also identified, so the type matters",
   "color": "#efe0b8",
   "usdaFdcId": 174924,
   "usdaDescription": "Bread, white, commercially prepared (includes soft bread crumbs)",
@@ -2142,11 +2372,8 @@
   "id": "bread-wholemeal",
   "name": "Wholemeal bread",
   "aliases": [
-   "bread",
    "crni kruh",
    "integralni kruh",
-   "kruh",
-   "polubijeli kruh",
    "whole wheat bread",
    "wholemeal bread"
   ],
@@ -2154,8 +2381,12 @@
   "serving": {
    "label": "1 slice",
    "grams": 32.0,
-   "source": "USDA SR Legacy food_portion (slice)"
+   "source": "USDA SR Legacy food_portion (1 slice = 32 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 252.0,
    "carbs": 42.71,
@@ -2185,8 +2416,6 @@
   "id": "bread-rye",
   "name": "Rye bread",
   "aliases": [
-   "bread",
-   "kruh",
    "razeni kruh",
    "raženi kruh",
    "rye bread"
@@ -2195,8 +2424,12 @@
   "serving": {
    "label": "1 slice, regular",
    "grams": 32.0,
-   "source": "USDA SR Legacy food_portion (slice, regular)"
+   "source": "USDA SR Legacy food_portion (1 slice, regular = 32 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 259.0,
    "carbs": 48.3,
@@ -2229,19 +2462,20 @@
    "baget",
    "baguette",
    "baguette / french bread",
-   "bread",
    "french bread",
-   "kruh",
-   "pecivo",
    "stangica",
    "štangica"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 slice",
-   "grams": 139.0,
-   "source": "USDA SR Legacy food_portion (slice)"
+   "grams": 30,
+   "source": "our assumption: the USDA 'slice' of this record is 139 g",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 272.0,
    "carbs": 51.88,
@@ -2273,28 +2507,81 @@
   "aliases": [
    "burek",
    "burek (meat/cheese pastry)",
+   "burek s mesom",
+   "burek sa sirom",
    "mesni burek",
-   "pastry",
-   "pita",
-   "pita od sira",
+   "sirna pita",
    "sirnica"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 piece turnover 1 serving",
-   "grams": 127.0,
-   "source": "USDA SR Legacy food_portion (piece turnover 1 serving)"
+   "label": "1 piece",
+   "grams": 150,
+   "source": "producer: Čakovečki mlinovi burek, net weight 150 g",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "carbs",
+     "fat",
+     "fiber",
+     "kcal",
+     "protein",
+     "satFat",
+     "sodiumMg",
+     "sugars"
+    ],
+    "basis": "per100g",
+    "label": {
+     "kcal": 297,
+     "fat": 16,
+     "satFat": 7.5,
+     "carbs": 29,
+     "sugars": 3.3,
+     "protein": 9.7,
+     "sodiumMg": 560,
+     "fiber": null
+    },
+    "usdaBefore": {
+     "kcal": 228.0,
+     "fat": 12.6,
+     "satFat": 5.512,
+     "carbs": 20.67,
+     "sugars": 7.87,
+     "protein": 7.87,
+     "sodiumMg": 378.0,
+     "fiber": 0.8
+    },
+    "level": "B",
+    "text": "Burek: there is no USDA burek, so the values are from a Croatian producer label (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). Burek varies: labels range from about 250 to 320 kcal per 100 g.",
+    "source": "Čakovečki mlinovi, Burek (net weight 150 g): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
+    "url": "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
+    "note": "Sodium = 1.4 / 2.5 = 560 mg. Fiber not declared (None). Water stays from the USDA turnover proxy.",
+    "rangesPer100g": {
+     "kcal": [
+      247,
+      316
+     ],
+     "sugars": [
+      2.2,
+      3.4
+     ]
+    }
+   }
+  ],
   "per100g": {
-   "kcal": 228.0,
-   "carbs": 20.67,
-   "sugars": 7.87,
+   "kcal": 297.0,
+   "carbs": 29.0,
+   "sugars": 3.3,
    "freeSugars": null,
-   "fiber": 0.8,
-   "fat": 12.6,
-   "satFat": 5.51,
-   "protein": 7.87,
-   "sodiumMg": 378.0,
+   "fiber": null,
+   "fat": 16.0,
+   "satFat": 7.5,
+   "protein": 9.7,
+   "sodiumMg": 560.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
    "waterG": 57.2
@@ -2305,10 +2592,10 @@
   "color": "#d9a860",
   "usdaFdcId": 168963,
   "usdaDescription": "Turnover, filled with egg, meat and cheese, frozen",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": true,
-  "notes": "PROXY: USDA has no burek record in SR Legacy. Closest is 'Turnover, filled with egg, meat and cheese, frozen'. Real burek (phyllo, oil) differs; treat as an estimate class, not a measurement."
+  "notes": "PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316)."
  },
  {
   "id": "pizza",
@@ -2323,41 +2610,44 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 serving 9 servings per 24 oz package",
-   "grams": 81.0,
-   "source": "USDA SR Legacy food_portion (serving 9 servings per 24 oz package)"
+   "label": "1 slice",
+   "grams": 107.0,
+   "source": "USDA SR Legacy food_portion (1 slice = 107 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
-   "kcal": 268.0,
-   "carbs": 29.02,
-   "sugars": 3.57,
+   "kcal": 266.0,
+   "carbs": 33.33,
+   "sugars": 3.58,
    "freeSugars": null,
-   "fiber": 2.2,
-   "fat": 12.28,
-   "satFat": 4.27,
-   "protein": 10.36,
-   "sodiumMg": 447.0,
+   "fiber": 2.3,
+   "fat": 9.69,
+   "satFat": 4.46,
+   "protein": 11.39,
+   "sodiumMg": 598.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 46.3
+   "waterG": 43.2
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
   "gi": null,
   "giSource": null,
   "color": "#e8b04a",
-  "usdaFdcId": 170317,
-  "usdaDescription": "Pizza, cheese topping, regular crust, frozen, cooked",
+  "usdaFdcId": 173292,
+  "usdaDescription": "Fast Food, Pizza Chain, 14\" pizza, cheese topping, regular crust",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Frozen, cooked, regular crust. Per-slice portion in USDA is small."
+  "notes": "Fast-food chain 14-inch cheese pizza, regular crust; 1 slice = 107 g (USDA portion)."
  },
  {
   "id": "pasta",
   "name": "Pasta (cooked)",
   "aliases": [
    "makaroni",
-   "njoki",
    "pasta",
    "pasta (cooked)",
    "spageti",
@@ -2368,10 +2658,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup spaghetti not packed",
+   "label": "1 portion, 124 g cooked",
    "grams": 124.0,
-   "source": "USDA SR Legacy food_portion (cup spaghetti not packed)"
+   "source": "USDA SR Legacy food_portion (1 cup spaghetti not packed = 124 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 158.0,
    "carbs": 30.86,
@@ -2402,17 +2696,19 @@
   "name": "Pasta (whole-wheat, cooked)",
   "aliases": [
    "integralna tjestenina",
-   "pasta",
    "pasta (whole-wheat, cooked)",
-   "tjestenina",
    "whole wheat pasta"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup spaghetti not packed",
+   "label": "1 portion, 117 g cooked",
    "grams": 117.0,
-   "source": "USDA SR Legacy food_portion (cup spaghetti not packed)"
+   "source": "USDA SR Legacy food_portion (1 cup spaghetti not packed = 117 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 149.0,
    "carbs": 30.07,
@@ -2454,10 +2750,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 158 g",
    "grams": 158.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 158 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 130.0,
    "carbs": 28.17,
@@ -2474,7 +2774,7 @@
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": 73,
-  "giSource": "Atkinson 2008 (PMC2584181) Table 1: White rice, boiled, mean of multiple studies",
+  "giSource": "Atkinson 2008 (PMC2584181) Table 1: White rice, boiled, mean of multiple studies; Table 1 notes that low-GI varieties were also identified, so the type matters",
   "color": "#f6f2e6",
   "usdaFdcId": 168878,
   "usdaDescription": "Rice, white, long-grain, regular, enriched, cooked",
@@ -2491,18 +2791,20 @@
    "brown rice (cooked)",
    "integralna riza",
    "integralna riža",
-   "rice",
-   "riza",
    "smeda riza",
    "smedja riza",
    "smeđa riža"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 202 g",
    "grams": 202.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 202 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 123.0,
    "carbs": 25.58,
@@ -2544,8 +2846,12 @@
   "serving": {
    "label": "1 potato (2-1/2\" dia, sphere)",
    "grams": 136.0,
-   "source": "USDA SR Legacy food_portion (potato (2-1/2\" dia, sphere))"
+   "source": "USDA SR Legacy food_portion (1 potato (2-1/2\" dia, sphere) = 136 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 87.0,
    "carbs": 20.13,
@@ -2575,19 +2881,21 @@
   "id": "potato-mashed",
   "name": "Mashed potato (milk and butter)",
   "aliases": [
-   "krumpir",
    "mashed potato",
    "mashed potato (milk and butter)",
    "pire",
-   "pire krumpir",
-   "potato"
+   "pire krumpir"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 210 g",
    "grams": 210.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 210 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 113.0,
    "carbs": 16.81,
@@ -2630,8 +2938,12 @@
   "serving": {
    "label": "1 small portion",
    "grams": 71.0,
-   "source": "USDA SR Legacy food_portion (serving small) = 71 g"
+   "source": "USDA SR Legacy food_portion (serving small) = 71 g",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 312.0,
    "carbs": 41.44,
@@ -2660,24 +2972,28 @@
  {
   "id": "oatmeal",
   "name": "Oatmeal (cooked)",
-  "aliases": ["oatmeal (cooked)", "oatmeal / porridge", 
+  "aliases": [
    "kasa",
    "kaša",
    "oatmeal",
+   "oatmeal (cooked)",
+   "oatmeal / porridge",
    "oatmeal / porridge (cooked)",
-   "oats",
    "owsianka",
    "porridge",
    "zobena kasa",
-   "zobena kaša",
-   "zobene pahuljice"
+   "zobena kaša"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup",
+   "label": "1 bowl, 234 g",
    "grams": 234.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 234 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 71.0,
    "carbs": 12.0,
@@ -2717,10 +3033,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup (1 NLEA serving)",
+   "label": "1 portion, 28 g",
    "grams": 28.0,
-   "source": "USDA SR Legacy food_portion (cup (1 NLEA serving))"
+   "source": "USDA SR Legacy food_portion (1 cup (1 NLEA serving) = 28 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 384.0,
    "carbs": 88.01,
@@ -2750,19 +3070,20 @@
   "id": "muesli",
   "name": "Muesli",
   "aliases": [
-   "cereal",
    "muesli",
    "musli",
-   "müsli",
-   "zitarice",
-   "žitarice"
+   "müsli"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
-   "grams": 122.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "label": "1 bowl",
+   "grams": 60,
+   "source": "our assumption: the USDA 'cup' is 122 g; EU packs give 40-50 g",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 388.0,
    "carbs": 73.8,
@@ -2803,8 +3124,12 @@
   "serving": {
    "label": "5 crackers",
    "grams": 14.9,
-   "source": "USDA SR Legacy food_portion (crackers)"
+   "source": "USDA SR Legacy food_portion (5 crackers = 14.9 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 418.0,
    "carbs": 74.05,
@@ -2832,7 +3157,7 @@
  },
  {
   "id": "pancake",
-  "name": "Pancakes (crêpes)",
+  "name": "Pancakes (US-style)",
   "aliases": [
    "palacinka",
    "palacinke",
@@ -2840,15 +3165,18 @@
    "palačinke",
    "pancake",
    "pancakes",
-   "pancakes (crepes)",
-   "pancakes (crêpes)"
+   "pancakes (us-style)"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 pancake (4\" dia)",
    "grams": 38.0,
-   "source": "USDA SR Legacy food_portion (pancake (4\" dia))"
+   "source": "USDA SR Legacy food_portion (1 pancake (4\" dia) = 38 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 227.0,
    "carbs": 28.3,
@@ -2871,8 +3199,8 @@
   "usdaDescription": "Pancakes, plain, prepared from recipe",
   "usdaDataset": "SR Legacy",
   "recipe": null,
-  "usdaProxy": false,
-  "notes": "Plain pancakes from recipe; upper-bound rule (sugar in recipe)."
+  "usdaProxy": true,
+  "notes": "PROXY for palačinke: a US fluffy pancake from recipe (baking powder, 4-inch); crêpes are thinner. Upper-bound rule (sugar in recipe)."
  },
  {
   "id": "chicken-breast",
@@ -2890,10 +3218,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "0.5 breast, bone and skin removed",
+   "label": "½ breast",
    "grams": 86.0,
-   "source": "USDA SR Legacy food_portion (breast, bone and skin removed)"
+   "source": "USDA SR Legacy food_portion (0.5 breast, bone and skin removed = 86 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 165.0,
    "carbs": 0.0,
@@ -2936,10 +3268,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "3 oz",
-   "grams": 85.0,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "label": "1 steak (200 g raw)",
+   "grams": 135,
+   "source": "our assumption: 200 g raw × USDA cooking yield 306/453.6",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 243.0,
    "carbs": 0.0,
@@ -2968,24 +3304,58 @@
  {
   "id": "cevapi",
   "name": "Ćevapi (grilled ground meat)",
-  "aliases": ["ćevapi (grilled ground meat)", "ground meat", 
+  "aliases": [
    "cevap",
+   "cevapa",
    "cevapcici",
    "cevapi",
+   "cevapi (grilled ground meat)",
    "cevapi (grilled minced meat)",
-   "minced meat",
-   "mljeveno meso",
    "ćevap",
+   "ćevapa",
    "ćevapi",
+   "ćevapi (grilled ground meat)",
    "ćevapi (grilled minced meat)",
    "ćevapčići"
   ],
   "kind": "solid",
   "serving": {
-   "label": "3 oz",
-   "grams": 85.0,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "label": "5 pieces",
+   "grams": 80,
+   "source": "our assumption: 5 × 16 g cooked (see piece)",
+   "assumed": true
   },
+  "piece": {
+   "label": "piece",
+   "grams": 16,
+   "source": "Sarajevo specification 10 pieces = 200-250 g raw (Wikipedia 'Ćevapi', ref. 38); × USDA raw→cooked factor 0.714"
+  },
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "sodiumMg"
+    ],
+    "basis": "per100g",
+    "label": {
+     "sodiumMg": 742
+    },
+    "usdaBefore": {
+     "sodiumMg": 83.0
+    },
+    "level": "C",
+    "text": "Ćevapi: the USDA stand-in (unsalted ground beef) has almost no salt. Sodium is from EU ćevapčići labels (1.25–1.70 g salt per 100 g raw), scaled to grilled weight with USDA’s raw-to-cooked ratio for this beef: about 740 mg per 100 g (range 630–860).",
+    "source": "Labels per 100 g raw: Culinea/Lidl beef ćevapčići 1.25 g salt (Open Food Facts 4056489117063); ja! Rewe ćevapčići 1.27 g (4388860565164); Culinea 1.5 g (20001759); Rewe ćevapčići gewürzt 1.70 g (wikifit.de). USDA 174036 raw vs 171798 cooked: Na 66 → 83 mg",
+    "url": "https://world.openfoodfacts.org/product/4388860565164/cevapcici-ja",
+    "note": "Raw Na 500-680 mg (salt × 400), midpoint 590 × 83/66 = 742 mg cooked; range 629-855.",
+    "rangesPer100g": {
+     "sodiumMg": [
+      629,
+      855
+     ]
+    }
+   }
+  ],
   "per100g": {
    "kcal": 246.0,
    "carbs": 0.0,
@@ -2995,7 +3365,7 @@
    "fat": 15.94,
    "satFat": 6.03,
    "protein": 24.04,
-   "sodiumMg": 83.0,
+   "sodiumMg": 742.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
    "waterG": 59.1
@@ -3006,10 +3376,10 @@
   "color": "#a35a35",
   "usdaFdcId": 171798,
   "usdaDescription": "Beef, ground, 80% lean meat / 20% fat, patty, cooked, pan-broiled",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": true,
-  "notes": "PROXY: USDA has no ćevapi record. Ground beef 80/20 pan-broiled patty is the closest class (real ćevapi are usually beef-lamb-pork with spices and salt)."
+  "notes": "PROXY: USDA has no ćevapi record. Ground beef 80/20 pan-broiled patty is the closest class (Sarajevo ćevapi are beef; Croatian ones often beef + pork or lamb). Sodium from EU ćevapčići labels (override)."
  },
  {
   "id": "pork-chop",
@@ -3026,10 +3396,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 chop, excluding refuse (yield from 1 raw chop, with refuse, weighing 151 g)",
+   "label": "1 chop",
    "grams": 89.0,
-   "source": "USDA SR Legacy food_portion (chop, excluding refuse (yield from 1 raw chop, with refuse, weighing 151 g))"
+   "source": "USDA SR Legacy food_portion (1 chop, excluding refuse (yield from 1 raw chop, with refuse, weighing 151 g) = 89 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 248.0,
    "carbs": 0.0,
@@ -3070,8 +3444,12 @@
   "serving": {
    "label": "3 oz",
    "grams": 85.0,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (3 oz = 85 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 258.0,
    "carbs": 0.0,
@@ -3101,7 +3479,6 @@
   "id": "tuna-canned",
   "name": "Tuna (canned in water)",
   "aliases": [
-   "riba",
    "tuna",
    "tuna (canned in water)",
    "tuna iz konzerve",
@@ -3112,28 +3489,32 @@
   "serving": {
    "label": "1 can",
    "grams": 165.0,
-   "source": "USDA SR Legacy food_portion (can)"
+   "source": "USDA SR Legacy food_portion (1 can = 165 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
-   "kcal": 116.0,
+   "kcal": 86.0,
    "carbs": 0.0,
    "sugars": 0.0,
    "freeSugars": 0.0,
    "fiber": 0.0,
-   "fat": 0.82,
-   "satFat": 0.23,
-   "protein": 25.51,
-   "sodiumMg": 50.0,
-   "caffeineMg": null,
-   "alcoholG": null,
-   "waterG": 75.2
+   "fat": 0.96,
+   "satFat": 0.21,
+   "protein": 19.44,
+   "sodiumMg": 247.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 78.1
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": null,
   "giSource": null,
   "color": "#d9b8a0",
-  "usdaFdcId": 171986,
-  "usdaDescription": "Fish, tuna, light, canned in water, without salt, drained solids",
+  "usdaFdcId": 173709,
+  "usdaDescription": "Fish, tuna, light, canned in water, drained solids (Includes foods for USDA's Food Distribution Program)",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
@@ -3146,16 +3527,19 @@
    "losos",
    "peceni losos",
    "pečeni losos",
-   "riba",
    "salmon",
    "salmon (cooked)"
   ],
   "kind": "solid",
   "serving": {
-   "label": "0.5 fillet",
+   "label": "½ fillet",
    "grams": 178.0,
-   "source": "USDA SR Legacy food_portion (fillet)"
+   "source": "USDA SR Legacy food_portion (0.5 fillet = 178 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 206.0,
    "carbs": 0.0,
@@ -3199,8 +3583,12 @@
   "serving": {
    "label": "1 fillet",
    "grams": 180.0,
-   "source": "USDA SR Legacy food_portion (fillet)"
+   "source": "USDA SR Legacy food_portion (1 fillet = 180 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 105.0,
    "carbs": 0.0,
@@ -3231,7 +3619,6 @@
   "name": "Sardines (canned in oil)",
   "aliases": [
    "plava riba",
-   "riba",
    "sardine",
    "sardines",
    "sardines (canned in oil)",
@@ -3241,8 +3628,12 @@
   "serving": {
    "label": "1 can (3.75 oz)",
    "grams": 92.0,
-   "source": "USDA SR Legacy food_portion (can (3.75 oz))"
+   "source": "USDA SR Legacy food_portion (1 can (3.75 oz) = 92 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 208.0,
    "carbs": 0.0,
@@ -3275,8 +3666,6 @@
    "ham",
    "ham (sliced)",
    "narezak",
-   "pureca sunka",
-   "pureća šunka",
    "sunka",
    "šunka"
   ],
@@ -3284,8 +3673,12 @@
   "serving": {
    "label": "1 slice",
    "grams": 28.0,
-   "source": "USDA SR Legacy food_portion (slice)"
+   "source": "USDA SR Legacy food_portion (1 slice = 28 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 164.0,
    "carbs": 3.63,
@@ -3315,7 +3708,6 @@
   "id": "sausage",
   "name": "Sausage (pork, cooked)",
   "aliases": [
-   "hrenovka",
    "kobasica",
    "kobasice",
    "kranjska",
@@ -3326,8 +3718,12 @@
   "serving": {
    "label": "3 oz",
    "grams": 85.0,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (3 oz = 85 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 326.0,
    "carbs": 1.63,
@@ -3351,7 +3747,7 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "USDA record: Polish sausage, pork (smoked); proxy for kranjska-type sausage."
  },
  {
   "id": "frankfurter",
@@ -3368,29 +3764,33 @@
   "kind": "solid",
   "serving": {
    "label": "1 frankfurter",
-   "grams": 48.0,
-   "source": "USDA SR Legacy food_portion (frankfurter)"
+   "grams": 50.0,
+   "source": "USDA SR Legacy food_portion (1 frankfurter = 50 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
-   "kcal": 322.0,
-   "carbs": 2.66,
-   "sugars": 1.27,
+   "kcal": 298.0,
+   "carbs": 4.96,
+   "sugars": 2.7,
    "freeSugars": null,
    "fiber": 0.0,
-   "fat": 29.36,
-   "satFat": 11.59,
-   "protein": 11.69,
-   "sodiumMg": 852.0,
+   "fat": 26.28,
+   "satFat": 8.22,
+   "protein": 10.31,
+   "sodiumMg": 914.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 53.5
+   "waterG": 55.2
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
   "gi": null,
   "giSource": null,
   "color": "#d98a70",
-  "usdaFdcId": 174614,
-  "usdaDescription": "Frankfurter, beef, heated",
+  "usdaFdcId": 171633,
+  "usdaDescription": "Frankfurter, meat and poultry, cooked, boiled",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
@@ -3401,7 +3801,6 @@
   "name": "Salami (dry, pork)",
   "aliases": [
    "kulen",
-   "narezak",
    "salama",
    "salami",
    "salami (dry, pork)"
@@ -3410,8 +3809,12 @@
   "serving": {
    "label": "1 slice (3-1/8\" dia x 1/16\" thick)",
    "grams": 10.0,
-   "source": "USDA SR Legacy food_portion (slice (3-1/8\" dia x 1/16\" thick))"
+   "source": "USDA SR Legacy food_portion (1 slice (3-1/8\" dia x 1/16\" thick) = 10 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 407.0,
    "carbs": 1.6,
@@ -3451,8 +3854,12 @@
   "serving": {
    "label": "1 slice cooked",
    "grams": 8.1,
-   "source": "USDA SR Legacy food_portion (slice cooked)"
+   "source": "USDA SR Legacy food_portion (1 slice cooked = 8.1 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 548.0,
    "carbs": 1.35,
@@ -3488,10 +3895,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "0.5 cup",
+   "label": "1 portion, 126 g",
    "grams": 126.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (0.5 cup = 126 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 144.0,
    "carbs": 2.78,
@@ -3528,15 +3939,18 @@
    "grah",
    "grah kuhani",
    "kidney beans",
-   "kidney beans (boiled)",
-   "pasulj"
+   "kidney beans (boiled)"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 177 g",
    "grams": 177.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 177 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 127.0,
    "carbs": 22.8,
@@ -3566,10 +3980,8 @@
   "id": "beans-white",
   "name": "White beans (boiled)",
   "aliases": [
-   "beans",
    "bijeli grah",
    "bijeli grah kuhani",
-   "grah",
    "tavce gravce",
    "tavče gravče",
    "white beans",
@@ -3577,10 +3989,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 179 g",
    "grams": 179.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 179 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 139.0,
    "carbs": 25.09,
@@ -3596,8 +4012,8 @@
    "waterG": 63.1
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 31,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1099: Haricot/Navy beans, boiled (Canada), 31 ± 6, 6 subjects; nearest tested white bean",
   "color": "#ece4cc",
   "usdaFdcId": 175203,
   "usdaDescription": "Beans, white, mature seeds, cooked, boiled, without salt",
@@ -3610,20 +4026,21 @@
   "id": "lentils",
   "name": "Lentils (boiled)",
   "aliases": [
-   "grah",
    "leca",
-   "lecа",
    "lentils",
    "lentils (boiled)",
-   "leća",
-   "lećа"
+   "leća"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 198 g",
    "grams": 198.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 198 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 116.0,
    "carbs": 20.13,
@@ -3656,16 +4073,19 @@
    "chickpeas",
    "chickpeas (boiled)",
    "garbanzo",
-   "leblebije",
    "slanutak",
    "slanutak kuhani"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 164 g",
    "grams": 164.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 164 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 164.0,
    "carbs": 27.42,
@@ -3705,10 +4125,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 160 g",
    "grams": 160.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 160 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 84.0,
    "carbs": 15.63,
@@ -3724,8 +4148,8 @@
    "waterG": 77.9
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 51,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1611: Pea, frozen, boiled (Canada), 51 ± 6, 6 subjects, single test",
   "color": "#7aa83a",
   "usdaFdcId": 170420,
   "usdaDescription": "Peas, green, cooked, boiled, drained, without salt",
@@ -3745,8 +4169,12 @@
   "serving": {
    "label": "1 tbsp",
    "grams": 15.0,
-   "source": "USDA SR Legacy food_portion (tbsp)"
+   "source": "USDA SR Legacy food_portion (1 tbsp = 15 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 237.0,
    "carbs": 15.0,
@@ -3762,8 +4190,8 @@
    "waterG": 57.4
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 6,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1730: Hummus (chickpea salad dip), 6 ± 4, 12 subjects; a commercial dip, row 1097, tested 22 ± 5",
   "color": "#dcc088",
   "usdaFdcId": 174289,
   "usdaDescription": "Hummus, commercial",
@@ -3786,10 +4214,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup shredded",
+   "label": "1 portion, 47 g",
    "grams": 47.0,
-   "source": "USDA SR Legacy food_portion (cup shredded)"
+   "source": "USDA SR Legacy food_portion (1 cup shredded = 47 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 17.0,
    "carbs": 3.29,
@@ -3829,10 +4261,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, chopped",
+   "label": "1 portion, 89 g",
    "grams": 89.0,
-   "source": "USDA SR Legacy food_portion (cup, chopped)"
+   "source": "USDA SR Legacy food_portion (1 cup, chopped = 89 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 25.0,
    "carbs": 5.8,
@@ -3869,10 +4305,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 142 g",
    "grams": 142.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 142 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 19.0,
    "carbs": 4.28,
@@ -3915,8 +4355,12 @@
   "serving": {
    "label": "1 medium whole (2-3/5\" dia)",
    "grams": 123.0,
-   "source": "USDA SR Legacy food_portion (medium whole (2-3/5\" dia))"
+   "source": "USDA SR Legacy food_portion (1 medium whole (2-3/5\" dia) = 123 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 18.0,
    "carbs": 3.89,
@@ -3956,8 +4400,12 @@
   "serving": {
    "label": "1 cucumber (8-1/4\")",
    "grams": 301.0,
-   "source": "USDA SR Legacy food_portion (cucumber (8-1/4\"))"
+   "source": "USDA SR Legacy food_portion (1 cucumber (8-1/4\") = 301 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 15.0,
    "carbs": 3.63,
@@ -3997,8 +4445,12 @@
   "serving": {
    "label": "1 medium",
    "grams": 61.0,
-   "source": "USDA SR Legacy food_portion (medium)"
+   "source": "USDA SR Legacy food_portion (1 medium = 61 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 41.0,
    "carbs": 9.58,
@@ -4014,15 +4466,15 @@
    "waterG": 88.3
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 35,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1621: Carrots, raw, diced (Australia), 35 ± 5, 7 subjects, single test; raw ground carrots 39 ± 1 (row 1622)",
   "color": "#ee8a1f",
   "usdaFdcId": 170393,
   "usdaDescription": "Carrots, raw",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "GI left null: Table 1 gives 39 for 'carrots, boiled'; Atkinson's text also quotes carrots GI 39 but raw carrot is not separately listed."
+  "notes": "GI: Atkinson 2008 Suppl. Table A1 row 1621 'Carrots, raw, diced' 35 ± 5 (7 healthy subjects, single test); raw ground carrots tested 39 ± 1 (row 1622). Table 1's 39 for 'carrots, boiled' is a mean of raw and boiled tests."
  },
  {
   "id": "broccoli",
@@ -4035,10 +4487,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup chopped",
+   "label": "1 portion, 91 g",
    "grams": 91.0,
-   "source": "USDA SR Legacy food_portion (cup chopped)"
+   "source": "USDA SR Legacy food_portion (1 cup chopped = 91 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 34.0,
    "carbs": 6.64,
@@ -4068,7 +4524,6 @@
   "id": "onion",
   "name": "Onion",
   "aliases": [
-   "bijeli luk",
    "crveni luk",
    "luk",
    "onion",
@@ -4078,8 +4533,12 @@
   "serving": {
    "label": "1 medium (2-1/2\" dia)",
    "grams": 110.0,
-   "source": "USDA SR Legacy food_portion (medium (2-1/2\" dia))"
+   "source": "USDA SR Legacy food_portion (1 medium (2-1/2\" dia) = 110 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 40.0,
    "carbs": 9.34,
@@ -4121,8 +4580,12 @@
   "serving": {
    "label": "1 medium (approx 2-3/4\" long, 2-1/2 dia.)",
    "grams": 119.0,
-   "source": "USDA SR Legacy food_portion (medium (approx 2-3/4\" long, 2-1/2 dia.))"
+   "source": "USDA SR Legacy food_portion (1 medium (approx 2-3/4\" long, 2-1/2 dia.) = 119 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 26.0,
    "carbs": 6.03,
@@ -4150,40 +4613,46 @@
  },
  {
   "id": "spinach",
-  "name": "Spinach (raw)",
+  "name": "Spinach (cooked)",
   "aliases": [
-   "blitva",
+   "cooked spinach",
+   "kuhani spinat",
+   "kuhani špinat",
    "spinach",
-   "spinach (raw)",
+   "spinach (cooked)",
    "spinat",
    "špinat"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
-   "grams": 30.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "label": "1 side portion, 180 g",
+   "grams": 180.0,
+   "source": "USDA SR Legacy food_portion (1 cup = 180 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 23.0,
-   "carbs": 3.63,
-   "sugars": 0.42,
+   "carbs": 3.75,
+   "sugars": 0.43,
    "freeSugars": 0.0,
-   "fiber": 2.2,
-   "fat": 0.39,
-   "satFat": 0.06,
-   "protein": 2.86,
-   "sodiumMg": 79.0,
+   "fiber": 2.4,
+   "fat": 0.26,
+   "satFat": 0.04,
+   "protein": 2.97,
+   "sodiumMg": 70.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 91.4
+   "waterG": 91.2
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": null,
   "giSource": null,
   "color": "#3f7a2a",
-  "usdaFdcId": 168462,
-  "usdaDescription": "Spinach, raw",
+  "usdaFdcId": 168463,
+  "usdaDescription": "Spinach, cooked, boiled, drained, without salt",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
@@ -4202,8 +4671,12 @@
   "serving": {
    "label": "1 medium",
    "grams": 196.0,
-   "source": "USDA SR Legacy food_portion (medium)"
+   "source": "USDA SR Legacy food_portion (1 medium = 196 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 17.0,
    "carbs": 3.11,
@@ -4243,10 +4716,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, pieces or slices",
+   "label": "1 portion, 70 g",
    "grams": 70.0,
-   "source": "USDA SR Legacy food_portion (cup, pieces or slices)"
+   "source": "USDA SR Legacy food_portion (1 cup, pieces or slices = 70 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 22.0,
    "carbs": 3.26,
@@ -4286,10 +4763,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup cut",
+   "label": "1 portion, 149 g",
    "grams": 149.0,
-   "source": "USDA SR Legacy food_portion (cup cut)"
+   "source": "USDA SR Legacy food_portion (1 cup cut = 149 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 96.0,
    "carbs": 20.98,
@@ -4329,8 +4810,12 @@
   "serving": {
    "label": "1 medium",
    "grams": 151.0,
-   "source": "USDA SR Legacy food_portion (medium)"
+   "source": "USDA SR Legacy food_portion (1 medium = 151 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 76.0,
    "carbs": 17.72,
@@ -4358,20 +4843,52 @@
  },
  {
   "id": "olives",
-  "name": "Olives (canned, ripe)",
+  "name": "Black olives",
   "aliases": [
+   "black olives",
    "crne masline",
    "masline",
    "olive",
-   "olives",
-   "olives (canned, ripe)"
+   "olives"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 large",
-   "grams": 4.4,
-   "source": "USDA SR Legacy food_portion (large)"
+   "label": "5 olives",
+   "grams": 22,
+   "source": "our assumption: 5 × USDA 'large' olive (4.4 g)",
+   "assumed": true
   },
+  "piece": {
+   "label": "olive",
+   "grams": 4.4,
+   "source": "USDA SR Legacy food_portion 'large' = 4.4 g"
+  },
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "sodiumMg"
+    ],
+    "basis": "per100g",
+    "label": {
+     "sodiumMg": 1000
+    },
+    "usdaBefore": {
+     "sodiumMg": 735.0
+    },
+    "level": "C",
+    "text": "Olives: sodium is the middle of three EU black-olive labels (800–1,200 mg per 100 g). USDA’s US olives have 735 mg.",
+    "source": "Open Food Facts label data: Tesco Pitted Black Olives (EAN 5050179405767) salt 2.015 g; Fragata pitted olives with sea salt (8410134020317) salt 2 g; Serpis Aceitunas negras cacereñas (8410344320016) salt 3 g per 100 g",
+    "url": "https://world.openfoodfacts.org/product/8410344320016",
+    "note": "Na = salt / 2.5: 806, 800, 1200 mg; midpoint of the range 800-1200 = 1000.",
+    "rangesPer100g": {
+     "sodiumMg": [
+      800,
+      1200
+     ]
+    }
+   }
+  ],
   "per100g": {
    "kcal": 116.0,
    "carbs": 6.04,
@@ -4381,7 +4898,7 @@
    "fat": 10.9,
    "satFat": 2.28,
    "protein": 0.84,
-   "sodiumMg": 735.0,
+   "sodiumMg": 1000.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
    "waterG": 80.0
@@ -4392,10 +4909,10 @@
   "color": "#3a3a2a",
   "usdaFdcId": 169094,
   "usdaDescription": "Olives, ripe, canned (small-extra large)",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "USDA ripe (black) olives, canned. Sodium from EU labels; energy and fat are the USDA values (EU black olives in brine are labelled 125-169 kcal, 13-18 g fat per 100 g)."
  },
  {
   "id": "olive-oil",
@@ -4411,8 +4928,12 @@
   "serving": {
    "label": "1 tablespoon",
    "grams": 13.5,
-   "source": "USDA SR Legacy food_portion (tablespoon)"
+   "source": "USDA SR Legacy food_portion (1 tablespoon = 13.5 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 884.0,
    "carbs": 0.0,
@@ -4451,10 +4972,14 @@
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup",
+   "label": "1 bowl, 241 g",
    "grams": 241.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 241 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 28.0,
    "carbs": 4.89,
@@ -4477,7 +5002,7 @@
   "usdaDescription": "Soup, vegetarian vegetable, canned, prepared with equal volume water",
   "usdaDataset": "SR Legacy",
   "recipe": null,
-  "usdaProxy": false,
+  "usdaProxy": true,
   "notes": "Canned vegetable soup prepared with water; proxy for home-made soup."
  },
  {
@@ -4486,22 +5011,21 @@
   "aliases": [
    "chicken noodle soup",
    "chicken soup",
-   "goveda juha",
-   "govedja juha",
-   "goveđa juha",
-   "juha",
    "juha s rezancima",
    "pileca juha",
    "pilece juha",
-   "pileća juha",
-   "soup"
+   "pileća juha"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 serving 1 cup",
+   "label": "1 bowl, 248 g",
    "grams": 248.0,
-   "source": "USDA SR Legacy food_portion (serving 1 cup)"
+   "source": "USDA SR Legacy food_portion (1 serving 1 cup = 248 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 24.0,
    "carbs": 2.97,
@@ -4524,30 +5048,32 @@
   "usdaDescription": "Soup, chicken noodle, canned, prepared with equal volume water",
   "usdaDataset": "SR Legacy",
   "recipe": null,
-  "usdaProxy": false,
+  "usdaProxy": true,
   "notes": "Canned, prepared with water; proxy for home-made broth soup."
  },
  {
   "id": "tomato-soup",
   "name": "Tomato soup",
   "aliases": [
-   "juha",
    "juha od rajcice",
    "juha od rajčice",
-   "soup",
    "tomato soup"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 serving 1 cup",
+   "label": "1 bowl, 248 g",
    "grams": 248.0,
-   "source": "USDA SR Legacy food_portion (serving 1 cup)"
+   "source": "USDA SR Legacy food_portion (1 serving 1 cup = 248 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 32.0,
    "carbs": 7.45,
    "sugars": 4.03,
-   "freeSugars": null,
+   "freeSugars": 4.03,
    "fiber": 0.5,
    "fat": 0.21,
    "satFat": 0.06,
@@ -4557,36 +5083,38 @@
    "alcoholG": 0.0,
    "waterG": 90.5
   },
-  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
+  "gi": 52,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1555: Tomato soup, condensed, prepared with water (Campbell's), 52 ± 4, 10 subjects, single test",
   "color": "#d8532a",
   "usdaFdcId": 171176,
   "usdaDescription": "Soup, tomato, canned, prepared with equal volume water, commercial",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "Upper-bound free sugars: all sugars counted as added (part of it is natural tomato sugar)."
  },
  {
   "id": "bean-soup",
-  "name": "Bean soup (grah, with ham)",
+  "name": "Bean soup (with ham)",
   "aliases": [
    "bean soup",
-   "bean soup (grah, with ham)",
+   "bean soup (with ham)",
    "grah juha",
    "grah varivo",
    "jota",
-   "juha",
-   "pasulj",
-   "soup"
+   "pasulj"
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 cup (8 fl oz)",
+   "label": "1 portion, 243 g",
    "grams": 243.0,
-   "source": "USDA SR Legacy food_portion (cup (8 fl oz))"
+   "source": "USDA SR Legacy food_portion (1 cup (8 fl oz) = 243 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 95.0,
    "carbs": 11.16,
@@ -4625,8 +5153,12 @@
   "serving": {
    "label": "1 medium (3\" dia)",
    "grams": 182.0,
-   "source": "USDA SR Legacy food_portion (medium (3\" dia))"
+   "source": "USDA SR Legacy food_portion (1 medium (3\" dia) = 182 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 52.0,
    "carbs": 13.81,
@@ -4664,8 +5196,12 @@
   "serving": {
    "label": "1 medium (7\" to 7-7/8\" long)",
    "grams": 118.0,
-   "source": "USDA SR Legacy food_portion (medium (7\" to 7-7/8\" long))"
+   "source": "USDA SR Legacy food_portion (1 medium (7\" to 7-7/8\" long) = 118 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 89.0,
    "carbs": 22.84,
@@ -4706,8 +5242,12 @@
   "serving": {
    "label": "1 fruit (2-5/8\" dia)",
    "grams": 131.0,
-   "source": "USDA SR Legacy food_portion (fruit (2-5/8\" dia))"
+   "source": "USDA SR Legacy food_portion (1 fruit (2-5/8\" dia) = 131 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 47.0,
    "carbs": 11.75,
@@ -4747,8 +5287,12 @@
   "serving": {
    "label": "1 medium (2-1/2\" dia)",
    "grams": 88.0,
-   "source": "USDA SR Legacy food_portion (medium (2-1/2\" dia))"
+   "source": "USDA SR Legacy food_portion (1 medium (2-1/2\" dia) = 88 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 53.0,
    "carbs": 13.34,
@@ -4786,10 +5330,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 151 g",
    "grams": 151.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 151 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 69.0,
    "carbs": 18.1,
@@ -4805,8 +5353,8 @@
    "waterG": 80.5
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 59,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 984: Grapes, black, Waltham Cross (Australia), 59, 11 subjects, bread reference, single test",
   "color": "#8fb04a",
   "usdaFdcId": 174683,
   "usdaDescription": "Grapes, red or green (European type, such as Thompson seedless), raw",
@@ -4826,10 +5374,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, halves",
+   "label": "1 portion, 152 g",
    "grams": 152.0,
-   "source": "USDA SR Legacy food_portion (cup, halves)"
+   "source": "USDA SR Legacy food_portion (1 cup, halves = 152 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 32.0,
    "carbs": 7.68,
@@ -4845,8 +5397,8 @@
    "waterG": 91.0
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 40,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1023: Strawberries, fresh, raw (Australia), 40 ± 7, 10 subjects, single test",
   "color": "#d6283a",
   "usdaFdcId": 167762,
   "usdaDescription": "Strawberries, raw",
@@ -4866,10 +5418,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, balls",
-   "grams": 154.0,
-   "source": "USDA SR Legacy food_portion (cup, balls)"
+   "label": "1 slice (1/16 of a melon)",
+   "grams": 286.0,
+   "source": "USDA SR Legacy food_portion (1 wedge (approx 1/16 of melon) = 286 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 30.0,
    "carbs": 7.55,
@@ -4907,10 +5463,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, balls",
+   "label": "1 portion, 177 g",
    "grams": 177.0,
-   "source": "USDA SR Legacy food_portion (cup, balls)"
+   "source": "USDA SR Legacy food_portion (1 cup, balls = 177 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 34.0,
    "carbs": 8.16,
@@ -4926,8 +5486,8 @@
    "waterG": 90.2
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 65,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1021: Rockmelon/Cantaloupe, raw (Australia), 65 ± 9, 8 subjects, bread reference; a second test, row 1022, gave 70 (10 subjects, glucose reference)",
   "color": "#f4b872",
   "usdaFdcId": 169092,
   "usdaDescription": "Melons, cantaloupe, raw",
@@ -4951,8 +5511,12 @@
   "serving": {
    "label": "1 medium",
    "grams": 178.0,
-   "source": "USDA SR Legacy food_portion (medium)"
+   "source": "USDA SR Legacy food_portion (1 medium = 178 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 57.0,
    "carbs": 15.23,
@@ -4984,7 +5548,6 @@
   "aliases": [
    "breskva",
    "breskve",
-   "nektarina",
    "peach",
    "peaches"
   ],
@@ -4992,8 +5555,12 @@
   "serving": {
    "label": "1 medium (2-2/3\" dia)",
    "grams": 150.0,
-   "source": "USDA SR Legacy food_portion (medium (2-2/3\" dia))"
+   "source": "USDA SR Legacy food_portion (1 medium (2-2/3\" dia) = 150 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 39.0,
    "carbs": 9.54,
@@ -5027,16 +5594,18 @@
    "cherries (sweet)",
    "cherry",
    "tresnje",
-   "trešnje",
-   "visnje",
-   "višnje"
+   "trešnje"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 NLEA serving",
+   "label": "1 bowl, 140 g",
    "grams": 140.0,
-   "source": "USDA SR Legacy food_portion (NLEA serving)"
+   "source": "USDA SR Legacy food_portion (1 NLEA serving = 140 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 63.0,
    "carbs": 16.01,
@@ -5052,8 +5621,8 @@
    "waterG": 82.2
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 63,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 970: Cherries, dark, raw, pitted (Australia), 63 ± 6, 10 subjects, single test",
   "color": "#9a1a2e",
   "usdaFdcId": 171719,
   "usdaDescription": "Cherries, sweet, raw",
@@ -5077,8 +5646,12 @@
   "serving": {
    "label": "1 fruit (2-1/8\" dia)",
    "grams": 66.0,
-   "source": "USDA SR Legacy food_portion (fruit (2-1/8\" dia))"
+   "source": "USDA SR Legacy food_portion (1 fruit (2-1/8\" dia) = 66 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 46.0,
    "carbs": 11.42,
@@ -5116,8 +5689,12 @@
   "serving": {
    "label": "1 fruit (2\" dia)",
    "grams": 69.0,
-   "source": "USDA SR Legacy food_portion (fruit (2\" dia))"
+   "source": "USDA SR Legacy food_portion (1 fruit (2\" dia) = 69 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 61.0,
    "carbs": 14.66,
@@ -5133,8 +5710,8 @@
    "waterG": 83.1
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 58,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 987: Kiwi fruit (Australia), 58 ± 7, 7 subjects, single test",
   "color": "#8aa83a",
   "usdaFdcId": 168153,
   "usdaDescription": "Kiwifruit, green, raw",
@@ -5152,10 +5729,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, chunks",
+   "label": "1 portion, 165 g",
    "grams": 165.0,
-   "source": "USDA SR Legacy food_portion (cup, chunks)"
+   "source": "USDA SR Legacy food_portion (1 cup, chunks = 165 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 50.0,
    "carbs": 13.12,
@@ -5192,10 +5773,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 portion, 148 g",
    "grams": 148.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 148 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 57.0,
    "carbs": 14.49,
@@ -5230,34 +5815,38 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 avocado, NS as to Florida or California",
-   "grams": 201.0,
-   "source": "USDA SR Legacy food_portion (avocado, NS as to Florida or California)"
+   "label": "1 avocado (without skin and seed)",
+   "grams": 136.0,
+   "source": "USDA SR Legacy food_portion (1 fruit, without skin and seed = 136 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
-   "kcal": 160.0,
-   "carbs": 8.53,
-   "sugars": 0.66,
+   "kcal": 167.0,
+   "carbs": 8.64,
+   "sugars": 0.3,
    "freeSugars": 0.0,
-   "fiber": 6.7,
-   "fat": 14.66,
+   "fiber": 6.8,
+   "fat": 15.41,
    "satFat": 2.13,
-   "protein": 2.0,
-   "sodiumMg": 7.0,
-   "caffeineMg": 0.0,
-   "alcoholG": 0.0,
-   "waterG": 73.2
+   "protein": 1.96,
+   "sodiumMg": 8.0,
+   "caffeineMg": null,
+   "alcoholG": null,
+   "waterG": 72.3
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": null,
   "giSource": null,
   "color": "#a8b84a",
-  "usdaFdcId": 171705,
-  "usdaDescription": "Avocados, raw, all commercial varieties",
+  "usdaFdcId": 171706,
+  "usdaDescription": "Avocados, raw, California",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "USDA California (Hass) avocado."
  },
  {
   "id": "raisins",
@@ -5278,8 +5867,12 @@
   "serving": {
    "label": "1 small box (1.5 oz)",
    "grams": 43.0,
-   "source": "USDA SR Legacy food_portion (small box (1.5 oz))"
+   "source": "USDA SR Legacy food_portion (1 small box (1.5 oz) = 43 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 299.0,
    "carbs": 79.32,
@@ -5295,8 +5888,8 @@
    "waterG": 15.5
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 64,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1018: Raisins (Canada), 64 ± 11, 6 subjects, single test; sultanas: printed mean of three studies 57 (rows 1029-1031)",
   "color": "#4a2a1a",
   "usdaFdcId": 168165,
   "usdaDescription": "Raisins, dark, seedless (Includes foods for USDA's Food Distribution Program)",
@@ -5310,20 +5903,20 @@
   "name": "Dried apricots",
   "aliases": [
    "dried apricots",
-   "dried fruit",
-   "marelice",
-   "marelice susene",
-   "marelice sušene",
    "suhe marelice",
-   "suseno voce",
-   "sušeno voće"
+   "susene marelice",
+   "sušene marelice"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup, halves",
-   "grams": 130.0,
-   "source": "USDA SR Legacy food_portion (cup, halves)"
+   "label": "1 handful",
+   "grams": 40,
+   "source": "our assumption (the USDA 'cup, halves' is 130 g)",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 241.0,
    "carbs": 62.64,
@@ -5339,8 +5932,8 @@
    "waterG": 30.9
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 31,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 950-952: Apricots, dried (Australia; UK ×2), 30 ± 7, 31 ± 6, 32 ± 7, printed mean of three studies 31",
   "color": "#d9822a",
   "usdaFdcId": 173941,
   "usdaDescription": "Apricots, dried, sulfured, uncooked",
@@ -5354,19 +5947,18 @@
   "name": "Dried figs",
   "aliases": [
    "dried figs",
-   "dried fruit",
-   "smokva",
-   "smokve",
-   "suhe smokve",
-   "suseno voce",
-   "sušeno voće"
+   "suhe smokve"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
-   "grams": 149.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "label": "1 handful",
+   "grams": 40,
+   "source": "our assumption (the USDA 'cup' is 149 g)",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 249.0,
    "carbs": 63.87,
@@ -5382,8 +5974,8 @@
    "waterG": 30.1
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 61,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 979: Figs, dried, tenderised (Dessert Maid), 61 ± 6, 10 subjects, single test",
   "color": "#6a4a3a",
   "usdaFdcId": 174665,
   "usdaDescription": "Figs, dried, uncooked",
@@ -5398,15 +5990,18 @@
   "aliases": [
    "dates",
    "datulja",
-   "datulje",
-   "dried fruit"
+   "datulje"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 date, pitted",
    "grams": 7.1,
-   "source": "USDA SR Legacy food_portion (date, pitted)"
+   "source": "USDA SR Legacy food_portion (1 date, pitted = 7.1 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 282.0,
    "carbs": 75.03,
@@ -5447,8 +6042,12 @@
   "serving": {
    "label": "1 oz (23 whole kernels)",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz (23 whole kernels))"
+   "source": "USDA SR Legacy food_portion (1 oz (23 whole kernels) = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 579.0,
    "carbs": 21.55,
@@ -5478,19 +6077,20 @@
   "id": "walnuts",
   "name": "Walnuts",
   "aliases": [
-   "nuts",
    "orah",
-   "orasasti plodovi",
    "orasi",
-   "orašasti plodovi",
    "walnuts"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 oz (14 halves)",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz (14 halves))"
+   "source": "USDA SR Legacy food_portion (1 oz (14 halves) = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 654.0,
    "carbs": 13.71,
@@ -5524,17 +6124,18 @@
    "ljesnjaci",
    "ljesnjak",
    "lješnjaci",
-   "lješnjak",
-   "nuts",
-   "orasasti plodovi",
-   "orašasti plodovi"
+   "lješnjak"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 oz (21 whole kernels)",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz (21 whole kernels))"
+   "source": "USDA SR Legacy food_portion (1 oz (21 whole kernels) = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 628.0,
    "carbs": 16.7,
@@ -5567,7 +6168,6 @@
    "kikiriki",
    "kikiriki peceni",
    "kikiriki pečeni",
-   "nuts",
    "peanuts",
    "peanuts (roasted)"
   ],
@@ -5575,8 +6175,12 @@
   "serving": {
    "label": "1 oz",
    "grams": 28.4,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (1 oz = 28.35 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 587.0,
    "carbs": 21.26,
@@ -5606,7 +6210,6 @@
   "id": "sunflower-seeds",
   "name": "Sunflower seeds",
   "aliases": [
-   "bundeva sjemenke",
    "sjemenke",
    "sjemenke suncokreta",
    "suncokret",
@@ -5614,10 +6217,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
-   "grams": 140.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "label": "1 handful",
+   "grams": 30,
+   "source": "our assumption (the USDA 'cup' is 140 g)",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 584.0,
    "carbs": 20.0,
@@ -5656,13 +6263,17 @@
   "serving": {
    "label": "2 tbsp",
    "grams": 32.0,
-   "source": "USDA SR Legacy food_portion (tbsp)"
+   "source": "USDA SR Legacy food_portion (2 tbsp = 32 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 598.0,
    "carbs": 22.31,
    "sugars": 10.49,
-   "freeSugars": null,
+   "freeSugars": 10.49,
    "fiber": 5.0,
    "fat": 51.36,
    "satFat": 10.32,
@@ -5672,7 +6283,7 @@
    "alcoholG": 0.0,
    "waterG": 1.2
   },
-  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+  "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
   "gi": null,
   "giSource": null,
   "color": "#b88a4a",
@@ -5681,7 +6292,7 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Peanut butter may contain added sugar; USDA gives no split, null."
+  "notes": "Upper-bound free sugars: all sugars counted as added (dry-roasted peanuts alone have 4.9 g/100 g)."
  },
  {
   "id": "nutella",
@@ -5697,31 +6308,75 @@
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 serving 2 TBSP",
-   "grams": 37.0,
-   "source": "USDA SR Legacy food_portion (serving 2 TBSP)"
+   "label": "1 portion (1 tbsp)",
+   "grams": 15,
+   "source": "label: Ferrero Nutella portion 15 g",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "carbs",
+     "fat",
+     "fiber",
+     "kcal",
+     "protein",
+     "satFat",
+     "sodiumMg",
+     "sugars"
+    ],
+    "basis": "per100g",
+    "label": {
+     "kcal": 539,
+     "fat": 30.9,
+     "satFat": 10.6,
+     "carbs": 57.5,
+     "sugars": 56.3,
+     "protein": 6.3,
+     "sodiumMg": 43,
+     "fiber": null
+    },
+    "usdaBefore": {
+     "kcal": 539.0,
+     "fat": 29.73,
+     "satFat": 28.423,
+     "carbs": 62.36,
+     "sugars": 54.05,
+     "protein": 5.41,
+     "sodiumMg": 41.0,
+     "fiber": 5.4
+    },
+    "level": "A",
+    "text": "Hazelnut spread: values are from the Ferrero Nutella label (per 100 g: 539 kcal, 30.9 g fat of which 10.6 g saturated, 56.3 g sugar). USDA’s generic record lists 28 g saturated fat, which the label contradicts.",
+    "source": "Ferrero Foodservice UK, Nutella 3 kg: per 100 g 539 kcal, fat 30.9 g, saturates 10.6 g, carbohydrate 57.5 g, sugars 56.3 g, protein 6.3 g, salt 0.107 g; portion 15 g",
+    "url": "https://www.ferrerofoodservice.com/uk/en/products/nutella/nutella-3kg",
+    "note": "Sodium = salt 0.107 g / 2.5 = 43 mg. Fiber is not declared on the label (None); EU carbohydrate excludes fiber.",
+    "rangesPer100g": {}
+   }
+  ],
   "per100g": {
    "kcal": 539.0,
-   "carbs": 62.36,
-   "sugars": 54.05,
-   "freeSugars": 54.05,
-   "fiber": 5.4,
-   "fat": 29.73,
-   "satFat": 28.42,
-   "protein": 5.41,
-   "sodiumMg": 41.0,
+   "carbs": 57.5,
+   "sugars": 56.3,
+   "freeSugars": 56.3,
+   "fiber": null,
+   "fat": 30.9,
+   "satFat": 10.6,
+   "protein": 6.3,
+   "sodiumMg": 43.0,
    "caffeineMg": 7.0,
    "alcoholG": 0.0,
    "waterG": 1.1
   },
-  "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
+  "freeSugarsBasis": "UPPER BOUND: all label sugars assumed added",
   "gi": null,
   "giSource": null,
   "color": "#5a3220",
   "usdaFdcId": 168000,
   "usdaDescription": "Chocolate-flavored hazelnut spread",
-  "usdaDataset": "SR Legacy",
+  "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": false,
   "notes": "Upper-bound rule: sugar is the main ingredient, milk lactose is small."
@@ -5741,13 +6396,17 @@
   "serving": {
    "label": "1 bar (1.55 oz)",
    "grams": 44.0,
-   "source": "USDA SR Legacy food_portion (bar (1.55 oz))"
+   "source": "USDA SR Legacy food_portion (1 bar (1.55 oz) = 44 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 535.0,
    "carbs": 59.4,
    "sugars": 51.5,
-   "freeSugars": null,
+   "freeSugars": 51.5,
    "fiber": 3.4,
    "fat": 29.66,
    "satFat": 18.51,
@@ -5757,7 +6416,7 @@
    "alcoholG": 0.0,
    "waterG": 1.5
   },
-  "freeSugarsBasis": "USDA reports no lactose value, split not possible",
+  "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
   "gi": 40,
   "giSource": "Atkinson 2008 (PMC2584181) Table 1: Chocolate, mean of multiple studies; nearest tested class, not tested on this exact product",
   "color": "#6a3a22",
@@ -5766,28 +6425,29 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "GI is the generic Table 1 'chocolate' value (40), not milk-chocolate specific."
+  "notes": "GI is the generic Table 1 'chocolate' value (40), not milk-chocolate specific. Upper-bound free sugars (milk lactose, maybe 8-10 g/100 g, is included)."
  },
  {
   "id": "chocolate-dark",
   "name": "Dark chocolate (70-85% cacao)",
   "aliases": [
-   "chocolate",
-   "cokolada",
    "dark chocolate",
    "dark chocolate (70-85% cacao)",
    "gorka cokolada",
    "gorka čokolada",
    "tamna cokolada",
-   "tamna čokolada",
-   "čokolada"
+   "tamna čokolada"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 bar",
-   "grams": 101.0,
-   "source": "USDA SR Legacy food_portion (bar)"
+   "label": "4 squares",
+   "grams": 40,
+   "source": "our assumption: 4 squares of a 100 g bar of 10 g squares",
+   "assumed": true
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 598.0,
    "carbs": 45.9,
@@ -5825,10 +6485,14 @@
   ],
   "kind": "semi",
   "serving": {
-   "label": "1 serving 1/2 cup",
+   "label": "1 portion, 66 g",
    "grams": 66.0,
-   "source": "USDA SR Legacy food_portion (serving 1/2 cup)"
+   "source": "USDA SR Legacy food_portion (1 serving 1/2 cup = 66 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 207.0,
    "carbs": 23.6,
@@ -5857,10 +6521,10 @@
  {
   "id": "biscuits",
   "name": "Butter cookies",
-  "aliases": ["butter cookies", 
+  "aliases": [
    "biscuits",
-   "biskvit",
    "butter biscuits / cookies",
+   "butter cookies",
    "cookies",
    "keks",
    "keksi",
@@ -5872,8 +6536,12 @@
   "serving": {
    "label": "1 cookie",
    "grams": 5.0,
-   "source": "USDA SR Legacy food_portion (cookie)"
+   "source": "USDA SR Legacy food_portion (1 cookie = 5 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 467.0,
    "carbs": 68.9,
@@ -5905,15 +6573,18 @@
   "aliases": [
    "croissant",
    "kroasan",
-   "kroasani",
-   "pecivo"
+   "kroasani"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 croissant, medium",
    "grams": 57.0,
-   "source": "USDA SR Legacy food_portion (croissant, medium)"
+   "source": "USDA SR Legacy food_portion (1 croissant, medium = 57 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 406.0,
    "carbs": 45.8,
@@ -5956,8 +6627,12 @@
   "serving": {
    "label": "1 piece (1/12 of 16 oz cake)",
    "grams": 38.0,
-   "source": "USDA SR Legacy food_portion (piece (1/12 of 16 oz cake))"
+   "source": "USDA SR Legacy food_portion (1 piece (1/12 of 16 oz cake) = 38 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 290.0,
    "carbs": 61.0,
@@ -5973,8 +6648,8 @@
    "waterG": 29.7
   },
   "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-  "gi": null,
-  "giSource": null,
+  "gi": 46,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A2 row 1883: Sponge cake, plain (Canada), 46 ± 6, 5 healthy subjects (listed in A2 because of the small number)",
   "color": "#f0d890",
   "usdaFdcId": 172706,
   "usdaDescription": "Cake, sponge, commercially prepared",
@@ -5985,41 +6660,46 @@
  },
  {
   "id": "doughnut",
-  "name": "Doughnut (glazed)",
+  "name": "Doughnut (jam-filled)",
   "aliases": [
    "donut",
    "doughnut",
-   "doughnut (glazed)",
+   "doughnut (jam-filled)",
+   "jelly doughnut",
    "krafna",
    "krafna s marmeladom",
    "krafne"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 doughnut (3-3/4\" dia)",
-   "grams": 60.0,
-   "source": "USDA SR Legacy food_portion (doughnut (3-3/4\" dia))"
+   "label": "1 doughnut",
+   "grams": 85.0,
+   "source": "USDA SR Legacy food_portion (1 doughnut oval (3-1/2\" x 2-1/2\") = 85 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
-   "kcal": 421.0,
-   "carbs": 47.93,
-   "sugars": 22.75,
-   "freeSugars": 22.75,
-   "fiber": 2.1,
-   "fat": 22.7,
-   "satFat": 9.45,
-   "protein": 6.14,
-   "sodiumMg": 316.0,
+   "kcal": 340.0,
+   "carbs": 39.0,
+   "sugars": 21.1,
+   "freeSugars": 21.1,
+   "fiber": 0.9,
+   "fat": 18.7,
+   "satFat": 4.84,
+   "protein": 5.9,
+   "sodiumMg": 455.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 22.0
+   "waterG": 35.6
   },
   "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-  "gi": null,
-  "giSource": null,
+  "gi": 75,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 13: Doughnut, wheat dough, deep-fried (China), 75 ± 7, 8 subjects; nearest tested food, not a jam-filled doughnut",
   "color": "#d9a85a",
-  "usdaFdcId": 172758,
-  "usdaDescription": "Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)",
+  "usdaFdcId": 172759,
+  "usdaDescription": "Doughnuts, yeast-leavened, with jelly filling",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
@@ -6036,8 +6716,12 @@
   "serving": {
    "label": "1 tbsp",
    "grams": 21.0,
-   "source": "USDA SR Legacy food_portion (tbsp)"
+   "source": "USDA SR Legacy food_portion (1 tbsp = 21 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 304.0,
    "carbs": 82.4,
@@ -6082,8 +6766,12 @@
   "serving": {
    "label": "1 tsp",
    "grams": 4.2,
-   "source": "USDA SR Legacy food_portion (tsp)"
+   "source": "USDA SR Legacy food_portion (1 tsp = 4.2 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 387.0,
    "carbs": 99.98,
@@ -6125,8 +6813,12 @@
   "serving": {
    "label": "1 tbsp",
    "grams": 20.0,
-   "source": "USDA SR Legacy food_portion (tbsp)"
+   "source": "USDA SR Legacy food_portion (1 tbsp = 20 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 278.0,
    "carbs": 68.86,
@@ -6168,13 +6860,17 @@
   "serving": {
    "label": "1 oz",
    "grams": 28.0,
-   "source": "USDA SR Legacy food_portion (oz)"
+   "source": "USDA SR Legacy food_portion (1 oz = 28 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 532.0,
    "carbs": 53.83,
    "sugars": 0.33,
-   "freeSugars": null,
+   "freeSugars": 0.0,
    "fiber": 3.1,
    "fat": 33.98,
    "satFat": 3.4,
@@ -6184,7 +6880,7 @@
    "alcoholG": 0.0,
    "waterG": 1.9
   },
-  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": 56,
   "giSource": "Atkinson 2008 (PMC2584181) Table 1: Potato crisps, mean of multiple studies",
   "color": "#e8c060",
@@ -6193,7 +6889,7 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "Free sugars none: plain salted crisps are potato, oil and salt (no added sugars), the same rule as fries."
  },
  {
   "id": "popcorn",
@@ -6206,10 +6902,14 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 cup",
+   "label": "1 cup, 8 g",
    "grams": 8.0,
-   "source": "USDA SR Legacy food_portion (cup)"
+   "source": "USDA SR Legacy food_portion (1 cup = 8 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 387.0,
    "carbs": 77.78,
@@ -6249,8 +6949,12 @@
   "serving": {
    "label": "1 cake",
    "grams": 9.0,
-   "source": "USDA SR Legacy food_portion (cake)"
+   "source": "USDA SR Legacy food_portion (1 cake = 9 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 387.0,
    "carbs": 81.5,
@@ -6283,15 +6987,18 @@
    "burger",
    "hamburger",
    "hamburger (fast food)",
-   "hamburger fast food",
-   "pljeskavica"
+   "hamburger fast food"
   ],
   "kind": "solid",
   "serving": {
    "label": "1 sandwich",
    "grams": 95.0,
-   "source": "USDA SR Legacy food_portion (sandwich)"
+   "source": "USDA SR Legacy food_portion (1 sandwich = 95 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": 264.0,
    "carbs": 30.28,
@@ -6307,8 +7014,8 @@
    "waterG": 44.5
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 66,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1176: Hamburger (beef patty, ketchup, pickle, onion, mustard on a bun), McDonald's Australia, 66 ± 8, 10 subjects, 95 g serve",
   "color": "#b8803a",
   "usdaFdcId": 170717,
   "usdaDescription": "McDONALD'S, Hamburger",
@@ -6330,6 +7037,9 @@
   ],
   "kind": "solid",
   "serving": null,
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
    "kcal": null,
    "carbs": null,
@@ -6357,44 +7067,50 @@
  },
  {
   "id": "sandwich-ham",
-  "name": "Sandwich (turkey, roast beef and ham sub)",
+  "name": "Ham sandwich (sub)",
   "aliases": [
+   "ham sandwich",
+   "ham sandwich (sub)",
    "sandwich",
-   "sandwich (turkey, roast beef and ham sub)",
    "sendvic",
    "sendvic sa sunkom",
    "sendvič",
+   "sendvič sa šunkom",
    "sub"
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 six-inch sub",
-   "grams": 207,
-   "source": "USDA food_portion: 6 inch sub = 207 g"
+   "label": "1 sub (15 cm)",
+   "grams": 184.0,
+   "source": "USDA SR Legacy food_portion (6 inch sub = 184 g)",
+   "assumed": false
   },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
   "per100g": {
-   "kcal": 146.0,
-   "carbs": 20.36,
-   "sugars": 3.19,
+   "kcal": 151.0,
+   "carbs": 22.91,
+   "sugars": 3.54,
    "freeSugars": null,
-   "fiber": 1.4,
-   "fat": 2.42,
-   "satFat": 0.57,
-   "protein": 10.66,
-   "sodiumMg": 348.0,
+   "fiber": 1.3,
+   "fat": 2.53,
+   "satFat": 0.63,
+   "protein": 9.12,
+   "sodiumMg": 396.0,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 64.7
+   "waterG": 63.3
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
   "gi": null,
   "giSource": null,
   "color": "#e8c888",
-  "usdaFdcId": 170308,
-  "usdaDescription": "Fast foods, submarine sandwich, turkey, roast beef and ham on white bread with lettuce and tomato",
+  "usdaFdcId": 170707,
+  "usdaDescription": "Fast foods, submarine sandwich, ham on white bread with lettuce and tomato",
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "US fast-food submarine sandwich, ham on white bread with lettuce and tomato."
  }
 ]

@@ -2,6 +2,26 @@
 
 File: `research/fooddb.json` (150 foods and drinks, 43 with a glycemic index). Built by `research/tools/build_fooddb.py` from the spec `research/tools/fooddb_spec.py`, using the lookup module `research/tools/usda_sr.py`. Rule: upute.md section 2, every number comes from a source that was actually read; missing means `null`.
 
+## Data flow (single source, since the 2026-10-17 audit)
+
+```
+research/tools/fooddb_spec.py   ← the ONLY place to change a food (record, serving, aliases, GI key, overrides)
+        │  python -I research/tools/build_fooddb.py build
+        ▼
+research/fooddb.json            ← full record per food (USDA ids, sources, overrides with the USDA values they replace)
+        │  research/tools/sync_app_fooddb.py (run automatically at the end of `build`; can be run alone)
+        ▼
+app/src/v4/food/fooddb.json     ← slim copy the app imports (parse.ts, content/food.ts). Never edit by hand.
+```
+
+- Before 2026-10-17 the app copy was hand-patched (fries, renames) and had drifted: `kebab` missing (intended) and the pancake aliases stale. It also carried app-side corrections in `parse.ts` (`SERVING_FIX`, `GI_ADD`, cola `labelFix`). All of these now live in the spec, and `parse.ts` reads the data as it is.
+- `sync_app_fooddb.py` `EXCLUDE`: `kebab` (no SR Legacy record, all values null). It stays in research/fooddb.json.
+- **Overrides** (`override()` at the bottom of the spec): where USDA is wrong for our market or contradicts the manufacturer. Each one has its own level, plain-English text, source string and URL. The build keeps the replaced USDA values in `overrides[].usdaBefore`. The app turns each override into a claim (`DBO-<food>-<n>`, content/food.ts) that is shown in the food's first chapter, in the caffeine chapter when caffeine is replaced, and on the "How we know" page. Current overrides: cola (EU can label), energy drink (Red Bull EU label), Nutella (Ferrero label), parmesan sodium (Parmigiano Reggiano Consortium), olives sodium (3 EU labels), ćevapi sodium (EU labels, scaled to cooked weight), burek (Čakovečki mlinovi label). EU labels give carbohydrate without fiber, so an overridden label row sets fiber to the label value or null.
+- **Alias owners** (`ALIAS_OWNER`): a word on several foods ("kava", "sir", "juice") belongs to one food; the build drops it from the others and fails on an undecided shared word. A test checks that no exact alias names two foods.
+- **Servings**: `('g', …)` servings are "assumed" (typical size, level C) unless the reason starts with USDA / label / producer. `piece` gives one countable piece (ćevapi 16 g, olive 4.4 g) used when a whole number is typed. `alias_serving` gives a brand its own pack (Monster 500 ml). `('mlx', …)` takes the density from another USDA record where a record's own portion is physically impossible (iced tea, almond milk, smoothie).
+- **GI**: Table 1 values plus single healthy-subject tests from Supplementary Tables A1/A2 (`GI_SUPP` in the build), each with its row number.
+- Tests: `app/src/v4/foodData.test.ts` (golden queries, alias uniqueness, Atwater ±15 %, every override).
+
 ## Sources
 
 1. **USDA FoodData Central, SR Legacy** (CSV release 2018-04, `FoodData_Central_sr_legacy_food_csv_2018-04.zip` from fdc.nal.usda.gov/fdc-datasets/). Downloaded to `data/raw/usda/` (new folder). The FDC API with `DEMO_KEY` returned HTTP 429 (Too Many Requests) on the first call, so the CSV bulk download was used; the records and FDC IDs are the same ones the API serves. Per-100 g values are read from `food_nutrient.csv` (nutrient numbers: 208 energy, 205 carbohydrate, 269 total sugars, 291 fibre, 204 fat, 606 saturated fat, 203 protein, 307 sodium, 262 caffeine, 221 alcohol, 255 water, 213 lactose, 539 added sugars). Serving sizes come from `food_portion.csv` (the portion text is quoted in `serving.label`).
@@ -28,7 +48,9 @@ File: `research/fooddb.json` (150 foods and drinks, 43 with a glycemic index). B
 | minusLactose | chocolate milk, hot chocolate, milk chocolate, dark chocolate, ice cream, fruit yoghurt | freeSugars = USDA total sugars minus USDA lactose (milk sugar is not free). If USDA lists no lactose value, freeSugars is null |
 | upper | cornflakes, biscuits, sponge cake, doughnut, hazelnut spread, soy milk, pancakes | UPPER BOUND: all total sugars are assumed to be added (USDA added-sugar value 539 is used if it exists; it did not for these). Real free sugars may be a little lower |
 | null | breads, burek, pizza, crackers, muesli, ham, sausages, bacon, salami, hummus, canned soups, peanut butter, croissant, crisps, hamburger, sandwich, coconut water, rice milk, protein shake, kebab | cannot separate added from natural sugars with the sources read |
-| (mix) | coffee with milk, cappuccino, latte | 0 (milk lactose and coffee only, unsweetened) |
+| (mix) | coffee with milk, cappuccino, latte, protein shake | 0 (milk lactose only; coffee and whey powder have 0 g sugar in USDA) |
+
+Changed 2026-10-17: potato chips null → none; tomato soup, peanut butter and milk chocolate → upper (they contain added sugar; null had counted as 0, and milk chocolate now uses the same rule as the health bars); protein shake null → 0. The per-item table below is the v1 snapshot; research/fooddb.json and research/audit/FIXES.md are current.
 
 ## Per-item table
 

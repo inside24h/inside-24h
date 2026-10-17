@@ -7,6 +7,20 @@ import { buildVitals, minutesToBed } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { COLA } from '../science/colaSim';
 import type { Profile } from '../science/profile';
+import { FOOD_BY_ID, type Per100 } from './food/parse';
+
+// Per-serving numbers come from the food database (one source; audit 2026-10-17: wine was 14.2 g here vs 15.8 g there)
+const perServing = (id: string, k: keyof Per100, grams = FOOD_BY_ID[id].serving.grams) => ((FOOD_BY_ID[id].p[k] ?? 0) * grams) / 100;
+const r1 = (v: number) => Math.round(v * 10) / 10;
+const DB = {
+  espressoCaffeine: r1(perServing('espresso', 'caffeineMg')),
+  teaCaffeine: r1(perServing('green-tea', 'caffeineMg')),
+  juiceFree: r1(perServing('orange-juice', 'freeSugars')),
+  chocolateFree40: r1(perServing('chocolate-milk-bar', 'freeSugars', 40)),
+  beerAlcohol: r1(perServing('beer', 'alcoholG')),
+  // one glass (150 ml) of wine: the mean of red and white
+  wineAlcohol: r1((perServing('red-wine', 'alcoholG') + perServing('white-wine', 'alcoholG')) / 2),
+};
 
 export type BarKey = 'health' | 'sleep' | 'sugar' | 'cholesterol' | 'fat' | 'life';
 export interface Bar { key: BarKey; label: string; value: number; base: number; notes: string[] }
@@ -63,9 +77,9 @@ export const RULES: { bar: string; rule: string; source: string }[] = [
   { bar: 'Life quality', rule: 'Starts from your weight category and age. Daily cola: −3 per can (+4–15% death risk, a link not proof). Coffee: +1 per shot up to 3 (−17% at 3–4 cups, a link not proof).', source: 'Wang 2022; Poole 2017' },
   { bar: 'Activity', rule: 'Compared with under 5,000 steps and no exercise. Steps 5–10k / 10k+: Life quality +3 / +4, Sugar +2 / +3, Fat +1 / +2. Exercise 1–2× / 3+× a week: Life quality +3 / +4, Sleep +2 / +4, Sugar +2 / +4, Fat +2 / +4, Cholesterol +1 / +3. Each bar has a cap so you cannot count the same benefit twice. Every +1,000 steps was linked to 15% lower death risk (levels off around 8–10k under 60).', source: 'Banach 2023; Paluch 2022; Arem 2015; exercise RCT meta-analyses (research/activity.md)' },
   { bar: 'Activity', rule: 'Kilometers walked burn about 0.5 kcal per kg body weight per km (running ≈ 1.0). For 70 kg, one cola (139 kcal) ≈ 4 km, about 48 min of brisk walking. If your weekly walking covers your cola calories, the Fat penalty for the cola habit halves. This is calorie arithmetic only: activity did not cancel the link between sugary drinks and diabetes.', source: 'ACSM metabolic equations; UK Biobank 2024' },
-  { bar: 'Foods', rule: 'Sugar counts only FREE sugars (WHO): orange juice 22 g, milk chocolate up to 20.6 g, cola 35 g. Sugar inside whole fruit (banana) does not count. Habits: pizza −1.4 and chocolate −2.9 Cholesterol per daily serving (saturated fat raises LDL 0.036 mmol/L per 1% of energy); orange juice −1 Life (+7% type-2 diabetes per daily glass); green tea +0.8 Life per cup up to 2 (association).', source: 'WHO 2015; Clarke 1997; Imamura 2015; research/foods.md' },
+  { bar: 'Foods', rule: `Sugar counts only FREE sugars (WHO): orange juice ${Math.round(DB.juiceFree)} g, milk chocolate (40 g) up to ${DB.chocolateFree40} g, cola ${COLA.eu.sugarG} g. Sugar inside whole fruit (banana) does not count. Habits: pizza −1.4 and chocolate −2.9 Cholesterol per daily serving (saturated fat raises LDL 0.036 mmol/L per 1% of energy); orange juice −1 Life (+7% type-2 diabetes per daily glass); green tea +0.8 Life per cup up to 2 (association).`, source: 'WHO 2015; Clarke 1997; Imamura 2015; research/foods.md' },
   { bar: 'Cigarettes', rule: 'Today: Sleep −2 (−5 for regular smokers). Habit: Cholesterol −0.4 per cigarette a day (max −5); Life quality −4 (1–4 a day), −6 (5–9), −8 (10–19), −10 (20+). Even 1–4 a day carried about 1.5× the death risk; lifelong smokers lose about 10 years.', source: 'Zhang 2006; Craig 1989; Bjartveit 2005; Doll 2004; Jha 2013' },
-  { bar: 'Alcohol', rule: 'Beer 0.5 L = 19.7 g alcohol, wine 150 ml = 14.2 g. Sleep: alcohol still in your blood at bedtime (Widmark estimate) costs 4 points per 0.2 g/L, up to 12. Habit: Fat −0.15 per gram a day (women ×1.5, max −15); Life quality only from 25 g a day upwards (death risk +5% at 25–44 g, +19% at 45–64 g, +35% above), because below that the pooled risk was not significant. WHO: no level is risk-free.', source: 'Zhao 2023; WHO Europe; Mitchell 2014; research/alcohol.md' },
+  { bar: 'Alcohol', rule: `Beer 0.5 L = ${DB.beerAlcohol} g alcohol, wine 150 ml = ${DB.wineAlcohol} g (USDA: beer about 5%, table wine about 13% alcohol by volume). Sleep: alcohol still in your blood at bedtime (Widmark estimate) costs 4 points per 0.2 g/L, up to 12. Habit: Fat −0.15 per gram a day (women ×1.5, max −15); Life quality only from 25 g a day upwards (death risk +5% at 25–44 g, +19% at 45–64 g, +35% above), because below that the pooled risk was not significant. WHO: no level is risk-free.`, source: 'Zhao 2023; WHO Europe; Mitchell 2014; research/alcohol.md' },
   { bar: 'Habits', rule: 'Sugar and Sleep look at today only. Cholesterol, Fat and Life quality look at your habit: servings × how often (every day = 1, 3–5× a week = 4/7, 1–2× a week = 1.5/7, just today = 0) × how long (years = 1, months = 0.7, weeks = 0.3). The studies behind these bars ran for months (trials) or years (cohorts).', source: 'our own scaling (level C)' },
   { bar: 'Health', rule: 'The average of the other five bars.', source: 'our own scale' },
 ];
@@ -90,21 +104,22 @@ function activityPoints(p: Profile) {
  *  Sources: research/<item>.md (cola, espresso, cigarettes, foods). All point values are our own scale (level C). */
 export interface ItemFx { name: string; max: number; freeSugarG?: number; caffeineMg?: number; chol?: number; fat?: number; life?: number; lifeCapServings?: number }
 export const ITEM_FX: Record<string, ItemFx> = {
-  espresso: { name: 'Espresso', max: 10, caffeineMg: 63, chol: -0.5, life: 1, lifeCapServings: 3 },
-  cola: { name: 'Cola', max: 10, freeSugarG: 35, caffeineMg: 32, chol: -4, fat: -6, life: -3 },
+  espresso: { name: 'Espresso', max: 10, caffeineMg: DB.espressoCaffeine, chol: -0.5, life: 1, lifeCapServings: 3 },
+  cola: { name: 'Cola', max: 10, freeSugarG: COLA.eu.sugarG, caffeineMg: COLA.caffeineMg, chol: -4, fat: -6, life: -3 },
   water: { name: 'Water', max: 12 },
   banana: { name: 'Banana', max: 6 }, // sugar in whole fruit is not "free sugar" (WHO) → no Sugar penalty
   bread: { name: 'White bread (2 slices)', max: 6 }, // free sugars ≤ 3.3 g, not itemised → counted as 0
   pizza: { name: 'Pizza slice', max: 8, chol: -1.4 }, // saturated fat → LDL +2.2 mg/dL per daily slice (Clarke 1997)
-  chocolate: { name: 'Milk chocolate (40 g)', max: 6, freeSugarG: 20.6, chol: -2.9 }, // upper bound
-  juice: { name: 'Orange juice', max: 6, freeSugarG: 22, life: -1 }, // fruit juice counts as free sugar; T2D +7% per daily serving
-  tea: { name: 'Green tea', max: 8, caffeineMg: 30, life: 0.8, lifeCapServings: 2 },
+  chocolate: { name: 'Milk chocolate (40 g)', max: 6, freeSugarG: DB.chocolateFree40, chol: -2.9 }, // upper bound, same rule as the database
+  juice: { name: 'Orange juice', max: 6, freeSugarG: DB.juiceFree, life: -1 }, // fruit juice counts as free sugar; T2D +7% per daily serving
+  tea: { name: 'Green tea', max: 8, caffeineMg: DB.teaCaffeine, life: 0.8, lifeCapServings: 2 },
   cigarettes: { name: 'Cigarettes', max: 40 },
   beer: { name: 'Beer (0.5 L)', max: 10 },
   wine: { name: 'Wine (glass)', max: 10 },
 };
-// grams of ethanol per serving: 500 ml × 5% × 0.789 g/ml; 150 ml × 12% × 0.789 [alcohol.md P2, P3]
-const ETHANOL_G: Record<string, number> = { beer: 19.7, wine: 14.2 };
+// grams of ethanol per serving, from the database: beer 500 ml (USDA 3.9 g/100 g ≈ 5% ABV), wine 150 ml (mean of red
+// 10.6 and white 10.3 g/100 g ≈ 13% ABV). Was 19.7 / 14.2 (12% ABV) here while search showed 15.8 g for a glass.
+export const ETHANOL_G: Record<string, number> = { beer: DB.beerAlcohol, wine: DB.wineAlcohol };
 
 export function healthBars(p: Profile, counts: Counts, habits: Habits = {}): Bar[] {
   const b0 = baseline(p), act = activityPoints(p);

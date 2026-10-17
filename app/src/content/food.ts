@@ -2,6 +2,7 @@
 // (GE/SI/CO/GL/TG/AA/TE/FC), research/alcohol.md (AL*) and research/fooddb-notes.md (DB*).
 import type { Claim } from './types';
 import { SOURCES } from './sources';
+import foodDb from '../v4/food/fooddb.json';
 
 const pm = (id: string) => `https://pubmed.ncbi.nlm.nih.gov/${id}/`;
 export const FOOD_SOURCES = {
@@ -45,10 +46,21 @@ for (const [k, s] of Object.entries(FOOD_SOURCES)) if (!SOURCES[k]) SOURCES[k] =
 
 const c = (id: string, level: Claim['level'], text: string, sources: string[], method?: string): Claim => ({ id, level, text, sources, method, verified: true });
 
+// Values that are NOT from USDA (research/tools/fooddb_spec.py OVERRIDES): one claim per override, with its own source,
+// generated from the database so the text, level and citation can never drift from the numbers.
+type SrcRow = { fields: string[]; level: 'A' | 'B' | 'C'; text: string; cite: string; url: string };
+const SOURCE_CLAIM_IDS: Record<string, string[]> = {};
+const SOURCE_CLAIMS: Claim[] = (foodDb as { id: string; src?: SrcRow[] }[]).flatMap((f) => (f.src ?? []).map((s, i) => {
+  const id = `DBO-${f.id}-${i}`, sid = `label-${f.id}-${i}`;
+  if (!SOURCES[sid]) SOURCES[sid] = { id: sid, cite: s.cite, url: s.url };
+  (SOURCE_CLAIM_IDS[f.id] ??= []).push(id);
+  return c(id, s.level, s.text, [sid], s.level === 'C' ? 'Our calculation from the labels named in the source (research/tools/fooddb_spec.py OVERRIDES).' : undefined);
+}));
+
 export const FOOD_CLAIMS: Record<string, Claim> = Object.fromEntries([
-  c('DB1', 'A', 'Calories, carbohydrate, sugar, fiber, fat, protein, water, caffeine and alcohol per 100 g come from the USDA SR Legacy database. Portion sizes like “1 medium apple” are USDA portion weights.', ['usdaSR']),
-  c('DB2', 'C', 'Household amounts we had to assume: glass 250 ml, cup 200 ml, can 330 ml, bottle 500 ml, tablespoon 15 ml, teaspoon 5 ml. Mixed drinks (coffee with milk, cappuccino, latte) are our own recipes from USDA ingredients.', ['usdaSR'], 'Typical European serving sizes; marked “assumed” on screen.'),
-  c('DB3', 'A', 'Glycemic index values are from the international GI tables (Atkinson 2008, Table 1 and Supplementary Table A1, healthy subjects). Foods without a measured GI show no sugar curve rather than a guess.', ['atkinson2008']),
+  c('DB1', 'A', 'Calories, carbohydrate, sugar, fiber, fat, protein, water, caffeine and alcohol per 100 g come from the USDA SR Legacy database, unless a statement here names a product label instead. Portion sizes like “1 medium apple” are USDA portion weights.', ['usdaSR']),
+  c('DB2', 'C', 'Household amounts we had to assume: glass 250 ml, cup 200 ml, can 330 ml (beer 500 ml, the usual Croatian can), bottle 500 ml (wine 750 ml), tablespoon 15 ml, teaspoon 5 ml. Mixed drinks (coffee with milk, cappuccino, latte) are our own recipes from USDA ingredients.', ['usdaSR'], 'Typical European serving sizes; marked “assumed” on screen.'),
+  c('DB3', 'A', 'Glycemic index values are from the international GI tables (Atkinson 2008: Table 1, and single tests in healthy people from Supplementary Tables A1 and A2). Foods without a measured GI show no sugar curve rather than a guess.', ['atkinson2008']),
   c('GE1', 'A', 'A normal solid meal: about 69% is still in the stomach after 1 hour, 24% after 2 hours and about 1% after 4 hours (123 healthy adults). More than 10% left at 4 hours counts as delayed.', ['tougas2000']),
   c('GE4', 'B', 'Half of a 255 kcal solid meal leaves the stomach in about 94 minutes; smaller meals in about 67 minutes, but never much faster than about an hour.', ['parkman2025']),
   c('GE5', 'C', 'Our solid-food curve: retention = exp(−(t/τ)^1.8), half-time 94 × √(kcal/255) min, at least 65 and at most 210 min (the slowest big meals measured by MRI). It reproduces the 69/24/1% data within a few points.', ['tougas2000', 'parkman2025', 'farivar2026'], 'Power-exponential fit to GE1 with GE4 scaling by meal energy.'),
@@ -75,4 +87,8 @@ export const FOOD_CLAIMS: Record<string, Claim> = Object.fromEntries([
   c('AL8', 'B', 'The effect grows with the dose. In 4,098 Finnish employees wearing heart monitors, the heart’s “recovery” in the first 3 hours of sleep fell by about 9, 24 and 39 percentage points after low (up to 0.25 g per kg; mostly one drink), moderate (0.25–0.75 g/kg) and high (over 0.75 g/kg) alcohol, compared with the same people’s nights without alcohol. Observational, not a trial.', ['pietila2018'], 'We use these g/kg bands to pick the wording for one drink, a few drinks or many (our mapping, C).'),
   c('AL7', 'A', 'A beer does not dehydrate you: in 72 men, 1 liter of lager gave the same urine over 4 hours as 1 liter of water. Stronger drinks (wine, spirits) were not tested.', ['maughan2016']),
   c('WK1', 'A', 'Extra water leaves through the kidneys within a few hours: after 1 liter of water, healthy men passed about 1.3 kg of urine over 4 hours.', ['maughan2016']),
+  ...SOURCE_CLAIMS,
 ].map((x) => [x.id, x]));
+
+/** "How do we know?" for this food's non-USDA values (label overrides), e.g. ['DBO-cola-0']. */
+export const foodSourceClaims = (foodId: string): string[] => SOURCE_CLAIM_IDS[foodId] ?? [];

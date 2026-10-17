@@ -7,7 +7,7 @@ import { sleepAnchors } from '../../science/anchors';
 import { simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
 import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
-import { FOOD_CLAIMS } from '../../content/food';
+import { FOOD_CLAIMS, foodSourceClaims } from '../../content/food';
 import { ESPRESSO } from '../../content/espresso';
 import type { OrganKey, Product, Stage } from '../../content/types';
 import { BLOOD_SITES, GUT_SITES, ROUTE_GUT_TO_BODY } from '../../scene/Flow';
@@ -31,6 +31,13 @@ function rate(a: Float64Array) { let max = 1e-9; for (let i = 0; i + 1 < a.lengt
 function inflow(a: Float64Array) { let max = 1e-9; for (let i = 0; i + 1 < a.length; i++) max = Math.max(max, a[i + 1] - a[i]); return (m: number) => Math.max(0, at(a, m + 1) - at(a, m)) / max; }
 
 export { mealKind, toMeal }; // moved to ./meal.ts (pure, testable without the 3D scene)
+
+/** Claim ids for the label overrides of these parts (optionally only those that replace `field`). */
+function labelClaims(parts: Part[], field?: string): string[] {
+  const ids = new Set<string>();
+  for (const p of parts) (p.food.src ?? []).forEach((s, i) => { if (!field || s.fields.includes(field)) ids.add(foodSourceClaims(p.food.id)[i]); });
+  return [...ids].filter(Boolean);
+}
 
 export function describe(parts: Part[]): string {
   return parts.map((p) => `${p.food.name.replace(/\s*\(.*\)$/, '')}`).join(' + ');
@@ -119,7 +126,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
   const content: Product = { id, name, serving, claims: { ...ESPRESSO.claims, ...FOOD_CLAIMS, ...MEAL_CLAIMS }, stages: [] }; // espresso claims: caffeine peak and half-life (D2, M4)
   const def: ProductDef = {
     id, content, hasDose: false,
-    vitalClaims: { caffeine: ['DB1'], hr: meal.alcoholG > 1 ? ['AL5'] : ['GL4'], bp: meal.alcoholG > 1 ? ['AL5'] : ['DB1'], glucose: ['DB3', 'GL1', 'GL4'], spo2: ['DB1'] },
+    vitalClaims: { caffeine: ['DB1', ...labelClaims(parts, 'caffeineMg')], hr: meal.alcoholG > 1 ? ['AL5'] : ['GL4'], bp: meal.alcoholG > 1 ? ['AL5'] : ['DB1'], glucose: ['DB3', 'GL1', 'GL4'], spo2: ['DB1'] },
     build: (p) => {
       const b = build(p);
       content.stages = b.story.chapters.map((c): Stage => ({ min: c.min, title: c.title, organs: c.focus ? [c.focus as OrganKey] : [], claims: c.claims }));
@@ -186,7 +193,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     : m.missingGi.length && gl !== null ? ` The glycemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`
     : m.missingGi.length ? ' Its glycemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
-    { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', 'DB2', 'DB3'], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
+    { min: 0, title: mixed ? 'First bite and sip' : isDrink ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', ...labelClaims(parts), 'DB2', 'DB3'], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}. ${macroLine}${giLine}` },
     { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow, and it slides down your food pipe into your stomach.' },
     { min: 1, title: 'In your stomach', focus: 'stomach', claims: mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
       text: mixed ? mealStomachText(s, parts) : isDrink
@@ -224,7 +231,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     else ch.push({ min: zero, title: 'Alcohol gone', focus: 'liver', claims: ['AL2'], text: 'In a typical body the alcohol is gone by now, but some people need hours longer. Your liver works at a fixed speed: coffee, water or fresh air don’t speed it up. This app can’t tell you when you’re safe to drive.' });
   }
   const nutrientKcal = meal.kcal - 7 * meal.alcoholG; // calories slow the stomach, so caffeine peaks later [GE12, C]
-  if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: s.meal?.caffeineInDrink ? ['DB1', 'D2', 'ML3'] : nutrientKcal > 30 ? ['DB1', 'D2', 'GE12'] : ['DB1', 'D2'], text: `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain and blocks the tiredness signal a little.${mealCaffeineNote(s)}` });
+  if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: [...(s.meal?.caffeineInDrink ? ['DB1', 'D2', 'ML3'] : nutrientKcal > 30 ? ['DB1', 'D2', 'GE12'] : ['DB1', 'D2']), ...labelClaims(parts, 'caffeineMg')], text: `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain and blocks the tiredness signal a little.${mealCaffeineNote(s)}` });
   if (meal.kcal >= 500) ch.push({ min: 90, title: 'Sleepy after eating', focus: 'brain', claims: ['FC1'], text: 'A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was.' });
   if (m.protein >= 10) ch.push({ min: 150, title: 'Building blocks', focus: 'heart', claims: ['AA1', 'TE1'], text: `The ${r0(m.protein)} g of protein arrive in your blood as amino acids, peaking about now. Your body spends about a quarter of protein’s calories just digesting it.` });
   if (m.fat >= 10) ch.push({ min: 210, title: 'Fat in your blood', focus: 'heart', claims: ['TG1'], text: `The fat travels through your lymph into the blood. Blood fat (triglycerides) is highest around now, roughly +${(s.tgDelta[210]).toFixed(1)} mmol/L, and falls again over the next few hours.` });

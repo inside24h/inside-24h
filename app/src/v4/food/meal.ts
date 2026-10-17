@@ -95,12 +95,15 @@ export interface Preset { id: string; name: string; sub: string; code: string }
 export const PRESETS: Preset[] = [
   { id: 'burger', name: 'Burger + fries + cola', sub: 'fast-food lunch', code: 'hamburger fries*2 cola' },
   { id: 'coffee-croissant', name: 'Coffee + croissant', sub: 'café breakfast', code: 'cappuccino croissant' },
+  // 10 ćevapi (2 servings of 5). Lepinja/somun is not in the database; 2 slices of white bread stand in, named honestly.
   { id: 'beer-cevapi', name: 'Beer + ćevapi + bread', sub: 'a night out', code: 'beer cevapi*2 bread-white*2' },
   { id: 'oat-breakfast', name: 'Oatmeal + banana + milk', sub: 'breakfast', code: 'oatmeal banana milk-semi-skimmed' },
   { id: 'pizza-beer', name: 'Pizza + beer', sub: '2 slices and a pint', code: 'pizza*2 beer' },
   { id: 'burek-yogurt', name: 'Burek + yogurt', sub: 'bakery breakfast', code: 'burek yogurt-plain' },
   { id: 'eggs-toast-oj', name: 'Eggs + toast + orange juice', sub: 'breakfast', code: 'egg-fried*2 bread-white*2 orange-juice' },
   { id: 'wine-cheese', name: 'Red wine + cheese', sub: 'evening', code: 'red-wine cheese-gouda*2' },
-  { id: 'movie', name: 'Popcorn + cola', sub: 'at the movies', code: 'popcorn*3 cola' },
+  // audit 2026-10-17: the database has air-popped popcorn only; cinema popcorn is oil-popped and a bigger bucket
+  // (several times the energy), so the preset no longer claims to be cinema popcorn.
+  { id: 'movie', name: 'Popcorn + cola', sub: 'air-popped, 3 cups', code: 'popcorn*3 cola' },
 ];
 export const presetParts = (p: Preset) => mealFromCode(p.code);
