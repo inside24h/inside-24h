@@ -3,7 +3,7 @@
 // Every rule is listed in `rules` so the "How is this calculated?" panel can show it word for word.
 import { WALK_NET_KCAL_PER_KG_KM } from '../science/walking';
 import { simulateEspresso } from '../science/espressoSim';
-import { buildVitals } from '../science/daily';
+import { buildVitals, minutesToBed } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { COLA } from '../science/colaSim';
 import type { Profile } from '../science/profile';
@@ -138,10 +138,10 @@ export function healthBars(p: Profile, counts: Counts, habits: Habits = {}): Bar
   const alcToday = (counts.beer ?? 0) * ETHANOL_G.beer + (counts.wine ?? 0) * ETHANOL_G.wine;
   if (alcToday > 0) {
     const r = p.sex === 'male' ? 0.7 : 0.6;
-    const hoursToBed = (((p.bedtimeMin - p.drinkAtMin) % 1440 + 1440) % 1440) / 60;
+    const hoursToBed = minutesToBed(p) / 60; // a drink after the usual bedtime = bed right after it (wave 6)
     const bacBed = Math.max(0, alcToday / (r * p.weightKg) - 0.15 * Math.max(0, hoursToBed - 1));
     if (bacBed > 0) { sleep = clamp(sleep - Math.min(12, 4 * (bacBed / 0.2))); notes.sleep.push(`≈ ${bacBed.toFixed(2)} ‰ alcohol in your blood at bedtime: worse sleep in the second half of the night`); }
-    else notes.sleep.push('alcohol is gone by bedtime');
+    else notes.sleep.push('alcohol is likely gone by bedtime');
     notes.health.push('Alcohol: no level is risk-free (WHO)');
   }
   const gDay = habitual(counts, habits, 'beer') * ETHANOL_G.beer + habitual(counts, habits, 'wine') * ETHANOL_G.wine;

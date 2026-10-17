@@ -2,7 +2,7 @@
 // green = fine, yellow = mild stress, red = high stress. The cut-offs are OUR simplified scale
 // (level C), anchored on published categories where they exist (noted per system), and shown in "How is this decided?".
 import { at, type Timeline } from '../science/espressoSim';
-import type { Vitals } from '../science/daily';
+import { SLEEP_WINDOW_MIN, type Vitals } from '../science/daily';
 import { bacRangeText } from '../science/ranges';
 import type { TipKey } from '../content/tips';
 
@@ -44,10 +44,15 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
   // Brain & sleep: caffeine by day (EFSA: up to 200 mg at once is fine), delayed sleep at night.
   // Alcohol (g/L = ‰): attention worse from 0.2, reaction time and balance from 0.5 (Jongen 2014; Croatian limit 0.5).
   const alc = (m: number) => (bac ? at(bac, m) : 0);
+  // "night" = asleep, or in bed falling asleep (lights-out to 90 min after, the window the sleep answer looks at)
+  const bedAt = v.toBedMin;
+  const night = (m: number) => asleep(m) || (bedAt !== undefined && m >= bedAt && m <= bedAt + SLEEP_WINDOW_MIN);
   const brain = fill((m) => {
     const a = alc(m);
     const fromAlc: Level = a >= 0.5 ? 2 : a >= 0.2 ? 1 : 0;
-    if (asleep(m)) return Math.max(fromAlc, a > 0.02 ? 1 : 0, v.extraLatencyMin >= 20 ? 2 : v.extraLatencyMin >= 5 ? 1 : 0) as Level;
+    // at night: yellow also for the cautious tier ('sensitive', or a delay under 5 min), so the light never says
+    // "Fine" while the sleep answer says sensitive people may sleep less (wave 6; science/daily.ts sleepRiskOf)
+    if (night(m)) return Math.max(fromAlc, a > 0.02 ? 1 : 0, v.extraLatencyMin >= 20 ? 2 : v.extraLatencyMin >= 5 || v.sleepRisk !== 'none' ? 1 : 0) as Level;
     const mg = caffeine.doseMg >= 1 ? at(caffeine.body, m) : 0;
     return Math.max(fromAlc, mg >= 400 ? 2 : mg >= 200 ? 1 : 0) as Level;
   });
@@ -93,16 +98,17 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
     },
     {
       key: 'brain', label: 'Brain & sleep', organ: 'brain', levels: brain,
-      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by 5–20 minutes or alcohol is still in your blood, red if more.',
+      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by up to 20 minutes, if enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
       says: (l, m) => {
         const a = alc(m);
         // a range, never one number: Widmark estimates are off by 20–40% (alcohol.md W6)
         if (a >= 0.5) return `Blood alcohol about ${bacRangeText(a)}: reaction time and balance are worse. Don’t drive.`;
         if (a >= 0.2) return `Blood alcohol about ${bacRangeText(a)}: your attention is already worse. Don’t drive.`;
-        if (asleep(m) && a > 0.02) return 'Alcohol is still in your blood: lighter, more broken sleep later in the night.';
+        if (night(m) && a > 0.02) return 'Alcohol is still in your blood: you may fall asleep faster, but the second half of the night will be lighter and more broken.';
         if (a > 0.02) return `A little alcohol (about ${bacRangeText(a)}). Not zero: don’t drive.`;
-        if (asleep(m)) return l === 0 ? 'Sleeping normally.' : `Caffeine is delaying your sleep by about ${Math.round(v.extraLatencyMin)} minutes.`;
-        return l === 0 ? (caffeine.doseMg >= 1 && at(caffeine.body, m) >= 10 ? 'A little more alert. Nothing to worry about.' : 'Your brain is working normally.') : l === 1 ? 'A lot of caffeine: you may feel jittery.' : 'A very high caffeine level: a racing heart and anxiety are likely.';
+        if (night(m) && (l > 0 || asleep(m))) return l === 0 ? 'Sleeping normally.' : v.extraLatencyMin >= 1 ? `Caffeine is delaying your sleep by about ${Math.max(1, Math.round(v.extraLatencyMin))} minutes.`
+          : 'Most people sleep normally with this much caffeine, but sensitive people may sleep a little less or more lightly.';
+        return l === 0 ? (caffeine.doseMg >= 1 && at(caffeine.body, m) >= 10 ? (v.sleepRisk !== 'none' ? 'A little more alert. Fine for now, but some will still be in you at bedtime.' : 'A little more alert. Nothing to worry about.') : 'Your brain is working normally.') : l === 1 ? 'A lot of caffeine: you may feel jittery.' : 'A very high caffeine level: a racing heart and anxiety are likely.';
       },
       tip: (l, m) => (alc(m) > 0.02 ? 'alcohol' : l === 0 ? null : 'caffeine'),
     },

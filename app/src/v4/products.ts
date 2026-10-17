@@ -35,6 +35,8 @@ export interface Built {
   story: Story;
   /** Blood alcohol (g/L) per minute, for products with alcohol. */
   bac?: Float64Array;
+  /** Grams of alcohol in the item (dose-aware sleep answer, science/daily.ts alcoholSleepTier). */
+  alcoholG?: number;
   /** Water the product brings (ml). */
   waterMl?: number;
   /** Amounts along the visible liquid route (scene/LiquidRoute). */

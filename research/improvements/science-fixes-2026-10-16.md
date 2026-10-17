@@ -71,3 +71,41 @@ End state: `tsc` is clean and vitest passes 21 files / 151 tests (10 of them new
 - **Walking** is net of rest. Gross values (which include the energy you would spend sitting) are about 40% higher. Hall 2004 measured gross values. For very heavy or very old people the ACSM equation is less validated.
 - The cola label values assume that the EU recipe matches the generic database entry (P5 caffeine: EU is assumed to be the same as US/CA).
 - Not checked in a real browser this round. The unit change in the Reel was checked only by type and test, not by recording a video.
+
+## Wave 6 (2026-10-17): alcohol and sleep, lights that match the answers
+
+Backups: `backups/20261017-002013-wave6/` (14 files, same paths as in the repo). Nothing was deleted (one temporary debug test that I made during this wave was removed again) and nothing was committed.
+End state: `tsc` is clean. Vitest passes 22 files and 167 tests, including 16 new tests in `app/src/v4/wave6.test.ts`. The `vite.v4.config.ts` build is OK. The split build ran last (`site/`: index.html + 19 assets).
+
+### Sources read (abstracts through `epmc.py`)
+- **Ebrahim IO et al. 2013**, Alcohol Clin Exp Res, **PMID 23347102** (review; only the abstract is available). At every dose studied: people fall asleep faster, sleep more deeply in the first half and are more disrupted in the second half, and the first REM period comes later. Total REM % falls at moderate and high doses; at low doses there is no clear trend. The abstract gives no g/kg values. → **AL6 (A)**, reworded.
+- **Pietilä J et al. 2018**, JMIR Ment Health, **PMID 29549064 / PMC5878366** (abstract and full text grepped). The study followed 4,098 people within-subject and is observational. HRV "recovery" in the first 3 h of sleep fell by 9.3, 24.0 and 39.2 percentage units after low (≤ 0.25 g/kg; about 90% of these days were one drink), moderate (0.25–0.75) and high (> 0.75 g/kg) intake. The effect was dose-dependent and present even at low intake. → new claim **AL8 (B)**, new source `pietila2018`, and alcohol.md row S2b.
+- de Zambotti 2021 (PMID 32663278, already S2) was reread as a check. It supports the dose-dependent nocturnal heart changes.
+- Our assumption (**C**): we use Pietilä's g/kg bands to choose between Ebrahim's "low / moderate / high" words. Ebrahim's own bands could not be read, because the review is not open access.
+
+### Changes
+1. **Drinks after the usual bedtime** (root cause of "wine at 23:50 → It won't affect your sleep"): the time to bed wrapped around to the next night, about 23 h later. A new function `minutesToBed()` (science/daily.ts) returns 0 when the drink falls between bedtime and wake time. It is used in `buildVitals`, Answers, the food, espresso and cola stories, the espresso headlines and the Sleep health bar. In those cases the stories show a "Going to bed" chapter 30 min after the drink.
+2. **Dose-aware alcohol sleep answer** (Answers.tsx, using `alcoholSleepTier`/`alcoholSleepSentence` in daily.ts). The answer looks at the highest blood alcohol from lights-out to 90 min after (the same window used for caffeine). If that is above 0.02 ‰:
+   - **low**: "Not quite … you may fall asleep faster, but the second half of the night will be a little lighter and more broken. With one drink the effect is small; more drinks make it bigger."
+   - **moderate**: adds "likely less dream (REM) sleep, your heart rests less".
+   - **high**: "clearly broken … much less".
+   The note line reads "Evidence A for the direction, B for the size". The tooltip names both papers. The dose uses `alcoholG` / body weight (a new `Built.alcoholG`, passed from AppV4 and analyze). This works the same for wine, beer, rakija and meals with alcohol. If the alcohol is gone by bedtime, the answer reads "Probably: … almost no alcohol should be left … we can't promise no effect" (C), never "won't affect".
+3. **The light matches the answer.**
+   - At night (asleep, or from lights-out to 90 min after), the Brain & sleep light is now yellow for the cautious caffeine tier (`sleepRisk` 'sensitive', or a delay under 5 min). It reads: "Most people sleep normally with this much caffeine, but sensitive people may sleep a little less or more lightly."
+   - Alcohol above 0.02 ‰ now counts in the falling-asleep window too. Before, it counted only once the person was "asleep".
+   - In the evening, the green text for espresso at 20:45 now reads "Fine for now, but some will still be in you at bedtime."
+   - The sleep answer's tone is never calmer than the light in that window. A caffeine delay of 20 min or more is now red, as the light already was.
+   - The "How the colors work" rule text was updated.
+4. **Scan for overclaims.** "Yes. It won't affect your sleep." was removed. Without caffeine or alcohol, the answer is now "Yes: it has no caffeine or alcohol." Espresso and cola after the usual bedtime were also judged against the next night; they are fixed by item 1. The status text was changed from "lighter, more broken sleep" to the fuller sentence. The health-bar note now reads "alcohol is likely gone by bedtime". `v4/simple.ts` still contains "Nothing from this drink affects your sleep", but that file is not imported anywhere (dead code), so it was left unchanged.
+
+### Tests (wave6.test.ts)
+- Wine at 23:50 does not match /won't affect/ and does not start with "Yes". It mentions the second half of the night and the small effect of one drink. Its tone is ≥ 1 and the evidence note is shown.
+- Beer, rakija, "burger and a beer", 3 glasses of wine and 5 rakija at 22:30, 23:50 and 00:30 are all flagged. The high dose gets the stronger wording.
+- AL6 (A, ebrahim2013) and AL8 (B, pietila2018) are present with their sources.
+- The light matches the answer (the worst brain level in the bed window equals the answer's tone) for espresso at 09:00, 20:45, 22:50 and 23:50, wine at 21:00 and 23:50, 5 rakija at 22:00, cola at 23:00 and water at 23:50.
+- `minutesToBed`: 23:50 → 0, 20:45 → 135, 09:00 → 840.
+
+### Open
+- The night light covers the whole night for the cautious caffeine tier, the same as the existing 5–20 min delay rule. The verdict line can therefore say "mild stress 23:10–07:00" for an espresso at 20:45. This is consistent, but coarse.
+- When a meal has both alcohol and caffeine and alcohol is present at bedtime, the sleep answer talks only about the alcohol.
+- Not checked in a browser this round.

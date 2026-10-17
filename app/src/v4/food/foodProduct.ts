@@ -2,7 +2,7 @@
 // guided story, liquid in each organ, plain-language changes, organ cards and traffic lights.
 // Model: science/foodSim.ts (level C on top of published numbers); claims: content/food.ts.
 import { at } from '../../science/espressoSim';
-import { sleepRiskAt, sleepSentence } from '../../science/daily';
+import { alcoholSleepSentence, alcoholSleepTier, minutesToBed, sleepRiskAt, sleepSentence } from '../../science/daily';
 import { sleepAnchors } from '../../science/anchors';
 import { simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
@@ -108,6 +108,7 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
       t50: s.t50,
       traits: { drink: isDrink, fat: m.fat >= 10, sugar: m.sugars >= 10, alcohol: meal.alcoholG > 1, caffeine: meal.caffeineMg >= 10, fibre: m.fiber >= 1 },
       bac: meal.alcoholG > 1 ? s.bac : undefined,
+      alcoholG: meal.alcoholG > 1 ? meal.alcoholG : undefined,
       waterMl: meal.waterG,
     };
     cache.set(built, s); unitOf.set(built, p.glucoseUnit);
@@ -155,7 +156,8 @@ export function makeFoodProduct(parts: Part[], id: string): ProductDef {
 }
 
 function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string, isDrink: boolean, parts: Part[]): Story {
-  const toBed = (p.bedtimeMin - p.drinkAtMin + 1440) % 1440;
+  const toBed = minutesToBed(p);
+  const afterBed = toBed === 0 && p.drinkAtMin !== p.bedtimeMin; // had it after the usual bedtime: bed right after
   const isMeal = parts.length > 1;
   const noun = isMeal ? 'meal' : isDrink ? 'drink' : 'food';
   const mixed = !!(s.meal?.phases.drink && s.meal.phases.food);
@@ -233,12 +235,16 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     ch.push({ min: 720, title: 'Through the colon', focus: 'colon_trans', claims: ['CO3'], text: 'The leftovers creep along your large intestine while water is taken back. This is the slowest part of the journey.' });
     ch.push({ min: 1440, title: '24 hours later', focus: 'colon_desc', claims: ['CO1', 'CO3'], text: `${r0((100 * s.exitedG[1440]) / s.residueG)}% has left your body so far. Food typically takes about 29 hours from mouth to toilet (the middle value); anywhere from 14 to 58 hours is normal.` });
   }
-  if (toBed > 30 && toBed < 1440) {
-    const caf = at(s.caffeine.body, toBed), bac = at(s.bac, toBed);
-    const alcoholMsg = (b: number) => `There is still alcohol in your blood (about ${bacRangeText(b)}): you may fall asleep faster, but you will sleep worse in the second half of the night.`;
+  if (afterBed || (toBed > 30 && toBed < 1440)) {
+    // after the usual bedtime: the chapter sits 30 min after the drink ("going to bed"), judged from lights-out now
+    const chMin = afterBed ? 30 : toBed;
+    const caf = at(s.caffeine.body, chMin), bac = at(s.bac, chMin);
+    // dose-aware (science/daily.ts): direction AL6 (A), size AL8 (B)
+    const tier = alcoholSleepTier(meal.alcoholG / Math.max(30, p.weightKg));
+    const alcoholMsg = (b: number) => `There is still alcohol in your blood (about ${bacRangeText(b)}). ${alcoholSleepSentence(tier)}`;
     const sl = sleepRiskAt(s.caffeine, toBed, sleepAnchors());
-    const msg = bac > 0.02 ? alcoholMsg(bac) : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you at ${hhmm(p.bedtimeMin)}. ${sleepSentence(sl.risk, sl.extra)}` : null;
-    if (msg) ch.push({ min: toBed, title: 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6'] : ['DB1', 'M4', 'VS1', 'VS2', 'VS3', 'VS4'], text: msg,
+    const msg = bac > 0.02 ? alcoholMsg(bac) : caf >= 20 ? `About ${r0(caf)} mg of caffeine is still in you ${afterBed ? 'as you go to bed' : `at ${hhmm(p.bedtimeMin)}`}. ${sleepSentence(sl.risk, sl.extra)}` : null;
+    if (msg) ch.push({ min: chMin, title: afterBed ? 'Going to bed' : 'Bedtime', focus: 'brain', claims: bac > 0.02 ? ['AL6', 'AL8'] : ['DB1', 'M4', 'VS1', 'VS2', 'VS3', 'VS4'], text: msg,
       ...(bac > 0.02 ? { live: (t: number) => (at(s.bac, t) > 0.02 ? alcoholMsg(at(s.bac, t)) : msg) } : {}) });
   }
   ch.push(...mealChapters(s, parts));

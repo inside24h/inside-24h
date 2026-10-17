@@ -33,6 +33,7 @@ export const FOOD_SOURCES = {
   jongen2014: { id: 'jongen2014', cite: 'Jongen S et al. 2014, Psychopharmacology', url: pm('24408210') },
   tasnim2020: { id: 'tasnim2020', cite: 'Tasnim S et al. 2020, Cochrane Review', url: pm('32609894') },
   ebrahim2013: { id: 'ebrahim2013', cite: 'Ebrahim IO et al. 2013, Alcohol Clin Exp Res', url: pm('23347102') },
+  pietila2018: { id: 'pietila2018', cite: 'Pietilä J et al. 2018, JMIR Ment Health (4,098 people, heart rate variability in sleep)', url: 'https://europepmc.org/article/PMC/PMC5878366' },
   maughan2016: { id: 'maughan2016', cite: 'Maughan RJ et al. 2016, Am J Clin Nutr', url: pm('26702122') },
   euCroatia: { id: 'euCroatia', cite: 'European Commission, Your Europe: Croatia road rules', url: 'https://europa.eu/youreurope/citizens/travel/driving-abroad/road-rules-and-safety/croatia/index_en.htm' },
   mudie2014: { id: 'mudie2014', cite: 'Mudie DM et al. 2014, Mol Pharm (MRI)', url: pm('25115349') },
@@ -70,7 +71,8 @@ export const FOOD_CLAIMS: Record<string, Claim> = Object.fromEntries([
   c('AL3', 'C', 'Blood alcohol = alcohol absorbed ÷ (Widmark factor × body weight); the factor comes from your BMI and sex. Real values differ by ±20–40% or more, so we show −40% to +50%: never use this to decide whether to drive.', ['searle2015', 'maskell2020', 'mitchell2014'], 'Widmark volume split in two (blood side fills first), first-order absorption by drink type and zero-order elimination, fitted to the beer, wine and vodka-tonic peaks of Mitchell 2014.'),
   c('AL4', 'A', 'Divided attention is already worse at 0.2 g/L; reaction time and balance at 0.5 g/L. In Croatia the limit is 0.5 g/L for most drivers and 0.0 for young and professional drivers.', ['jongen2014', 'euCroatia']),
   c('AL5', 'A', 'Within 6 hours after 14–28 g of alcohol, pulse rises by about 5 beats and systolic blood pressure drops by about 5–6 mmHg. After more than 30 g: pulse about +6, pressure about −3.5 (Cochrane review, 32 trials).', ['tasnim2020']),
-  c('AL6', 'A', 'Alcohol before bed helps you fall asleep but disturbs the second half of the night; at moderate and higher amounts it also cuts dream (REM) sleep.', ['ebrahim2013']),
+  c('AL6', 'A', 'Alcohol before bed helps you fall asleep faster at every dose studied, but disturbs the second half of the night, and the first dream (REM) sleep comes later. At moderate and high doses it also cuts total dream sleep; at low doses that effect is unclear (review of sleep-lab studies in healthy people).', ['ebrahim2013']),
+  c('AL8', 'B', 'The effect grows with the dose. In 4,098 Finnish employees wearing heart monitors, the heart’s “recovery” in the first 3 hours of sleep fell by about 9, 24 and 39 percentage points after low (up to 0.25 g per kg; mostly one drink), moderate (0.25–0.75 g/kg) and high (over 0.75 g/kg) alcohol, compared with the same people’s nights without alcohol. Observational, not a trial.', ['pietila2018'], 'We use these g/kg bands to pick the wording for one drink, a few drinks or many (our mapping, C).'),
   c('AL7', 'A', 'A beer does not dehydrate you: in 72 men, 1 liter of lager gave the same urine over 4 hours as 1 liter of water. Stronger drinks (wine, spirits) were not tested.', ['maughan2016']),
   c('WK1', 'A', 'Extra water leaves through the kidneys within a few hours: after 1 liter of water, healthy men passed about 1.3 kg of urine over 4 hours.', ['maughan2016']),
 ].map((x) => [x.id, x]));

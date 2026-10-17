@@ -243,7 +243,7 @@ export default function AppV4() {
     const unknownSugar = !!m && m.gl === null && m.availCarbs >= 3;
     const g = built.effects.glucoseMgDl ?? (unknownSugar ? undefined : new Float64Array(1441));
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
-      glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, sleepRisk: vYou.sleepRisk, bac: built.bac, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
+      glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, sleepRisk: vYou.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, wakeMin: profile.wakeMin, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
       latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH),
       mealLines: productId === 'food' ? mealLinesFor(foodParts, profile) : undefined, glucoseUnit: profile.glucoseUnit });
   }, [systems, profile, built, vYou, productId, foodParts]);

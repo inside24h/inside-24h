@@ -36,6 +36,29 @@ export function sleepFraction(p: Profile, m: number, latencyMin: number, wakeRam
   return 1 - smooth(sWake / wakeRampMin);
 }
 
+/** Minutes from the drink to lights-out. A drink taken during the usual sleep time (after bedtime, before waking,
+ *  e.g. 23:50 with bedtime 23:00) means you go to bed right after it: 0, not "tomorrow's bedtime" ~23 h later.
+ *  Without this, wine or an espresso just after the set bedtime was judged against the next night (wave 6). */
+export function minutesToBed(p: { drinkAtMin: number; bedtimeMin: number; wakeMin?: number }): number {
+  const toBed = ((p.bedtimeMin - p.drinkAtMin) % 1440 + 1440) % 1440;
+  const sleepLen = (((p.wakeMin ?? 7 * 60) - p.bedtimeMin) % 1440 + 1440) % 1440;
+  return toBed > 0 && toBed > 1440 - sleepLen ? 0 : toBed;
+}
+
+/** Alcohol and sleep, by dose (g of alcohol per kg of body weight), one wording for every screen.
+ *  Direction [AL6, A]: at every dose you fall asleep faster but the second half of the night is more broken; total
+ *  dream (REM) sleep falls at moderate and high doses (Ebrahim 2013 review). Size [AL8, B]: heart "recovery" during
+ *  the first 3 h of sleep fell by 9, 24 and 39 points after low (≤ 0.25 g/kg), moderate and high (> 0.75 g/kg)
+ *  intake (Pietilä 2018, 4,098 people, observational). Using Pietilä's g/kg bands for Ebrahim's dose words is our
+ *  assumption (C). */
+export type AlcoholSleepTier = 'low' | 'moderate' | 'high';
+export const alcoholSleepTier = (gPerKg: number): AlcoholSleepTier => (gPerKg > 0.75 ? 'high' : gPerKg > 0.25 ? 'moderate' : 'low');
+export function alcoholSleepSentence(tier: AlcoholSleepTier): string {
+  if (tier === 'high') return 'You may fall asleep faster, but the second half of the night will be clearly broken, you’ll get less dream (REM) sleep, and your heart rests much less in the first hours.';
+  if (tier === 'moderate') return 'You may fall asleep faster, but the second half of the night will be lighter and more broken, you’ll likely get less dream (REM) sleep, and your heart rests less.';
+  return 'You may fall asleep faster, but the second half of the night will be a little lighter and more broken. With one drink the effect is small; more drinks make it bigger.';
+}
+
 /** Extra minutes to fall asleep from caffeine still in the body at bedtime (level C interpolation).
  *  [VS2] 100 mg taken 4 h before bed: no measurable effect. 400 mg 4 h before bed: +14.2 min sleep latency.
  *  We interpolate linearly on blood caffeine at bedtime (mg/L) between those two anchors. */
@@ -88,6 +111,8 @@ export interface Vitals {
   latencyMin: number; extraLatencyMin: number; mgAtBed: number;
   /** what the caffeine left at bedtime means for sleep (sleepRiskOf) */
   sleepRisk: SleepRisk;
+  /** minutes from the drink to lights-out (minutesToBed): 0 when the drink comes after the usual bedtime */
+  toBedMin?: number;
 }
 
 /** Body rhythm + the drink's effect. `sim` provides the caffeine-driven changes (BP) and caffeine left at bedtime. */
@@ -97,7 +122,7 @@ export interface ProductEffects { hr?: Float64Array; glucoseMgDl?: Float64Array;
 
 export function buildVitals(p: Profile, sim: Timeline, anchors: { none: number; full: number; cautious?: number }, withDrink = true, fx: ProductEffects = {}): Vitals {
   const n = sim.minutes + 1;
-  const toBed = (p.bedtimeMin - p.drinkAtMin + 1440) % 1440;
+  const toBed = minutesToBed(p);
   const mgAtBed = withDrink ? sim.body[Math.min(sim.minutes, toBed)] : 0;
   // compare blood concentration (what the brain sees), so body size is accounted for
   const concSleep = withDrink ? sleepConc(sim.conc, toBed) : 0;
@@ -106,7 +131,7 @@ export function buildVitals(p: Profile, sim: Timeline, anchors: { none: number; 
   const latency = SLEEP.baseLatencyMin + extra;
   const mk = () => new Float64Array(n);
   const v: Vitals = { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk(), asleep: mk(),
-    effect: { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk() }, latencyMin: latency, extraLatencyMin: extra, mgAtBed, sleepRisk };
+    effect: { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk() }, latencyMin: latency, extraLatencyMin: extra, mgAtBed, sleepRisk, toBedMin: toBed };
   for (let m = 0; m < n; m++) {
     const h = clockH(p.drinkAtMin + m);
     const s = sleepFraction(p, m, latency, SLEEP.wakeRampMin);
