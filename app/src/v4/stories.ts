@@ -67,8 +67,9 @@ function vitalChanges(m: number, v: Vitals, p: Profile, sugarToo: boolean): Chan
 
 // ---------------- cola ----------------
 export function colaStory(s: ColaSim, p: Profile): Story {
-  // a drink after the usual bedtime means bed right after it (science/daily.ts minutesToBed): chapter 30 min later
-  const toBed = minutesToBed(p), afterBed = toBed === 0 && p.drinkAtMin !== p.bedtimeMin, bedCh = afterBed ? 30 : toBed;
+  // a drink at or after the usual bedtime means bed right after it (science/daily.ts minutesToBed): chapter 30 min
+  // later (wave 7: "at" too, else "Bedtime" sat on the first sip and said "about 0 mg is left")
+  const toBed = minutesToBed(p), afterBed = toBed === 0, bedCh = afterBed ? 30 : toBed;
   const peakFruct = peakOf(s.liverFructose), peakBlood = peakOf(s.bloodGlucose), peakCaf = peakOf(s.caffeine.conc);
   const g0 = p.glucoseMgDl, gPeak = g0 + peakOf(s.glucoseDeltaMgDl);
   const g = (mgdl: number) => `${formatGlucose(mgdl, p.glucoseUnit)} ${p.glucoseUnit}`;
@@ -118,7 +119,7 @@ export function colaStory(s: ColaSim, p: Profile): Story {
 
 // ---------------- espresso ----------------
 export function espressoStory(sim: Timeline, p: Profile, dose: number): Story {
-  const toBed = minutesToBed(p), afterBed = toBed === 0 && p.drinkAtMin !== p.bedtimeMin, bedCh = afterBed ? 30 : toBed;
+  const toBed = minutesToBed(p), afterBed = toBed === 0, bedCh = afterBed ? 30 : toBed;
   const peak = peakOf(sim.body), peakC = peakOf(sim.conc);
   const emptyR = rate(sim.stomach), absorbR = rate(sim.intestine), clearR = inflow(sim.cleared);
   return {

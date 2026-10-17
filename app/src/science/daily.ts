@@ -54,9 +54,18 @@ export function minutesToBed(p: { drinkAtMin: number; bedtimeMin: number; wakeMi
 export type AlcoholSleepTier = 'low' | 'moderate' | 'high';
 export const alcoholSleepTier = (gPerKg: number): AlcoholSleepTier => (gPerKg > 0.75 ? 'high' : gPerKg > 0.25 ? 'moderate' : 'low');
 export function alcoholSleepSentence(tier: AlcoholSleepTier): string {
-  if (tier === 'high') return 'You may fall asleep faster, but the second half of the night will be clearly broken, you’ll get less dream (REM) sleep, and your heart rests much less in the first hours.';
-  if (tier === 'moderate') return 'You may fall asleep faster, but the second half of the night will be lighter and more broken, you’ll likely get less dream (REM) sleep, and your heart rests less.';
+  // two sentences, so the short caption (share.ts captionOf) still carries the meaning, not only the number (wave 7)
+  if (tier === 'high') return 'You may fall asleep faster, but the second half of the night will be clearly broken. You’ll get less dream (REM) sleep, and your heart rests much less in the first hours.';
+  if (tier === 'moderate') return 'You may fall asleep faster, but the second half of the night will be lighter and more broken. You’ll likely get less dream (REM) sleep, and your heart rests less.';
   return 'You may fall asleep faster, but the second half of the night will be a little lighter and more broken. With one drink the effect is small; more drinks make it bigger.';
+}
+/** Extra sentence for a meal or drink with BOTH alcohol and caffeine near bed: the alcohol answer leads, and this adds
+ *  the caffeine when it is above its own threshold (sleepRiskOf), with the same words as the caffeine-only answers
+ *  (VS1–VS4). Empty when the caffeine is too low to matter (wave 7). */
+export function caffeineAlsoSentence(risk: SleepRisk, extraLatencyMin: number): string {
+  if (risk === 'delay' && extraLatencyMin >= 5) return ` Its caffeine may also add about ${Math.round(extraLatencyMin)} min to the time it takes you to fall asleep.`;
+  if (risk !== 'none') return ' It also has some caffeine, which may make your sleep a little lighter if caffeine affects you easily.';
+  return '';
 }
 
 /** Extra minutes to fall asleep from caffeine still in the body at bedtime (level C interpolation).
@@ -113,6 +122,9 @@ export interface Vitals {
   sleepRisk: SleepRisk;
   /** minutes from the drink to lights-out (minutesToBed): 0 when the drink comes after the usual bedtime */
   toBedMin?: number;
+  /** blood caffeine of the cautious anchor (VS1): the night light stays yellow for the 'sensitive' tier only while the
+   *  level is above it, not the whole night (wave 7) */
+  cautiousConc?: number;
 }
 
 /** Body rhythm + the drink's effect. `sim` provides the caffeine-driven changes (BP) and caffeine left at bedtime. */
@@ -131,7 +143,7 @@ export function buildVitals(p: Profile, sim: Timeline, anchors: { none: number; 
   const latency = SLEEP.baseLatencyMin + extra;
   const mk = () => new Float64Array(n);
   const v: Vitals = { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk(), asleep: mk(),
-    effect: { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk() }, latencyMin: latency, extraLatencyMin: extra, mgAtBed, sleepRisk, toBedMin: toBed };
+    effect: { hr: mk(), sbp: mk(), dbp: mk(), glucose: mk(), spo2: mk() }, latencyMin: latency, extraLatencyMin: extra, mgAtBed, sleepRisk, toBedMin: toBed, cautiousConc: anchors.cautious };
   for (let m = 0; m < n; m++) {
     const h = clockH(p.drinkAtMin + m);
     const s = sleepFraction(p, m, latency, SLEEP.wakeRampMin);

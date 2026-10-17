@@ -11,7 +11,7 @@ import { Disclaimer } from './HowWeKnow';
 import { FACTORS, FED_PEAK_RATIO, type PersonalNotes } from '../science/personal';
 import { simulateFood } from '../science/foodSim';
 import { walkingKm, walkingMinutes } from '../science/walking';
-import { alcoholSleepSentence, alcoholSleepTier, minutesToBed, SLEEP_WINDOW_MIN, type SleepRisk } from '../science/daily';
+import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesToBed, SLEEP_WINDOW_MIN, type SleepRisk } from '../science/daily';
 import type { Profile } from '../science/profile';
 import { toMeal } from './food/meal';
 import { mealAnswerLines } from './food/mealWords';
@@ -26,6 +26,9 @@ export interface AnswerInput {
   alcoholG?: number;
   /** usual wake time; a drink between bedtime and waking means bed right after it (science/daily.ts minutesToBed) */
   wakeMin?: number;
+  /** caffeine in the item (mg); without it, "has caffeine" is guessed from latestForSleep and the amount at bedtime,
+   *  which is 0 for a drink right at bedtime (wave 7: cola at 23:00 in Compare said "no caffeine") */
+  caffeineDoseMg?: number;
   /** latest clock minute to have it without delaying sleep (caffeine), if any */
   latestForSleep?: number | null;
   /** what the caffeine left at bedtime means for sleep (science/daily.ts sleepRiskOf); from the vitals */
@@ -83,7 +86,7 @@ export function quickAnswers(x: AnswerInput): Answer[] {
   let lightSleep = 0;
   if (brainSys) for (let m = bedRel; m <= Math.min(brainSys.levels.length - 1, bedRel + SLEEP_WINDOW_MIN); m++) lightSleep = Math.max(lightSleep, brainSys.levels[m]);
   const pn = x.personal;
-  const hasCaffeine = x.latestForSleep !== undefined && x.latestForSleep !== null || x.caffeineAtBedMg >= 1;
+  const hasCaffeine = x.latestForSleep !== undefined && x.latestForSleep !== null || x.caffeineAtBedMg >= 1 || (x.caffeineDoseMg ?? 0) >= 1;
   // caffeine: the clock is this person's half-life (smoking, pill, pregnancy) and body water (espresso.md M6–M9, D4)
   const sleepNote = pn && hasCaffeine ? (pn.halfLifeWhy
     ? `For you: caffeine half-life ≈ ${pn.halfLifeH.toFixed(1)} h (${pn.halfLifeWhy}); typical 6 h`
@@ -94,16 +97,23 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     let peak = 0; for (let m = 0; m < x.bac.length; m++) peak = Math.max(peak, x.bac[m]);
     const gPerKg = x.alcoholG !== undefined ? x.alcoholG / Math.max(30, x.weightKg) : peak * 0.68; // fallback: Widmark r ≈ 0.68
     const tier = alcoholSleepTier(gPerKg);
-    const tone = Math.max(tier === 'high' ? 2 : 1, lightSleep) as 0 | 1 | 2;
-    out.push({ icon: '🌙', q: 'Will I sleep well?', a: `${tier === 'low' ? 'Not quite' : 'Not as well'}: alcohol is still in your blood ${bedWord}. ${alcoholSleepSentence(tier)}`, tone, tag: sleepTag,
+    // caffeine in the same meal or drink (e.g. rakija with an espresso): one short extra sentence when it is above its
+    // own threshold, with the caffeine answer's own tone (wave 7)
+    const cafTone = x.extraSleepMin >= 20 ? 2 : x.extraSleepMin >= 1 || (x.sleepRisk !== undefined && x.sleepRisk !== 'none') ? 1 : 0;
+    const tone = Math.max(tier === 'high' ? 2 : 1, cafTone, lightSleep) as 0 | 1 | 2;
+    const cafAlso = caffeineAlsoSentence(x.sleepRisk ?? (x.extraSleepMin >= 1 ? 'delay' : 'none'), x.extraSleepMin);
+    out.push({ icon: '🌙', q: 'Will I sleep well?', a: `${tier === 'low' ? 'Not quite' : 'Not as well'}: alcohol is still in your blood ${bedWord}. ${alcoholSleepSentence(tier)}${cafAlso}`, tone, tag: sleepTag,
       note: `Evidence A for the direction, B for the size. ${tier === 'low' ? 'Low' : tier === 'moderate' ? 'Moderate' : 'High'} dose for your weight (low ≤ 0.25 g/kg, high > 0.75 g/kg)`,
       title: 'Ebrahim 2013 (review of sleep-lab studies); Pietilä 2018 (4,098 people wearing heart monitors). How the dose bands map onto the lab studies is our estimate.' });
-  } else if (x.bac && x.caffeineAtBedMg < 1) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Probably: by ${hh(x.bedtimeMin)} almost no alcohol should be left in your blood. Sleep studies give alcohol shortly before bed, so for drinks this early we can’t promise no effect.`, tone: lightSleep as 0 | 1 | 2, tag: sleepTag, note: 'Our estimate (C): no study read on alcohol that is already gone by bedtime' });
+  } else if (x.bac && x.caffeineAtBedMg < 1) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Probably: by ${hh(x.bedtimeMin)} almost no alcohol should be left in your blood. Sleep studies test alcohol taken shortly before bed, so for a drink this early we can’t promise zero effect.`, tone: lightSleep as 0 | 1 | 2, tag: sleepTag, note: 'Our estimate (C): no study read on alcohol that is already gone by bedtime' });
   else if (x.extraSleepMin >= 5) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `It may take you about ${Math.round(x.extraSleepMin)} min longer to fall asleep (${bedRel < 90 ? 'you had it shortly before bed, so it reaches your blood while you fall asleep' : `${Math.round(x.caffeineAtBedMg)} mg of caffeine is still in you ${bedWord}`}).`, tone: Math.max(x.extraSleepMin >= 20 ? 2 : 1, lightSleep) as 0 | 1 | 2, note: sleepNote, tag: sleepTag });
   // below the 5-min delay: "too little" only when it is also under the meta-analysis level (VS1); otherwise be honest
   // that caffeine-sensitive people can still sleep less (VS4), e.g. an espresso at 20:45 leaves ≈ 51 mg at 23:00
   else if (x.sleepRisk === 'sensitive' || (x.sleepRisk === 'delay' && x.extraSleepMin < 5)) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Probably, unless caffeine affects you easily. ${bedRel < 90 ? 'You had it shortly before bed, so the caffeine reaches your blood while you fall asleep' : `About ${Math.round(x.caffeineAtBedMg)} mg is still in you ${bedWord}`}: most people sleep normally with that much, but sensitive people may sleep a little less or more lightly.`, tone: Math.max(1, lightSleep) as 0 | 1 | 2, note: sleepNote, tag: sleepTag });
-  else out.push({ icon: '🌙', q: 'Will I sleep well?', a: x.caffeineAtBedMg >= 10 ? `Yes. The ${Math.round(x.caffeineAtBedMg)} mg of caffeine left ${bedWord} is too little to affect your sleep.` : hasCaffeine ? 'Yes. The caffeine is gone by bedtime.' : 'Yes: it has no caffeine or alcohol.', tone: lightSleep as 0 | 1 | 2, note: sleepNote, tag: sleepTag });
+  else out.push({ icon: '🌙', q: 'Will I sleep well?', a: x.caffeineAtBedMg >= 10 ? `Yes. The ${Math.round(x.caffeineAtBedMg)} mg of caffeine left ${bedWord} is too little to affect your sleep.` : hasCaffeine
+      // had it right at (or after) bedtime: the caffeine is still on its way in, not "gone" (wave 7; cola at 23:00)
+      ? (bedRel < 30 ? 'Yes. There is only a little caffeine in it: too little to affect your sleep, even this close to bed.' : 'Yes. Almost no caffeine is left by bedtime.')
+      : 'Yes: it has no caffeine or alcohol.', tone: lightSleep as 0 | 1 | 2, note: sleepNote, tag: sleepTag });
   // Best time (caffeine): the latest time that leaves sleep untouched
   if (x.latestForSleep !== undefined && x.latestForSleep !== null) {
     const late = (x.drinkAt > x.latestForSleep && x.drinkAt < x.bedtimeMin) || afterBed;

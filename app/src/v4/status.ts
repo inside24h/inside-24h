@@ -17,6 +17,8 @@ export interface System {
   unknown?: boolean; // no data to judge (e.g. a food without a measured glycemic index)
   /** next step for that moment (content/tips.ts), only when the light is yellow or red */
   tip?: (lvl: Level, m: number) => TipKey | null;
+  /** gentler words for the day summary when a yellow span starting at minute m only means "maybe" (verdict) */
+  soft?: (m: number) => { word: string; tail: string } | undefined;
 }
 
 const N = 1441;
@@ -47,12 +49,17 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
   // "night" = asleep, or in bed falling asleep (lights-out to 90 min after, the window the sleep answer looks at)
   const bedAt = v.toBedMin;
   const night = (m: number) => asleep(m) || (bedAt !== undefined && m >= bedAt && m <= bedAt + SLEEP_WINDOW_MIN);
+  // cautious caffeine tier ('sensitive', or a delay under 5 min) and the level at minute m is still above that anchor
+  const cautiousNow = (m: number) => v.sleepRisk !== 'none' && v.extraLatencyMin < 5 && caffeine.doseMg >= 1
+    && (v.cautiousConc === undefined || at(caffeine.conc, m) > v.cautiousConc);
   const brain = fill((m) => {
     const a = alc(m);
     const fromAlc: Level = a >= 0.5 ? 2 : a >= 0.2 ? 1 : 0;
     // at night: yellow also for the cautious tier ('sensitive', or a delay under 5 min), so the light never says
     // "Fine" while the sleep answer says sensitive people may sleep less (wave 6; science/daily.ts sleepRiskOf)
-    if (night(m)) return Math.max(fromAlc, a > 0.02 ? 1 : 0, v.extraLatencyMin >= 20 ? 2 : v.extraLatencyMin >= 5 || v.sleepRisk !== 'none' ? 1 : 0) as Level;
+    // The cautious tier is yellow only while the blood level is still above the cautious anchor (VS1), not until
+    // morning: "sleep may be a little lighter" is about the hours caffeine is actually there (wave 7)
+    if (night(m)) return Math.max(fromAlc, a > 0.02 ? 1 : 0, v.extraLatencyMin >= 20 ? 2 : v.extraLatencyMin >= 5 ? 1 : cautiousNow(m) ? 1 : 0) as Level;
     const mg = caffeine.doseMg >= 1 ? at(caffeine.body, m) : 0;
     return Math.max(fromAlc, mg >= 400 ? 2 : mg >= 200 ? 1 : 0) as Level;
   });
@@ -98,7 +105,7 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
     },
     {
       key: 'brain', label: 'Brain & sleep', organ: 'brain', levels: brain,
-      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by up to 20 minutes, if enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
+      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by up to 20 minutes, while enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
       says: (l, m) => {
         const a = alc(m);
         // a range, never one number: Widmark estimates are off by 20–40% (alcohol.md W6)
@@ -111,6 +118,8 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
         return l === 0 ? (caffeine.doseMg >= 1 && at(caffeine.body, m) >= 10 ? (v.sleepRisk !== 'none' ? 'A little more alert. Fine for now, but some will still be in you at bedtime.' : 'A little more alert. Nothing to worry about.') : 'Your brain is working normally.') : l === 1 ? 'A lot of caffeine: you may feel jittery.' : 'A very high caffeine level: a racing heart and anxiety are likely.';
       },
       tip: (l, m) => (alc(m) > 0.02 ? 'alcohol' : l === 0 ? null : 'caffeine'),
+      // the cautious caffeine tier at night is a "maybe" for sensitive people, not stress (wave 7)
+      soft: (m) => (night(m) && alc(m) <= 0.02 && cautiousNow(m) ? { word: 'maybe lighter sleep', tail: ' if caffeine affects you easily' } : undefined),
     },
   ];
 }
@@ -132,7 +141,13 @@ export function verdict(systems: System[], drinkAt: number): string {
     }
     if (!spans.length) { calm.push(NAME[s.key]); continue; }
     // "mild stress 16:13–16:42 and again 17:15–18:17" (same level twice), "mild stress …, then high stress …" otherwise
-    const words = spans.slice(0, 2).map(([a, b, l], i) => `${i === 1 && l === spans[0][2] ? 'again' : l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`);
+    // a yellow span that only means "maybe, for sensitive people" gets its own gentle words (System.soft, wave 7)
+    const softs = spans.slice(0, 2).map(([a, , l]) => (l === 1 ? s.soft?.(a) : undefined));
+    const words = spans.slice(0, 2).map(([a, b, l], i) => {
+      const soft = softs[i];
+      if (soft) return `${soft.word} ${hh(a)}–${hh(b + 1)}${soft.tail}`;
+      return `${i === 1 && l === spans[0][2] && !softs[0] ? 'again' : l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`;
+    });
     parts.push(`${s.label}: ${words.length === 2 && spans[1][2] === spans[0][2] ? words.join(' and ') : words.join(', then ')}`);
   }
   const calmTxt = calm.length ? `${calm.length === 4 ? 'Sugar, heart, water and brain' : calm.length > 2 ? `${cap(calm.slice(0, -1).join(', '))} and ${calm[calm.length - 1]}` : cap(calm.join(' and '))}: no real effect.` : '';

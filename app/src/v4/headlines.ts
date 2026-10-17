@@ -10,7 +10,7 @@ export interface Headline { label: string; text: string; claims: string[] }
 const hhmm = (min: number) => `${String(Math.floor(min / 60) % 24).padStart(2, '0')}:${String(Math.floor(min) % 60).padStart(2, '0')}`;
 
 export function headline(stageMin: number, sim: Timeline, p: Profile, extraLatencyMin = 0): Headline {
-  const toBed = minutesToBed(p), afterBed = toBed === 0 && p.drinkAtMin !== p.bedtimeMin;
+  const toBed = minutesToBed(p), afterBed = toBed === 0; // at or after bedtime (wave 7)
   switch (stageMin) {
     case 0: return { label: 'First sip', text: `One shot carries about ${Math.round(sim.doseMg)} mg of caffeine in 30 ml.`, claims: ['P1', 'P2', 'P3'] };
     case 1: return { label: 'Stomach', text: 'Liquid doesn’t wait: half of it leaves the stomach within about 13 minutes.', claims: ['G1', 'G2', 'F4'] };
