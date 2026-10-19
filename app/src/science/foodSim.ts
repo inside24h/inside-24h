@@ -20,6 +20,29 @@ export interface Meal {
    *  drink and one food, switch on the two-phase stomach (drinks leave faster than food, but slower than alone) and the
    *  per-item sugar curves. Absent or one item = the single-food model, unchanged. research/meals.md */
   items?: MealItem[];
+  /** PACING (2026-10-19, research/improvements/pacing-2026-10-19.md): the amount is had as `doses` equal rounds spread
+   *  evenly over `overMin` minutes, one round every overMin / doses minutes, the first at minute 0 (5 beers over 3 h =
+   *  one every 36 min). Absent, doses < 2 or overMin 0 = all at once, exactly the old model. */
+  pace?: { doses: number; overMin: number };
+}
+
+/** Most rounds we simulate (a link or a typed amount can ask for more; each round is one serving or a share of it). */
+export const MAX_PACE_DOSES = 24;
+/** Start minute of each round: [0] for all at once. */
+export function paceStarts(meal: Pick<Meal, 'pace'>): number[] {
+  const pc = meal.pace;
+  if (!pc || !(pc.overMin > 0) || !(pc.doses >= 2)) return [0];
+  const N = Math.min(MAX_PACE_DOSES, Math.floor(pc.doses)), every = pc.overMin / N;
+  return Array.from({ length: N }, (_, i) => Math.round(i * every));
+}
+/** One round of the meal: every amount × f (kind, drink class and "with food" stay). */
+export function scaleMeal(meal: Meal, f: number): Meal {
+  const sc = <T extends MealItem | Meal>(x: T): T => ({ ...x, grams: x.grams * f, kcal: x.kcal * f, availCarbs: x.availCarbs * f, fiber: x.fiber * f, fat: x.fat * f,
+    protein: x.protein * f, waterG: x.waterG * f, caffeineMg: x.caffeineMg * f, alcoholG: x.alcoholG * f, gl: x.gl === null ? null : x.gl * f });
+  const out: Meal = { ...sc(meal), items: meal.items?.map(sc) };
+  if (!meal.items) delete out.items;
+  delete out.pace;
+  return out;
 }
 
 /** One thing in a meal (macros of the amount eaten). `drink` = empties with the liquid phase (drinks, coffee). */
@@ -123,6 +146,10 @@ export interface FoodSim {
     phases: MealPhases; drinkStomachG: Float64Array; foodStomachG: Float64Array; drinkIntestineG: Float64Array;
     foodT50: number; items: ItemGlucose[]; caffeineTmaxAloneMin: number | null; caffeineInDrink: boolean;
   } | null;
+  /** PACING only (else null): the rounds, when each starts (min after the first), and the stomach half-time of ONE
+   *  round (`t50` above is then when half of everything has left the stomach, counting rounds not yet had as not left). */
+  pace: { doses: number; overMin: number; everyMin: number; startsMin: number[]; doseT50: number;
+    /** the rounds came faster than the stomach lets sugar out, so the sugar curve is the at-once one */ sugarAsOnce: boolean } | null;
 }
 
 const nutrientKcal = (x: { kcal: number; alcoholG: number }) => Math.max(0, x.kcal - 7 * x.alcoholG);
@@ -235,21 +262,51 @@ export function mealGlucose(meal: Meal, ph: MealPhases, foodT50: number) {
 
 export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   const n = minutes + 1, mk = () => new Float64Array(n);
+  // PACING: N equal rounds `dm`, round i starting at starts[i]. Everything that is linear in the amount (stomach, gut,
+  // water, colon, caffeine, blood fat) is the sum of the rounds shifted in time; alcohol is integrated once for the whole
+  // evening, because its zero-order liver works on the total in the body (Searle 2015: full elimination rate from the
+  // start of drinking). Each round is a smaller meal, so on its own it leaves the stomach faster (GE12), but never
+  // faster than the whole amount had at once (`left` below, C). All at once: starts = [0], dm = meal, the old model exactly.
+  const starts = paceStarts(meal), N = starts.length;
+  const dm = N > 1 ? scaleMeal(meal, 1 / N) : meal;
   const R = new Float64Array(n);
-  for (let t = 0; t < n; t++) R[t] = stomachRetention(meal, t);
+  for (let t = 0; t < n; t++) R[t] = stomachRetention(dm, t);
   const half = (a: Float64Array) => { for (let t = 1; t < a.length; t++) if (a[t] <= 0.5) return t; return a.length - 1; };
-  const t50 = half(R);
+  const doseT50 = half(R);
   // MEAL: each phase empties on its own curve and carries its own carbs, protein, fat, water and fibre into the gut.
-  const ph = mealPhases(meal);
+  const ph = mealPhases(dm);
   type Load = { carbs: number; protein: number; fat: number; water: number; fibre: number; grams: number };
-  const loadOf = (ix: number[]): Load => ix.reduce((s, i) => { const x = meal.items![i]; return { carbs: s.carbs + x.availCarbs, protein: s.protein + x.protein, fat: s.fat + x.fat, water: s.water + x.waterG, fibre: s.fibre + x.fiber, grams: s.grams + x.grams }; }, { carbs: 0, protein: 0, fat: 0, water: 0, fibre: 0, grams: 0 });
+  const loadOf = (ix: number[]): Load => ix.reduce((s, i) => { const x = dm.items![i]; return { carbs: s.carbs + x.availCarbs, protein: s.protein + x.protein, fat: s.fat + x.fat, water: s.water + x.waterG, fibre: s.fibre + x.fiber, grams: s.grams + x.grams }; }, { carbs: 0, protein: 0, fat: 0, water: 0, fibre: 0, grams: 0 });
   const phases: { R: Float64Array; load: Load; drink: boolean }[] = [];
   if (ph.drink && ph.food) {
     const Rd = new Float64Array(n), Rf = new Float64Array(n);
-    for (let t = 0; t < n; t++) { Rd[t] = drinkRetention(ph.drink.t50, t); Rf[t] = foodRetention(meal, ph.food.kind, t); }
+    for (let t = 0; t < n; t++) { Rd[t] = drinkRetention(ph.drink.t50, t); Rf[t] = foodRetention(dm, ph.food.kind, t); }
     phases.push({ R: Rd, load: loadOf(ph.drink.items), drink: true }, { R: Rf, load: loadOf(ph.food.items), drink: false });
-  } else phases.push({ R, load: { carbs: meal.availCarbs, protein: meal.protein, fat: meal.fat, water: meal.waterG, fibre: meal.fiber, grams: meal.grams }, drink: false });
-  const foodT50 = ph.food ? half(phases[1].R) : t50;
+  } else phases.push({ R, load: { carbs: dm.availCarbs, protein: dm.protein, fat: dm.fat, water: dm.waterG, fibre: dm.fiber, grams: dm.grams }, drink: false });
+  const foodT50 = ph.food ? half(phases[1].R) : doseT50;
+  // PACED stomach, per phase, in "rounds": what has left = what the rounds would release on their own, but never more
+  // than the stomach releases when everything is had at once. Nutrient drinks leave at a regulated, calorie-limited
+  // pace (GE12: the bigger the load, the slower), so a round drunk while the last is still there waits its turn;
+  // without this cap, 5 colas over 1 h would deliver sugar and caffeine faster than 5 colas at once (C).
+  const started = (t: number) => { let c = 0; for (const s0 of starts) if (t >= s0) c++; return c; };
+  const left: Float64Array[] = N === 1 ? [] : (() => {
+    const ph0 = mealPhases(meal);
+    return phases.map((q, j) => {
+      const c = new Float64Array(n);
+      for (let t = 0; t < n; t++) {
+        let own = 0; for (const s0 of starts) if (t >= s0) own += 1 - q.R[t - s0];
+        const once = 1 - (phases.length > 1 ? (j === 0 ? drinkRetention(ph0.drink!.t50, t) : foodRetention(meal, ph0.food!.kind, t)) : stomachRetention(meal, t));
+        c[t] = Math.max(t ? c[t - 1] : 0, Math.min(own, N * once));
+      }
+      return c;
+    });
+  })();
+  /** grams of phase j in the stomach at minute t, and how much leaves between t and t + 1 (all at once: the old curve) */
+  const inStomach = (j: number, t: number) => phases[j].load.grams * (N === 1 ? phases[j].R[t] : started(t) - left[j][t]);
+  const leaving = (j: number, t: number) => (N === 1 ? phases[j].R[t] - phases[j].R[t + 1] : left[j][t + 1] - left[j][t]);
+  // paced: half of EVERYTHING has left the stomach (rounds not yet had count as not left), for hydration and old callers
+  const t50 = N === 1 ? doseT50 : (() => { const all = left.length > 1 ? (t: number) => (phases[0].load.grams * left[0][t] + phases[1].load.grams * left[1][t]) / Math.max(1e-9, phases[0].load.grams + phases[1].load.grams) : (t: number) => left[0][t];
+    for (let t = 1; t < n; t++) if (all(t) >= N / 2) return t; return n - 1; })();
 
   const M = FOOD_MODEL, sub = 20, h = 1 / sub;
   const k = (half: number) => Math.LN2 / half;
@@ -274,20 +331,22 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   // state in the small intestine
   // Alcohol: the fitted absorption rate (Mitchell 2014 peak times) already includes the stomach, so it starts at once.
   // Balc = alcohol in the central part (the blood we show), Bper = in the rest of the body water.
-  let Ic = 0, Ip = 0, If = 0, Iw = 0, Ir1 = 0, Ir2 = 0, Ia = meal.alcoholG;
+  // (each round's alcohol enters at its start minute, below)
+  let Ic = 0, Ip = 0, If = 0, Iw = 0, Ir1 = 0, Ir2 = 0, Ia = 0;
   const C = new Array(3 * M.colonStages).fill(0);
   const kst = C.map((_, j) => M.colonStages / M.colonMin[Math.floor(j / M.colonStages)]);
   let X = 0, Bw = 0, U = 0, kcalAbs = 0, Balc = 0, Bper = 0, Bc = 0, Dg = 0;
   const drinkStomachG = mk(), foodStomachG = mk(), drinkIntestineG = mk();
   for (let t = 0; t < n; t++) {
-    out.stomachG[t] = meal.grams * R[t];
-    if (phases.length > 1) { drinkStomachG[t] = phases[0].load.grams * phases[0].R[t]; foodStomachG[t] = phases[1].load.grams * phases[1].R[t]; drinkIntestineG[t] = Dg; }
+    for (const s0 of starts) if (s0 === t) Ia += dm.alcoholG;
+    out.stomachG[t] = N === 1 ? meal.grams * R[t] : phases.reduce((s2, _, j) => s2 + inStomach(j, t), 0);
+    if (phases.length > 1) { drinkStomachG[t] = inStomach(0, t); foodStomachG[t] = inStomach(1, t); drinkIntestineG[t] = Dg; }
     out.intestineG[t] = Ic + Ip + If + Iw + Ir1 + Ir2 + Ia;
     const S = M.colonStages, seg = (q: number) => C.slice(q * S, (q + 1) * S).reduce((a2, b2) => a2 + b2, 0);
     out.c0[t] = seg(0); out.c1[t] = seg(1); out.c2[t] = seg(2); out.exitedG[t] = X;
     out.bodyWater[t] = Bw; out.bladder[t] = U; out.kcalAbsorbed[t] = kcalAbs; out.bac[t] = Balc / vc; out.carbsInBlood[t] = Bc;
     if (t === n - 1) break;
-    const emptied = phases.map((q) => (q.R[t] - q.R[t + 1]) * h);
+    const emptied = phases.map((_, j) => leaving(j, t) * h);
     for (let s = 0; s < sub; s++) {
       for (let j = 0; j < phases.length; j++) {
         const e = emptied[j], L = phases[j].load;
@@ -316,14 +375,39 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   if (atwater > 0) { const f = meal.kcal / atwater; for (let t = 0; t < n; t++) out.kcalAbsorbed[t] *= f; }
 
   const multi = !!meal.items && meal.items.length > 1;
-  const single = glucoseResponse(meal, t50);
-  const mg = multi ? mealGlucose(meal, ph, foodT50) : null;
-  const g = mg ? { fn: mg.fn, peak: mg.peak, tPeak: mg.tPeak, stretch: single.stretch } : single;
-  const peakRatio = g.peak / 2.3; // insulin scaled to the cola anchor (C)
-  const insulinAt = (t: number) => (mg ? mg.insulinFn(t) : peakRatio * insulinDelta(t / g.stretch));
+  const sugarOf = (mm: Meal, phs: MealPhases, tHalf: number, fHalf: number) => {
+    const single = glucoseResponse(mm, tHalf);
+    const mg = multi ? mealGlucose(mm, phs, fHalf) : null;
+    const g = mg ? { fn: mg.fn, peak: mg.peak, tPeak: mg.tPeak, stretch: single.stretch } : single;
+    const peakRatio = g.peak / 2.3; // insulin scaled to the cola anchor (C)
+    return { ...g, items: mg?.items, insulinAt: (t: number) => (mg ? mg.insulinFn(t) : peakRatio * insulinDelta(t / g.stretch)) };
+  };
+  const one = sugarOf(dm, ph, doseT50, foodT50);
+  // PACED sugar: each round is a smaller serving with its own (smaller, quicker) curve, and the rounds are added up.
+  // Spreading the same sugar flattens the curve: 50 g glucose sipped over 3.5 h vs drunk in 5–10 min gave a similar
+  // 4-h glucose area with a flatter curve and about half the insulin (Jenkins 1990, PMID 2191884); 75 g sipped over
+  // 3.25 h flattened glucose and insulin (Grant 2026, PMID 42072154). Our rounds keep the full insulin (C, high side).
+  // An area-matched version was tried and dropped: the at-once curve saturates (GL curve), so it would shrink a cola
+  // every 48 min below one cola on its own.
+  const g = (() => {
+    if (N === 1) return { fn: one.fn, peak: one.peak, tPeak: one.tPeak, insulinAt: one.insulinAt, capped: false };
+    // the dip after a sugary drink only after the LAST round: the next round arrives before it (C)
+    const last = starts[N - 1];
+    const raw = (t: number) => { let v = 0; for (const s0 of starts) if (t > s0) v += s0 === last ? one.fn(t - s0) : Math.max(0, one.fn(t - s0)); return v; };
+    const rawIns = (t: number) => { let v = 0; for (const s0 of starts) if (t > s0) v += one.insulinAt(t - s0); return v; };
+    const ph0 = mealPhases(meal), t0 = halfOf((t) => stomachRetention(meal, t));
+    const once = sugarOf(meal, ph0, t0, ph0.food ? halfOf((t) => foodRetention(meal, ph0.food!.kind, t)) : t0);
+    let peak = 0, tPeak = 0;
+    for (let t = 0; t < Math.min(n, 900); t++) { const v = raw(t); if (v > peak) { peak = v; tPeak = t; } }
+    // the stomach lets sugar out no faster than when it is all had at once (the cap on `left` above), so the paced
+    // peak can't be higher either: if it would be, the stomach is the bottleneck and the at-once curve stands (C)
+    if (peak > once.peak) return { fn: once.fn, peak: once.peak, tPeak: once.tPeak, insulinAt: once.insulinAt, capped: true };
+    return { fn: raw, peak, tPeak, insulinAt: rawIns, capped: false };
+  })();
+  const insulinAt = g.insulinAt;
   const glucoseDeltaMgDl = mk(), insulin = mk(), tg = mk(), hr = mk(), sbp = mk();
   const bacPeak = Math.max(...out.bac);
-  const tgAmp = Math.min(1.2, (M.tgPer50gFat * meal.fat) / 50);
+  const tgAmp = Math.min(1.2, (M.tgPer50gFat * dm.fat) / 50);
   // Alcohol on pulse and blood pressure within 6 h (Tasnim 2020 Cochrane, abstract read 2026-10-16): 14–28 g HR +4.6,
   // SBP −5.6; > 30 g HR +5.8, SBP −3.5 (the fall is smaller at high doses). Ramp up to 20 g, blend 28 → 30 g (C).
   const ag = meal.alcoholG, hiW = Math.min(1, Math.max(0, (ag - 28) / 2));
@@ -332,7 +416,7 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   for (let t = 0; t < n; t++) {
     glucoseDeltaMgDl[t] = g.fn(t) * 18.016;
     insulin[t] = insulinAt(t);
-    const x = t / M.tgPeakMin; tg[t] = tgAmp * Math.pow(x, 3) * Math.exp(3 * (1 - x));
+    for (const s0 of starts) if (t >= s0) { const x = (t - s0) / M.tgPeakMin; tg[t] += tgAmp * Math.pow(x, 3) * Math.exp(3 * (1 - x)); }
     // Alcohol: HR +4.6–5.1 bpm and SBP −5.6 mmHg within 6 h after 14–28 g [alcohol S3]; scaled by blood alcohol (C)
     const bacFrac = bacPeak > 0 ? out.bac[t] / bacPeak : 0;
     hr[t] = alcHr * bacFrac + (3 * insulin[t]) / 30; // sugar part as cola [H2, H4]
@@ -340,15 +424,45 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   }
   // Caffeine leaves the stomach with the phase it is in. In a meal the coffee's caffeine is held back by the food:
   // tmax 29 → 65–69 min with a 500–1000 kcal meal, same total amount absorbed [ML3, Wildgrube 2026].
-  const cafDrink = ph.drink ? ph.drink.items.reduce((s, i) => s + meal.items![i].caffeineMg, 0) : 0;
-  const caffeineInDrink = !!ph.drink && cafDrink >= 0.5 * meal.caffeineMg;
-  const cafHalf = ph.drink && ph.food ? (caffeineInDrink ? ph.drink.t50 : foodT50) : t50;
-  const caffeine = simulateEspresso(Math.max(1e-4, meal.caffeineMg), p, minutes, Math.max(13, cafHalf));
-  const caffeineTmaxAloneMin = ph.drink && caffeineInDrink && meal.caffeineMg >= 1 ? simulateEspresso(meal.caffeineMg, p, Math.min(minutes, 600), Math.max(13, ph.drink.aloneT50)).tmaxMin : null;
+  // PACED: the caffeine model is linear, so the evening is what each minute's caffeine leaving the stomach (the capped
+  // `left` of the phase it travels in) does on its own, added up: a convolution with one dose put straight into the gut.
+  const cafDrink = ph.drink ? ph.drink.items.reduce((s, i) => s + dm.items![i].caffeineMg, 0) : 0;
+  const caffeineInDrink = !!ph.drink && cafDrink >= 0.5 * dm.caffeineMg;
+  const cafHalf = ph.drink && ph.food ? (caffeineInDrink ? ph.drink.t50 : foodT50) : doseT50;
+  const cafOne = simulateEspresso(Math.max(1e-4, dm.caffeineMg), p, minutes, Math.max(13, cafHalf));
+  const cafPhase = ph.drink && ph.food && !caffeineInDrink ? 1 : 0;
+  const caffeine = N === 1 ? cafOne : dm.caffeineMg < 0.01 ? { ...cafOne, doseMg: cafOne.doseMg * N }
+    : pacedCaffeine(cafOne, simulateEspresso(1, p, minutes, 0.1), (t) => dm.caffeineMg * leaving(cafPhase, t), (t) => dm.caffeineMg * (started(t) - left[cafPhase][t]), N, p);
+  const caffeineTmaxAloneMin = ph.drink && caffeineInDrink && dm.caffeineMg >= 1 ? simulateEspresso(dm.caffeineMg, p, Math.min(minutes, 600), Math.max(13, ph.drink.aloneT50)).tmaxMin : null;
   return {
     minutes, t50, stomachG: out.stomachG, intestineG: out.intestineG, colonG: [out.c0, out.c1, out.c2], exitedG: out.exitedG, residueG: residue,
     bodyWater: out.bodyWater, bladder: out.bladder, kcalAbsorbed: out.kcalAbsorbed, kcal: meal.kcal,
     glucoseDeltaMgDl, insulin, glucosePeakMmol: g.peak, glucosePeakMin: g.tPeak, tgDelta: tg, bac: out.bac, hr, sbp, caffeine, carbsInBlood: out.carbsInBlood,
-    meal: multi ? { phases: ph, drinkStomachG, foodStomachG, drinkIntestineG, foodT50, items: mg?.items ?? [], caffeineTmaxAloneMin, caffeineInDrink } : null,
+    meal: multi ? { phases: ph, drinkStomachG, foodStomachG, drinkIntestineG, foodT50, items: one.items ?? [], caffeineTmaxAloneMin, caffeineInDrink } : null,
+    pace: N > 1 ? { doses: N, overMin: meal.pace!.overMin, everyMin: meal.pace!.overMin / N, startsMin: starts, doseT50, sugarAsOnce: g.capped } : null,
+  };
+}
+
+/** Caffeine had in rounds. `imp` = 1 mg that reaches the gut at once (gastric half-time 0.1 min); `inflow(t)` = mg leaving
+ *  the stomach between minute t and t + 1; `inStomach(t)` = mg still there. The model after the stomach is linear
+ *  (espressoSim.ts), so gut, blood, breakdown products and blood pressure are the inflow convolved with `imp`. Pulse,
+ *  sugar and oxygen stay flat, as for one dose; half-life and body water are this person's, as for one round (`one`). */
+export function pacedCaffeine(one: Timeline, imp: Timeline, inflow: (t: number) => number, inStomach: (t: number) => number, rounds: number, p: Profile): Timeline {
+  const n = one.conc.length;
+  const a = new Float64Array(n);
+  for (let t = 0; t + 1 < n; t++) a[t] = Math.max(0, inflow(t));
+  const conv = (x: Float64Array) => { const o = new Float64Array(n); for (let t = 1; t < n; t++) { let v = 0; for (let u = 0; u < t; u++) if (a[u]) v += a[u] * x[t - u]; o[t] = v; } return o; };
+  const intestine = conv(imp.intestine), body = conv(imp.body), metabolites = conv(imp.metabolites), cleared = conv(imp.cleared), conc = conv(imp.conc);
+  const stomach = new Float64Array(n);
+  for (let t = 0; t < n; t++) stomach[t] = Math.max(0, inStomach(t));
+  const dose = one.doseMg * rounds;
+  // blood pressure rises in proportion to blood caffeine (espressoSim.ts): the same mmHg per mg/L as one round
+  const tm = one.tmaxMin, kS = one.conc[tm] > 0 ? (one.sbp[tm] - p.sbp) / one.conc[tm] : 0, kD = one.conc[tm] > 0 ? (one.dbp[tm] - p.dbp) / one.conc[tm] : 0;
+  let tmaxMin = 0, peakConc = 0;
+  for (let t = 0; t < n; t++) { if (body[t] > body[tmaxMin]) tmaxMin = t; if (conc[t] > peakConc) peakConc = conc[t]; }
+  return {
+    ...one, doseMg: dose, stomach, intestine, body, metabolites, cleared, conc,
+    stomachMl: stomach.map((s) => (one.stomachMl[0] * s) / Math.max(1e-9, one.doseMg)),
+    sbp: conc.map((c) => p.sbp + kS * c), dbp: conc.map((c) => p.dbp + kD * c), tmaxMin, peakConc,
   };
 }

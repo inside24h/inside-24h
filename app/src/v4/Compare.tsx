@@ -57,16 +57,17 @@ function SugarChart({ a, b, unit }: { a: Analysis; b: Analysis; unit: Profile['g
   );
 }
 
-export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, onRight }: {
+export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, onRight, overMin = 0 }: {
   current: Part[]; profile: Profile; initial?: Part[]; onClose: () => void; onVideo?: (a: Analysis, b: Analysis) => void; short?: boolean; setShort?: (v: boolean) => void;
   onRight?: (right: Part[] | null) => void; // the partner goes into the link (#vs=…)
+  /** "Over how long?" of the item on screen (minutes; 2026-10-19): kept while the left side is that item */ overMin?: number;
 }) {
   const box = useRef<HTMLDivElement>(null);
   useModal(box, true, onClose);
   const [left, setLeft] = useState<Part[]>(current);
   const [right, setRight] = useState<Part[] | null>(initial?.length ? initial : null); // an unknown partner = none yet
   useEffect(() => { onRight?.(right); }, [right]); // eslint-disable-line react-hooks/exhaustive-deps
-  const a = useMemo(() => analyze(left, profile), [left, profile]);
+  const a = useMemo(() => analyze(left, profile, left === current ? overMin : 0), [left, profile, current, overMin]);
   const b = useMemo(() => (right?.length ? analyze(right, profile) : null), [right, profile]);
   const pick = ([l, r]: [string, string]) => { const pl = parseMeal(l), pr = parseMeal(r); if (pl.length) setLeft(pl); if (pr.length) setRight(pr); };
   return (

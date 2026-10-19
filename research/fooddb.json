@@ -887,6 +887,10 @@
      "chip": "Filter"
     },
     {
+     "k": "filter-coffee.turkish",
+     "chip": "Turkish"
+    },
+    {
      "k": "coffee-with-milk",
      "chip": "With milk"
     },
@@ -1065,6 +1069,79 @@
     ],
     "range": null,
     "overrides": null
+   },
+   {
+    "v": "turkish",
+    "chip": "Turkish",
+    "name": "Turkish coffee",
+    "words": [
+     "bosanska",
+     "domaca kava",
+     "dzezva",
+     "turkish",
+     "turska"
+    ],
+    "aliases": [
+     "bosanska kava",
+     "domaca kava",
+     "domaća kava",
+     "grcka kava",
+     "greek coffee",
+     "grčka kava",
+     "kava iz dzezve",
+     "kava iz džezve",
+     "turkish coffee",
+     "turska kava"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 cup, 70 ml",
+     "grams": 70.1,
+     "assumed": false,
+     "source": "volume 70 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
+    },
+    "per100g": {
+     "kcal": 9.0,
+     "carbs": 1.67,
+     "sugars": 0.0,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 0.18,
+     "satFat": 0.09,
+     "protein": 0.12,
+     "sodiumMg": 14.0,
+     "caffeineMg": 212.0,
+     "alcoholG": 0.0,
+     "waterG": 97.8
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#3a1d0c",
+    "usdaFdcId": 171891,
+    "usdaDescription": "Beverages, coffee, brewed, espresso, restaurant-prepared",
+    "recipe": null,
+    "usdaProxy": true,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "B",
+      "text": "Turkish coffee (boiled, unfiltered, about 7 g coffee per 70 ml cup) has no USDA record. Its caffeine was measured at 2.0–2.2 mg per ml (Derossi et al. 2018, J Sci Food Agric; one cup 112 mg) and 2.8 mg per ml (Elsahoryi et al. 2025). The USDA espresso record has the same strength (2.1 mg per g), so we use it for a 70 ml cup: about 148 mg caffeine. Your cup depends on how much coffee goes in and whether you drink the grounds. Range: caffeineMg 112–196 per serving.",
+      "cite": "USDA FoodData Central, SR Legacy 171891: Beverages, coffee, brewed, espresso, restaurant-prepared",
+      "url": "https://fdc.nal.usda.gov/food-details/171891/nutrients",
+      "claim": "DBV-filter-coffee.turkish"
+     }
+    ],
+    "range": {
+     "caffeineMg": [
+      112,
+      196
+     ]
+    },
+    "overrides": null
    }
   ],
   "addins": [
@@ -1177,6 +1254,10 @@
     {
      "k": "filter-coffee",
      "chip": "Filter"
+    },
+    {
+     "k": "filter-coffee.turkish",
+     "chip": "Turkish"
     },
     {
      "k": "coffee-with-milk",
@@ -1462,6 +1543,10 @@
     {
      "k": "filter-coffee",
      "chip": "Filter"
+    },
+    {
+     "k": "filter-coffee.turkish",
+     "chip": "Turkish"
     },
     {
      "k": "coffee-with-milk",
@@ -1913,6 +1998,10 @@
     {
      "k": "filter-coffee",
      "chip": "Filter"
+    },
+    {
+     "k": "filter-coffee.turkish",
+     "chip": "Turkish"
     },
     {
      "k": "coffee-with-milk",
@@ -2367,6 +2456,10 @@
     {
      "k": "filter-coffee",
      "chip": "Filter"
+    },
+    {
+     "k": "filter-coffee.turkish",
+     "chip": "Turkish"
     },
     {
      "k": "coffee-with-milk",
@@ -4815,6 +4908,91 @@
     ],
     "range": null,
     "overrides": null
+   },
+   {
+    "v": "medica",
+    "chip": "Medica",
+    "name": "Medica honey liqueur",
+    "words": [
+     "medenica",
+     "medica",
+     "medovaca"
+    ],
+    "aliases": [
+     "badel medica",
+     "honey liqueur",
+     "honey rakija",
+     "medena rakija",
+     "medenica",
+     "medica",
+     "medica honey liqueur",
+     "medovaca",
+     "medovača",
+     "rakija od meda"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "40 ml",
+     "grams": 40.1,
+     "source": "our recipe: 22.6 g rakija / brandy + 4.9 g honey + 12.6 g water",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 167.2,
+     "carbs": 10.076,
+     "sugars": 10.042,
+     "freeSugars": 10.042,
+     "fiber": 0.024,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.037,
+     "sodiumMg": 2.311,
+     "caffeineMg": 0.0,
+     "alcoholG": 18.805,
+     "waterG": 71.026
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (rakija / brandy, honey, water)",
+    "gi": 61,
+    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Honey GI 61 on 4.0 g carbs (Atkinson 2008 (PMC2584181) Table 1: Honey, mean of multiple studies)",
+    "color": "#e8dcc0",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "rakija",
+      "usdaFdcId": 174815,
+      "usdaDescription": "Alcoholic beverage, distilled, all (gin, rum, vodka, whiskey) 80 proof",
+      "grams": 22.6
+     },
+     {
+      "ref": "honey",
+      "usdaFdcId": 169640,
+      "usdaDescription": "Honey",
+      "grams": 4.9
+     },
+     {
+      "ref": "water",
+      "usdaFdcId": 173647,
+      "usdaDescription": "Beverages, water, tap, drinking",
+      "grams": 12.6
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Medica (honey liqueur) is our recipe: 24 ml of 40% spirit, 4.9 g honey and 12.6 ml water per 40 ml (USDA parts), about 24% alcohol like Badel Medica (24% vol, komovica spirit with honey). Producers do not publish the sugar, so we use the EU minimum for a liqueur, 100 g sugar per litre: real medica can be sweeter. Homemade medica varies more.",
+      "cite": "Our recipe from USDA SR Legacy parts: 22.6 g Alcoholic beverage, distilled, all (gin, rum, vodka, whiskey) 80 proof (174815); 4.9 g Honey (169640); 12.6 g Beverages, water, tap, drinking (173647)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-rakija.medica"
+     }
+    ],
+    "range": null,
+    "overrides": null
    }
   ],
   "sizes": {
@@ -6514,10 +6692,10 @@
      "fiber": 0.8
     },
     "level": "B",
-    "text": "Burek: there is no USDA burek, so the values are from a Croatian producer label (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). Burek varies: labels range from about 250 to 320 kcal per 100 g.",
-    "source": "Čakovečki mlinovi, Burek (net weight 150 g): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
+    "text": "Burek: there is no USDA burek, so the values are from a Croatian producer’s cheese burek (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). The web table does not print “per 100 g”, but EU law requires nutrition per 100 g, and the same table format gives a 400 g loaf 222 kcal, which can only be per 100 g. Burek varies: labels range from about 250 to 320 kcal per 100 g.",
+    "source": "Čakovečki mlinovi, Burek (net weight 150 g; “slojevi tijesta i sirnog nadjeva”, layers of dough and cheese filling): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Basis: Regulation (EU) 1169/2011 Art. 32(2) “shall be expressed per 100 g or per 100 ml”. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
     "url": "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
-    "note": "Sodium = 1.4 / 2.5 = 560 mg. Fiber not declared (None). Water stays from the USDA turnover proxy.",
+    "note": "Sodium = 1.4 / 2.5 = 560 mg. Fiber not declared (None). Water stays from the USDA turnover proxy. Basis checked 2026-10-19 on the producer's web page (EN and HR), not on the pack: the table has no column header; per 100 g follows from EU 1169/2011 Art. 32(2), from Atwater (16×9 + 29×4 + 9.7×4 = 299 kcal ≈ 297, i.e. 54.7 g of macros per 100 g, plausible for burek), from the same page's 400 g breads at 222 and 260 kcal (per 100 g), and from other burek labels (247-316 kcal/100 g); per piece it would be 198 kcal/100 g, below every label. Level B until read on the pack.",
     "rangesPer100g": {
      "kcal": [
       247,
@@ -6553,7 +6731,7 @@
   "usdaDataset": "SR Legacy + label override",
   "recipe": null,
   "usdaProxy": true,
-  "notes": "PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316).",
+  "notes": "PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi, a cheese burek); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316).",
   "builder": {
    "title": "What's in it?",
    "ask": "Which burek?",
@@ -6597,7 +6775,7 @@
           "all"
          ],
          "level": "B",
-         "text": "Bakery burek: one Croatian producer label (Čakovečki mlinovi, 150 g piece); the label does not name the filling.",
+         "text": "Bakery burek: a cheese burek from a Croatian bakery producer (Čakovečki mlinovi, 150 g piece: “layers of dough and cheese filling”), values from its nutrition table, which is per 100 g as EU law requires.",
          "cite": "USDA FoodData Central, SR Legacy 168963: Turnover, filled with egg, meat and cheese, frozen",
          "url": "https://fdc.nal.usda.gov/food-details/168963/nutrients",
          "claim": "DBB-burek-bakery"
@@ -6614,8 +6792,8 @@
           "sugars"
          ],
          "level": "B",
-         "text": "Burek: there is no USDA burek, so the values are from a Croatian producer label (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). Burek varies: labels range from about 250 to 320 kcal per 100 g.",
-         "cite": "Čakovečki mlinovi, Burek (net weight 150 g): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
+         "text": "Burek: there is no USDA burek, so the values are from a Croatian producer’s cheese burek (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). The web table does not print “per 100 g”, but EU law requires nutrition per 100 g, and the same table format gives a 400 g loaf 222 kcal, which can only be per 100 g. Burek varies: labels range from about 250 to 320 kcal per 100 g.",
+         "cite": "Čakovečki mlinovi, Burek (net weight 150 g; “slojevi tijesta i sirnog nadjeva”, layers of dough and cheese filling): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Basis: Regulation (EU) 1169/2011 Art. 32(2) “shall be expressed per 100 g or per 100 ml”. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
          "url": "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
          "claim": "DBO-burek-0"
         }
@@ -6829,9 +7007,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Spinach burek (zeljanica) is our recipe for a 150 g piece: 75 g phyllo, 30 g cooked spinach, 30 g fresh cheese and 15 g sunflower oil (USDA parts). We found no label with its proportions, so they are our estimate.",
-         "cite": "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)",
-         "url": "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g",
+         "text": "Spinach burek (zeljanica) is our recipe for a 150 g piece: 75 g phyllo, 30 g cooked spinach, 30 g fresh cheese and 15 g sunflower oil (USDA parts), 262 kcal per 100 g. We found no label that gives the proportions, so they are our estimate; spinach burek labels give 230–282 kcal per 100 g, so the total fits.",
+         "cite": "Our recipe (no label gives the shares); check: Open Food Facts spinach burek labels 3871832005535 (230 kcal), 3800047770372 (281), 3811832016414 (282 per 100 g)",
+         "url": "https://world.openfoodfacts.org/product/3871832005535",
          "claim": "DBB-burek-spinach"
         }
        ]
@@ -6905,9 +7083,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Potato burek (krumpiruša) is our recipe for a 150 g piece: 75 g phyllo, 45 g boiled potato, 15 g onion and 15 g sunflower oil (USDA parts). We found no label with its proportions, so they are our estimate.",
-         "cite": "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)",
-         "url": "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g",
+         "text": "Potato burek (krumpiruša) is our recipe for a 150 g piece: 75 g phyllo, 45 g boiled potato, 15 g onion and 15 g sunflower oil (USDA parts), 268 kcal per 100 g. We found no label that gives the proportions, so they are our estimate; the one potato burek label we found gives 253 kcal, 9.5 g fat and 36 g carbohydrate per 100 g (ours: 13 g fat, 33 g carbohydrate).",
+         "cite": "Our recipe (no label gives the shares); check: Open Food Facts ‘Burek potato’ 7350039279179 (253 kcal per 100 g)",
+         "url": "https://world.openfoodfacts.org/product/7350039279179",
          "claim": "DBB-burek-potato"
         }
        ]
@@ -7037,9 +7215,9 @@
        "k": "cheese",
        "chip": "Extra cheese",
        "name": "extra cheese",
-       "grams": 14.2,
+       "grams": 6.3,
        "rng": [
-        12.4,
+        5.2,
         14.2
        ],
        "on": false,
@@ -7075,9 +7253,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Extra cheese on pizza: our estimate 14.2 g per slice: about 4 oz on a 14-inch pie, roughly half of the base cheese (pizza operators on PMQ Think Tank; a weaker source, seen only as a search excerpt). Mozzarella, USDA.",
-         "cite": "PMQ Think Tank forum, ‘How much extra cheese’ (search excerpt)",
-         "url": "https://thinktank.pmq.com/t/how-much-extra-cheese/15619",
+         "text": "Extra cheese on pizza: 6.3 g of mozzarella per slice, USDA’s own recipe for an extra-cheese pizza (41 g of cheese added to a 691 g pizza, 5.9%). A thick-crust recipe adds 4.9% (5.2 g per slice); pizzerias may add up to about 4 oz on a large pizza (14.2 g per slice, pizza operators’ forum).",
+         "cite": "USDA FNDDS 2021-2023 recipes 2708622 and 2708623 (Pizza, extra cheese, thin / thick crust)",
+         "url": "https://fdc.nal.usda.gov/food-details/2708622/nutrients",
          "claim": "DBB-pizza-cheese"
         }
        ]
@@ -7575,10 +7753,10 @@
        "k": "tuna",
        "chip": "Tuna",
        "name": "tuna",
-       "grams": 21.2,
+       "grams": 11.9,
        "rng": [
-        16.0,
-        21.2
+        10.8,
+        12.8
        ],
        "on": false,
        "p": {
@@ -7611,9 +7789,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Tuna on pizza: our estimate 21.2 g per slice, from a pizza-industry portion chart (170 g on a 14-inch pie, 128 g on a 12-inch pie, 8 slices). Tuna is not in the chart: we use its amount for cooked meat toppings.",
-         "cite": "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)",
-         "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
+         "text": "Tuna on pizza: 11.9 g per slice. European frozen tuna pizzas declare 9.2–10.7% tuna (Dr. Oetker 9.2% and 10%, Casino 9.4%, Auchan 10.7%); 10% of a topped slice is 11.9 g, the range 10.8–12.8 g. Canned tuna in water, USDA.",
+         "cite": "Open Food Facts ingredient lists: Dr. Oetker Ristorante Pizza Tonno (4001724039891), Dr. Oetker Pizza Tonno (4001724015727), Casino Pizza thon (3222477010352), Auchan Pizza Thon (3596710428595)",
+         "url": "https://world.openfoodfacts.org/product/4001724015727",
          "claim": "DBB-pizza-tuna"
         }
        ]
@@ -7659,9 +7837,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Egg on pizza: our estimate, one large egg (50 g, USDA) per pizza, so 6.2 g per slice. No portion source was found for egg.",
-         "cite": "USDA FoodData Central, SR Legacy 171287: Egg, whole, raw, fresh",
-         "url": "https://fdc.nal.usda.gov/food-details/171287/nutrients",
+         "text": "Egg on pizza: one egg per pizza, as in pizza Fiorentina recipes; a large egg is 50 g (USDA), so 6.2 g per slice (5.5–7.0 g for a medium to an extra-large egg). The egg sits on one or two slices, so those slices carry more.",
+         "cite": "Great British Chefs, Pizza Fiorentina recipe (1 pizza base, 1 egg); USDA SR Legacy 171287 portions",
+         "url": "https://www.greatbritishchefs.com/recipes/pizza-fiorentina-recipe",
          "claim": "DBB-pizza-egg"
         }
        ]
@@ -7780,9 +7958,9 @@
      ],
      "words": [],
      "check": {
-      "grams": 220.2,
-      "kcal": 540.4,
-      "fat": 29.28,
+      "grams": 212.3,
+      "kcal": 516.7,
+      "fat": 27.53,
       "gi": null
      }
     }
@@ -7880,6 +8058,37 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "GI is Table 1 'spaghetti, white'.",
+  "sizes": {
+   "opts": [
+    {
+     "k": "side",
+     "label": "Side",
+     "mult": 1
+    },
+    {
+     "k": "plate",
+     "label": "Plate",
+     "mult": 1.6048387096774193
+    },
+    {
+     "k": "large",
+     "label": "Large",
+     "mult": 2.0161290322580645
+    }
+   ],
+   "src": [
+    {
+     "fields": [
+      "serving"
+     ],
+     "level": "B",
+     "text": "Sizes are cooked weight: Side is USDA’s cup, 124 g; Plate is the typical adult portion, 199 g; Large is a big portion, 250 g (the middle and the upper quarter of what Irish adults ate, weighed in a national survey). 80 g of dry pasta, the Italian standard portion, cooks to about 190 g.",
+     "cite": "Irish Food Portion Sizes Database (IUNA 2013), adults 18-64, Table 4: boiled pasta median 199 g (IQR 113-250 g), boiled rice median 173 g (IQR 120-224 g); USDA SR Legacy cup portions",
+     "url": "https://irp-cdn.multiscreensite.com/46a7ad27/files/uploaded/Irish-Food-Portion-Sizes-Database.pdf",
+     "claim": "DBS-pasta"
+    }
+   ]
+  },
   "choose": {
    "k": "pasta",
    "ask": "Which pasta?",
@@ -7941,6 +8150,37 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "",
+  "sizes": {
+   "opts": [
+    {
+     "k": "side",
+     "label": "Side",
+     "mult": 1
+    },
+    {
+     "k": "plate",
+     "label": "Plate",
+     "mult": 1.7008547008547008
+    },
+    {
+     "k": "large",
+     "label": "Large",
+     "mult": 2.1367521367521367
+    }
+   ],
+   "src": [
+    {
+     "fields": [
+      "serving"
+     ],
+     "level": "B",
+     "text": "Sizes are cooked weight: Side is USDA’s cup, 117 g; Plate is the typical adult pasta portion, 199 g; Large is a big portion, 250 g (Irish national survey, all boiled pasta).",
+     "cite": "Irish Food Portion Sizes Database (IUNA 2013), adults 18-64, Table 4: boiled pasta median 199 g (IQR 113-250 g), boiled rice median 173 g (IQR 120-224 g); USDA SR Legacy cup portions",
+     "url": "https://irp-cdn.multiscreensite.com/46a7ad27/files/uploaded/Irish-Food-Portion-Sizes-Database.pdf",
+     "claim": "DBS-pasta-wholewheat"
+    }
+   ]
+  },
   "choose": {
    "k": "pasta",
    "ask": "Which pasta?",
@@ -8008,6 +8248,37 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "Long-grain, regular, enriched, cooked.",
+  "sizes": {
+   "opts": [
+    {
+     "k": "side",
+     "label": "Side",
+     "mult": 0.759493670886076
+    },
+    {
+     "k": "plate",
+     "label": "Plate",
+     "mult": 1
+    },
+    {
+     "k": "large",
+     "label": "Large",
+     "mult": 1.4177215189873418
+    }
+   ],
+   "src": [
+    {
+     "fields": [
+      "serving"
+     ],
+     "level": "B",
+     "text": "Sizes are cooked weight: Side 120 g, Plate is USDA’s cup, 158 g, Large 224 g. Irish adults ate 120–224 g of boiled rice at a meal (the middle half, median 173 g, weighed in a national survey). 80 g of dry rice, the Italian standard portion, cooks to about 225 g.",
+     "cite": "Irish Food Portion Sizes Database (IUNA 2013), adults 18-64, Table 4: boiled pasta median 199 g (IQR 113-250 g), boiled rice median 173 g (IQR 120-224 g); USDA SR Legacy cup portions",
+     "url": "https://irp-cdn.multiscreensite.com/46a7ad27/files/uploaded/Irish-Food-Portion-Sizes-Database.pdf",
+     "claim": "DBS-rice-white"
+    }
+   ]
+  },
   "choose": {
    "k": "rice",
    "ask": "Which rice?",
@@ -9057,9 +9328,9 @@
   ],
   "kind": "solid",
   "serving": {
-   "label": "1 can",
-   "grams": 165.0,
-   "source": "USDA SR Legacy food_portion (1 can = 165 g)",
+   "label": "1 portion, 80 g",
+   "grams": 80,
+   "source": "survey: Irish Food Portion Sizes Database 2013 (IUNA, adults 18-64), canned tuna median 80 g, IQR 50-105 g; EU cans are mostly 80 g",
    "assumed": false
   },
   "piece": null,
@@ -9108,9 +9379,9 @@
     ],
     "kind": "solid",
     "serving": {
-     "label": "1 can",
-     "grams": 171.0,
-     "source": "USDA SR Legacy food_portion (1 can = 171 g)",
+     "label": "1 portion, 80 g",
+     "grams": 80,
+     "source": "survey: Irish Food Portion Sizes Database 2013 (IUNA, adults 18-64), canned tuna median 80 g; the same portion as tuna in water",
      "assumed": false
     },
     "per100g": {
@@ -9142,7 +9413,7 @@
        "all"
       ],
       "level": "A",
-      "text": "Tuna in oil: values from the USDA record for light tuna canned in oil, drained; 1 can = 171 g.",
+      "text": "Tuna in oil: values from the USDA record for light tuna canned in oil, drained (198 kcal per 100 g); 1 portion is 80 g (the median canned-tuna portion of Irish adults). If you eat the oil too, it is about twice that: the Open Food Facts entry for a Croatian can of tuna in vegetable oil (Eva, 80 g) gives 391 kcal and 35 g fat per 100 g.",
       "cite": "USDA FoodData Central, SR Legacy 173708: Fish, tuna, light, canned in oil, drained solids",
       "url": "https://fdc.nal.usda.gov/food-details/173708/nutrients",
       "claim": "DBV-tuna-canned.oil"
@@ -12562,7 +12833,7 @@
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
   "gi": 65,
-  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1021: Rockmelon/Cantaloupe, raw (Australia), 65 ± 9, 8 subjects, bread reference; a second test, row 1022, gave 70 (10 subjects, glucose reference)",
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1021: Rockmelon/Cantaloupe, raw (Australia), 65 ± 9, 8 subjects, 25 g carbohydrate portions, bread reference, published study; a second test, row 1022, gave 70 (10 subjects, glucose reference, only 10 g carbohydrate portions, no SEM, unpublished), so 65 is used; GL 4 per 120 g either way",
   "color": "#f4b872",
   "usdaFdcId": 169092,
   "usdaDescription": "Melons, cantaloupe, raw",
@@ -15443,26 +15714,26 @@
   "kind": "solid",
   "serving": {
    "label": "1 kebab",
-   "grams": 250.0,
-   "source": "our builder default: 60 g pita + 110 g chicken + 30 g tomato + 20 g onion + 30 g yogurt sauce",
+   "grams": 290.0,
+   "source": "our builder default: 60 g pita + 150 g chicken + 30 g tomato + 20 g onion + 30 g yogurt sauce",
    "assumed": true
   },
   "piece": null,
   "aliasServing": null,
   "overrides": null,
   "per100g": {
-   "kcal": 157.0,
-   "carbs": 15.14,
-   "sugars": 1.53,
+   "kcal": 160.0,
+   "carbs": 13.05,
+   "sugars": 1.32,
    "freeSugars": null,
-   "fiber": 0.81,
-   "fat": 4.3,
-   "satFat": 1.32,
-   "protein": 13.69,
-   "sodiumMg": 181.7,
+   "fiber": 0.7,
+   "fat": 4.83,
+   "satFat": 1.45,
+   "protein": 15.22,
+   "sodiumMg": 171.3,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 66.2
+   "waterG": 66.3
   },
   "freeSugarsBasis": "not determined: a part has no free-sugar value",
   "gi": null,
@@ -15482,7 +15753,7 @@
     "ref": "chicken",
     "usdaFdcId": 172388,
     "usdaDescription": "chicken",
-    "grams": 110.0
+    "grams": 150.0
    },
    {
     "ref": "tomato",
@@ -15626,10 +15897,10 @@
        "k": "chicken",
        "chip": "Chicken",
        "name": "chicken",
-       "grams": 110.0,
+       "grams": 150.0,
        "rng": [
         60,
-        173
+        227
        ],
        "on": true,
        "p": {
@@ -15667,9 +15938,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Chicken: our estimate 110 g of roasted chicken thigh meat (USDA). Measured portions run from 60 g (USDA gyro) to 80–173 g (döner weighed in a German TV test).",
-         "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-         "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+         "text": "Chicken: 150 g of meat (roasted chicken thigh, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g.",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-chicken"
         }
        ]
@@ -15678,10 +15949,10 @@
        "k": "beef",
        "chip": "Beef/veal",
        "name": "beef",
-       "grams": 110.0,
+       "grams": 150.0,
        "rng": [
         60,
-        173
+        227
        ],
        "on": false,
        "p": {
@@ -15723,9 +15994,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Beef/veal: our estimate 110 g; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Measured portions run from 60 g to 173 g.",
-         "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-         "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+         "text": "Beef/veal: 150 g of meat; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Weighed döner kebabs in Italy carried about 150 g of meat (35–40% of a 402 g kebab); measured portions run from 60 g (USDA gyro) to about 230 g.",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-beef"
         }
        ]
@@ -15987,9 +16258,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 250.0,
-      "kcal": 393.6,
-      "fat": 10.74,
+      "grams": 290.0,
+      "kcal": 465.2,
+      "fat": 14.0,
       "gi": null
      }
     },
@@ -16007,9 +16278,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 250.0,
-      "kcal": 493.7,
-      "fat": 21.33,
+      "grams": 290.0,
+      "kcal": 601.7,
+      "fat": 28.44,
       "gi": null
      }
     },
@@ -16027,9 +16298,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 262.0,
-      "kcal": 448.9,
-      "fat": 15.77,
+      "grams": 302.0,
+      "kcal": 520.5,
+      "fat": 19.03,
       "gi": null
      }
     }
@@ -16040,7 +16311,7 @@
       "all"
      ],
      "level": "C",
-     "text": "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record, in the amounts of USDA’s gyro sandwich recipe and weighed döner portions. Kebab shops differ a lot, mostly in the meat.",
+     "text": "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) is from döner kebabs weighed in Italian shops; bread, vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat; the weighed Italian kebabs also had more bread (about 100 g).",
      "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
      "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
      "claim": "DBB-kebab"

@@ -39,6 +39,9 @@ export interface Built {
   alcoholG?: number;
   /** Water the product brings (ml). */
   waterMl?: number;
+  /** PACING ("Over how long?", 2026-10-19): the rounds, one every `everyMin`; for alcohol also the same drinks all at once
+   *  (to say what spreading changed). Absent = all at once. */
+  pace?: { doses: number; overMin: number; everyMin: number; bacOnce?: Float64Array };
   /** Amounts along the visible liquid route (scene/LiquidRoute). */
   route?: Route;
   /** Half of it has left the stomach after this many minutes. */

@@ -89,6 +89,8 @@ All foods within ±15 % of 4/4/9/7 (fiber 2) except sauerkraut (+17 %) and mushr
 
 ## Not decided (recommendation)
 
+Data round 2 (2026-10-19) decided: melon GI 65 (row 1021 is the stronger test), tuna (water default, 80 g portion), burek per-100 g basis (verified indirectly, level B; it is a cheese burek), pasta plate (Irish survey 199 g; SINU 80 g dry ≈ 188 g cooked), "turska kava" (now a filter-coffee variant), "nar" (needs parse.ts). Details: `VARIANTS-DONE.md`, "Data round 2".
+
 | question | recommendation |
 |---|---|
 | "čaj" → black tea (50 mg caffeine); in Croatia often herbal | keep black for "tea"; ask the owner whether "čaj" should be herbal (0 mg) |

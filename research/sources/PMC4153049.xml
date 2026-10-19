@@ -1,0 +1,424 @@
+
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.4 20241031//EN" "JATS-archivearticle1-4-mathml3.dtd">
+<article article-type="research-article" xml:lang="en" dtd-version="1.4"><front><journal-meta><journal-id journal-id-type="nlm-ta">J Nutr Sci</journal-id><journal-id journal-id-type="iso-abbrev">J Nutr Sci</journal-id><journal-id journal-id-type="pmc-domain-id">2443</journal-id><journal-id journal-id-type="pmc-domain">jnutsci</journal-id><journal-id journal-id-type="publisher-id">JNS</journal-id><journal-title-group><journal-title>Journal of Nutritional Science</journal-title></journal-title-group><issn pub-type="epub">2048-6790</issn><publisher><publisher-name>Cambridge University Press</publisher-name></publisher></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC4153049</article-id><article-id pub-id-type="pmcid-ver">PMC4153049.1</article-id><article-id pub-id-type="pmcaid">4153049</article-id><article-id pub-id-type="pmcaiid">4153049</article-id><article-id pub-id-type="pmid">25191574</article-id><article-id pub-id-type="doi">10.1017/jns.2013.14</article-id><article-id pub-id-type="pii">S2048679013000141</article-id><article-id pub-id-type="publisher-id">00014</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Dietary Surveys and Nutritional Epidemiology</subject></subj-group></article-categories><title-group><article-title>Development of an online database of typical food portion sizes in Irish
+population groups</article-title><alt-title alt-title-type="left-running">Jacqueline Lyons <italic toggle="yes">et al</italic>.</alt-title><alt-title alt-title-type="right-running">Development of an online database of typical food
+portion sizes in Irish population groups</alt-title></title-group><contrib-group><contrib contrib-type="author"><name name-style="western"><surname>Lyons</surname><given-names initials="J">Jacqueline</given-names></name><xref ref-type="aff" rid="aff1"/><xref ref-type="corresp" rid="cor1">*</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Walton</surname><given-names initials="J">Janette</given-names></name><xref ref-type="aff" rid="aff1"/></contrib><contrib contrib-type="author"><name name-style="western"><surname>Flynn</surname><given-names initials="A">Albert</given-names></name><xref ref-type="aff" rid="aff1"/></contrib></contrib-group><aff id="aff1"><addr-line>School of Food and Nutritional Sciences</addr-line>,
+<institution>University College Cork</institution>, <addr-line>Cork</addr-line>,
+<country>Republic of Ireland</country></aff><author-notes><corresp id="cor1"><label>*</label><addr-line><bold>Corresponding author:</bold> Jacqueline
+Lyons</addr-line>, fax <fax>+353 21 427 0244</fax>, email <email>jacqueline.lyons@ucc.ie</email></corresp></author-notes><pub-date pub-type="collection"><year>2013</year></pub-date><pub-date pub-type="epub"><day>24</day><month>7</month><year>2013</year></pub-date><volume>2</volume><issue-id pub-id-type="pmc-issue-id">242317</issue-id><elocation-id>e25</elocation-id><history><date date-type="received"><day>11</day><month>12</month><year>2012</year></date><date date-type="rev-recd"><day>19</day><month>2</month><year>2013</year></date><date date-type="accepted"><day>25</day><month>4</month><year>2013</year></date></history><pub-history><event event-type="pmc-release"><date><day>01</day><month>01</month><year>2013</year></date></event><event event-type="pmc-live"><date><day>04</day><month>09</month><year>2014</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2025-08-15 15:25:14.817"><day>15</day><month>08</month><year>2025</year></date></event></pub-history><permissions><copyright-statement>© The Author(s) 2013</copyright-statement><copyright-year>2013</copyright-year><copyright-holder>The Author(s)</copyright-holder><license license-type="open-access"><ali:license_ref xmlns:ali="http://www.niso.org/schemas/ali/1.0/" specific-use="textmining" content-type="ccbyncsalicense">https://creativecommons.org/licenses/by-nc-sa/2.5/</ali:license_ref><license-p>The online version of this article is published within an Open Access
+environment subject to the conditions of the Creative Commons
+Attribution-NonCommercial-ShareAlike licence
+&lt;<ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="http://creativecommons.org/licenses/by-nc-sa/2.5/">http://creativecommons.org/licenses/by-nc-sa/2.5/</ext-link>&gt;. The written
+permission of Cambridge University Press must be obtained for commercial
+re-use.</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="S2048679013000141a.pdf"><?pdf-name S2048679013000141a.pdf?><?pdf-size 333691?><?pdf-md5 213dade2199baca6500ee3e2457af551?><?pdf-image-server-status NEVER_LOAD?><?pdf-cloudpmc-urn urn:app:6999/4153049/213dade2199b/S2048679013000141a.pdf?></self-uri><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:title="pdf" xlink:href="S2048679013000141a.pdf"/><abstract abstract-type="normal"><p>The Irish Food Portion Sizes Database (available at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.iuna.net">www.iuna.net</uri>) describes typical portion weights for an
+extensive range of foods and beverages for Irish children, adolescents and adults. The
+present paper describes the methodologies used to develop the database and some key
+characteristics of the portion weight data contained therein. The data are derived from
+three large, cross-sectional food consumption surveys carried out in Ireland over the last
+decade: the National Children's Food Survey (2003–2004), National Teens' Food Survey
+(2005–2006) and National Adult Nutrition Survey (2008–2010). Median, 25th and 75th
+percentile portion weights are described for a total of 545 items across the three survey
+groups, split by age group or sex as appropriate. The typical (median) portion weights
+reported for adolescents and adults are similar for many foods, while those reported for
+children are notably smaller. Adolescent and adult males generally consume larger portions
+than their female counterparts, though similar portion weights may be consumed where foods
+are packaged in unit amounts (for example, pots of yoghurt). The inclusion of energy
+under-reporters makes little difference to the estimation of typical portion weights in
+adults. The data have wide-ranging applications in dietary assessment and food labelling,
+and will serve as a useful reference against which to compare future portion size data
+from the Irish population. The present paper provides a useful context for researchers and
+others wishing to use the Irish Food Portion Sizes Database, and may guide researchers in
+other countries in establishing similar databases of their own.</p></abstract><kwd-group><title>Key words</title><kwd>Databases</kwd><kwd>Typical portion sizes</kwd><kwd>Irish population groups</kwd></kwd-group><kwd-group kwd-group-type="abbreviations"><title>Abbreviations</title><kwd>IQR, interquartile range</kwd><kwd>IUNA, Irish Universities Nutrition Alliance</kwd><kwd>NANS, National Adult Nutrition Survey</kwd><kwd>NCFS, National Children's Food Survey</kwd><kwd>NTFS, National Teens' Food Survey</kwd></kwd-group><counts><table-count count="3"/><ref-count count="25"/><page-count count="6"/></counts><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-license-ref</meta-name><meta-value>CC BY-NC-SA</meta-value></custom-meta></custom-meta-group></article-meta></front><body><p>Typical portion weight data as derived from national food consumption surveys have
+wide-ranging applications. They provide a useful reference against which to compare future
+data from the same population. They enable researchers to assign realistic portion weights in
+non-weighed methods of dietary assessment (for example, when using FFQ), and lend themselves
+to the development of more accurate and age-appropriate quantification tools, such as
+photographic food atlases, for use in dietary assessment. Dietitians may find such data useful
+in their management of child and adult patients. Another application of typical portion weight
+data is in the establishment of ‘suggested serving sizes’, as used by food manufacturers in
+food labelling.</p><p>Despite their uses, published data on typical food portion sizes as consumed by different
+populations are somewhat limited for European Union countries. Weighed intake data from the
+National Diet and Nutrition Surveys have been used to document typical portion sizes of a
+range of food items consumed by children<sup>(</sup><xref rid="ref1" ref-type="bibr">
+<sup>1</sup>
+</xref><sup>)</sup> and adults<sup>(</sup><xref rid="ref2" ref-type="bibr">
+<sup>2</sup>
+</xref><sup>)</sup> in Great Britain. The portion sizes of snacks consumed by adolescents in
+Britain in 1997 and Northern Ireland in 2005 have also been documented<sup>(</sup><xref rid="ref3" ref-type="bibr">
+<sup>3</sup>
+</xref><sup>)</sup>. Older portion size data are available in the <italic toggle="yes">Food Portion
+Sizes</italic> publications<sup>(</sup><xref rid="ref4" ref-type="bibr">
+<sup>4</sup>
+</xref><sup>,</sup><xref rid="ref5" ref-type="bibr">
+<sup>5</sup>
+</xref><sup>)</sup>, which contain a substantial amount of manufacturers' information in
+addition to ‘average’ portion size data for many food items, mainly derived from the 1986/1987
+Dietary and Nutritional Survey of British Adults<sup>(</sup><xref rid="ref6" ref-type="bibr">
+<sup>6</sup>
+</xref><sup>)</sup>. The typical portion sizes of foods consumed by children, adolescents and
+adults in the Republic of Ireland are described for the first time in the Irish Food Portion
+Sizes Database (available at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.iuna.net">www.iuna.net</uri>).</p><p>The present study describes the methodologies used to develop the Irish Food Portion Sizes
+Database, and some key characteristics of the data contained therein.</p><sec sec-type="methods" id="sec1"><title>Methods</title><sec id="sec1-1"><title>Survey methodologies</title><p>The National Children's Food Survey (NCFS) (2003–2004), National Teens' Food Survey
+(NTFS) (2005–2006) and National Adult Nutrition Survey (NANS) (2008–2010) were carried out
+as a programme of national nutrition surveys by the Irish Universities Nutrition Alliance
+(IUNA), a formal association of the nutrition units at University College Cork, University
+College Dublin, the University of Ulster at Coleraine and Trinity College Dublin. The
+primary objective of the surveys was to gather information about the dietary habits and
+nutritional status of the Irish population. Participants on the NCFS and NTFS were
+recruited from primary and secondary schools that had been randomly selected from a
+database held by the Irish Department of Education and Science to include a mix of school
+types (for example, urban/rural, disadvantaged/not disadvantaged, etc.). Similarly,
+participants on the NANS were randomly selected from a database of names held by
+<italic toggle="yes">An Post</italic> (the Irish postal service). The final response rates were 66 %
+(NCFS), 63 % (NTFS) and 60 % (NANS). Analysis of the demographic features of each of the
+samples has shown them to be representative of Irish children, adolescents and adults with
+respect to age, sex, social class, socio-economic group and geographic location when
+compared with the relevant census data. The NCFS used a 7 d weighed food record to collect
+intake data from 594 children aged 5–12 years, while the NTFS used a 7 d semi-weighed food
+record to collect intake data from 441 adolescents aged 13–17 years. The NANS used a 4 d
+semi-weighed food record to collect intake data from 1500 adults, but data from adults
+aged 18–64 years only (<italic toggle="yes">n</italic> 1274) have been included in the Irish Food
+Portion Sizes Database. Participants were responsible for defining eating occasions.
+Further detail on the survey methodologies is available at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.iuna.net">www.iuna.net</uri></p></sec><sec id="sec1-2"><title>Definition of food portion size</title><p>For the purpose of the present study, ‘food portion size’ is defined as the weight of
+food consumed per eating occasion, i.e. weight served minus leftovers. It is not a measure
+of ‘serving size’, i.e. the weight of food served at an eating occasion, without
+accounting for leftovers. For ease, the term ‘food portion size’ is used to describe
+portions of both foods and beverages.</p></sec><sec id="sec1-3"><title>Quantification methods used in surveys</title><p>Food weights were included in the estimation of typical portion size regardless of the
+method of quantification used. A quantification protocol established by the IUNA for the
+North/South Ireland Food Consumption Survey<sup>(</sup><xref rid="ref7" ref-type="bibr">
+<sup>7</sup>
+</xref><sup>)</sup> was subsequently adapted for the NCFS, NTFS and NANS. All methods of
+quantification were used with all population groups. The ethos of the protocol was to
+obtain the best food weight estimates possible using a hierarchy of quantification
+methods, as described below. Leftovers were also quantified, typically using digital
+scales, photographic food atlas or household measures, to obtain an accurate estimate of
+the amount consumed.</p><sec id="sec1-3-1"><title>Weighed by participant</title><p>Each participant (or their parent/guardian in the case of younger children) was
+provided with a digital food scales and given instructions regarding their use.
+Participants on the NCFS were asked to weigh all foods consumed throughout the recording
+period (‘weighed study’), while participants on the NTFS and NANS were asked to weigh as
+many foods as possible (‘semi-weighed studies’).</p></sec><sec id="sec1-3-2"><title>Manufacturers' weights</title><p>For some foods, it was possible to obtain the amounts eaten from weights printed on
+food packaging or directly from the manufacturer. To facilitate this, participants were
+asked to retain food and beverage packaging for collection by the researcher.</p></sec><sec id="sec1-3-3"><title>Photographic food atlas</title><p>A photographic food atlas<sup>(</sup><xref rid="ref8" ref-type="bibr">
+<sup>8</sup>
+</xref><sup>)</sup> was used to pictorially quantify foods and beverages, with
+participants asked to describe food quantities in terms of fractions or multiples of the
+amounts shown in the food atlas.</p></sec><sec id="sec1-3-4"><title>Irish Universities Nutrition Alliance weights</title><p>Average portion weight data collated by the IUNA survey team for certain foods were
+applied where appropriate. These foods included items from local chip shop menus and
+loose fruit and vegetables, weighed in triplicate to provide average values.</p></sec><sec id="sec1-3-5"><title><italic toggle="yes">Food Portion Sizes</italic> publications</title><p><italic toggle="yes">Food Portion Sizes</italic><sup>(</sup><xref rid="ref4" ref-type="bibr">
+<sup>4</sup>
+</xref><sup>,</sup><xref rid="ref5" ref-type="bibr">
+<sup>5</sup>
+</xref><sup>)</sup> publications were used to assign average portion weights to foods
+and beverages where none of the previous methods had provided quantities.</p></sec><sec id="sec1-3-6"><title>Household measures</title><p>Measures such as ‘teaspoon’, ‘tablespoon’ and ‘pint’ were used to quantify certain food
+items (for example, sugar, oils).</p></sec><sec id="sec1-3-7"><title>Estimated</title><p>The researcher made an estimate of the amount of food or beverage likely to have been
+consumed based on their knowledge of the participants' eating habits as observed during
+the recording period.</p></sec></sec><sec id="sec1-4"><title>Selection of food items for analysis</title><p>All foods and beverages consumed on each of the surveys were assigned to one of
+sixty-eight different food groups previously defined by the IUNA research group. Within
+each food group, foods were ranked by frequency of consumption (i.e. number of eating
+occasions) to determine key items for analysis. Foods that were very infrequently consumed
+were excluded from the analysis. Similar foods within a food group were aggregated where
+appropriate, for example, ‘mayonnaise, retail’, ‘mayonnaise, homemade’ and ‘mayonnaise,
+reduced calorie’ were combined for portion size analysis of ‘mayonnaise’. An extensive
+selection of foods from all of the major food categories (i.e. starchy foods, fruit and
+vegetables, milk and dairy foods, meat and other protein foods, and foods high in fat or
+sugar) was included for analysis. Food items were subsequently re-grouped into
+twenty-three food groups for presentation in the database.</p></sec><sec id="sec1-5"><title>Estimation of typical food portion size</title><p>For each food item examined, descriptive statistics were performed to obtain the median,
+25th and 75th percentile portion weights, split by age group or sex, as appropriate. The
+adult and adolescent portion weight data are presented overall, and separately for males
+and females, to reflect the disparity in their energy requirements. Adult and adolescent
+data have not been split by age group, however, as the differences in energy requirements
+that occur in each sex between the ages of 18 and 64 years, and during the narrow age
+range examined for adolescents, are relatively small<sup>(</sup><xref rid="ref9" ref-type="bibr">
+<sup>9</sup>
+</xref><sup>)</sup>. As male and female children of the same age have similar energy
+requirements<sup>(</sup><xref rid="ref9" ref-type="bibr">
+<sup>9</sup>
+</xref><sup>)</sup>, this group was not split by sex. Instead, the group was split into
+younger (5–8 years) and older (9–12 years) age groups to reflect the increase in energy
+requirements that occurs with age in young children<sup>(</sup><xref rid="ref9" ref-type="bibr">
+<sup>9</sup>
+</xref><sup>)</sup>. Portion weights from all eating occasions of a particular food were
+included for analysis, while non-consumers of that food were excluded. Data manipulation
+and statistical analysis were conducted using SPSS version 15.0 for Windows (SPSS Inc.).
+Before the estimation of typical (median) portion weights, identical food codes within a
+meal were aggregated so that if, for example, two potatoes eaten at the same meal were
+entered into the food consumption database separately with weights of 65 g and 70 g, the
+portion weight carried forward for analysis was 135 g.</p></sec><sec id="sec1-6"><title>Inclusion of reference weights</title><p>‘Reference weights’ are described in the database for food items wherever available (in
+square brackets immediately following the food descriptor). These weights comprise a
+mixture of manufacturers' information (for example, one Weetabix biscuit = 19 g), IUNA
+information (for example, one medium tomato = 80 g) and data from the <italic toggle="yes">Food Portion
+Sizes</italic> publication<sup>(</sup><xref rid="ref4" ref-type="bibr">
+<sup>4</sup>
+</xref><sup>)</sup> (one medium boiled egg = 50 g). These are not suggested portion sizes
+and are included solely to provide some context for the typical portion weight data
+generated for the different population groups.</p></sec><sec id="sec1-7"><title>Standardising edible fractions</title><p>Certain foods have different portion weights depending on the form in which they are
+weighed (for example, bananas weighed with or without skin). It was considered acceptable
+for participants to report food portions to include non-edible food parts. Where this
+occurred, a factor was applied so that the weight of the edible fraction only was
+recorded. This was done using standard published factors for stone-containing fruits
+(olives, peaches, nectarines, plums), fruits weighed with skin where the skin is not eaten
+(bananas, oranges, melons) and fruits weighed with cores (apples, pears)<sup>(</sup><xref rid="ref10" ref-type="bibr">
+<sup>10</sup>
+</xref><sup>)</sup>. A published conversion factor was also applied to lamb and pork chops
+weighed with bone to ascertain the weight of the edible fraction only<sup>(</sup><xref rid="ref11" ref-type="bibr">
+<sup>11</sup>
+</xref><sup>)</sup>.</p></sec><sec id="sec1-8"><title>Examining the effect of under-reporting of energy intake</title><p>Adult participants identified as having a ratio of energy intake:estimated BMR of less
+than less than 1.10 were defined as energy under-reporters<sup>(</sup><xref rid="ref12" ref-type="bibr">
+<sup>12</sup>
+</xref><sup>)</sup>. Energy under-reporters were not excluded from the estimation of
+typical food portion weights in any of the survey groups. To investigate whether the
+inclusion of energy under-reporters may have introduced bias to the analysis, median and
+interquartile range (IQR) portion weights of a subsample of foods consumed by men and
+women on the NANS were compared to include and exclude energy under-reporters. Foods
+within this subsample were selected based on their relatively large <italic toggle="yes">n</italic>
+values (number of eating occasions), and in order to represent all of the major food
+categories (i.e. starchy foods, fruit and vegetables, milk and dairy foods, meat and other
+protein foods, and foods high in fat or sugar).</p></sec></sec><sec id="sec2"><title>Results and discussion</title><sec id="sec2-1"><title>Foods included in database</title><p>The Irish Food Portion Sizes Database (available at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.iuna.net">www.iuna.net</uri>) contains median and percentile portion weight
+information for the foods most commonly consumed by Irish children (5–12 years),
+adolescents (13–17 years) and adults (18–64 years) based on intake data from the NCFS,
+NTFS and NANS. Typical portion weights are reported for a total of 545 food items across
+twenty-three food groups (<xref ref-type="table" rid="tab01">Table 1</xref>), covering the
+vast majority of items consumed on each of the surveys (NANS, 93 %; NTFS, 85 %; NCFS, 91
+%). For each food item examined, portion weights from all eating occasions were included
+for analysis. This was carried out to capture the full distribution of portion weights and
+allow for within-person variability in portion size, rather than a mean weight being
+calculated for each participant before calculating the overall ‘average’ portion weight.
+The methodology is in agreement with that used in previous studies that have estimated
+typical food portion sizes<sup>(</sup><xref rid="ref2" ref-type="bibr">
+<sup>2</sup>
+</xref><sup>,</sup><xref rid="ref13" ref-type="bibr">
+<sup>13</sup>
+</xref><sup>,</sup><xref rid="ref14" ref-type="bibr">
+<sup>14</sup>
+</xref><sup>)</sup> or examined trends in food portion sizes over time<sup>(</sup><xref rid="ref15" ref-type="bibr">
+<sup>15</sup>
+</xref><sup>–</sup><xref rid="ref17" ref-type="bibr">
+<sup>17</sup>
+</xref><sup>)</sup>. <table-wrap id="tab01" orientation="portrait" position="float"><label>Table 1.</label><caption><p>Food groups included in the Irish Food Portion Sizes Database</p></caption><alternatives><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S2048679013000141_tab1.jpg"><?image-name S2048679013000141_tab1.jpg?><?image-size 37255?><?image-md5 2025535e68ce1be346c948136f3ad97a?><?image-image-server-status NEVER_LOAD?><?image-original-height 407?><?image-original-width 358?><?image-scaled-height 407?><?image-scaled-width 358?><?image-cloudpmc-urn urn:cdn:blobs/6999/4153049/2025535e68ce/S2048679013000141_tab1.jpg?><?thumb-name S2048679013000141_tab1.gif?><?thumb-size 4854?><?thumb-md5 38167c4a5ed3bf6c75b2437c5943425c?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 114?><?thumb-scaled-width 100?><?thumb-cloudpmc-urn urn:cdn:blobs/6999/4153049/38167c4a5ed3/S2048679013000141_tab1.gif?></graphic><table frame="hsides" rules="groups"><col align="left" width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><thead><tr><th rowspan="1" colspan="1"/><th align="center" colspan="3" rowspan="1">Food items included
+(<italic toggle="yes">n</italic>)</th></tr><tr><th rowspan="1" colspan="1">Food groups</th><th rowspan="1" colspan="1">NCFS</th><th rowspan="1" colspan="1">NTFS</th><th rowspan="1" colspan="1">NANS</th></tr></thead><tbody><tr><td rowspan="1" colspan="1">Pasta, rice and noodles</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">4</td></tr><tr><td rowspan="1" colspan="1">Savouries</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">2</td></tr><tr><td rowspan="1" colspan="1">Breads</td><td rowspan="1" colspan="1">12</td><td rowspan="1" colspan="1">14</td><td rowspan="1" colspan="1">15</td></tr><tr><td rowspan="1" colspan="1">Potatoes</td><td rowspan="1" colspan="1">6</td><td rowspan="1" colspan="1">7</td><td rowspan="1" colspan="1">8</td></tr><tr><td rowspan="1" colspan="1">Breakfast cereals</td><td rowspan="1" colspan="1">9</td><td rowspan="1" colspan="1">9</td><td rowspan="1" colspan="1">9</td></tr><tr><td rowspan="1" colspan="1">Fruit</td><td rowspan="1" colspan="1">9</td><td rowspan="1" colspan="1">9</td><td rowspan="1" colspan="1">18</td></tr><tr><td rowspan="1" colspan="1">Vegetables</td><td rowspan="1" colspan="1">17</td><td rowspan="1" colspan="1">21</td><td rowspan="1" colspan="1">28</td></tr><tr><td rowspan="1" colspan="1">Meat and meat products</td><td rowspan="1" colspan="1">20</td><td rowspan="1" colspan="1">21</td><td rowspan="1" colspan="1">21</td></tr><tr><td rowspan="1" colspan="1">Fish and fish products</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">6</td></tr><tr><td rowspan="1" colspan="1">Eggs</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">6</td></tr><tr><td rowspan="1" colspan="1">Milk and other dairy foods</td><td rowspan="1" colspan="1">16</td><td rowspan="1" colspan="1">13</td><td rowspan="1" colspan="1">17</td></tr><tr><td rowspan="1" colspan="1">Fats and oils</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">2</td><td rowspan="1" colspan="1">4</td></tr><tr><td rowspan="1" colspan="1">Biscuits</td><td rowspan="1" colspan="1">9</td><td rowspan="1" colspan="1">7</td><td rowspan="1" colspan="1">9</td></tr><tr><td rowspan="1" colspan="1">Chocolate confectionery</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">5</td></tr><tr><td rowspan="1" colspan="1">Non-chocolate confectionery</td><td rowspan="1" colspan="1">8</td><td rowspan="1" colspan="1">7</td><td rowspan="1" colspan="1">6</td></tr><tr><td rowspan="1" colspan="1">Cakes, buns and pastries</td><td rowspan="1" colspan="1">6</td><td rowspan="1" colspan="1">6</td><td rowspan="1" colspan="1">7</td></tr><tr><td rowspan="1" colspan="1">Puddings and desserts</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">6</td><td rowspan="1" colspan="1">5</td></tr><tr><td rowspan="1" colspan="1">Savoury snacks</td><td rowspan="1" colspan="1">5</td><td rowspan="1" colspan="1">5</td><td rowspan="1" colspan="1">5</td></tr><tr><td rowspan="1" colspan="1">Beverages</td><td rowspan="1" colspan="1">7</td><td rowspan="1" colspan="1">7</td><td rowspan="1" colspan="1">13</td></tr><tr><td rowspan="1" colspan="1">Sugar, preserves and spreads</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">4</td></tr><tr><td rowspan="1" colspan="1">Nuts and seeds</td><td rowspan="1" colspan="1">2</td><td rowspan="1" colspan="1">2</td><td rowspan="1" colspan="1">5</td></tr><tr><td rowspan="1" colspan="1">Soups and sauces</td><td rowspan="1" colspan="1">7</td><td rowspan="1" colspan="1">5</td><td rowspan="1" colspan="1">11</td></tr><tr><td rowspan="1" colspan="1">Composite meals</td><td rowspan="1" colspan="1">3</td><td rowspan="1" colspan="1">4</td><td rowspan="1" colspan="1">6</td></tr><tr><td rowspan="1" colspan="1">Total food items</td><td rowspan="1" colspan="1">165</td><td rowspan="1" colspan="1">166</td><td rowspan="1" colspan="1">214</td></tr></tbody></table></alternatives><table-wrap-foot><fn><p>NCFS, National Children's Food Survey; NTFS, National Teens' Food Survey; NANS,
+National Adult Nutrition Survey.</p></fn></table-wrap-foot></table-wrap></p></sec><sec id="sec2-2"><title>Methods of quantification</title><p>A breakdown of the quantification methods used in each of the surveys is provided in
+<xref ref-type="table" rid="tab02">Table 2</xref>. The top two methods of
+quantification, i.e. ‘weighed by participant’ and ‘assigned a manufacturer's weight’,
+which is generally considered as reliable as the participant weighing the food, accounted
+for 86 % (NCFS), 46 % (NTFS) and 57 % (NANS) of the quantification used in the surveys.
+While a significant number of data were quantified using non-weighed methods, particularly
+in the case of adolescents and adults, Wrieden &amp; Barton<sup>(</sup><xref rid="ref2" ref-type="bibr">
+<sup>2</sup>
+</xref><sup>)</sup> have used data from the British National Diet and Nutrition Surveys of
+adults aged 19–64 years<sup>(</sup><xref rid="ref18" ref-type="bibr">
+<sup>18</sup>
+</xref><sup>)</sup> and people aged 65 years and over<sup>(</sup><xref rid="ref19" ref-type="bibr">
+<sup>19</sup>
+</xref><sup>)</sup> to show that there was little difference in the energy and nutrient
+intakes obtained from ‘weighed’ data only, when compared with both ‘weighed’ and
+‘non-weighed’ data. Both ‘weighed’ and ‘non-weighed’ data were subsequently included in
+the estimation of typical food portion sizes for adults<sup>(</sup><xref rid="ref2" ref-type="bibr">
+<sup>2</sup>
+</xref><sup>)</sup> and children<sup>(</sup><xref rid="ref1" ref-type="bibr">
+<sup>1</sup>
+</xref><sup>)</sup> in Great Britain, and in comparing the portion sizes of snacks
+consumed by adolescents in Britain in 1997 and Northern Ireland in 2005<sup>(</sup><xref rid="ref3" ref-type="bibr">
+<sup>3</sup>
+</xref><sup>)</sup>. All other studies identified as having estimated typical portion
+sizes<sup>(</sup><xref rid="ref13" ref-type="bibr">
+<sup>13</sup>
+</xref><sup>,</sup><xref rid="ref14" ref-type="bibr">
+<sup>14</sup>
+</xref><sup>)</sup> or examined trends in portion sizes over time<sup>(</sup><xref rid="ref15" ref-type="bibr">
+<sup>15</sup>
+</xref><sup>–</sup><xref rid="ref17" ref-type="bibr">
+<sup>17</sup>
+</xref><sup>)</sup> have relied on a full set of ‘non-weighed’ data in their analyses.
+<table-wrap id="tab02" orientation="portrait" position="float"><label>Table 2.</label><caption><p>Percentage of food-eating occasions by method of quantification on the National
+Children's Food Survey (NCFS), National Teens' Food Survey (NTFS) and National Adult
+Nutrition Survey (NANS)</p></caption><alternatives><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S2048679013000141_tab2.jpg"><?image-name S2048679013000141_tab2.jpg?><?image-size 19788?><?image-md5 5ed21793fa1b3bef13080709bfd6bdae?><?image-image-server-status NEVER_LOAD?><?image-original-height 140?><?image-original-width 753?><?image-scaled-height 140?><?image-scaled-width 753?><?image-cloudpmc-urn urn:cdn:blobs/6999/4153049/5ed21793fa1b/S2048679013000141_tab2.jpg?><?thumb-name S2048679013000141_tab2.gif?><?thumb-size 3392?><?thumb-md5 d0c3930bdab2b0672f0069da9cac652c?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 37?><?thumb-scaled-width 200?><?thumb-cloudpmc-urn urn:cdn:blobs/6999/4153049/d0c3930bdab2/S2048679013000141_tab2.gif?></graphic><table frame="hsides" rules="groups"><col align="left" width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><thead><tr><th rowspan="1" colspan="1"/><th align="center" rowspan="1" colspan="1">NCFS (%)</th><th align="center" rowspan="1" colspan="1">NTFS (%)</th><th align="center" rowspan="1" colspan="1">NANS (%)*</th></tr></thead><tbody><tr><td rowspan="1" colspan="1">Weighed by participant</td><td rowspan="1" colspan="1">75·7</td><td rowspan="1" colspan="1">21·0</td><td rowspan="1" colspan="1">47·2</td></tr><tr><td rowspan="1" colspan="1">Assigned a manufacturer's weight</td><td rowspan="1" colspan="1">10·6</td><td rowspan="1" colspan="1">24·5</td><td rowspan="1" colspan="1">9·9</td></tr><tr><td rowspan="1" colspan="1">Photographic food atlas<sup>(</sup><xref rid="ref8" ref-type="bibr">
+<sup>8</sup>
+</xref><sup>)</sup></td><td rowspan="1" colspan="1">5·2</td><td rowspan="1" colspan="1">27·7</td><td rowspan="1" colspan="1">15·6</td></tr><tr><td rowspan="1" colspan="1">IUNA weights</td><td rowspan="1" colspan="1">1·0</td><td rowspan="1" colspan="1">8·0</td><td rowspan="1" colspan="1">4·0</td></tr><tr><td rowspan="1" colspan="1">
+<italic toggle="yes">Food Portion Sizes</italic>
+<sup>(</sup>
+<xref rid="ref4" ref-type="bibr">
+<sup>4</sup>
+</xref>
+<sup>,</sup>
+<xref rid="ref5" ref-type="bibr">
+<sup>5</sup>
+</xref>
+<sup>)</sup>
+</td><td rowspan="1" colspan="1">2·9</td><td rowspan="1" colspan="1">10·0</td><td rowspan="1" colspan="1">10·1</td></tr><tr><td rowspan="1" colspan="1">Household measures</td><td rowspan="1" colspan="1">1·5</td><td rowspan="1" colspan="1">6·5</td><td rowspan="1" colspan="1">10·6</td></tr><tr><td rowspan="1" colspan="1">Estimated</td><td rowspan="1" colspan="1">3·1</td><td rowspan="1" colspan="1">2·3</td><td rowspan="1" colspan="1">2·6</td></tr></tbody></table></alternatives><table-wrap-foot><fn><p>IUNA, Irish Universities Nutrition Alliance.</p></fn><fn><p>*Data from participants aged 18–64 years only.</p></fn></table-wrap-foot></table-wrap></p></sec><sec id="sec2-3"><title>Use of median and interquartile range portion weights</title><p>Reporting typical portion weights using median and IQR values means that a robust set of
+data is produced, eliminating the need to remove outliers. Median portion weights were
+shown to be the most appropriate value to use in reporting typical portion sizes in an
+analysis performed on the National Diet and Nutrition Survey databases of children aged
+1½–4½ years<sup>(</sup><xref rid="ref20" ref-type="bibr">
+<sup>20</sup>
+</xref><sup>)</sup> and young people aged 4–18 years<sup>(</sup><xref rid="ref21" ref-type="bibr">
+<sup>21</sup>
+</xref><sup>)</sup>. Presenting the data in this way also allows for comparison with the
+typical portion size data previously reported for British children, adolescents and
+adults<sup>(</sup><xref rid="ref1" ref-type="bibr">
+<sup>1</sup>
+</xref><sup>–</sup><xref rid="ref3" ref-type="bibr">
+<sup>3</sup>
+</xref><sup>)</sup> and Australian adults<sup>(</sup><xref rid="ref13" ref-type="bibr">
+<sup>13</sup>
+</xref><sup>)</sup>.</p></sec><sec id="sec2-4"><title>Treatment of energy under-reporters</title><p><xref ref-type="table" rid="tab03">Table 3</xref> shows that the inclusion of energy
+under-reporters made little difference to the estimation of median and IQR portion weights
+for a selected subsample of foods consumed on the NANS. This finding held true for foods
+that might be perceived as ‘healthy’ (for example, boiled carrots) and ‘less healthy’ (for
+example, chips and wedges). The finding suggests that energy under-reporting may occur
+more typically as the ‘omission’ of food items than as the ‘underestimation’ of portion
+weights. Since under-reporters of energy intake do not appear to be significant
+mis-reporters of portion size, it would seem appropriate to continue to include them in
+the estimation of typical portion weights for a population. Thus, the Irish Food Portion
+Sizes Database made no adjustments to account for under-reporting of energy intake on any
+of the surveys. Including energy under-reporters in the analysis meant that a greater
+number of eating occasions were available to work with (larger <italic toggle="yes">n</italic> values),
+and more food items could be included in the analysis. Previous studies reporting typical
+food portion sizes in children, adolescents and adults have also opted to include all
+reporters in their analysis<sup>(</sup><xref rid="ref1" ref-type="bibr">
+<sup>1</sup>
+</xref><sup>,</sup><xref rid="ref2" ref-type="bibr">
+<sup>2</sup>
+</xref><sup>)</sup>. Similarly, studies which have observed trends in food portion sizes
+over time have included all reporters<sup>(</sup><xref rid="ref15" ref-type="bibr">
+<sup>15</sup>
+</xref><sup>,</sup><xref rid="ref16" ref-type="bibr">
+<sup>16</sup>
+</xref><sup>)</sup>. <table-wrap id="tab03" orientation="portrait" position="float"><label>Table 3.</label><caption><p>Effect of under-reporting of energy intake on estimates of food portion weights in
+Irish adults aged 18–64 years</p><p>(Numbers, medians and interquartile ranges (IQR))</p></caption><alternatives><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="S2048679013000141_tab3.jpg"><?image-name S2048679013000141_tab3.jpg?><?image-size 99561?><?image-md5 a8795fac5cecf2b1b218130c7002993f?><?image-image-server-status NEVER_LOAD?><?image-original-height 375?><?image-original-width 753?><?image-scaled-height 375?><?image-scaled-width 753?><?image-cloudpmc-urn urn:cdn:blobs/6999/4153049/a8795fac5cec/S2048679013000141_tab3.jpg?><?thumb-name S2048679013000141_tab3.gif?><?thumb-size 6585?><?thumb-md5 455f396d537f26a94b7ba3b126c98e1f?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 160?><?thumb-cloudpmc-urn urn:cdn:blobs/6999/4153049/455f396d537f/S2048679013000141_tab3.gif?></graphic><table frame="hsides" rules="groups"><col align="left" width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><col align="char" char="." width="1*" span="1"/><thead><tr><th rowspan="1" colspan="1"/><th align="center" colspan="6" rowspan="1">Men</th><th align="center" colspan="6" rowspan="1">Women</th></tr><tr><th rowspan="1" colspan="1"/><th align="center" colspan="3" rowspan="1">All reporters (<italic toggle="yes">n</italic>
+634)</th><th align="center" colspan="3" rowspan="1">Accurate reporters only
+(<italic toggle="yes">n</italic> 448)</th><th align="center" colspan="3" rowspan="1">All reporters (<italic toggle="yes">n</italic>
+640)</th><th align="center" colspan="3" rowspan="1">Accurate reporters only
+(<italic toggle="yes">n</italic> 441)</th></tr><tr><th rowspan="1" colspan="1"/><th align="center" rowspan="1" colspan="1">
+<italic toggle="yes">n</italic>
+</th><th align="center" rowspan="1" colspan="1">Median</th><th align="center" rowspan="1" colspan="1">IQR</th><th align="center" rowspan="1" colspan="1">
+<italic toggle="yes">n</italic>
+</th><th align="center" rowspan="1" colspan="1">Median</th><th align="center" rowspan="1" colspan="1">IQR</th><th align="center" rowspan="1" colspan="1">
+<italic toggle="yes">n</italic>
+</th><th align="center" rowspan="1" colspan="1">Median</th><th align="center" rowspan="1" colspan="1">IQR</th><th align="center" rowspan="1" colspan="1">
+<italic toggle="yes">n</italic>
+</th><th align="center" rowspan="1" colspan="1">Median</th><th align="center" rowspan="1" colspan="1">IQR</th></tr></thead><tbody><tr><td rowspan="1" colspan="1">Rice, boiled</td><td rowspan="1" colspan="1">252</td><td rowspan="1" colspan="1">179</td><td rowspan="1" colspan="1">131–250</td><td rowspan="1" colspan="1">190</td><td rowspan="1" colspan="1">200</td><td rowspan="1" colspan="1">148–261</td><td rowspan="1" colspan="1">246</td><td rowspan="1" colspan="1">141</td><td rowspan="1" colspan="1">100–180</td><td rowspan="1" colspan="1">162</td><td rowspan="1" colspan="1">157</td><td rowspan="1" colspan="1">100–190</td></tr><tr><td rowspan="1" colspan="1">Pizza, all types</td><td rowspan="1" colspan="1">174</td><td rowspan="1" colspan="1">306</td><td rowspan="1" colspan="1">180–407</td><td rowspan="1" colspan="1">152</td><td rowspan="1" colspan="1">308</td><td rowspan="1" colspan="1">184–405</td><td rowspan="1" colspan="1">152</td><td rowspan="1" colspan="1">170</td><td rowspan="1" colspan="1">112–228</td><td rowspan="1" colspan="1">111</td><td rowspan="1" colspan="1">176</td><td rowspan="1" colspan="1">117–250</td></tr><tr><td rowspan="1" colspan="1">White bread, sliced</td><td rowspan="1" colspan="1">1197</td><td rowspan="1" colspan="1">76</td><td rowspan="1" colspan="1">62–86</td><td rowspan="1" colspan="1">923</td><td rowspan="1" colspan="1">76</td><td rowspan="1" colspan="1">62–89</td><td rowspan="1" colspan="1">880</td><td rowspan="1" colspan="1">63</td><td rowspan="1" colspan="1">42–76</td><td rowspan="1" colspan="1">625</td><td rowspan="1" colspan="1">64</td><td rowspan="1" colspan="1">44–76</td></tr><tr><td rowspan="1" colspan="1">Brown bread, sliced</td><td rowspan="1" colspan="1">1178</td><td rowspan="1" colspan="1">76</td><td rowspan="1" colspan="1">60–86</td><td rowspan="1" colspan="1">876</td><td rowspan="1" colspan="1">76</td><td rowspan="1" colspan="1">60–93</td><td rowspan="1" colspan="1">1099</td><td rowspan="1" colspan="1">68</td><td rowspan="1" colspan="1">44–76</td><td rowspan="1" colspan="1">815</td><td rowspan="1" colspan="1">69</td><td rowspan="1" colspan="1">48–76</td></tr><tr><td rowspan="1" colspan="1">Potatoes, boiled</td><td rowspan="1" colspan="1">692</td><td rowspan="1" colspan="1">218</td><td rowspan="1" colspan="1">161–297</td><td rowspan="1" colspan="1">470</td><td rowspan="1" colspan="1">221</td><td rowspan="1" colspan="1">175–303</td><td rowspan="1" colspan="1">639</td><td rowspan="1" colspan="1">151</td><td rowspan="1" colspan="1">105–206</td><td rowspan="1" colspan="1">439</td><td rowspan="1" colspan="1">160</td><td rowspan="1" colspan="1">120–220</td></tr><tr><td rowspan="1" colspan="1">Chips/wedges</td><td rowspan="1" colspan="1">559</td><td rowspan="1" colspan="1">165</td><td rowspan="1" colspan="1">117–204</td><td rowspan="1" colspan="1">429</td><td rowspan="1" colspan="1">168</td><td rowspan="1" colspan="1">126–211</td><td rowspan="1" colspan="1">493</td><td rowspan="1" colspan="1">132</td><td rowspan="1" colspan="1">97–168</td><td rowspan="1" colspan="1">381</td><td rowspan="1" colspan="1">132</td><td rowspan="1" colspan="1">97–173</td></tr><tr><td rowspan="1" colspan="1">RTEBC, total</td><td rowspan="1" colspan="1">1245</td><td rowspan="1" colspan="1">52</td><td rowspan="1" colspan="1">38–74</td><td rowspan="1" colspan="1">950</td><td rowspan="1" colspan="1">53</td><td rowspan="1" colspan="1">38–75</td><td rowspan="1" colspan="1">1019</td><td rowspan="1" colspan="1">40</td><td rowspan="1" colspan="1">30–54</td><td rowspan="1" colspan="1">742</td><td rowspan="1" colspan="1">40</td><td rowspan="1" colspan="1">30–60</td></tr><tr><td rowspan="1" colspan="1">Boiled carrots</td><td rowspan="1" colspan="1">423</td><td rowspan="1" colspan="1">72</td><td rowspan="1" colspan="1">52–90</td><td rowspan="1" colspan="1">299</td><td rowspan="1" colspan="1">72</td><td rowspan="1" colspan="1">50–90</td><td rowspan="1" colspan="1">424</td><td rowspan="1" colspan="1">60</td><td rowspan="1" colspan="1">40–83</td><td rowspan="1" colspan="1">309</td><td rowspan="1" colspan="1">60</td><td rowspan="1" colspan="1">40–80</td></tr><tr><td rowspan="1" colspan="1">Baked beans</td><td rowspan="1" colspan="1">189</td><td rowspan="1" colspan="1">135</td><td rowspan="1" colspan="1">90–200</td><td rowspan="1" colspan="1">143</td><td rowspan="1" colspan="1">135</td><td rowspan="1" colspan="1">90–203</td><td rowspan="1" colspan="1">142</td><td rowspan="1" colspan="1">103</td><td rowspan="1" colspan="1">64–169</td><td rowspan="1" colspan="1">94</td><td rowspan="1" colspan="1">109</td><td rowspan="1" colspan="1">63–107</td></tr><tr><td rowspan="1" colspan="1">Roast meats</td><td rowspan="1" colspan="1">562</td><td rowspan="1" colspan="1">100</td><td rowspan="1" colspan="1">76–148</td><td rowspan="1" colspan="1">406</td><td rowspan="1" colspan="1">100</td><td rowspan="1" colspan="1">76–148</td><td rowspan="1" colspan="1">483</td><td rowspan="1" colspan="1">86</td><td rowspan="1" colspan="1">51–120</td><td rowspan="1" colspan="1">339</td><td rowspan="1" colspan="1">88</td><td rowspan="1" colspan="1">51–120</td></tr><tr><td rowspan="1" colspan="1">Sausages</td><td rowspan="1" colspan="1">361</td><td rowspan="1" colspan="1">75</td><td rowspan="1" colspan="1">48–102</td><td rowspan="1" colspan="1">275</td><td rowspan="1" colspan="1">75</td><td rowspan="1" colspan="1">50–101</td><td rowspan="1" colspan="1">251</td><td rowspan="1" colspan="1">48</td><td rowspan="1" colspan="1">33–75</td><td rowspan="1" colspan="1">188</td><td rowspan="1" colspan="1">47</td><td rowspan="1" colspan="1">30–75</td></tr><tr><td rowspan="1" colspan="1">Cheese, all types</td><td rowspan="1" colspan="1">959</td><td rowspan="1" colspan="1">38</td><td rowspan="1" colspan="1">25–50</td><td rowspan="1" colspan="1">734</td><td rowspan="1" colspan="1">40</td><td rowspan="1" colspan="1">25–51</td><td rowspan="1" colspan="1">917</td><td rowspan="1" colspan="1">27</td><td rowspan="1" colspan="1">20–40</td><td rowspan="1" colspan="1">688</td><td rowspan="1" colspan="1">27</td><td rowspan="1" colspan="1">20–40</td></tr><tr><td rowspan="1" colspan="1">Butter</td><td rowspan="1" colspan="1">657</td><td rowspan="1" colspan="1">14</td><td rowspan="1" colspan="1">8–20</td><td rowspan="1" colspan="1">512</td><td rowspan="1" colspan="1">14</td><td rowspan="1" colspan="1">8–20</td><td rowspan="1" colspan="1">617</td><td rowspan="1" colspan="1">9</td><td rowspan="1" colspan="1">6–16</td><td rowspan="1" colspan="1">473</td><td rowspan="1" colspan="1">10</td><td rowspan="1" colspan="1">6–16</td></tr><tr><td rowspan="1" colspan="1">Biscuits, all types</td><td rowspan="1" colspan="1">821</td><td rowspan="1" colspan="1">32</td><td rowspan="1" colspan="1">24–48</td><td rowspan="1" colspan="1">648</td><td rowspan="1" colspan="1">32</td><td rowspan="1" colspan="1">24–48</td><td rowspan="1" colspan="1">777</td><td rowspan="1" colspan="1">26</td><td rowspan="1" colspan="1">18–36</td><td rowspan="1" colspan="1">601</td><td rowspan="1" colspan="1">27</td><td rowspan="1" colspan="1">18–39</td></tr><tr><td rowspan="1" colspan="1">Chocolate</td><td rowspan="1" colspan="1">689</td><td rowspan="1" colspan="1">39</td><td rowspan="1" colspan="1">22–54</td><td rowspan="1" colspan="1">577</td><td rowspan="1" colspan="1">40</td><td rowspan="1" colspan="1">22–55</td><td rowspan="1" colspan="1">782</td><td rowspan="1" colspan="1">26</td><td rowspan="1" colspan="1">18–43</td><td rowspan="1" colspan="1">625</td><td rowspan="1" colspan="1">26</td><td rowspan="1" colspan="1">18–43</td></tr><tr><td rowspan="1" colspan="1">Potato crisps</td><td rowspan="1" colspan="1">310</td><td rowspan="1" colspan="1">30</td><td rowspan="1" colspan="1">25–40</td><td rowspan="1" colspan="1">259</td><td rowspan="1" colspan="1">35</td><td rowspan="1" colspan="1">25–45</td><td rowspan="1" colspan="1">301</td><td rowspan="1" colspan="1">25</td><td rowspan="1" colspan="1">25–37</td><td rowspan="1" colspan="1">234</td><td rowspan="1" colspan="1">25</td><td rowspan="1" colspan="1">25–37</td></tr><tr><td rowspan="1" colspan="1">Carbonated beverages</td><td rowspan="1" colspan="1">697</td><td rowspan="1" colspan="1">330</td><td rowspan="1" colspan="1">292–500</td><td rowspan="1" colspan="1">570</td><td rowspan="1" colspan="1">330</td><td rowspan="1" colspan="1">300–500</td><td rowspan="1" colspan="1">445</td><td rowspan="1" colspan="1">302</td><td rowspan="1" colspan="1">225–500</td><td rowspan="1" colspan="1">372</td><td rowspan="1" colspan="1">301</td><td rowspan="1" colspan="1">225–500</td></tr><tr><td rowspan="1" colspan="1">Pure juice</td><td rowspan="1" colspan="1">568</td><td rowspan="1" colspan="1">191</td><td rowspan="1" colspan="1">136–267</td><td rowspan="1" colspan="1">460</td><td rowspan="1" colspan="1">190</td><td rowspan="1" colspan="1">136–278</td><td rowspan="1" colspan="1">449</td><td rowspan="1" colspan="1">177</td><td rowspan="1" colspan="1">123–250</td><td rowspan="1" colspan="1">357</td><td rowspan="1" colspan="1">173</td><td rowspan="1" colspan="1">119–250</td></tr><tr><td rowspan="1" colspan="1">Curries</td><td rowspan="1" colspan="1">128</td><td rowspan="1" colspan="1">277</td><td rowspan="1" colspan="1">194–350</td><td rowspan="1" colspan="1">92</td><td rowspan="1" colspan="1">285</td><td rowspan="1" colspan="1">204–350</td><td rowspan="1" colspan="1">108</td><td rowspan="1" colspan="1">200</td><td rowspan="1" colspan="1">149–297</td><td rowspan="1" colspan="1">63</td><td rowspan="1" colspan="1">192</td><td rowspan="1" colspan="1">124–290</td></tr></tbody></table></alternatives><table-wrap-foot><fn><p>RTEBC, ready-to-eat breakfast cereals.</p></fn></table-wrap-foot></table-wrap></p></sec><sec id="sec2-5"><title>Comparison between population groups</title><p>The median portion weights reported for Irish adolescents and adults in the database
+appear similar for many foods, while those reported for children are notably smaller.
+Older-aged children (9–12 years) reported larger median portion weights for most foods
+than younger children (5–8 years). However, identical portion weights were reported by
+children for a range of packaged food items that tend to be consumed in unit amounts (for
+example, yoghurts, crisps). Typical portion weights were estimated overall, and separately
+for males and females, for the adolescent and adult groups. In both groups, the median
+portion weights consumed by males tended to be greater than those consumed by females,
+particularly for foods that may be self-served (for example, pasta, breakfast cereals,
+composite meals). Median portion weights were more similar among males and females for
+packaged foods that tend to be consumed in unit amounts (for example, yoghurt, popcorn),
+and for other foods that may be consumed in more fixed amounts (for example, sliced bread,
+eggs, bananas). Typical portion weight data should be estimated separately for children
+and adults, and for adult males and females, due to the disparity in the typical portion
+weights reported by these groups.</p></sec><sec id="sec2-6"><title>Comparison with other data</title><p>A comparison of the typical portion weights reported for Irish adults with the equivalent
+data for adults in Great Britain<sup>(</sup><xref rid="ref2" ref-type="bibr">
+<sup>2</sup>
+</xref><sup>)</sup> suggests that portion sizes are broadly similar between the cohorts
+for the majority of food categories. For most foods examined, the UK median weights were
+slightly (5–10 %) smaller than the Irish median weights; however, this may be partly
+attributable to the fact that the Irish group consisted of adults aged 18–64 years only,
+while the UK group included ‘elderly adults’, whose reduced energy needs might be expected
+to reduce the overall median portion weights of the group. Foods that tend to be consumed
+in unit amounts (for example, yoghurts, crisps) were, in many cases, reported with
+identical portion weights, as were ‘condiment’ type foods (for example, butter, spreads,
+sugar, jam, ketchup). Irish adults reported larger portions of boiled and mashed potatoes,
+scones, breakfast cereals, tea, coffee and milk, while UK adults reported larger portions
+of fairy cakes, fruit crumble and custard. The differences may be attributable to cultural
+factors, or to methodological differences in the estimation of portion size (for example,
+a heavier reliance on non-weighed methods of quantification for a particular food may have
+biased portion weight estimates for that food).</p></sec><sec id="sec2-7"><title>Strengths and limitations</title><p>The Irish Food Portion Sizes Database has two notable strengths: first, it is based on
+data collected from nationally representative samples of the Irish population; and second,
+it is the output of very carefully quantified food intake data. A limitation is that the
+database does not account for possible differences in portion weight relating to the
+eating occasion at which a food was consumed (for example, a typical portion of roast
+chicken consumed as part of an evening meal may be larger than a typical portion consumed
+as part of a sandwich).</p></sec><sec id="sec2-8"><title>Possible applications of the data</title><p>Being the first extensive set of food portion size data for Irish children, adolescents
+and adults, the Irish Food Portion Sizes Database will serve as a useful reference against
+which to compare future Irish portion size data. This is of public health interest, with
+large portion sizes considered a possible dietary risk factor for obesity<sup>(</sup><xref rid="ref22" ref-type="bibr">
+<sup>22</sup>
+</xref><sup>)</sup>. Age- and sex-specific typical portion weights are of use in dietary
+intake assessment, allowing researchers to avoid reliance on ‘standard’ portion sizes,
+which have been shown to underestimate energy and nutrient intakes<sup>(</sup><xref rid="ref23" ref-type="bibr">
+<sup>23</sup>
+</xref><sup>,</sup><xref rid="ref24" ref-type="bibr">
+<sup>24</sup>
+</xref><sup>)</sup>. In addition, the 25th percentile, median and 75th percentile values
+could conceivably be considered ‘small’, ‘medium’ and ‘large’ portion weights in
+non-weighed methods of dietary assessment, according to how they are described by
+participants. The data will also enable researchers to improve quantification tools for
+use in dietary intake assessment, for example, age-appropriate food atlases, which have
+previously been shown to improve the accuracy of food portion size estimation in
+children<sup>(</sup><xref rid="ref25" ref-type="bibr">
+<sup>25</sup>
+</xref><sup>)</sup>. Dietitians and other health professionals may also find this resource
+useful in their management of child and adult patients. A further application of the data
+is in the establishment of ‘suggested serving sizes’ as used in food labelling.</p></sec><sec id="sec2-9" sec-type="conclusion"><title>Conclusions</title><p>The Irish Food Portion Sizes Database describes typical portion weights for a total of
+545 food items for Irish children, adolescents and adults. The typical portion weights
+reported for children are notably smaller than those reported for adolescents or adults,
+and adolescent and adult males tend to consume larger portions than females. The inclusion
+of energy under-reporters makes little difference to the estimation of typical portion
+weights in adults. The data provide a useful reference against which to compare any future
+food portion size data, and may have applications for dietary intake assessment, food
+labelling or public health initiatives.</p></sec></sec></body><back><ack id="ack"><title>Acknowledgements</title><p>The present study was funded by the Irish Department of Agriculture, Food and the Marine
+under the Food for Health Research Initiative 2007–2012, supported by the Irish Department
+of Health and the Health Research Board.</p><p>J. L. was involved in the collection and analysis of data, and preparation of the
+manuscript; A. F. was involved in the conception of the study and was a grant holder; J. W.
+was involved in the design and implementation of the studies. All authors contributed to the
+writing of the manuscript.</p><p>There are no personal or financial conflicts of interest.</p></ack><ref-list><title>References</title><ref id="ref1"><label>1.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Wrieden</surname><given-names>WL</given-names></name>, <name name-style="western"><surname>Longbottom</surname><given-names>PJ</given-names></name>, <name name-style="western"><surname>Adamson</surname><given-names>AJ</given-names></name>, <etal/> (<year>2008</year>) <article-title>Estimation of typical food portion
+sizes for children of different ages in Great Britain</article-title>. <source>Br J Nutr</source><volume>99</volume>, <fpage>1344</fpage>–<lpage>1353</lpage><pub-id pub-id-type="pmid">18031591</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114507868516</pub-id></mixed-citation></ref><ref id="ref2"><label>2.</label><mixed-citation publication-type="other"><name name-style="western"><surname>Wrieden</surname><given-names>W</given-names></name> &amp; <name name-style="western"><surname>Barton</surname><given-names>K</given-names></name> (<year>2006</year>) Calculation and collation of typical food portion sizes for
+adults aged 19–64 and older people aged 65 and over. Final Technical Report to the Food
+Standards Agency. <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foodbase.org.uk/results.php?f_category_id=&amp;f_report_id=82">http://www.foodbase.org.uk/results.php?f_category_id=&amp;f_report_id=82</uri>
+(accessed <date-in-citation content-type="access-date">November
+2012</date-in-citation>).</mixed-citation></ref><ref id="ref3"><label>3.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Kerr</surname><given-names>MA</given-names></name>, <name name-style="western"><surname>Rennie</surname><given-names>KL</given-names></name>, <name name-style="western"><surname>McCaffrey</surname><given-names>TA</given-names></name>, <etal/> (<year>2009</year>) <article-title>Snacking patterns among adolescents: a
+comparison of type, frequency and portion size between Britain in 1997 and Northern
+Ireland in 2005</article-title>. <source>Br J Nutr</source><volume>101</volume>, <fpage>122</fpage>–<lpage>131</lpage><pub-id pub-id-type="pmid">18533071</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S0007114508994769</pub-id></mixed-citation></ref><ref id="ref4"><label>4.</label><mixed-citation publication-type="book"><collab>Food Standards
+Agency</collab> (<year>2002</year>) <source>Food Portion Sizes</source>, <edition>3rd ed.</edition><publisher-loc>London</publisher-loc>: <publisher-name>The Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref5"><label>5.</label><mixed-citation publication-type="book"><collab>Ministry of Agriculture,
+Fisheries and Food</collab> (<year>1993</year>) <source>Food Portion Sizes</source>,
+<edition>2nd ed.</edition><publisher-loc>London</publisher-loc>: <publisher-name>HM Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref6"><label>6.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Gregory</surname><given-names>J</given-names></name>, <name name-style="western"><surname>Foster</surname><given-names>K</given-names></name>, <name name-style="western"><surname>Tyler</surname><given-names>H</given-names></name>, <etal/> (<year>1990</year>) <source>Dietary and Nutritional Survey of British
+Adults</source>. <publisher-loc>London</publisher-loc>: <publisher-name>HM Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref7"><label>7.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Harrington</surname><given-names>KE</given-names></name>, <name name-style="western"><surname>Robson</surname><given-names>PJ</given-names></name>, <name name-style="western"><surname>Kiely</surname><given-names>M</given-names></name>, <etal/> (<year>2001</year>) <article-title>The North/South Ireland Food
+Consumption Survey: survey design and methodology</article-title>. <source>Public Health
+Nutr</source><volume>4</volume>, <fpage>1037</fpage>–<lpage>1042</lpage><pub-id pub-id-type="pmid">11820916</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1079/phn2001184</pub-id></mixed-citation></ref><ref id="ref8"><label>8.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Nelson</surname><given-names>M</given-names></name>, <name name-style="western"><surname>Atkinson</surname><given-names>M</given-names></name> &amp; <name name-style="western"><surname>Meyer</surname><given-names>J</given-names></name> (<year>1997</year>) <source>A Photographic Atlas of Food Portion Sizes</source>.
+<publisher-loc>London</publisher-loc>: <publisher-name>Food Standards
+Agency</publisher-name></mixed-citation></ref><ref id="ref9"><label>9.</label><mixed-citation publication-type="book"><collab>Scientific Advisory
+Committee on Nutrition</collab> (<year>2011</year>) <source>Dietary Reference Values for
+Energy</source>. <publisher-loc>London</publisher-loc>: <publisher-name>The Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref10"><label>10.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Holland</surname><given-names>B</given-names></name>, <name name-style="western"><surname>Unwin</surname><given-names>ID</given-names></name> &amp; <name name-style="western"><surname>Buss</surname><given-names>DH</given-names></name> (<year>1992</year>) <source>Fruits and Nuts. First Supplement to McCance and
+Widdowson's The Composition of Foods</source>, <edition>5th ed.</edition><publisher-loc>London</publisher-loc>: <publisher-name>HM Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref11"><label>11.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Chan</surname><given-names>W</given-names></name>, <name name-style="western"><surname>Brown</surname><given-names>J</given-names></name>, <name name-style="western"><surname>Lee</surname><given-names>SJ</given-names></name>, <etal/> (<year>1995</year>) <source>Meat, Poultry and Game. Fifth Supplement to
+McCance and Widdowson's The Composition of Foods</source>, <edition>5th ed.</edition><publisher-loc>London</publisher-loc>: <publisher-name>HM Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref12"><label>12.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Goldberg</surname><given-names>GR</given-names></name>, <name name-style="western"><surname>Black</surname><given-names>AE</given-names></name>, <name name-style="western"><surname>Jebb</surname><given-names>SA</given-names></name>, <etal/> (<year>1991</year>) <article-title>Critical evaluation of energy intake
+data using fundamental principles of energy philosophy: 1. Derivation of cut-off limits
+to identify under-recording</article-title>. <source>Eur J Clin Nutr</source><volume>45</volume>, <fpage>569</fpage>–<lpage>581</lpage><pub-id pub-id-type="pmid">1810719</pub-id></mixed-citation></ref><ref id="ref13"><label>13.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Rangan</surname><given-names>AM</given-names></name>, <name name-style="western"><surname>Schindeler</surname><given-names>S</given-names></name>, <name name-style="western"><surname>Hector</surname><given-names>DJ</given-names></name>, <etal/> (<year>2009</year>) <article-title>Assessment of typical food portion
+sizes consumed among Australian adults</article-title>. <source>Nutr Diet</source><volume>66</volume>, <fpage>227</fpage>–<lpage>233</lpage></mixed-citation></ref><ref id="ref14"><label>14.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Fox</surname><given-names>MK</given-names></name>, <name name-style="western"><surname>Reidy</surname><given-names>K</given-names></name>, <name name-style="western"><surname>Karwe</surname><given-names>V</given-names></name>, <etal/> (<year>2006</year>) <article-title>Average portions of foods commonly
+eaten by infants and toddlers in the United States</article-title>. <source>J Am Diet
+Assoc</source><volume>106</volume>, <fpage>S66</fpage>–<lpage>S76</lpage><pub-id pub-id-type="pmid">16376631</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jada.2005.09.042</pub-id></mixed-citation></ref><ref id="ref15"><label>15.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Nielsen</surname><given-names>SJ</given-names></name> &amp; <name name-style="western"><surname>Popkin</surname><given-names>BM</given-names></name> (<year>2004</year>) <article-title>Changes in beverage intake between 1977 and
+2001</article-title>. <source>Am J Prev Med</source><volume>27</volume>, <fpage>205</fpage>–<lpage>210</lpage><pub-id pub-id-type="pmid">15450632</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.amepre.2004.05.005</pub-id></mixed-citation></ref><ref id="ref16"><label>16.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Nielsen</surname><given-names>SJ</given-names></name> &amp; <name name-style="western"><surname>Popkin</surname><given-names>BM</given-names></name> (<year>2003</year>) <article-title>Patterns and trends in food portion sizes,
+1977–1998</article-title>. <source>JAMA</source><volume>289</volume>, <fpage>450</fpage>–<lpage>453</lpage><pub-id pub-id-type="pmid">12533124</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1001/jama.289.4.450</pub-id></mixed-citation></ref><ref id="ref17"><label>17.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Smiciklas-Wright</surname><given-names>H</given-names></name>, <name name-style="western"><surname>Mitchell</surname><given-names>DC</given-names></name>, <name name-style="western"><surname>Mickle</surname><given-names>SJ</given-names></name>, <etal/> (<year>2003</year>) <article-title>Foods commonly eaten in the United
+States, 1989–1991 and 1994–1996: are portion sizes changing?</article-title><source>J Am Diet Assoc</source><volume>103</volume>, <fpage>41</fpage>–<lpage>47</lpage><pub-id pub-id-type="pmid">12525792</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1053/jada.2003.50000</pub-id></mixed-citation></ref><ref id="ref18"><label>18.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Henderson</surname><given-names>L</given-names></name>, <name name-style="western"><surname>Gregory</surname><given-names>J</given-names></name> &amp; <name name-style="western"><surname>Swan</surname><given-names>G</given-names></name> (<year>2002</year>) <source>The National Diet and Nutrition Survey: Adults Aged
+19–64 Years. Volume 1: Types and Quantities of Foods Consumed</source>.
+<publisher-loc>London</publisher-loc>: <publisher-name>The Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref19"><label>19.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Finch</surname><given-names>S</given-names></name>, <name name-style="western"><surname>Doyle</surname><given-names>W</given-names></name>, <name name-style="western"><surname>Lowe</surname><given-names>C</given-names></name>, <etal/> (<year>1998</year>) <source>National Diet and Nutrition Survey: People
+Aged 65 Years and Over. Volume 1: Report of the Diet and Nutrition Survey</source>.
+<publisher-loc>London</publisher-loc>: <publisher-name>The Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref20"><label>20.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Gregory</surname><given-names>JR</given-names></name>, <name name-style="western"><surname>Collins</surname><given-names>DL</given-names></name>, <name name-style="western"><surname>Davies</surname><given-names>PSW</given-names></name>, <etal/> (<year>1995</year>) <source>National Diet and Nutrition Survey: Children
+Aged 1½ to 4½. Volume 1: Report of the Diet and Nutrition Survey</source>.
+<publisher-loc>London</publisher-loc>: <publisher-name>HM Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref21"><label>21.</label><mixed-citation publication-type="book"><name name-style="western"><surname>Gregory</surname><given-names>J</given-names></name> &amp; <name name-style="western"><surname>Lowe</surname><given-names>S</given-names></name> (<year>2000</year>) <source>National Diet and Nutrition Survey: Young People Aged
+4 to 18 Years. Volume 1: Report of the Diet and Nutrition Survey</source>.
+<publisher-loc>London</publisher-loc>: <publisher-name>HM Stationery
+Office</publisher-name></mixed-citation></ref><ref id="ref22"><label>22.</label><mixed-citation publication-type="book"><collab>World Health
+Organization</collab> (<year>2003</year>) <source>Diet, Nutrition and the Prevention of
+Chronic Diseases. Joint WHO/FAO Expert Consultation. WHO Technical Report Series no.
+916</source>. <publisher-loc>Geneva</publisher-loc>:
+<publisher-name>WHO</publisher-name><pub-id pub-id-type="pmid">12768890</pub-id></mixed-citation></ref><ref id="ref23"><label>23.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Hendricks</surname><given-names>K</given-names></name>, <name name-style="western"><surname>Tang</surname><given-names>A</given-names></name>, <name name-style="western"><surname>Spiegelman</surname><given-names>D</given-names></name>, <etal/> (<year>2005</year>) <article-title>Dietary intake in human
+immunodeficiency virus-infected adults: a comparison of dietary assessment
+methods</article-title>. <source>J Am Diet Assoc</source><volume>105</volume>, <fpage>532</fpage>–<lpage>540</lpage><pub-id pub-id-type="pmid">15800553</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jada.2005.01.028</pub-id></mixed-citation></ref><ref id="ref24"><label>24.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Welten</surname><given-names>DC</given-names></name>, <name name-style="western"><surname>Carpenter</surname><given-names>RA</given-names></name>, <name name-style="western"><surname>McPherson</surname><given-names>RS</given-names></name>, <etal/> (<year>2000</year>) <article-title>Comparison of a dietary record using
+reported portion size versus standard portion size for assessing nutrient
+intake</article-title>. <source>Public Health Nutr</source><volume>3</volume>, <fpage>151</fpage>–<lpage>158</lpage><pub-id pub-id-type="pmid">10948382</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/s1368980000000185</pub-id></mixed-citation></ref><ref id="ref25"><label>25.</label><mixed-citation publication-type="journal"><name name-style="western"><surname>Foster</surname><given-names>E</given-names></name>, <name name-style="western"><surname>Matthews</surname><given-names>JNS</given-names></name>, <name name-style="western"><surname>Lloyd</surname><given-names>J</given-names></name>, <etal/> (<year>2008</year>) <article-title>Children's estimates of food portion
+size: the development and evaluation of three portion size assessment tools for use with
+children</article-title>. <source>Br J Nutr</source><volume>99</volume>, <fpage>175</fpage>–<lpage>184</lpage><pub-id pub-id-type="pmid">17697426</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1017/S000711450779390X</pub-id></mixed-citation></ref></ref-list></back></article>

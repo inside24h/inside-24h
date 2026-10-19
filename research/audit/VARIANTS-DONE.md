@@ -141,3 +141,46 @@ Portion research: `builder-portions-research.md` (research agent, every number w
 7. **Browser QA** (390, 360 split site, 1440):
    - no page overflow and no console errors;
    - screenshots in `scratchpad/qa/shots-var/`.
+
+## Data round 2 (2026-10-19)
+
+Backup of every touched file: `backups/20261019-142350-data2/`. Build: `python -I research/tools/build_fooddb.py build` (fails 0; gate passes; 50 variants, 14 sized foods). The app was NOT built (the pacing agent builds). `npx tsc --noEmit -p .` clean; `npx vitest run` 391/391.
+
+### Weak estimates, now sourced
+
+| item | before | after | source (read) |
+|---|---|---|---|
+| pizza: extra cheese / slice | 14.2 g (forum excerpt) | **6.3 g**, range 5.2–14.2 | USDA FNDDS 2021-23 recipes (`input_food.csv`): 2708622 "Pizza, extra cheese, thin crust" = 691 g chain cheese pizza + 41 g mozzarella (5.9%); 2708623 thick = 1060 g + 52 g (4.9%). × our 107 g slice. Forum 4 oz/14" kept as the top. |
+| pizza: tuna / slice | 21.2 g (meat-topping amount) | **11.9 g**, range 10.8–12.8 | EU frozen tuna-pizza labels, QUID % (Open Food Facts): Dr. Oetker Ristorante Tonno 9.2%, Dr. Oetker Pizza Tonno 10%, Casino 9.4%, Auchan 10.7%. t = 107 × s/(1−s). |
+| pizza: egg / slice | 6.2 g (no source) | 6.2 g, range 5.5–7.0 (unchanged number, now sourced) | one egg per pizza: Great British Chefs "Pizza Fiorentina" (1 pizza base, 1 egg); USDA egg sizes 44/50/56 g ÷ 8. |
+| kebab meat | 110 g (our estimate) | **150 g**, range 60–227 | Panozzo et al. 2015, Ital J Food Saf 4:4535 (PDF read): 20 döner kebabs bought and weighed, meat 34.8% / 39.5% (median 36.7%), mean kebab 402 g (274–618) → 148 g. Cross-checks: RTL 80–173 g; USDA gyro 60 g. Default kebab is now 290 g, 464 kcal. Note: the same study's bread was 22–27% (≈100 g); our pita stays USDA 60 g. |
+| burek spinach / potato | "our estimate" | same recipes (262 / 268 kcal per 100 g), now checked | no label with the shares exists that we could find (OFF, Konzum, web). Label energy as a check: spinach burek 230 / 281 / 282 kcal (OFF 3871832005535, 3800047770372, 3811832016414); potato burek 253 kcal, 9.5 g fat (OFF 7350039279179). Text says so. |
+| Turkish coffee | not in the app ("turska kava" found nothing) | **filter-coffee variant "turkish"**: 70 ml, 148 mg caffeine, range 112–196 mg; in the "Which coffee?" row | Derossi et al. 2018 (J Sci Food Agric, PMID 29230816, abstract): Turkish cup 112 mg; 2.01–2.21 mg/mL (quoted in PMC8228209); Elsahoryi et al. 2025 (PMC11901579) 2.8 mg/mL; cup 70 ml (PMC10440973), 7 g + 75 ml water (PMC12581726). USDA espresso record (2.1 mg/g) used as the proxy. FNDDS 2710377 "Coffee, Turkish" rejected: it is filter coffee + sugar. |
+
+### Missing items added (variants/sizes of existing foods only)
+
+- **Medica** = `rakija.medica`: 24 ml 40% spirit + 4.9 g honey + 12.6 ml water per 40 ml → 24% vol, 4.0 g sugar (100 g/l), 67 kcal. Badel Medica 24% vol, "blending the base spirit, Benkovac Komovica, with natural honey" (LCBO 33641; badel1862.hr). Sugar is not published, so the EU liqueur minimum is used: Reg. (EU) 2019/787 Annex I cat. 33 "100 grams per litre in all other cases" (PDF read). The text says real medica can be sweeter.
+- **Pasta / rice sizes** (Side · Plate · Large, cooked): pasta 124 / 199 / 250 g; whole-wheat pasta 117 / 199 / 250 g; white rice 120 / 158 / 224 g. Source: Irish Food Portion Sizes Database (Lyons & Giltinan, IUNA 2013, NANS 2008-10, adults 18-64, Table 4, PDF read): boiled pasta median 199 g (IQR 113–250), boiled rice median 173 g (IQR 120–224). Cross-check: SINU/LARN standard 80 g dry (IEO SmartFood sheet) = 188 g cooked pasta / 225 g cooked rice by USDA energy (371→158; 365→130 kcal). FNDDS's "1 oz dry yields 80 g" (×2.8) was not used: it does not match the energy of the USDA cooked record. Brown rice has no sizes (its USDA cup is 202 g, above the Irish IQR).
+
+### FIXES.md undecided items
+
+- **Melon GI: 65 stays.** Atkinson A1 rows re-read: 1021 = 65 ± 9, 8 subjects, footnote 8 (25 g carbohydrate portions), published (ref 1); 1022 = 70, no SEM, footnote 7 (only 10 g portions), unpublished (UO4). The stronger test wins; giSource now says why.
+- **Canned tuna:** the default stays **in water** (no Croatian sales split of water vs oil was found; the water record is drained fish). The portion changed from the US 5-oz can (165 g) to **80 g** (Irish adults' median canned-tuna portion, IQR 50–105; Croatian/EU cans are 80 g: Eva 2 × 80 g, Rio Mare 80 g). The oil variant says that eating the oil about doubles the calories (OFF entry for Eva tuna in oil: 391 kcal, 35 g fat per 100 g). Owner may still prefer oil as default.
+- **"nar" → ham:** not fixable in the data. `parse.ts` `aliasScore` gives any prefix of ≥ 2 letters 6 + len/aliasLen (6.43 for "nar"/"narezak"), above MIN_LOG 4.1, so the prefix is LOGGED. Suggested fix (parse.ts, other agent's area, NOT edited): log a prefix match only when it covers at least half of the alias (`text.length / alias.length >= 0.5`; "ban"/"banana" = 0.5 still logs, "nar"/"narezak" = 0.43 only suggests).
+
+### Burek default (task 4)
+
+- The Čakovečki mlinovi page (EN and HR, read 2026-10-19) describes the burek as "layers of dough and cheese filling" ("slojevi tijesta i sirnog nadjeva"): the default is a **cheese** burek, not an unnamed filling. The bakery option's text and the override text now say so (chip still "Bakery").
+- Per 100 g basis: the table has no header. Verified indirectly (level B): EU 1169/2011 Art. 32(2) "shall be expressed per 100 g or per 100 ml"; the same page's 400 g breads show 222 and 260 kcal (only possible per 100 g); Atwater 299 ≈ 297; per piece it would be 198 kcal/100 g, below every burek label (247–316). The app's source note says this was checked on the web page, not on the pack.
+
+### Tests
+
+- `variants.test.ts`: new block "data round 2" (7 tests: Turkish coffee, medica, pasta/rice sizes, tuna portion, pizza toppings, kebab meat, burek + melon); golden: kebab 290 g, turska kava, bosanska kava, medica, tuna u ulju; "Which coffee?" now has Turkish.
+- `foodData.test.ts`: "turska kava" moved from must-find-nothing to found; tuna 80 g; kebab 464 kcal.
+
+### Open (owner)
+
+1. "burek sa sirom" still opens our cheese recipe (289 kcal/100 g), while plain "burek" shows the producer's cheese burek (297). Merge them, or rename the base "Burek (meat/cheese pastry)"?
+2. Tuna default water vs oil (see above).
+3. Kebab bread: weighed Italian kebabs carry ≈ 100 g of bread; we keep USDA's 60 g pita.
+4. Medica sugar is a legal minimum; a pack label would settle it.

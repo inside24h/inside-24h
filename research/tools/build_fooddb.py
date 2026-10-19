@@ -40,7 +40,13 @@ GI_SUPP = {
  "a1_cherries": (63, A1 + " row 970: Cherries, dark, raw, pitted (Australia), 63 ± 6, 10 subjects, single test"),
  "a1_kiwi": (58, A1 + " row 987: Kiwi fruit (Australia), 58 ± 7, 7 subjects, single test"),
  "a1_strawberries": (40, A1 + " row 1023: Strawberries, fresh, raw (Australia), 40 ± 7, 10 subjects, single test"),
- "a1_melon": (65, A1 + " row 1021: Rockmelon/Cantaloupe, raw (Australia), 65 ± 9, 8 subjects, bread reference; a second test, row 1022, gave 70 (10 subjects, glucose reference)"),
+ # Data round 2 (2026-10-19), decided from the rows (re-read in dc08-1239_1.pdf, pdftotext -raw):
+ #  "1021 Rockmelon/Cantaloupe, raw (Australia)8 65±9 93 Normal, 8 Bread, 2h 1 120 6 4"
+ #  "1022 Rockmelon/Cantaloupe, raw (Australia)7 70 100 Normal, 10 Glucose, 2h UO4 120 6 4"
+ #  Footnote 8 = test and reference portions of 25 g carbohydrate; footnote 7 = only 10 g; ref 1 = a published study,
+ #  UO4 = Sydney University unpublished observations. Row 1021 wins: SEM reported, 25 g portions, published. Row 1022
+ #  has no SEM and used 10 g portions (a weaker test). Atkinson prints no mean for the two. GL per 120 g is 4 for both.
+ "a1_melon": (65, A1 + " row 1021: Rockmelon/Cantaloupe, raw (Australia), 65 ± 9, 8 subjects, 25 g carbohydrate portions, bread reference, published study; a second test, row 1022, gave 70 (10 subjects, glucose reference, only 10 g carbohydrate portions, no SEM, unpublished), so 65 is used; GL 4 per 120 g either way"),
  "a1_peas": (51, A1 + " row 1611: Pea, frozen, boiled (Canada), 51 ± 6, 6 subjects, single test"),
  "a1_white_beans": (31, A1 + " row 1099: Haricot/Navy beans, boiled (Canada), 31 ± 6, 6 subjects; nearest tested white bean"),
  "a1_hummus": (6, A1 + " row 1730: Hummus (chickpea salad dip), 6 ± 4, 12 subjects; a commercial dip, row 1097, tested 22 ± 5"),
@@ -102,7 +108,7 @@ def serving(sp, fdc):
     ports = U.portions(fdc) if fdc else []
     if kind == 'g':
         if sp[1] is None: return None
-        assumed = not re.match(r"(USDA|label|producer)", sp[3], re.I)
+        assumed = not re.match(r"(USDA|label|producer|survey)", sp[3], re.I)  # "survey": a measured national portion (data round 2)
         return {"label": sp[2], "grams": sp[1], "source": sp[3], "assumed": assumed}
     if kind == 'p':
         alts = [re.compile(a, re.I) for a in sp[1].split("|")]

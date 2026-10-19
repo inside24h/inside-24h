@@ -2,19 +2,38 @@ import { useState } from 'react';
 import { SmartSearch } from './SmartSearch';
 import './meals.css';
 import { baseOf, kindsOf, type Food, type Part } from './food/parse';
-import { addParts, ITEM_STEPS, MAX_ITEMS, removePart, setFood, setServings, shortName, stepOf } from './food/meal';
+import { addParts, ITEM_STEPS, MAX_ITEMS, PACE_OPTIONS, paceLabel, removePart, setFood, setServings, shortName, stepOf } from './food/meal';
 import { ChoiceBar, ChoiceSheet } from './Choices';
 
 // The search in the header plus the MEAL builder: "+ Add something" next to what you have, and, once there are two or
 // more things, one chip per item with its amount (tap to cycle ½ · 1 · 2 · 3) and ✕ to take it out. Max 5 things.
 const stepLabel = (x: number) => (x === 0.5 ? '½' : `${x}`);
 
-export function MealBar({ parts, current, onPick, onChange, asking = false, onSwitch }: {
+/** "Over how long?" (PACING, 2026-10-19): All at once · 1 h · 2 h · 3 h · 4 h, for two or more servings. Highlighted
+ *  (like "Which tea?") for several alcoholic drinks until the person picks: nobody drinks 5 beers in one go. */
+function PaceBar({ over, set, hot }: { over: number; set: (min: number) => void; hot: boolean }) {
+  return (
+    <div className={`choices pace ${hot ? 'asking' : ''}`}>
+      <div className="crow">
+        <span className="cask" id="pace-ask">Over how long?{hot ? <em> Few people drink them all in one go: pick yours.</em> : null}</span>
+        <div className="cchips small" role="radiogroup" aria-labelledby="pace-ask">
+          {PACE_OPTIONS.map((m) => (
+            <button key={m} type="button" role="radio" aria-checked={over === m} className={over === m ? 'on' : ''}
+              title={m ? `Spread evenly over ${paceLabel(m)}, the first one now` : 'Everything at the same moment (the highest peak)'} onClick={() => set(m)}>{paceLabel(m)}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function MealBar({ parts, current, onPick, onChange, asking = false, onSwitch, pace }: {
   parts: Part[]; current?: string;
   /** replace everything (search pick, preset) */ onPick: (parts: Part[], text: string) => void;
   /** the meal changed (added, removed, amount) */ onChange: (parts: Part[]) => void;
   /** "Which tea?" is still open (the text named several foods) */ asking?: boolean;
   /** another kind of item i: the simulation switches and keeps the minute */ onSwitch?: (i: number, food: Food) => void;
+  /** "Over how long?" when there is something to spread (minutes; `hot` = highlight until picked) */ pace?: { over: number; set: (min: number) => void; hot: boolean };
 }) {
   const [adding, setAdding] = useState(false);
   const [sheet, setSheet] = useState<number | null>(null);
@@ -53,6 +72,7 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
         </ul>
       )}
       {parts.length === 1 && !adding && onSwitch && <ChoiceBar part={parts[0]} asking={asking} onPick={(f) => switchItem(0, f)} />}
+      {pace && !adding && <PaceBar {...pace} />}
       {sheet !== null && parts[sheet] && (
         <ChoiceSheet food={parts[sheet].food} title={shortName(baseOf(parts[sheet].food))} full onPick={(f) => switchItem(sheet, f)} onClose={() => setSheet(null)} />
       )}

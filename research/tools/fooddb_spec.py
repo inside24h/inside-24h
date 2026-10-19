@@ -168,7 +168,7 @@ add("bread-french", "Baguette / French bread", ["baget", "baguette", "french bre
 # net weight of one piece. "pastry" (usually sweet) and bare "pita" (any pie, e.g. pita od jabuka) removed.
 add("burek", "Burek (meat/cheese pastry)", ["burek"], "solid",
     168963, "#d9a860", "null", ('g', 150, "1 piece", "producer: Čakovečki mlinovi burek, net weight 150 g"), proxy=True,
-    note="PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316).")
+    note="PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi, a cheese burek); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316).")
 # audit 2026-10-17: was frozen pizza 170317 + an app-side 107 g slice taken from THIS record; now the record itself.
 add("pizza", "Pizza (cheese)", ["pizza", "pica", "margherita", "pizza margherita", "sirna pizza"], "solid",
     173292, "#e8b04a", "null", ('p', r'^slice$'), note="Fast-food chain 14-inch cheese pizza, regular crust; 1 slice = 107 g (USDA portion).")
@@ -227,8 +227,13 @@ add("pork-chop", "Pork chop / loin (roasted)", ["svinjetina", "svinjski kotlet",
 add("lamb-roast", "Lamb (roasted)", ["janjetina", "janjeće", "janjece", "lamb", "janje"], "solid",
     174312, "#9a5a3a", "none", ('p', r'oz|cup|slice'))
 # audit 2026-10-17: was 171986 "canned in water, WITHOUT SALT" (Na 50 mg); EU canned tuna is salted.
+# Data round 2 (2026-10-19): the USDA "1 can" (165 g drained) is a US 5-oz can. Croatian/EU cans are mostly 80 g
+# (Eva "2 x 80 g", Rio Mare "80g" on Open Food Facts 3850104301353, 8004030348738). Irish Food Portion Sizes Database
+# (Lyons & Giltinan 2013, IUNA; NANS 2008-2010, adults 18-64, Table 4): "Canned salmon/tuna 210 80 50-105" = median
+# 80 g, IQR 50-105 g per eating occasion. Serving → 80 g. Default stays canned in WATER: we read no Croatian sales split
+# of water vs oil, and the water record is drained fish; oil is one tap away (owner may decide otherwise).
 add("tuna-canned", "Tuna (canned in water)", ["tuna", "tuna iz konzerve", "tunjevina", "tuna konzerva", "riba"], "solid",
-    173709, "#d9b8a0", "none", ('p', r'^can$'))
+    173709, "#d9b8a0", "none", ('g', 80, "1 portion, 80 g", "survey: Irish Food Portion Sizes Database 2013 (IUNA, adults 18-64), canned tuna median 80 g, IQR 50-105 g; EU cans are mostly 80 g"))
 add("salmon", "Salmon (cooked)", ["losos", "salmon", "riba", "pečeni losos"], "solid",
     "Fish, salmon, Atlantic, farmed, cooked, dry heat", "#f08a5a", "none", ('p', r'fillet|oz', "½ fillet"))
 add("cod", "Cod / white fish (cooked)", ["bakalar", "oslić", "oslic", "bijela riba", "cod", "riba", "white fish", "fish"], "solid",
@@ -512,10 +517,10 @@ override("cevapi", "per100g", {"sodiumMg": 742}, "C",
     "https://world.openfoodfacts.org/product/4388860565164/cevapcici-ja",
     note="Raw Na 500-680 mg (salt × 400), midpoint 590 × 83/66 = 742 mg cooked; range 629-855.", ranges={"sodiumMg": (629, 855)})
 override("burek", "per100g", {"kcal": 297, "fat": 16, "satFat": 7.5, "carbs": 29, "sugars": 3.3, "protein": 9.7, "sodiumMg": 560, "fiber": None}, "B",
-    "Burek: there is no USDA burek, so the values are from a Croatian producer label (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). Burek varies: labels range from about 250 to 320 kcal per 100 g.",
-    "Čakovečki mlinovi, Burek (net weight 150 g): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
+    "Burek: there is no USDA burek, so the values are from a Croatian producer’s cheese burek (Čakovečki mlinovi: 297 kcal, 16 g fat, 3.3 g sugar per 100 g). The web table does not print “per 100 g”, but EU law requires nutrition per 100 g, and the same table format gives a 400 g loaf 222 kcal, which can only be per 100 g. Burek varies: labels range from about 250 to 320 kcal per 100 g.",
+    "Čakovečki mlinovi, Burek (net weight 150 g; “slojevi tijesta i sirnog nadjeva”, layers of dough and cheese filling): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Basis: Regulation (EU) 1169/2011 Art. 32(2) “shall be expressed per 100 g or per 100 ml”. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
     "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
-    note="Sodium = 1.4 / 2.5 = 560 mg. Fiber not declared (None). Water stays from the USDA turnover proxy.",
+    note="Sodium = 1.4 / 2.5 = 560 mg. Fiber not declared (None). Water stays from the USDA turnover proxy. Basis checked 2026-10-19 on the producer's web page (EN and HR), not on the pack: the table has no column header; per 100 g follows from EU 1169/2011 Art. 32(2), from Atwater (16×9 + 29×4 + 9.7×4 = 299 kcal ≈ 297, i.e. 54.7 g of macros per 100 g, plausible for burek), from the same page's 400 g breads at 222 and 260 kcal (per 100 g), and from other burek labels (247-316 kcal/100 g); per piece it would be 198 kcal/100 g, below every label. Level B until read on the pack.",
     ranges={"kcal": (247, 316), "sugars": (2.2, 3.4)})
 
 
@@ -608,6 +613,16 @@ var("rakija", "43", "43%", "Rakija 43%", usda=171919, text="Rakija 43%: values f
 var("rakija", "45", "45%", "Rakija 45%", usda=171920, text="Rakija 45%: values from the USDA record for 90-proof distilled spirits (45% alcohol).")
 var("rakija", "50", "50%", "Rakija 50%", usda=173664, words=["domaca"], aliases=["domaća rakija", "homemade rakija"],
     text="Rakija 50%: values from the USDA record for 100-proof distilled spirits (50% alcohol). Homemade rakija is often 45–50%; it is rarely measured.")
+# Data round 2 (2026-10-19): medica = honey liqueur. Badel Medica: 24% vol, "produced by blending the base spirit,
+# Benkovac Komovica, with natural honey" (LCBO product page 33641; badel1862.hr lists 24%). Its sugar is not published,
+# so we use the EU legal minimum for a liqueur: Regulation (EU) 2019/787 Annex I cat. 33 "minimum content of sweetening
+# products, expressed as invert sugar, of ... 100 grams per litre in all other cases"; minimum 15% vol.
+# Per 40 ml: 24 ml 40% spirit (9.6 ml ethanol = 24% vol) + 4.9 g honey (USDA 82.1 g sugars/100 g → 4.0 g sugar =
+# 100 g/l) + 12.6 ml water (40 − 24 − 4.9 g / 1.42 g/ml honey). Volumes are taken as additive (about 1% off).
+var("rakija", "medica", "Medica", "Medica honey liqueur", recipe=[("rakija", ("ml", 24)), ("honey", 4.9), ("water", ("ml", 12.6))],
+    serving=('g', None, "40 ml", "our recipe"), words=["medica", "medenica", "medovaca"],
+    aliases=["medica", "medenica", "medovača", "medovaca", "rakija od meda", "medena rakija", "honey rakija", "honey liqueur", "badel medica"],
+    text="Medica (honey liqueur) is our recipe: 24 ml of 40% spirit, 4.9 g honey and 12.6 ml water per 40 ml (USDA parts), about 24% alcohol like Badel Medica (24% vol, komovica spirit with honey). Producers do not publish the sugar, so we use the EU minimum for a liqueur, 100 g sugar per litre: real medica can be sweeter. Homemade medica varies more.")
 size("rakija", [("3cl", "3 cl", "ml", 30), ("4cl", "4 cl", "ml", 40), ("5cl", "5 cl", "ml", 50)],
      "Sizes are the usual small glasses for spirits: 3, 4 or 5 cl.", "Common serving sizes")
 
@@ -647,6 +662,22 @@ var("filter-coffee", "instant", "Instant", "Instant coffee", usda=174130, words=
     text="Instant coffee: values from the USDA record for instant coffee prepared with water (26 mg caffeine per 100 g, about 65 mg per 250 ml).")
 var("filter-coffee", "decaf", "Decaf", "Decaf filter coffee", usda=171889, words=["decaf", "bez kofeina"],
     aliases=["decaf coffee", "decaf filter coffee"], text="Decaf filter coffee: values from the USDA record for decaffeinated brewed coffee.")
+# Data round 2 (2026-10-19): Turkish (Bosnian, "domaća") coffee, boiled unfiltered in a džezva/cezve. No SR Legacy
+# record (FNDDS 2710377 "Coffee, Turkish" is only brewed filter coffee + sugar, so it is not used). Measured:
+#  Derossi A et al. 2018, J Sci Food Agric, PMID 29230816, DOI 10.1002/jsfa.8826 (abstract): "Caffeine content was 316, 112 and 64 mg
+#   for the American, Turkish and espresso coffee cup"; per ml 2.01-2.21 mg/mL Turkish (as quoted in the review
+#   Olechno E et al. 2021, PMC8228209);
+#  Elsahoryi NA et al. 2025, PMC11901579: "the caffeine content to be 2.8 ± 0.3 mg/mL" (Arabica, standardized dose).
+# Cup: 7 g coffee + "1 cup (75 mL) of cold water" (Turkish Coffee Culture and Research Association, quoted in Dilek NM
+#  et al. 2025, PMC12581726); "1 cup (70 mL) of Turkish coffee" (Kayikci EE et al. 2023, PMC10440973).
+# Values: the USDA espresso record is the nearest concentration (212 mg caffeine per 100 g = 2.1 mg/g, the middle of
+# Derossi's 2.0-2.2 mg/mL), so 70 ml ≈ 148 mg; range 112 (Derossi's measured cup) to 196 mg (2.8 mg/mL × 70 ml).
+# Mass check: 7 g coffee × 0.9-2.4% caffeine (Arabica-Robusta green beans, PMC8228209) = 63-168 mg at most.
+var("filter-coffee", "turkish", "Turkish", "Turkish coffee", usda=171891, serving=('ml', 70, r'fl oz', "1 cup, 70 ml"), proxy=True,
+    words=["turska", "bosanska", "dzezva", "turkish", "domaca kava"],
+    aliases=["turska kava", "turkish coffee", "bosanska kava", "kava iz džezve", "kava iz dzezve", "domaća kava", "domaca kava", "greek coffee", "grčka kava"],
+    rng={"caffeineMg": (112, 196)},
+    text="Turkish coffee (boiled, unfiltered, about 7 g coffee per 70 ml cup) has no USDA record. Its caffeine was measured at 2.0–2.2 mg per ml (Derossi et al. 2018, J Sci Food Agric; one cup 112 mg) and 2.8 mg per ml (Elsahoryi et al. 2025). The USDA espresso record has the same strength (2.1 mg per g), so we use it for a 70 ml cup: about 148 mg caffeine. Your cup depends on how much coffee goes in and whether you drink the grounds.")
 addins("filter-coffee", ["sugar", "milk"])
 ask("coffee-with-milk", "Which coffee with milk?", "Classic")
 var("coffee-with-milk", "macchiato", "Macchiato", "Macchiato", recipe=[("espresso", ("ml", 30)), ("milk-whole", ("ml", 30))],
@@ -711,6 +742,24 @@ var("fries", "oven", "Oven-baked", "Oven-baked fries", usda=169264, gi="inherit"
     text="Oven-baked fries: values from the USDA record for frozen fries heated in the oven: about half the fat of deep-fried fries.")
 size("fries", [("small", "Small", 1), ("medium", "Medium", 117 / 71.0), ("large", "Large", 154 / 71.0)],
      "Sizes are USDA’s fast-food fries portions: small 71 g, medium 117 g, large 154 g.", "USDA FoodData Central, SR Legacy 170698 portions", "https://fdc.nal.usda.gov/food-details/170698/nutrients", level="A")
+# Data round 2 (2026-10-19): pasta and rice sizes from measured adult portions. Irish Food Portion Sizes Database
+# (Lyons J, Giltinan M, IUNA/UCC 2013; National Adult Nutrition Survey 2008-2010, 4-day semi-weighed records, adults
+# 18-64, n 1274), Table 4, cooked weight per eating occasion: "Pasta, boiled 396 199 113-250" (median 199 g, IQR
+# 113-250; men 214, women 161); "Rice, boiled 498 173 120-224" (median 173 g, IQR 120-224; men 179, women 141).
+# Cross-check: the Italian SINU/LARN standard portion of dry pasta or rice is 80 g (IEO SmartFood sheet: "Porzioni di
+# riferimento SINU - Pasta e cereali in chicco: 80g"); with USDA energy (dry 371 → cooked 158 kcal per 100 g pasta;
+# rice 365 → 130) 80 g dry = 188 g cooked pasta or 225 g cooked rice. The default serving stays the USDA cup.
+PR = "Irish Food Portion Sizes Database (IUNA 2013), adults 18-64, Table 4: boiled pasta median 199 g (IQR 113-250 g), boiled rice median 173 g (IQR 120-224 g); USDA SR Legacy cup portions"
+PRU = "https://irp-cdn.multiscreensite.com/46a7ad27/files/uploaded/Irish-Food-Portion-Sizes-Database.pdf"
+size("pasta", [("side", "Side", 1), ("plate", "Plate", 199 / 124.0), ("large", "Large", 250 / 124.0)],
+     "Sizes are cooked weight: Side is USDA’s cup, 124 g; Plate is the typical adult portion, 199 g; Large is a big portion, 250 g (the middle and the upper quarter of what Irish adults ate, weighed in a national survey). 80 g of dry pasta, the Italian standard portion, cooks to about 190 g.",
+     PR, PRU, level="B")
+size("pasta-wholewheat", [("side", "Side", 1), ("plate", "Plate", 199 / 117.0), ("large", "Large", 250 / 117.0)],
+     "Sizes are cooked weight: Side is USDA’s cup, 117 g; Plate is the typical adult pasta portion, 199 g; Large is a big portion, 250 g (Irish national survey, all boiled pasta).",
+     PR, PRU, level="B")
+size("rice-white", [("side", "Side", 120 / 158.0), ("plate", "Plate", 1), ("large", "Large", 224 / 158.0)],
+     "Sizes are cooked weight: Side 120 g, Plate is USDA’s cup, 158 g, Large 224 g. Irish adults ate 120–224 g of boiled rice at a meal (the middle half, median 173 g, weighed in a national survey). 80 g of dry rice, the Italian standard portion, cooks to about 225 g.",
+     PR, PRU, level="B")
 size("cevapi", [("5", "5 pcs", 1), ("10", "10 pcs", 2)],
      "5 or 10 pieces of about 16 g grilled (Sarajevo standard: 10 pieces = 200–250 g raw).", "Wikipedia ‘Ćevapi’, ref. 38; USDA raw-to-cooked factor", "https://en.wikipedia.org/wiki/%C4%86evapi")
 ask("vegetable-soup", "Which vegetable soup?", "Vegetable")
@@ -740,8 +789,11 @@ ask("ham", "Which ham?", "Pork")
 var("ham", "turkey", "Turkey", "Turkey ham", usda=168092, serving=('g', 28, "1 slice", "our assumption: the same slice as the pork ham (USDA 28 g)"),
     words=["pureca", "turkey"], aliases=["pureća šunka", "pureca sunka", "turkey ham", "pureća prsa narezak"], text="Turkey ham: values from the USDA record “Ham, turkey, sliced, extra lean, prepackaged or deli”.")
 ask("tuna-canned", "Canned in?", "Water")
-var("tuna-canned", "oil", "Oil", "Tuna canned in oil", usda=173708, serving=('p', r'^can$'), words=["u ulju", "in oil"],
-    aliases=["tuna u ulju", "tuna in oil", "tunjevina u ulju"], text="Tuna in oil: values from the USDA record for light tuna canned in oil, drained; 1 can = 171 g.")
+var("tuna-canned", "oil", "Oil", "Tuna canned in oil", usda=173708,
+    serving=('g', 80, "1 portion, 80 g", "survey: Irish Food Portion Sizes Database 2013 (IUNA, adults 18-64), canned tuna median 80 g; the same portion as tuna in water"),
+    words=["u ulju", "in oil"], aliases=["tuna u ulju", "tuna in oil", "tunjevina u ulju"],
+    text="Tuna in oil: values from the USDA record for light tuna canned in oil, drained (198 kcal per 100 g); 1 portion is 80 g (the median canned-tuna portion of Irish adults). If you eat the oil too, it is about twice that: the Open Food Facts entry for a Croatian can of tuna in vegetable oil (Eva, 80 g) gives 391 kcal and 35 g fat per 100 g.")
+CHANGED_ON_PURPOSE["tuna-canned"] = "data round 2: serving 165 g (US 5-oz can) to 80 g (Irish national portion median; EU 80 g cans)"
 ask("cheese-cottage", "Which cottage cheese?", "Creamed")
 var("cheese-cottage", "lowfat", "Low-fat", "Low-fat cottage cheese", usda=172182, serving=('g', 105, "1 portion, 105 g", "our assumption: the same portion as the creamed cottage cheese"),
     words=["nemasni", "posni", "lowfat"], aliases=["nemasni svježi sir", "posni sir", "low-fat cottage cheese"], text="Low-fat cottage cheese: values from the USDA record for 2% milkfat cottage cheese.")
@@ -772,9 +824,13 @@ builder("pizza", "What's on it?", [
     grp("base", "Base", [opt("base", "Cheese pizza", "cheese pizza", "pizza", on=True, level="A",
         src="The base is USDA’s 14-inch chain cheese pizza (dough, tomato sauce, mozzarella): 1 slice = 107 g, the whole pizza 853 g.")], one=True),
     grp("top", "Toppings", [
-        opt("cheese", "Extra cheese", "extra cheese", 170845, 14.2, rng=(12.4, 14.2), words=["sirom", "extra cheese", "dupli sir", "vise sira", "cheese"],
-            src="Extra cheese on pizza: our estimate 14.2 g per slice: about 4 oz on a 14-inch pie, roughly half of the base cheese (pizza operators on PMQ Think Tank; a weaker source, seen only as a search excerpt). Mozzarella, USDA.",
-            cite="PMQ Think Tank forum, ‘How much extra cheese’ (search excerpt)", url="https://thinktank.pmq.com/t/how-much-extra-cheese/15619"),
+        # Data round 2: USDA FNDDS 2021-2023 recipes (input_food.csv): "Pizza, extra cheese, thin crust" (2708622) = 691 g
+        # 14-inch chain cheese pizza + 41 g part-skim mozzarella (5.9%); "…, thick crust" (2708623) = 1060 g + 52 g (4.9%).
+        # Per our 107 g slice: 107 × 41/691 = 6.3 g; 107 × 52/1060 = 5.2 g. Pizza operators (PMQ Think Tank, search
+        # excerpt only) put about 4 oz on a 14-inch pie = 14.2 g per slice: the top of the range.
+        opt("cheese", "Extra cheese", "extra cheese", 170845, 6.3, rng=(5.2, 14.2), words=["sirom", "extra cheese", "dupli sir", "vise sira", "cheese"],
+            src="Extra cheese on pizza: 6.3 g of mozzarella per slice, USDA’s own recipe for an extra-cheese pizza (41 g of cheese added to a 691 g pizza, 5.9%). A thick-crust recipe adds 4.9% (5.2 g per slice); pizzerias may add up to about 4 oz on a large pizza (14.2 g per slice, pizza operators’ forum).",
+            cite="USDA FNDDS 2021-2023 recipes 2708622 and 2708623 (Pizza, extra cheese, thin / thick crust)", url="https://fdc.nal.usda.gov/food-details/2708622/nutrients"),
         pz("pepperoni", "Pepperoni", "pepperoni", 174575, 35, 50, ["pepperoni", "peperoni", "feferoni salama"]),
         pz("salami", "Salami", "salami", "salami", 35, 50, ["salamom", "salama", "kulenom", "salami"], " Salami is not in the chart: we use the pepperoni amount."),
         pz("ham", "Ham", "ham", "ham", 128, 170, ["sunkom", "sunka", "ham", "sunke"]),
@@ -785,9 +841,20 @@ builder("pizza", "What's on it?", [
         pz("onion", "Onion", "onion", "onion", 78, 113, ["lukom", "luk", "onion", "onions"]),
         pz("olives", "Olives", "olives", "olives", 78, 113, ["maslinama", "masline", "olives"]),
         pz("corn", "Corn", "sweet corn", 169214, 85, 99, ["kukuruzom", "kukuruz", "corn"]),
-        pz("tuna", "Tuna", "tuna", "tuna-canned", 128, 170, ["tunom", "tunjevinom", "tuna"], " Tuna is not in the chart: we use its amount for cooked meat toppings."),
+        # Data round 2: tuna share on EU tuna-pizza labels (Open Food Facts, ingredient lists with QUID %): Dr. Oetker
+        # Ristorante Pizza Tonno 4001724039891 "9,2% THUNFISCH"; Dr. Oetker Pizza Tonno 4001724015727 "10% THUNFISCH";
+        # Casino Pizza thon 3222477010352 "thon 9,4%"; Auchan Pizza Thon 3596710428595 "thon … 10,7%". The share is of the
+        # topped pizza, so per our 107 g cheese slice t = 107 × s / (1 − s): 9.2% → 10.8 g, 10% → 11.9 g, 10.7% → 12.8 g.
+        opt("tuna", "Tuna", "tuna", "tuna-canned", 11.9, rng=(10.8, 12.8), words=["tunom", "tunjevinom", "tuna"],
+            src="Tuna on pizza: 11.9 g per slice. European frozen tuna pizzas declare 9.2–10.7% tuna (Dr. Oetker 9.2% and 10%, Casino 9.4%, Auchan 10.7%); 10% of a topped slice is 11.9 g, the range 10.8–12.8 g. Canned tuna in water, USDA.",
+            cite="Open Food Facts ingredient lists: Dr. Oetker Ristorante Pizza Tonno (4001724039891), Dr. Oetker Pizza Tonno (4001724015727), Casino Pizza thon (3222477010352), Auchan Pizza Thon (3596710428595)",
+            url="https://world.openfoodfacts.org/product/4001724015727"),
+        # Data round 2: one egg per pizza (Great British Chefs "Pizza Fiorentina": "1 pizza base", "1 egg"; BBC Good Food
+        # ME "20-minute Fiorentina pizzas": an egg per flatbread, search excerpt). USDA egg 171287: large 50 g, medium 44 g,
+        # extra large 56 g → per slice of 8: 6.2 g (5.5–7.0).
         opt("egg", "Egg", "egg", 171287, 6.2, rng=(5.5, 7.0), words=["jajem", "jaje", "egg", "jajetom"],
-            src="Egg on pizza: our estimate, one large egg (50 g, USDA) per pizza, so 6.2 g per slice. No portion source was found for egg."),
+            src="Egg on pizza: one egg per pizza, as in pizza Fiorentina recipes; a large egg is 50 g (USDA), so 6.2 g per slice (5.5–7.0 g for a medium to an extra-large egg). The egg sits on one or two slices, so those slices carry more.",
+            cite="Great British Chefs, Pizza Fiorentina recipe (1 pizza base, 1 egg); USDA SR Legacy 171287 portions", url="https://www.greatbritishchefs.com/recipes/pizza-fiorentina-recipe"),
     ]),
 ], "Pizza is our builder: USDA’s 14-inch chain cheese pizza plus the toppings you pick, each a USDA record in a pizza-industry chart amount. Water lost in the oven is not modeled. Check: our pepperoni slice (113 g, 316 kcal, 13.2 g fat) matches USDA’s own 14-inch pepperoni slice (111 g, 313 kcal, 13.2 g fat).",
     presets=[preset("margherita", "Margherita", "Pizza Margherita", []),
@@ -865,6 +932,14 @@ builder("sandwich-ham", "What's on it?", [
 
 DK = "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)"
 DKU = "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger"
+# Data round 2 (2026-10-19), kebab meat: Panozzo M et al. 2015, "Nutritional quality of preparations based on Döner
+# Kebab sold in two towns of Veneto Region, Italy", Ital J Food Saf 4:4535 (read, PDF): 20 kebabs bought in shops,
+# each component weighed. Table 1 meat 34.8 ± 10.2% (Verona) and 39.5 ± 6.8% (Vicenza), median 36.7%; bread 26.9 /
+# 22.5%; mean serving "402 g" (range "274 to 618 g"). CALC: 36.7% × 402 g = 148 g (town means 140–159 g), so 150 g;
+# range from the USDA gyro (60 g) to 36.7% of the heaviest kebab (618 g → 227 g). Cross-checks: RTL weighing 80–173 g
+# (Mallorca Revue), Verbraucherzentrale Hamburg "rund 100 bis 150 Gramm Fleisch" (secondary excerpt only).
+DKM = "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro"
+DKMU = "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187"
 builder("kebab", "What's on it?", [
     grp("bread", "Bread", [
         opt("pita", "Pita", "pita", 174915, 60, rng=(28, 60), on=True, words=["u piti", "pita", "lepinji"], cite=DK, url=DKU,
@@ -873,10 +948,10 @@ builder("kebab", "What's on it?", [
             src="Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches)."),
     ], one=True),
     grp("meat", "Meat", [
-        opt("chicken", "Chicken", "chicken", 172388, 110, rng=(60, 173), on=True, words=["piletinom", "pileci", "chicken"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DK, url=DKU,
-            src="Chicken: our estimate 110 g of roasted chicken thigh meat (USDA). Measured portions run from 60 g (USDA gyro) to 80–173 g (döner weighed in a German TV test)."),
-        opt("beef", "Beef/veal", "beef", 171797, 110, rng=(60, 173), words=["teletinom", "junetinom", "govedinom", "telecim", "beef"], aliases=["teleći kebab", "teleci kebab", "juneći kebab", "beef kebab", "beef doner"], cite=DK, url=DKU,
-            src="Beef/veal: our estimate 110 g; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Measured portions run from 60 g to 173 g."),
+        opt("chicken", "Chicken", "chicken", 172388, 150, rng=(60, 227), on=True, words=["piletinom", "pileci", "chicken"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DKM, url=DKMU,
+            src="Chicken: 150 g of meat (roasted chicken thigh, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g."),
+        opt("beef", "Beef/veal", "beef", 171797, 150, rng=(60, 227), words=["teletinom", "junetinom", "govedinom", "telecim", "beef"], aliases=["teleći kebab", "teleci kebab", "juneći kebab", "beef kebab", "beef doner"], cite=DKM, url=DKMU,
+            src="Beef/veal: 150 g of meat; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Weighed döner kebabs in Italy carried about 150 g of meat (35–40% of a 402 g kebab); measured portions run from 60 g (USDA gyro) to about 230 g."),
     ], one=True),
     grp("extra", "Extras", [
         opt("tomato", "Tomato", "tomato", "tomato", 30, rng=(20, 40), on=True, words=["rajcicom", "tomato"], cite=DK, url=DKU, src="Tomato: 30 g (USDA gyro recipe)."),
@@ -887,7 +962,7 @@ builder("kebab", "What's on it?", [
         opt("mayo", "Mayo sauce", "mayonnaise sauce", 171009, 14, rng=(9, 28), words=["majonezom", "mayo"], cite=FN, url=FNU,
             src="Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich)."),
     ]),
-], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record, in the amounts of USDA’s gyro sandwich recipe and weighed döner portions. Kebab shops differ a lot, mostly in the meat.",
+], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) is from döner kebabs weighed in Italian shops; bread, vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat; the weighed Italian kebabs also had more bread (about 100 g).",
     presets=[preset("chicken-pita", "Chicken pita", "Chicken kebab in pita", ["pita", "chicken", "tomato", "onion", "yogurt"]),
              preset("beef-pita", "Beef pita", "Beef kebab in pita", ["pita", "beef", "tomato", "onion", "yogurt"]),
              preset("chicken-wrap", "Chicken wrap", "Chicken kebab wrap", ["wrap", "chicken", "tomato", "onion", "yogurt"])],
@@ -896,10 +971,19 @@ CHANGED_ON_PURPOSE["kebab"] = "owner 2026-10-18: kebab returns as a builder (was
 
 BU = "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)"
 BUU = "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g"
+# Data round 2 (2026-10-19): no spinach or potato burek label with ingredient shares was found (Open Food Facts,
+# Konzum, web). Label energy per 100 g used as a CHECK of our recipes (Open Food Facts, nutrition tables):
+#  spinach: "Burek filled with Spinach and Cheese" 3871832005535 230 kcal, 10 g fat; "Mini filo twist with cheese and
+#  spinach (burek)" 3800047770372 281 kcal; "Burek spinach zeljanica posno" 3811832016414 282 kcal, 14.4 g fat;
+#  potato: "Burek potato" 7350039279179 253 kcal, 9.5 g fat, 36 g carbohydrate, 5 g protein.
+BUS = "Our recipe (no label gives the shares); check: Open Food Facts spinach burek labels 3871832005535 (230 kcal), 3800047770372 (281), 3811832016414 (282 per 100 g)"
+BUSU = "https://world.openfoodfacts.org/product/3871832005535"
+BUP = "Our recipe (no label gives the shares); check: Open Food Facts ‘Burek potato’ 7350039279179 (253 kcal per 100 g)"
+BUPU = "https://world.openfoodfacts.org/product/7350039279179"
 builder("burek", "What's in it?", [
     grp("filling", "Filling", [
         opt("bakery", "Bakery", "bakery burek", "burek", on=True, level="B",
-            src="Bakery burek: one Croatian producer label (Čakovečki mlinovi, 150 g piece); the label does not name the filling."),
+            src="Bakery burek: a cheese burek from a Croatian bakery producer (Čakovečki mlinovi, 150 g piece: “layers of dough and cheese filling”), values from its nutrition table, which is per 100 g as EU law requires."),
         opt("cheese", "Cheese", "burek with cheese", [(172791, 84), ("cheese-cottage", 51), (171017, 15)], words=["sirom", "sa sirom", "s sirom"],
             aliases=["burek sa sirom", "burek s sirom", "sirnica", "sirna pita", "burek od sira", "cheese burek"], cite=BU, url=BUU,
             src="Burek with cheese is our recipe for a 150 g piece: 84 g phyllo (USDA), 51 g fresh cheese (34%, as on the Vindija label; USDA cottage cheese) and 15 g sunflower oil (Croatian rules ask for at least 10% fat). Labels give 247–316 kcal per 100 g; water lost in baking is not modeled."),
@@ -907,16 +991,17 @@ builder("burek", "What's in it?", [
             aliases=["burek s mesom", "burek sa mesom", "mesni burek", "meat burek", "burek od mesa"], cite=BU, url=BUU,
             src="Burek with meat is our recipe for a 150 g piece: 77 g phyllo (USDA), 58 g ground beef (38.6%, as on a Krajina Klas label; USDA cooked ground beef 80/20) and 15 g sunflower oil (at least 10% fat by Croatian rules)."),
         opt("spinach", "Spinach", "spinach burek", [(172791, 75), ("spinach", 30), ("cheese-cottage", 30), (171017, 15)], words=["spinatom", "zeljem", "sa spinatom"],
-            aliases=["zeljanica", "burek sa špinatom", "burek sa zeljem", "spinach burek", "pita sa zeljem"], cite=BU, url=BUU,
-            src="Spinach burek (zeljanica) is our recipe for a 150 g piece: 75 g phyllo, 30 g cooked spinach, 30 g fresh cheese and 15 g sunflower oil (USDA parts). We found no label with its proportions, so they are our estimate."),
+            aliases=["zeljanica", "burek sa špinatom", "burek sa zeljem", "spinach burek", "pita sa zeljem"], cite=BUS, url=BUSU,
+            src="Spinach burek (zeljanica) is our recipe for a 150 g piece: 75 g phyllo, 30 g cooked spinach, 30 g fresh cheese and 15 g sunflower oil (USDA parts), 262 kcal per 100 g. We found no label that gives the proportions, so they are our estimate; spinach burek labels give 230–282 kcal per 100 g, so the total fits."),
         opt("potato", "Potato", "potato burek", [(172791, 75), ("potato-boiled", 45), ("onion", 15), (171017, 15)], words=["krumpirom", "krompirom"],
-            aliases=["krumpiruša", "krumpirusa", "krompiruša", "burek s krumpirom", "potato burek", "burek od krumpira"], cite=BU, url=BUU,
-            src="Potato burek (krumpiruša) is our recipe for a 150 g piece: 75 g phyllo, 45 g boiled potato, 15 g onion and 15 g sunflower oil (USDA parts). We found no label with its proportions, so they are our estimate."),
+            aliases=["krumpiruša", "krumpirusa", "krompiruša", "burek s krumpirom", "potato burek", "burek od krumpira"], cite=BUP, url=BUPU,
+            src="Potato burek (krumpiruša) is our recipe for a 150 g piece: 75 g phyllo, 45 g boiled potato, 15 g onion and 15 g sunflower oil (USDA parts), 268 kcal per 100 g. We found no label that gives the proportions, so they are our estimate; the one potato burek label we found gives 253 kcal, 9.5 g fat and 36 g carbohydrate per 100 g (ours: 13 g fat, 33 g carbohydrate)."),
     ], one=True),
 ], "Burek: the bakery label, or our recipes for each filling from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
     ask="Which burek?", unit="piece", cite=BU, url=BUU)
+CHANGED_ON_PURPOSE["melon"] = "data round 2: giSource text says why row 1021 (65) wins over row 1022 (70); the GI value is unchanged"
 CHANGED_ON_PURPOSE["bread-white"] = "alias 'tost' moved to the sandwich builder (Croatian 'tost' is a toasted ham-and-cheese sandwich)"
-CHANGED_ON_PURPOSE["burek"] = "aliases 'burek sa sirom', 'sirnica', 'sirna pita', 'mesni burek', 'burek s mesom' moved to the burek fillings (builder)"
+CHANGED_ON_PURPOSE["burek"] = "aliases 'burek sa sirom', 'sirnica', 'sirna pita', 'mesni burek', 'burek s mesom' moved to the burek fillings (builder); data round 2: override text names the cheese filling and the per-100 g basis check"
 
 DR = "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)"
 DRU = "https://www.law.cornell.edu/cfr/text/21/101.12"
@@ -938,7 +1023,7 @@ builder("cabbage", "Dressing?", dressing("cabbage", "Cabbage"), "Cabbage salad: 
 # Owner 2026-10-18: a word that names several foods asks ("Which tea?"); the app starts on the ALIAS_OWNER food and
 # keeps the chooser visible until a pick. Every shared word in the spec must be covered (the build fails otherwise).
 chooser("tea", "Which tea?", [("black-tea", "Black"), ("green-tea", "Green"), ("herbal-tea", "Herbal"), ("iced-tea", "Iced")], words=["čaj", "tea", "čaja", "čajem"])
-chooser("coffee", "Which coffee?", [("espresso", "Espresso"), ("filter-coffee", "Filter"), ("coffee-with-milk", "With milk"), ("cappuccino", "Cappuccino"), ("latte", "Latte")],
+chooser("coffee", "Which coffee?", [("espresso", "Espresso"), ("filter-coffee", "Filter"), ("filter-coffee.turkish", "Turkish"), ("coffee-with-milk", "With milk"), ("cappuccino", "Cappuccino"), ("latte", "Latte")],
         words=["kava", "coffee", "kave", "kavu", "kafa", "crna kava"])
 chooser("juice", "Which juice?", [("orange-juice", "Orange"), ("apple-juice", "Apple"), ("tomato-juice", "Tomato")], words=["sok", "juice", "soka", "voćni sok"])
 chooser("milk", "Which milk?", [("milk-whole", "Whole"), ("milk-semi-skimmed", "2%"), ("milk-skimmed", "Skim")], words=["mlijeko", "milk", "mlijeka", "mleko"])

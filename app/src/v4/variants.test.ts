@@ -34,8 +34,13 @@ const GOLDEN: [string, [string, number][]][] = [
   ['bezalkoholno pivo', [['beer.alcohol-free', 500]]],
   ['pljeskavica', [['hamburger_pljeskavica', 315]]],
   ['cheeseburger', [['hamburger_cheeseburger', 119]]],
-  ['kebab', [['kebab', 250]]],
-  ['kebab s teletinom', [['kebab_pita_beef_tomato_onion_yogurt', 250]]],
+  ['kebab', [['kebab', 290]]],
+  ['kebab s teletinom', [['kebab_pita_beef_tomato_onion_yogurt', 290]]],
+  // data round 2 (2026-10-19)
+  ['turska kava', [['filter-coffee.turkish', 70]]],
+  ['bosanska kava', [['filter-coffee.turkish', 70]]],
+  ['medica', [['rakija.medica', 40]]],
+  ['tuna u ulju', [['tuna-canned.oil', 80]]],
   ['tost', [['sandwich-ham_toast', 109]]],
   ['domaća rakija', [['rakija.50', 38]]],
   ['decaf espresso', [['espresso.decaf', 30]]],
@@ -50,8 +55,8 @@ describe('"Which …?" choosers: a word that names several foods asks, and start
   const ASK: [string, string, string, string[]][] = [
     ['čaj', 'black-tea', 'Which tea?', ['Black', 'Green', 'Herbal', 'Iced']],
     ['tea', 'black-tea', 'Which tea?', ['Black', 'Green', 'Herbal', 'Iced']],
-    ['kava', 'espresso', 'Which coffee?', ['Espresso', 'Filter', 'With milk', 'Cappuccino', 'Latte']],
-    ['coffee', 'filter-coffee', 'Which coffee?', ['Espresso', 'Filter', 'With milk', 'Cappuccino', 'Latte']],
+    ['kava', 'espresso', 'Which coffee?', ['Espresso', 'Filter', 'Turkish', 'With milk', 'Cappuccino', 'Latte']],
+    ['coffee', 'filter-coffee', 'Which coffee?', ['Espresso', 'Filter', 'Turkish', 'With milk', 'Cappuccino', 'Latte']],
     ['sok', 'orange-juice', 'Which juice?', ['Orange', 'Apple', 'Tomato']],
     ['juice', 'orange-juice', 'Which juice?', ['Orange', 'Apple', 'Tomato']],
     ['mlijeko', 'milk-whole', 'Which milk?', ['Whole', '2%', 'Skim']],
@@ -290,5 +295,55 @@ describe('meals', () => {
   it('suggestions show variants only when their word is typed', () => {
     expect(suggest('pivo').map((s) => foodKey(s.parts[0].food))).not.toContain('beer.radler');
     expect(suggest('bezalkoholno').map((s) => foodKey(s.parts[0].food))[0]).toBe('beer.alcohol-free');
+  });
+});
+
+// Data round 2 (2026-10-19, research/audit/VARIANTS-DONE.md "Data round 2"): each number below is from a source read
+// that round; the test keeps the data equal to it.
+describe('data round 2: sourced portions and new variants', () => {
+  const per = (f: Food, k: keyof Food['p'], grams = f.serving.grams) => ((f.p[k] as number) * grams) / 100;
+  const opt = (id: string, k: string) => FOOD_BY_ID[id].builder!.groups.flatMap((g) => g.opts).find((o) => o.k === k)!;
+  it('Turkish coffee: a 70 ml cup at espresso strength (measured 2.0–2.8 mg/ml), range 112–196 mg', () => {
+    const t = deriveFood(FOOD_BY_ID['filter-coffee'], { v: 'turkish' });
+    expect(foodKey(t)).toBe('filter-coffee.turkish');
+    expect(t.serving.grams).toBeCloseTo(70, 0);
+    const mg = per(t, 'caffeineMg');
+    expect(mg).toBeGreaterThan(140); expect(mg).toBeLessThan(156);
+    const v = FOOD_BY_ID['filter-coffee'].variants!.find((x) => x.v === 'turkish')!;
+    expect(v.range?.caffeineMg).toEqual([112, 196]);
+    expect(v.src[0].text).toMatch(/Derossi/);
+  });
+  it('medica: 24% alcohol and the EU liqueur minimum of 100 g sugar per litre, in a 40 ml glass', () => {
+    const m = deriveFood(FOOD_BY_ID.rakija, { v: 'medica' });
+    expect(m.serving.label).toBe('40 ml');
+    expect(per(m, 'alcoholG') / 0.789 / 40).toBeCloseTo(0.24, 2); // ethanol 0.789 g/ml
+    expect(per(m, 'sugars')).toBeCloseTo(4.0, 1);
+    expect(per(m, 'freeSugars')).toBeCloseTo(4.0, 1); // honey sugars are free sugars (WHO)
+    expect(sizesOf(m)!.map((s) => s.mult)).toEqual([0.75, 1, 1.25]);
+  });
+  it('pasta and rice sizes: Side · Plate · Large from weighed adult portions (Irish national survey)', () => {
+    const g = (id: string) => sizesOf(FOOD_BY_ID[id])!.map((s) => [s.label, Math.round(s.mult * FOOD_BY_ID[id].serving.grams)]);
+    expect(g('pasta')).toEqual([['Side', 124], ['Plate', 199], ['Large', 250]]);
+    expect(g('pasta-wholewheat')).toEqual([['Side', 117], ['Plate', 199], ['Large', 250]]);
+    expect(g('rice-white')).toEqual([['Side', 120], ['Plate', 158], ['Large', 224]]);
+  });
+  it('canned tuna: an 80 g portion (EU can, Irish median), water by default, oil as a variant', () => {
+    expect(FOOD_BY_ID['tuna-canned'].serving.grams).toBe(80);
+    expect(deriveFood(FOOD_BY_ID['tuna-canned'], { v: 'oil' }).serving.grams).toBe(80);
+  });
+  it('pizza toppings: extra cheese from the USDA recipe, tuna from EU labels, one egg per pizza', () => {
+    expect([opt('pizza', 'cheese').grams, opt('pizza', 'tuna').grams, opt('pizza', 'egg').grams]).toEqual([6.3, 11.9, 6.2]);
+    expect(opt('pizza', 'cheese').rng).toEqual([5.2, 14.2]);
+    expect(opt('pizza', 'tuna').rng).toEqual([10.8, 12.8]);
+  });
+  it('kebab meat: 150 g (weighed Italian döner), range 60–227 g', () => {
+    for (const k of ['chicken', 'beef']) { expect(opt('kebab', k).grams).toBe(150); expect(opt('kebab', k).rng).toEqual([60, 227]); }
+  });
+  it('burek: the bakery default is a cheese burek, its label read per 100 g; melon GI stays 65 (Atkinson A1 row 1021)', () => {
+    const b = opt('burek', 'bakery');
+    expect(b.on).toBe(true);
+    expect(b.src[0].text).toMatch(/cheese/); expect(b.src[0].text).toMatch(/per 100 g/);
+    expect(Math.round(FOOD_BY_ID.burek.p.kcal)).toBe(297);
+    expect(FOOD_BY_ID.melon.gi).toBe(65);
   });
 });

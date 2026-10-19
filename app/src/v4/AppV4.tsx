@@ -55,7 +55,7 @@ import { MomentShare, type Moment } from './MomentShare';
 
 import { SmartSearch } from './SmartSearch';
 import { isPlain, macros, parseMeal, sizesOf, suggest, type Food, type Part } from './food/parse';
-import { setFood } from './food/meal';
+import { canPace, paceLabel, paceMatters, setFood } from './food/meal';
 import { makeFoodProduct } from './food/foodProduct';
 
 // Water each drink brings (ml): espresso 30 ml shot, cola 330 ml can (≈ 89% water), water 250 ml glass.
@@ -176,7 +176,13 @@ export default function AppV4() {
   const [bodyAsked, setBodyAsked] = useState(() => { if (LINK_MISS || HASH_T !== null || LINK_FOOD) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
   const [habits, setHabits] = useState<Habits>({});
   const [foodParts, setFoodParts] = useState<Part[]>(HASH_Q);
-  const def = useMemo(() => (productId === 'food' && foodParts.length ? makeFoodProduct(foodParts, 'food') : own(PRODUCTS, productId) ?? PRODUCTS.espresso), [productId, foodParts]);
+  // "Over how long?" (PACING, 2026-10-19): minutes the servings are spread over; 0 = all at once (every older link).
+  // Only for two or more servings (or a meal with two or more drinks); a new food starts at all at once again.
+  const [over, setOver] = useState(LINK.over ?? 0);
+  const [paceTouched, setPaceTouched] = useState(LINK.over !== undefined); // highlighted until picked (several drinks)
+  const paceable = productId === 'food' && canPace(foodParts);
+  const overEff = paceable ? over : 0;
+  const def = useMemo(() => (productId === 'food' && foodParts.length ? makeFoodProduct(foodParts, 'food', overEff) : own(PRODUCTS, productId) ?? PRODUCTS.espresso), [productId, foodParts, overEff]);
   const habitId = productId === 'food' ? (foodParts.length === 1 ? HABIT_OF[foodParts[0].food.id] ?? 'food' : 'food') : productId;
   const PRODUCT = def.content;
   const lower = PRODUCT.name.toLowerCase();
@@ -253,8 +259,9 @@ export default function AppV4() {
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
       glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, caffeineDoseMg: built.caffeine.doseMg, sleepRisk: vYou.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, wakeMin: profile.wakeMin, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
       latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH),
-      mealLines: productId === 'food' ? mealLinesFor(foodParts, profile) : undefined, glucoseUnit: profile.glucoseUnit });
-  }, [systems, profile, built, vYou, productId, foodParts]);
+      mealLines: productId === 'food' ? mealLinesFor(foodParts, profile, overEff) : undefined, glucoseUnit: profile.glucoseUnit,
+      pace: built.pace, canPace: paceable });
+  }, [systems, profile, built, vYou, productId, foodParts, overEff, paceable]);
   // the current item as database parts (curated products too), its sugar peak, and a checked better swap
   const currentParts = useMemo(() => (productId === 'food' ? foodParts : parseMeal(({ cola: 'cola', espresso: 'espresso', water: 'glass of water' } as Record<string, string>)[productId] ?? productId)), [productId, foodParts]);
   const peakNow = useMemo(() => {
@@ -354,24 +361,28 @@ export default function AppV4() {
 
   const choose = (item: CatalogItem) => {
     if (item.status !== 'ready' || !PRODUCTS[item.id]) { setNotice(item); return; }
-    setPortion(1); setPortionBase(null);
+    setPortion(1); setPortionBase(null); setOver(0);
     setProductId(item.id); setMissText(null);
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
   };
-  const chooseFood = (parts: Part[]) => {
+  /** `keepPace`: the meal itself changed (an amount, an item added or removed), so "Over how long?" stays */
+  const chooseFood = (parts: Part[]) => pickFood(parts, false);
+  const changeMeal = (parts: Part[]) => pickFood(parts, true);
+  const pickFood = (parts: Part[], keepPace: boolean) => {
     if (!parts.length) return;
     setPortion(1); setPortionBase(null);
+    if (!keepPace) { setOver(0); setPaceTouched(false); }
     const one = parts.length === 1 ? parts[0] : null;
     setAsking(parts.length === 1 && !!parts[0].ask);
     if (one && isPlain(one.food) && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
     setFoodParts(parts); setProductId('food'); setMissText(null);
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
-    try { history.replaceState(null, '', writeLink(linkFor(parts))); } catch { /* sandboxed: fine */ }
+    try { history.replaceState(null, '', writeLink({ ...linkFor(parts), over: keepPace && canPace(parts) ? over : 0 })); } catch { /* sandboxed: fine */ }
   };
 
   // ---- Share: hook → the whole day following the liquid → summary card, recorded into a Reel or a feed video ----
   const HOOK_OF: Record<string, string> = { cola: 'one can of cola', espresso: 'one espresso', water: 'one glass of water' };
-  const hookWhat = productId === 'food' ? foodParts.map((p) => `${p.amountLabel} ${p.food.name.replace(/\s*\(.*\)$/, '').toLowerCase()}`).join(' + ') : HOOK_OF[productId] ?? lower;
+  const hookWhat = productId === 'food' ? `${foodParts.map((p) => `${p.amountLabel} ${p.food.name.replace(/\s*\(.*\)$/, '').toLowerCase()}`).join(' + ')}${overEff ? ` over ${paceLabel(overEff)}` : ''}` : HOOK_OF[productId] ?? lower;
   const overlayRef = useRef<Overlay | null>(null);
   const reelStops = useRef<number[] | null>(null);
   const [shortVid, setShortVid] = useState(false); // ≈ 22 s cut for TikTok / Shorts
@@ -529,7 +540,7 @@ export default function AppV4() {
   // ---- deep link: the address bar always describes what is on screen (replaceState, so no history spam).
   // The minute goes in only while paused / after scrubbing, never every frame.
   const linkHash = (t: number | null) => writeLink({
-    ...linkFor(portion !== 1 && portionBase ? portionBase : currentParts), t,
+    ...linkFor(portion !== 1 && portionBase ? portionBase : currentParts), t, over: overEff,
     ...(sizes?.find((x) => Math.abs(x.mult - portion) < 1e-6 && x.mult !== 1) && productId === 'food' && currentParts.length === 1
       ? { s: sizes.find((x) => Math.abs(x.mult - portion) < 1e-6)!.k } : { n: portion }),
     view: mode === 'detailed' ? 'detailed' : calm ? 'simple' : 'full',
@@ -594,7 +605,8 @@ export default function AppV4() {
           setStarted(false); setPlaying(false); setPanel(null); setEvidence(null); setCompare(null); setShare(null); setSelected(null);
           try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch { /* sandboxed */ }
         }}>Inside <em>24h</em></button>
-        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={chooseFood} asking={asking} onSwitch={switchFood} />}</div>
+        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={changeMeal} asking={asking} onSwitch={switchFood}
+          pace={paceable ? { over: overEff, set: (v) => { setOver(v); setPaceTouched(true); }, hot: paceMatters(currentParts) && !overEff && !paceTouched } : undefined} />}</div>
         <div className="topactions">
           <div className="seg2 mode" role="group" aria-label="View">
             <button aria-pressed={mode === 'simple' && calm} onClick={() => { setMode('simple'); setCalm(true); }}>Simple</button>
@@ -800,7 +812,7 @@ export default function AppV4() {
       )}
 
       {linkNote && <div className="linknote" role="status">{linkNote}<button className="x" aria-label="Close" onClick={() => setLinkNote(null)}>×</button></div>}
-      {compare && <Compare current={currentParts} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} onRight={setVsParts} />}
+      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
       {share?.state === 'rec' && <div className="recbadge" role="status">● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</div>}
       {share && share.state !== 'rec' && (

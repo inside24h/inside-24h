@@ -34,7 +34,11 @@ export interface AlcoholClock {
   typicalAt: (m: number) => number; slowAt: (m: number) => number;
 }
 
-export function alcoholClock(bac: ArrayLike<number>): AlcoholClock {
+/** `pivotMin` (PACING, 2026-10-19): where the other livers' downslope starts. All at once that is the peak. Spread over
+ *  hours the liver has been working since the first drink (Searle 2015: full elimination rate from the start of the
+ *  session), so the pivot is where ONE round would peak (the all-at-once peak minute), not the late evening peak;
+ *  otherwise a slow liver would look done too early. */
+export function alcoholClock(bac: ArrayLike<number>, pivotMin?: number): AlcoholClock {
   const n = bac.length;
   let peak = 0, peakMin = 0;
   for (let t = 0; t < n; t++) if (bac[t] > peak) { peak = bac[t]; peakMin = t; }
@@ -46,12 +50,15 @@ export function alcoholClock(bac: ArrayLike<number>): AlcoholClock {
     return b - a >= 30 ? Math.max(0.05, ((bac[a] - bac[b]) * 60) / (b - a)) : null;
   };
   const beta = slope(150) ?? slope(60) ?? 0.12;
-  let gone = peakMin; while (gone < n - 1 && bac[gone] > GONE_GL) gone++;
+  // gone = after the LAST minute with alcohol (the same as the first one after the peak for one curve; with rounds
+  // spread far apart the blood can be clear between two of them)
+  let gone = n - 1; while (gone > peakMin && bac[gone - 1] <= GONE_GL) gone--;
   const beyond24 = bac[n - 1] > GONE_GL;
   const goneMin = beyond24 ? n - 1 + (60 * bac[n - 1]) / beta : gone;
   // a liver at speed v clears the same downslope in (gone − peak) × beta / v
-  const earliestMin = beta >= ELIM_RANGE.fast ? goneMin : peakMin + ((goneMin - peakMin) * beta) / ELIM_RANGE.fast;
-  const latestMin = beta <= ELIM_RANGE.slow ? goneMin : peakMin + ((goneMin - peakMin) * beta) / ELIM_RANGE.slow;
+  const pv = pivotMin !== undefined ? Math.min(peakMin, Math.max(0, pivotMin)) : peakMin;
+  const earliestMin = beta >= ELIM_RANGE.fast ? goneMin : Math.max(peakMin, pv + ((goneMin - pv) * beta) / ELIM_RANGE.fast);
+  const latestMin = beta <= ELIM_RANGE.slow ? goneMin : pv + ((goneMin - pv) * beta) / ELIM_RANGE.slow;
   const typicalAt = (m: number) => {
     if (m <= n - 1) return bac[Math.max(0, Math.round(m))];
     return Math.max(0, bac[n - 1] - (beta * (m - (n - 1))) / 60);

@@ -9,17 +9,19 @@ import { quickAnswers } from './Answers';
 import { climateNow, findCity, cityLabel } from './climate/cities';
 import { isPlain, macros, type Part } from './food/parse';
 import { makeFoodProduct } from './food/foodProduct';
+import { canPace, cleanPace } from './food/meal';
 import { PRODUCTS } from './products';
 
 const WATER_ML: Record<string, number> = { espresso: 29, cola: 295, water: 250 };
 const T50_OF: Record<string, number> = { espresso: 13, cola: 32, water: 13 };
 const CURATED = new Set(['espresso', 'cola', 'water']);
 
-export function analyze(parts: Part[], p: Profile) {
+/** `overMin` = "Over how long?" (PACING, 2026-10-19; 0 = all at once). One serving has nothing to spread. */
+export function analyze(parts: Part[], p: Profile, overMin = 0) {
   const one = parts.length === 1 ? parts[0] : null;
   // the curated models only for the plain default (a decaf espresso or a 500 ml cola uses the generic model)
   const curated = one && isPlain(one.food) && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1 ? one.food.id : null;
-  const def = curated ? PRODUCTS[curated] : makeFoodProduct(parts, 'food');
+  const def = curated ? PRODUCTS[curated] : makeFoodProduct(parts, 'food', cleanPace(overMin));
   const built = def.build(p, 63);
   const v = buildVitals(p, built.caffeine, sleepAnchors(), true, built.effects);
   const city = findCity(p.city);
@@ -33,6 +35,7 @@ export function analyze(parts: Part[], p: Profile) {
     glucoseDeltaMgDl: unknownSugar ? undefined : built.effects.glucoseMgDl ?? new Float64Array(1441),
     extraSleepMin: v.extraLatencyMin, caffeineAtBedMg: v.mgAtBed, caffeineDoseMg: built.caffeine.doseMg, sleepRisk: v.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, wakeMin: p.wakeMin, waterMl,
     glucoseUnit: p.glucoseUnit, // Compare shows the unit picked in "Your body"
+    pace: built.pace, canPace: !curated && canPace(parts),
   });
   const g = built.effects.glucoseMgDl;
   const sugarPeak = unknownSugar ? null : g ? Math.max(0, ...Array.from(g.subarray(0, 600))) / 18.016 : 0;

@@ -40,12 +40,17 @@ export interface AnswerInput {
   mealLines?: string[];
   /** the blood sugar unit chosen in "Your body" (default mmol/L) */
   glucoseUnit?: 'mmol/L' | 'mg/dL';
+  /** PACING ("Over how long?", 2026-10-19): the rounds and, for alcohol, the same drinks all at once (for the comparison) */
+  pace?: { doses: number; overMin: number; bacOnce?: Float64Array };
+  /** "Over how long?" is offered for this item (two or more servings): the all-at-once answers point at it */
+  canPace?: boolean;
 }
 
 /** Whole-meal sentences (which item drives sugar, speed, alcohol, caffeine) for 2+ items; [] for a single food. */
-export function mealLinesFor(parts: Part[], profile: Profile): string[] {
+export function mealLinesFor(parts: Part[], profile: Profile, overMin = 0): string[] {
   if (parts.length < 2) return [];
-  return mealAnswerLines(simulateFood(toMeal(parts), profile), toMeal(parts), parts);
+  const meal = toMeal(parts, undefined, overMin);
+  return mealAnswerLines(simulateFood(meal, profile), meal, parts);
 }
 export interface Answer { icon: string; q: string; a: string; tone: 0 | 1 | 2; /** small line under the answer (evidence level) */ note?: string; title?: string;
   /** 'you' = computed for this person's body and settings; 'typical' = the same for everyone */
@@ -135,9 +140,15 @@ export function quickAnswers(x: AnswerInput): Answer[] {
   // Driving: never a "safe" time and never one exact number. Widmark estimates are off by 20–40% (alcohol.md W6),
   // and attention is already worse from 0.2 g/L (AL4), so the only honest answer is "don't".
   if (x.bac) {
-    let peak = 0;
-    for (let m = 0; m < x.bac.length; m++) peak = Math.max(peak, x.bac[m]);
-    out.push({ icon: '🚗', q: 'Can I drive?', a: `No. Don’t drive after drinking: this app can’t tell you when you’re safe. Your peak is likely about ${bacRangeText(peak)}. The range runs from 40% below to 50% above our estimate, because bodies differ.`, tone: 2,
+    let peak = 0, peakMin = 0;
+    for (let m = 0; m < x.bac.length; m++) if (x.bac[m] > peak) { peak = x.bac[m]; peakMin = m; }
+    // paced: the same drinks all at once, for "what did spreading change" (and where the other livers' slope starts)
+    const once = x.pace?.bacOnce;
+    let oncePeak = 0, oncePeakMin = 0;
+    if (once) for (let m = 0; m < once.length; m++) if (once[m] > oncePeak) { oncePeak = once[m]; oncePeakMin = m; }
+    const overH = x.pace ? `${x.pace.overMin / 60} h` : '';
+    const paceTxt = x.pace && once ? ` (${x.pace.doses} drinks spread over ${overH}; all at once about ${bacRangeText(oncePeak)})` : '';
+    out.push({ icon: '🚗', q: 'Can I drive?', a: `No. Don’t drive after drinking: this app can’t tell you when you’re safe. Your peak is likely about ${bacRangeText(peak)}${paceTxt}. The range runs from 40% below to 50% above our estimate, because bodies differ.`, tone: 2,
       tag: pn ? 'you' : undefined,
       note: pn ? (pn.withMeal
         ? `For you: after a meal the peak is about ${Math.round(FED_PEAK_RATIO[0] * 100)}–${Math.round(FED_PEAK_RATIO[1] * 100)}% of the peak on an empty stomach (evidence ${FACTORS.withMeal.level})`
@@ -147,13 +158,21 @@ export function quickAnswers(x: AnswerInput): Answer[] {
       note: 'Evidence A: 693 deaths from alcohol poisoning (Jones & Holmgren 2003); warning signs from NIAAA', title: 'We show this when the top of our range (model + 50%) reaches 2.2 ‰, the 5th percentile of blood alcohol in deaths from acute alcohol poisoning.' });
     // When is it gone? The liver works at a fixed speed, 0.10–0.20 ‰ an hour for most people, asleep or awake [AL2, A].
     // The model's own day stops at 24 h: past that we say so and extrapolate at the same speed (never a silent cut).
-    const clk = alcoholClock(x.bac);
+    const clk = alcoholClock(x.bac, once ? oncePeakMin : undefined);
     const day = (m: number) => clockLabel(x.drinkAt, m);
     const hrs = (m: number) => { const h = m / 60; return h < 1.5 ? `${Math.max(1, Math.round(m / 10) * 10)} min` : `${h < 10 ? Math.round(h * 2) / 2 : Math.round(h)} h`; };
-    const spread = (x.alcoholG ?? 0) > 21 ? ' This assumes you drink it all at once; spread over an evening the peak is lower, but it is gone at about the same time.' : '';
-    out.push({ icon: '⏳', q: 'When is the alcohol gone?', a: clk.beyond24
+    // [AL14, AL16]: the liver clears a fixed amount an hour from the first sip, so spreading moves the peak, not the end
+    const goneOnce = once ? alcoholClock(once).goneMin : null;
+    const spread = x.pace && goneOnce !== null
+      ? (clk.goneMin - goneOnce <= 30
+        ? ` Spreading the drinks over ${overH} lowered the peak, not the end: it is gone at about the same time as all at once.`
+        : ` Spread this thinly, one drink is almost gone before the next, so it ends about ${hrs(clk.goneMin - goneOnce)} later than all at once.`)
+      : (x.alcoholG ?? 0) > 21 ? ` This assumes you drink it all at once${x.canPace ? ' (pick “Over how long?” to spread it)' : ''}; spread over an evening the peak is lower, but it is gone at about the same time.` : '';
+    // paced: when the evening peaks (after the last drink), then when it is gone
+    const peakLine = x.pace ? `Highest around ${at0(peakMin)}, after the last drink (about ${bacRangeText(peak)}). ` : '';
+    out.push({ icon: '⏳', q: 'When is the alcohol gone?', a: peakLine + (clk.beyond24
       ? `Not within the 24 hours shown here. A typical body like yours needs about ${hrs(clk.goneMin)}, until around ${day(clk.goneMin)}; with a slow liver until about ${day(clk.latestMin)}, with a fast one about ${day(clk.earliestMin)}. Sleep, coffee, water or a shower don’t speed it up.${spread}`
-      : `In a typical body like yours around ${day(clk.goneMin)}, about ${hrs(clk.goneMin)} after the first sip. Livers clear about 0.10–0.20 ‰ an hour, so for most people somewhere between ${day(clk.earliestMin)} and ${day(clk.latestMin)}. Sleep, coffee, water or a shower don’t speed it up.${spread}`,
+      : `In a typical body like yours around ${day(clk.goneMin)}, about ${hrs(clk.goneMin)} after the first sip. Livers clear about 0.10–0.20 ‰ an hour, so for most people somewhere between ${day(clk.earliestMin)} and ${day(clk.latestMin)}. Sleep, coffee, water or a shower don’t speed it up.${spread}`),
       tone: clk.beyond24 ? 2 : 1, tag: pn ? 'you' : undefined,
       note: 'Evidence A for the liver speed (Jones 2010); the times are our estimate (C)', title: 'Typical time from our model; the earliest and latest times re-run the same downslope at 0.20 and 0.10 ‰ per hour. Your body water can shift them further (see the peak range).' });
     // The next morning (evening or night drinking): the honest answer, with the range across people. Never "safe".

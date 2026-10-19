@@ -63,7 +63,7 @@ const GOLDEN: [string, [string, number][]][] = [
   ['nutella', [['nutella', 15]]],
   ['biftek', [['beef-steak', 135]]],
   ['maslac', [['butter', 14]]],
-  ['tuna', [['tuna-canned', 165]]],
+  ['tuna', [['tuna-canned', 80]]], // data round 2: Irish adults' median canned-tuna portion; EU 80 g cans (was US 165 g can)
   ['krafna', [['doughnut', 85]]],
   ['burek', [['burek', 150]]],
   ['pizza and a beer', [['pizza', 107], ['beer', 502]]],
@@ -90,13 +90,15 @@ const GOLDEN: [string, [string, number][]][] = [
   ['sendvič', [['sandwich-ham', 184]]],
   // must find NOTHING: these name foods we do not have (a wrong food would be worse)
   ['maline', []], ['cockta', []], ['zobene pahuljice', []], ['oats', []], ['bijeli luk', []], ['bundeva', []],
-  ['blitva', []], ['višnje', []], ['njoki', []], ['turska kava', []], ['mljeveno meso', []],
+  ['blitva', []], ['višnje', []], ['njoki', []], ['mljeveno meso', []],
   ['ovčji sir', []], ['marelice', []], ['smokve', []],
   ['pecivo', []], ['leblebije', []],
   // 2026-10-18 (owner, VARIANTS-PLAN.md): these now have a food of their own (variant or builder), checked by kind
   // in variants.test.ts: pljeskavica (burger builder), kebab (builder), pureća šunka (turkey ham), goveđa juha (beef
-  // noodle soup, closest record), macchiato (espresso + milk recipe)
-  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 250]]], ['pureća šunka', [['ham', 28]]],
+  // noodle soup, closest record), macchiato (espresso + milk recipe). Data round 2 (2026-10-19): turska kava (filter
+  // coffee variant "turkish", checked in variants.test.ts); kebab meat 150 g (weighed Italian döner), so 290 g
+  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 290]]], ['pureća šunka', [['ham', 28]]],
+  ['turska kava', [['filter-coffee', 70]]],
   ['goveđa juha', [['chicken-soup', 244]]], ['macchiato', [['coffee-with-milk', 61]]],
 ];
 
@@ -229,7 +231,7 @@ describe('servings and health bars read the database (one number everywhere)', (
   });
   it('kebab is back as a builder of USDA parts (owner 2026-10-18); new GI values from Atkinson 2008 Suppl. A1 are in', () => {
     expect(FOOD_BY_ID.kebab.recipe).toBe(true);
-    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(393); // chicken in pita, the default
+    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(464); // chicken in pita, the default (150 g meat, data round 2)
     expect([FOOD_BY_ID.carrot.gi, FOOD_BY_ID['dried-apricots'].gi, FOOD_BY_ID['tomato-soup'].gi, FOOD_BY_ID['dried-figs'].gi, FOOD_BY_ID.raisins.gi]).toEqual([35, 31, 52, 61, 64]);
   });
 });

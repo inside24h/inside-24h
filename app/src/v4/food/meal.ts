@@ -1,7 +1,7 @@
 // MEALS: several things eaten together (burger + fries + cola) followed as ONE 24 h story.
 // Pure helpers for the meal builder (chips, "+ add"), the deep-link code and the popular presets.
 // Science: science/foodSim.ts (two-phase stomach, per-item sugar curves); evidence: research/meals.md.
-import { ALCOHOL_DRINKS, alcoholClass, type Meal, type MealItem } from '../../science/foodSim';
+import { ALCOHOL_DRINKS, alcoholClass, MAX_PACE_DOSES, type Meal, type MealItem } from '../../science/foodSim';
 import { foodFromKey, foodKey, gramsPart, macros, servingPart, type Food, type Macros, type Part } from './parse';
 
 /** More than ~5 things stops being "a meal" on a phone screen. */
@@ -30,8 +30,27 @@ export function mealKind(parts: Part[]): Meal['kind'] {
   return parts.some((p) => p.food.kind === 'solid') ? 'solid' : 'semi';
 }
 
-/** Parts → the model input. Two or more parts also carry `items` (the meal model). */
-export function toMeal(parts: Part[], m: Macros = macros(parts)): Meal {
+// ---- PACING (2026-10-19, research/improvements/pacing-2026-10-19.md): "Over how long?" ----
+/** The choices, in minutes: All at once · 1 h · 2 h · 3 h · 4 h. */
+export const PACE_OPTIONS = [0, 60, 120, 180, 240] as const;
+export const paceLabel = (min: number) => (min > 0 ? `${min / 60} h` : 'All at once');
+/** How many equal rounds the amount is had in: one food → its servings (2 beers, 5 beers; 1.5 servings stays 1);
+ *  a meal → the servings of its drinks (pizza + 3 beers = 3 rounds, each one beer and a third of the pizza). 1 = nothing
+ *  to spread. Capped at MAX_PACE_DOSES. */
+export function paceDoses(parts: Part[]): number {
+  const s = parts.length === 1 ? servingsOf(parts[0]) : parts.filter((p) => isDrink(p.food)).reduce((a, p) => a + servingsOf(p), 0);
+  return s >= 1.75 ? Math.min(MAX_PACE_DOSES, Math.round(s)) : 1;
+}
+/** "Over how long?" is offered: two or more servings of one thing, or a meal with two or more drinks. */
+export const canPace = (parts: Part[]) => paceDoses(parts) >= 2;
+/** A pace from a link or the screen, kept to the offered choices (anything else = all at once). */
+export const cleanPace = (min: number | null | undefined) => ((PACE_OPTIONS as readonly number[]).includes(min ?? 0) ? (min ?? 0) : 0);
+/** Several alcoholic servings: the control is highlighted until the person picks (nobody drinks 5 beers in one go). */
+export const paceMatters = (parts: Part[]) => canPace(parts) && parts.some((p) => (p.food.p.alcoholG ?? 0) > 0.5);
+
+/** Parts → the model input. Two or more parts also carry `items` (the meal model). `overMin` = "Over how long?" in
+ *  minutes (0 or absent = all at once, the old model). */
+export function toMeal(parts: Part[], m: Macros = macros(parts), overMin = 0): Meal {
   const kind = mealKind(parts);
   // g alcohol per 100 g of the strongest drink: with two drinks the faster class is used (the higher peak, C)
   const abv = parts.reduce((m, p) => Math.max(m, p.food.p.alcoholG ?? 0), 0);
@@ -40,7 +59,8 @@ export function toMeal(parts: Part[], m: Macros = macros(parts)): Meal {
   const alcoholKa = cls?.ka, alcoholF = cls?.F;
   // with food: ≥ 100 kcal of something that is not a drink in the same meal [alcohol A2, PF1]
   const fed = parts.some((p) => !isDrink(p.food) && ((p.food.p.kcal ?? 0) * p.grams) / 100 >= 100);
-  return { ...m, kind, alcoholKa, alcoholF, fed, ...(parts.length > 1 ? { items: mealItems(parts) } : {}) };
+  const doses = overMin > 0 ? paceDoses(parts) : 1;
+  return { ...m, kind, alcoholKa, alcoholF, fed, ...(parts.length > 1 ? { items: mealItems(parts) } : {}), ...(doses >= 2 ? { pace: { doses, overMin } } : {}) };
 }
 
 /** Servings of this part (1 = one USDA/typical serving). */

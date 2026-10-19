@@ -5,12 +5,12 @@
 // written as text (#q=118 g Banana + 250 g Milk) still open through the text parser.
 import { MAX_MIN } from '../time';
 import { baseOf, deriveFood, foodKey, isPlain, parseMeal, servingPart, sizesOf, type Choice, type Part } from './food/parse';
-import { mealCode, mealFromCode } from './food/meal';
+import { cleanPace, mealCode, mealFromCode } from './food/meal';
 
 export type View = 'simple' | 'full' | 'detailed';
 export const PORTIONS = [0.5, 1, 2, 3] as const;
 /** Keys this module owns; any other key in the hash (dose, city, QA keys…) is passed through untouched. */
-const OWN = ['q', 'm', 'p', 'n', 't', 'view', 'vs', 'compare', 'v', 's', 'add', 'on'];
+const OWN = ['q', 'm', 'p', 'n', 't', 'view', 'vs', 'compare', 'v', 's', 'add', 'on', 'over'];
 /** Old keys that describe a stale UI state and are dropped as soon as the app writes its own hash. */
 const DROP = ['organ', 'panel'];
 
@@ -27,7 +27,12 @@ export interface Link {
   s?: string;      // named size, wins over n: #q=pizza&s=whole
   add?: string;    // add-ins: #q=espresso&add=sugar1 (several: "sugar1 milk1")
   on?: string;     // builder parts: #q=pizza&on=base+ham+mushrooms
+  // 2026-10-19 PACING: "Over how long?" in minutes, #q=beer&n=3&over=2h (0 / absent = all at once, as every older link)
+  over?: number;
 }
+
+/** "3h", "180m", "180" → one of the offered paces (0 · 60 · 120 · 180 · 240 min); anything else = all at once. */
+export const parsePace = (s: string | null | undefined): number => cleanPace(parseTime(s));
 
 /** "45m", "2h", "1h30m", "1.5h", or old plain minutes "90" → minutes (clamped to the day); null if unreadable. */
 export function parseTime(s: string | null | undefined): number | null {
@@ -69,6 +74,7 @@ export function readLink(hash: string): Link {
     s: h.get('s')?.trim() || undefined,
     add: h.get('add')?.trim() || undefined,
     on: h.get('on')?.trim() || undefined,
+    over: parsePace(h.get('over')) || undefined,
   };
 }
 
@@ -79,6 +85,7 @@ export function writeLink(l: Partial<Link>, prev = ''): string {
   if (!l.m && l.q) { if (l.v) out.set('v', l.v); if (l.add) out.set('add', l.add); if (l.on) out.set('on', l.on); }
   if (!l.m && l.q && l.s) out.set('s', l.s);
   else if (l.n !== undefined && l.n !== 1) out.set('n', String(l.n));
+  if (l.over && cleanPace(l.over)) out.set('over', `${cleanPace(l.over) / 60}h`);
   if (l.t !== undefined && l.t !== null) out.set('t', formatTime(l.t));
   if (l.view && l.view !== 'simple') out.set('view', l.view);
   if (l.vs) out.set('vs', l.vs);
