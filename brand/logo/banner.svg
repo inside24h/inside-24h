@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500">
+  <defs>
+    <radialGradient id="bb" cx="70%" cy="40%" r="80%"><stop offset="0" stop-color="#0c1a2b"/><stop offset="1" stop-color="#04070c"/></radialGradient>
+    <linearGradient id="tl" x1="0" x2="1"><stop offset="0" stop-color="#5cd3ff"/><stop offset=".55" stop-color="#b48cff"/><stop offset="1" stop-color="#ffc46b"/></linearGradient>
+  </defs>
+  <rect width="1500" height="500" fill="url(#bb)"/>
+  <g font-family="Segoe UI, Inter, Helvetica, Arial, sans-serif">
+    <text x="560" y="230" fill="#e9f3fb" font-size="96" font-weight="700" letter-spacing="-2">Inside <tspan fill="#5cd3ff">24h</tspan></text>
+    <text x="564" y="292" fill="#9fb3c6" font-size="34">What one food does inside your body, hour by hour.</text>
+    <rect x="564" y="330" width="760" height="6" rx="3" fill="url(#tl)"/>
+    <g font-size="22" fill="#6f8599" letter-spacing="3"><text x="564" y="376">00:00</text><text x="1252" y="376">24:00</text></g>
+  </g>
+</svg>
