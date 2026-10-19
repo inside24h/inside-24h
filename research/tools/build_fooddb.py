@@ -144,35 +144,37 @@ def lactose_of(e, fdc):
     if e["mix"]: return None
     return U.nutrients(fdc).get("lactose")
 
-def main(mode):
-    out = []; fails = 0
-    for e in S.E:
-        if e["usda"] is None and not e["mix"]:
-            fdc = None
-        else:
-            fdc, cand = resolve(e["usda"] if e["usda"] is not None else e["mix"][0][0])
-            if fdc is None:
-                fails += 1; print("NOMATCH", e["id"], "|", e["usda"]);
-                for c in cand: print("      ", c[1], c[2])
-                continue
-        for f, _ in (e["mix"] or []):
-            if str(f) not in U.foods(): print("BAD MIX ID", e["id"], f)
-        sv = None
-        if fdc is not None:
-            sv = serving(e["serving"], fdc if not e["mix"] else fdc)
-        elif e["serving"][0] == 'g':
-            sv = serving(e["serving"], None)
-        if sv == "FAIL":
-            fails += 1
-            print("NOSERVING", e["id"], U.foods()[fdc]);
-            for p in U.portions(fdc): print("      ", p)
-            continue
-        if mode == "check": continue
+def build_entry(e, mode="build"):
+    """One spec entry → (entry dict or None, number of failures). Used for the S.E foods and, since 2026-10-18, for
+    variants and builder parts with a USDA record (build_variants.py). `e["key"]` (default: the id) names the override
+    rows that belong to this entry, so a variant ("energy-drink.sugarfree") can carry its own label row."""
+    key = e.get("key", e["id"])
+    if e["usda"] is None and not e["mix"]:
+        fdc = None
+    else:
+        fdc, cand = resolve(e["usda"] if e["usda"] is not None else e["mix"][0][0])
+        if fdc is None:
+            print("NOMATCH", key, "|", e["usda"]);
+            for c in cand: print("      ", c[1], c[2])
+            return None, 1
+    for f, _ in (e["mix"] or []):
+        if str(f) not in U.foods(): print("BAD MIX ID", key, f)
+    sv = None
+    if fdc is not None:
+        sv = serving(e["serving"], fdc if not e["mix"] else fdc)
+    elif e["serving"][0] == 'g':
+        sv = serving(e["serving"], None)
+    if sv == "FAIL":
+        print("NOSERVING", key, U.foods()[fdc]);
+        for p in U.portions(fdc): print("      ", p)
+        return None, 1
+    if mode == "check": return None, 0
+    if True:  # (the body below is the old main() loop, unchanged)
         p100, mixg = per100(e, fdc) if fdc else ({k: None for k in ["kcal","carbs","sugars","fiber","fat","satFat","protein","sodiumMg","caffeineMg","alcoholG","waterG"]}, None)
         n = U.nutrients(fdc) if fdc else {}
         # ---- overrides (spec OVR): replace named per-100 g values, keep the USDA values they replace ----
         ovr_out = []
-        for o in [o for o in S.OVR if o["id"] == e["id"]]:
+        for o in [o for o in S.OVR if o["id"] == key]:
             if o["basis"] == "per100g": f = 1.0
             elif o["basis"] == "perServing": f = 100.0 / sv["grams"]
             elif o["basis"] == "per100ml":
@@ -248,10 +250,24 @@ def main(mode):
           "usdaProxy": bool(e["proxy"]),
           "notes": e["note"],
         }
-        out.append(ent)
+        return ent, 0
+
+def main(mode):
+    out = []; fails = 0
+    for e in S.E:
+        ent, f = build_entry(e, mode)
+        fails += f
+        if ent is not None: out.append(ent)
+    keys = {e["id"] for e in S.E} | {"%s.%s" % (b, v["v"]) for b, vs in getattr(S, "VARS", {}).items() for v in vs}
     for o in S.OVR:
-        if o["id"] not in {e["id"] for e in S.E}: fails += 1; print("OVERRIDE FOR UNKNOWN FOOD", o["id"])
+        if o["id"] not in keys: fails += 1; print("OVERRIDE FOR UNKNOWN FOOD", o["id"])
     if mode == "build": fails += dedupe_aliases(out)
+    # 2026-10-18: variants, sizes, add-ins, builders and "Which …?" choosers (build_variants.py; plan:
+    # research/audit/VARIANTS-PLAN.md). They are added as NEW keys on the base entries, so a food without them is
+    # written exactly as before (the gate in build_variants.gate()).
+    if mode == "build" and not fails:
+        import build_variants
+        fails += build_variants.attach(out, sys.modules[__name__])
     print("fails", fails, "entries", len(S.E), "built", len(out))
     if mode == "build" and not fails:
         with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fooddb.json"), "w", encoding="utf-8") as f:

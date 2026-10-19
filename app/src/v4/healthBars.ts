@@ -70,7 +70,7 @@ function baseline(p: Profile) {
 export const RULES: { bar: string; rule: string; source: string }[] = [
   { bar: 'Fat', rule: 'Starts from your BMI: healthy (18.5–24.9) = 90, overweight = 65, obesity = 45 or less.', source: 'CDC adult BMI categories' },
   { bar: 'Fat', rule: 'Each daily can of cola: −6. A liter a day raised liver fat 132–143% in 6 months; one can is a third of that.', source: 'Maersk 2012 (RCT)' },
-  { bar: 'Sugar', rule: 'Starts at 100 each day = your free-sugar budget. WHO limit: under 10% of energy, about 50 g. One cola (35 g) uses 70%.', source: 'WHO 2015' },
+  { bar: 'Free sugar', rule: 'Sugar you eat or drink, not blood sugar. Starts at 100 each day = your free-sugar budget. WHO limit: under 10% of energy, about 50 g. One cola (35 g) uses 70%.', source: 'WHO 2015' },
   { bar: 'Sleep', rule: 'Starts from how long you sleep: 7–9 h = 90, 6–7 h = 70, under 6 h = 55, 9–10 h = 80, over 10 h = 70. Adults need 7 or more hours; both short and very long sleep are linked to higher death risk (short 1.12×, long 1.30×).', source: 'AASM/SRS 2015 consensus; Cappuccio 2010 meta-analysis' },
   { bar: 'Sleep', rule: 'Then minus 1 point per extra minute you need to fall asleep, from the caffeine in your blood while you fall asleep (the highest level from bedtime to 90 min after).', source: 'Gardiner 2025 (RCT), our interpolation' },
   { bar: 'Cholesterol', rule: 'We cannot know your cholesterol without a blood test, so it starts at 85 and only shows what the drinks change. Cola daily: −4 per can (+3.6% total cholesterol). Espresso: −0.5 per shot (+0.8 mg/dL).', source: 'Maersk 2012; Svatun 2022 + cafestol trials' },
@@ -206,7 +206,7 @@ export function healthBars(p: Profile, counts: Counts, habits: Habits = {}): Bar
   return [
     { key: 'health', label: 'Health', value: health, base: baseHealth, notes: notes.health },
     { key: 'sleep', label: 'Sleep', value: sleep, base: base.sleep, notes: [`${+sleepHours(p).toFixed(1)} h a night`, ...notes.sleep] },
-    { key: 'sugar', label: 'Sugar', value: sugar, base: base.sugar, notes: notes.sugar },
+    { key: 'sugar', label: 'Free sugar', value: sugar, base: base.sugar, notes: notes.sugar },
     { key: 'cholesterol', label: 'Cholesterol', value: chol, base: base.cholesterol, notes: notes.cholesterol },
     { key: 'fat', label: 'Fat', value: fat, base: base.fat, notes: [`BMI ${bmi(p).toFixed(1)}`, ...notes.fat] },
     { key: 'life', label: 'Life quality', value: life, base: base.life, notes: notes.life },

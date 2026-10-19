@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Spec for fooddb.json. Each entry is a dict; build_fooddb.py resolves USDA records and writes the JSON.
 usda: FDC id (int) | exact SR Legacy description (str)
 mix:  optional [(usda, grams), ...] computed recipe (weights are OUR assumption, flagged in notes)
@@ -154,7 +154,7 @@ add("butter", "Butter (unsalted)", ["maslac", "butter", "puter"], "solid",
 
 # ---------------- BREAD / CEREALS / STARCH ----------------
 # audit 2026-10-17: "polubijeli kruh" (semi-white, T-850) moved from wholemeal to white, the closer of the two.
-add("bread-white", "White bread", ["bijeli kruh", "kruh", "bread", "white bread", "kruh bijeli", "štruca", "struca", "tost", "polubijeli kruh"], "solid",
+add("bread-white", "White bread", ["bijeli kruh", "kruh", "bread", "white bread", "kruh bijeli", "štruca", "struca", "polubijeli kruh"], "solid",
     174924, "#efe0b8", "null", ('p', r'slice'), gi="white_bread", note="Free sugars null: white bread contains sugars but USDA gives no added-sugar split.")
 add("bread-wholemeal", "Wholemeal bread", ["integralni kruh", "crni kruh", "kruh", "whole wheat bread", "wholemeal bread", "bread"], "solid",
     172688, "#b88a52", "null", ('p', r'slice'), gi="wholemeal_bread")
@@ -166,7 +166,7 @@ add("bread-french", "Baguette / French bread", ["baget", "baguette", "french bre
 # audit 2026-10-17: USDA turnover proxy replaced by a Croatian producer label (override below): the turnover had
 # 228 kcal and 7.87 g sugar per 100 g; burek labels give 247-316 kcal and 2-3.4 g sugar. Serving: the producer's
 # net weight of one piece. "pastry" (usually sweet) and bare "pita" (any pie, e.g. pita od jabuka) removed.
-add("burek", "Burek (meat/cheese pastry)", ["burek", "sirnica", "sirna pita", "burek sa sirom", "mesni burek", "burek s mesom"], "solid",
+add("burek", "Burek (meat/cheese pastry)", ["burek"], "solid",
     168963, "#d9a860", "null", ('g', 150, "1 piece", "producer: Čakovečki mlinovi burek, net weight 150 g"), proxy=True,
     note="PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316).")
 # audit 2026-10-17: was frozen pizza 170317 + an app-side 107 g slice taken from THIS record; now the record itself.
@@ -251,7 +251,7 @@ add("tofu", "Tofu (firm)", ["tofu", "sojin sir"], "solid",
     "Tofu, raw, firm, prepared with calcium sulfate", "#f3ecd5", "none", ('p', r'cup|oz|slice', "1 portion, 126 g"))
 
 # ---------------- LEGUMES / VEG ----------------
-add("beans-kidney", "Kidney beans (boiled)", ["grah", "crveni grah", "kidney beans", "beans", "grah kuhani", "fižol", "pasulj"], "solid",
+add("beans-kidney", "Kidney beans (boiled)", ["grah", "crveni grah", "kidney beans", "beans", "grah kuhani", "fižol"], "solid",
     "Beans, kidney, red, mature seeds, cooked, boiled, without salt", "#7a2f2a", "none", ('p', r'cup'), gi="kidney_beans")
 add("beans-white", "White beans (boiled)", ["bijeli grah", "bijeli grah kuhani", "white beans", "beans", "grah", "tavče gravče"], "solid",
     "Beans, white, mature seeds, cooked, boiled, without salt", "#ece4cc", "none", ('p', r'cup'), gi="a1_white_beans")
@@ -427,7 +427,7 @@ add("hamburger", "Hamburger (fast food)", ["hamburger", "burger", "hamburger fas
     "McDONALD'S, Hamburger", "#b8803a", "null", ('p', r'sandwich|item|hamburger|\d'), gi="a1_hamburger", note="USDA record is McDonald's hamburger.")
 add("kebab", "Kebab / doner", ["kebab", "döner", "doner", "gyros", "dener"], "solid",
     None, "#c9854a", "null", ('g', None, None, "no source"), proxy=True,
-    note="NO DATA: SR Legacy has no doner/gyros/kebab record and any value would be a guess. All numeric fields null.")
+    note="COMPUTED: SR Legacy has no doner/gyros/kebab record. Since 2026-10-18 kebab is our builder (BUILD below): the values are its default (chicken in pita with tomato, onion and yogurt sauce), computed from USDA parts.")
 # audit 2026-10-17: was 170308 (turkey + roast beef + ham sub); 170707 is the ham sub, matching "sa šunkom".
 add("sandwich-ham", "Ham sandwich (sub)", ["sendvič", "sendvic", "sandwich", "sub", "sendvic sa sunkom", "sendvič sa šunkom", "ham sandwich"], "solid",
     170707, "#e8c888", "null", ('p', r'inch sub', "1 sub (15 cm)"), note="US fast-food submarine sandwich, ham on white bread with lettuce and tomato.")
@@ -517,5 +517,453 @@ override("burek", "per100g", {"kcal": 297, "fat": 16, "satFat": 7.5, "carbs": 29
     "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
     note="Sodium = 1.4 / 2.5 = 560 mg. Fiber not declared (None). Water stays from the USDA turnover proxy.",
     ranges={"kcal": (247, 316), "sugars": (2.2, 3.4)})
+
+
+# ======================= VARIANTS, SIZES, ADD-INS, BUILDERS, CHOOSERS (2026-10-18) =======================
+# Built by build_variants.py (called from build_fooddb.py build). Plan: research/audit/VARIANTS-PLAN.md; what was
+# built and why: research/audit/VARIANTS-DONE.md. A variant keeps the base id and adds a key v ("beer.radler").
+# Every variant has a USDA SR Legacy record (checked with usda_sr.py) or is OUR recipe with stated grams (level C).
+# Amounts of toppings/add-ins are "our estimate" with a range; the reason is in the src text shown under
+# "How do we know?". Variant names have no parentheses (the app's shortName strips them).
+VARS, ASK, SIZES, ADDIN, ADDINS_OF, BUILD, CHOOSE = {}, {}, {}, {}, {}, {}, []
+# foods whose old values change on purpose (the build's gate fails on any other change)
+CHANGED_ON_PURPOSE = {}
+
+def ask(base, question, chip):
+    ASK[base] = (question, chip)
+
+def var(base, v, chip, name, usda=None, recipe=None, serving=None, words=(), aliases=(), gi=None, free=None, proxy=False,
+        kind=None, color=None, text="", note="", rng=None, atwater_ok=False):
+    """usda: own record (serving defaults to the base serving spec, resolved on THIS record). recipe: [(ref, amount)]
+    with serving=('g', None, label, why) for the label. gi: a GI key, "inherit" (the base GI), or None (not inherited)."""
+    VARS.setdefault(base, []).append(dict(v=v, chip=chip, name=name, usda=usda, recipe=recipe, serving=serving, words=list(words),
+        aliases=list(aliases), gi=gi, free=free, proxy=proxy, kind=kind, color=color, text=text, note=note, rng=rng, atwater_ok=atwater_ok))
+
+def size(base, opts, text, cite, url="https://fdc.nal.usda.gov/", level="C"):
+    """opts: (key, label, mult) or (key, label, "ml", ml). The default serving must be one of them."""
+    SIZES[base] = dict(opts=opts, text=text, cite=cite, url=url, level=level)
+
+def addin(k, label, ref, grams, unit, words, text, cite, url, level="C", max=2, excl=None):
+    ADDIN[k] = dict(label=label, ref=ref, grams=grams, unit=unit, words=words, text=text, cite=cite, url=url, level=level, max=max, excl=excl)
+
+def addins(base, keys):
+    ADDINS_OF[base] = list(keys)
+
+def chooser(k, question, opts, words=()):
+    """opts: [(food id or "id.v", chip)]; the first option of the word's ALIAS_OWNER is what the app starts on."""
+    CHOOSE.append(dict(k=k, ask=question, opts=opts, words=list(words)))
+
+def opt(k, chip, name, ref, grams=None, src="", rng=None, on=False, words=(), aliases=(), level="C", cite=None, url=None):
+    return dict(k=k, chip=chip, name=name, ref=ref, grams=grams, src=src, rng=rng, on=on, words=list(words), aliases=list(aliases), level=level, cite=cite, url=url)
+
+def grp(k, label, opts, one=False):
+    return dict(k=k, label=label, opts=opts, one=one)
+
+def preset(k, chip, name, on, aliases=(), words=()):
+    return dict(k=k, chip=chip, name=name, on=list(on), aliases=list(aliases), words=list(words))
+
+def builder(base, title, groups, note, presets=(), unit="", ask=None, base_is_default=False, serving_label=None, cite=None, url=None):
+    BUILD[base] = dict(title=title, groups=groups, note=note, presets=list(presets), unit=unit, ask=ask,
+                       base_is_default=base_is_default, serving_label=serving_label, **({"cite": cite} if cite else {}), **({"url": url} if url else {}))
+
+USDA_FDC = "https://fdc.nal.usda.gov/"
+
+# ---------------- ALCOHOL ----------------
+ask("beer", "Which beer?", "Lager")
+var("beer", "light", "Light", "Light beer", usda=168749, words=["light", "lagano", "lagani"],
+    aliases=["light beer", "lagano pivo", "light pivo"], note="US light beer, about 4% alcohol.")
+var("beer", "strong", "Strong", "Strong beer", usda=171906, words=["jako", "jako pivo", "strong"],
+    aliases=["strong beer", "jako pivo", "jaka piva"],
+    text="Strong beer: values from the USDA record “Alcoholic beverages, beer, higher alcohol”: 7.7 g alcohol per 100 g, about 9–10% by volume. Many strong beers are 6–8%, so this is the upper end.")
+var("beer", "alcohol-free", "Alcohol-free", "Alcohol-free beer", usda=174863,
+    words=["bezalkoholno", "bezalkoholni", "alcohol-free", "non-alcoholic", "0.0", "nula"],
+    aliases=["bezalkoholno pivo", "bezalkoholno", "alcohol-free beer", "non-alcoholic beer", "alcohol free beer", "pivo bez alkohola"],
+    rng={"kcal": (105, 186)},
+    text="Alcohol-free beer: values from the USDA record “Malt beverage, includes non-alcoholic beer” (37 kcal and 8 g sugar per 100 g, 0.3 g alcohol). European alcohol-free lagers are often lighter: Heineken 0.0 lists 21 kcal and 4.8 g carbohydrate per 100 ml (FatSecret NZ entry), so a 0.5 l glass is about 105–186 kcal.")
+var("beer", "radler", "Radler", "Radler", recipe=[("beer", ("ml", 250)), ("lemonade", ("ml", 250))],
+    serving=('g', None, "500 ml", "our recipe"), words=["radler"], aliases=["radler", "radler limun", "pivo s limunadom", "shandy"],
+    text="Radler is our recipe: half beer, half lemonade (250 ml USDA regular beer + 250 ml USDA lemonade), about 2.5% alcohol. Bottled radlers are usually about 2–2.5% and differ in sugar.")
+size("beer", [("0.3l", "0.3 l", "ml", 300), ("0.33l", "0.33 l", "ml", 330), ("0.5l", "0.5 l", "ml", 500)],
+     "Sizes are the usual glasses and bottles: a small glass 0.3 l, a bottle 0.33 l, a large glass or can 0.5 l. You pick the one you had.", "Common serving sizes")
+
+ask("red-wine", "Which red wine?", "Table wine")
+var("red-wine", "bevanda", "With water", "Red wine with water", recipe=[("red-wine", ("ml", 100)), ("water", ("ml", 100))],
+    serving=('g', None, "200 ml", "our recipe"), words=["bevanda"], aliases=["bevanda", "vino s vodom", "crno vino s vodom", "red wine with water"],
+    text="Red wine with water (bevanda) is our recipe: half red table wine (USDA), half water, about 6.5% alcohol. People mix it 1:1 or stronger.")
+var("red-wine", "dessert", "Dessert", "Dessert wine", usda=173176, serving=('ml', 100, r'fl oz'),
+    words=["prosek", "desertno", "slatko"], aliases=["prošek", "desertno vino", "dessert wine", "slatko vino", "sweet wine"],
+    text="Dessert wine (like prošek): values from the USDA record “Alcoholic beverage, wine, dessert, sweet”: 7.8 g sugar and 15.3 g alcohol per 100 g. A glass is smaller, 100 ml.")
+ask("white-wine", "Which white wine?", "Table wine")
+var("white-wine", "spritzer", "Spritzer", "Wine spritzer", recipe=[("white-wine", ("ml", 100)), ("water", ("ml", 100))],
+    serving=('g', None, "200 ml", "our recipe"), words=["gemist"], aliases=["gemišt", "gemist", "spritzer", "wine spritzer", "bijeli gemišt", "špricer", "spricer"],
+    text="Wine spritzer (gemišt) is our recipe: half white table wine (USDA), half sparkling water, about 6.5% alcohol. We use the USDA tap-water record for the water part: bubbles add no calories.")
+var("white-wine", "rose", "Rosé", "Rosé wine", usda=171908, words=["rose", "roze", "ruzica"],
+    aliases=["rosé", "rose wine", "roze vino", "rosé vino", "ružica"], text="Rosé: values from the USDA record “Alcoholic beverages, wine, rose”.")
+for w in ("red-wine", "white-wine"):
+    size(w, [("1dl", "1 dl", "ml", 100), ("1.5dl", "1.5 dl", "ml", 150), ("2dl", "2 dl", "ml", 200), ("3dl", "3 dl", "ml", 300)],
+         "Sizes are the amount of drink in your glass: 1, 1.5, 2 or 3 dl. A typical glass of wine is 1.5 dl.", "Common serving sizes")
+
+ask("rakija", "How strong?", "40%")
+var("rakija", "43", "43%", "Rakija 43%", usda=171919, text="Rakija 43%: values from the USDA record for 86-proof distilled spirits (43% alcohol).")
+var("rakija", "45", "45%", "Rakija 45%", usda=171920, text="Rakija 45%: values from the USDA record for 90-proof distilled spirits (45% alcohol).")
+var("rakija", "50", "50%", "Rakija 50%", usda=173664, words=["domaca"], aliases=["domaća rakija", "homemade rakija"],
+    text="Rakija 50%: values from the USDA record for 100-proof distilled spirits (50% alcohol). Homemade rakija is often 45–50%; it is rarely measured.")
+size("rakija", [("3cl", "3 cl", "ml", 30), ("4cl", "4 cl", "ml", 40), ("5cl", "5 cl", "ml", 50)],
+     "Sizes are the usual small glasses for spirits: 3, 4 or 5 cl.", "Common serving sizes")
+
+# ---------------- SOFT DRINKS ----------------
+ask("energy-drink", "Which energy drink?", "Regular")
+var("energy-drink", "sugarfree", "Sugar-free", "Sugar-free energy drink", usda=171870, serving=('ml', 250, r'can', "1 can (250 ml)"),
+    words=["sugarfree", "sugar-free", "zero", "bez secera"], aliases=["sugar free red bull", "red bull sugarfree", "red bull zero", "energy drink zero", "sugar-free energy drink", "energetsko pice bez secera"],
+    text="Sugar-free energy drink: values from the USDA record for sugar-free Red Bull (30 mg caffeine per 100 g, about 75 mg per can).")
+size("energy-drink", [("250ml", "250 ml", "ml", 250), ("355ml", "355 ml", "ml", 355), ("500ml", "500 ml", "ml", 500)],
+     "Sizes are the usual cans: 250 ml (Red Bull), 355 ml (12 fl oz) and 500 ml (Monster).", "Common can sizes")
+size("cola", [("250ml", "250 ml", "ml", 250), ("330ml", "330 ml", "ml", 330), ("500ml", "500 ml", "ml", 500)],
+     "Sizes are a glass (250 ml), a can (330 ml) and a bottle (500 ml).", "Common serving sizes")
+
+# ---------------- COFFEE, TEA (sugar and honey are folded into the drink: add-ins) ----------------
+addin("sugar", "Sugar", "sugar", 4.2, "1 tsp, 4.2 g", ["šećer", "šećerom", "šećera", "sugar", "sa šećerom"],
+      "Sugar: one teaspoon is 4.2 g (USDA portion for granulated sugar). Café sachets hold about 4–5 g. It all counts as free sugar.",
+      "USDA FoodData Central, SR Legacy 169655: Sugars, granulated (portion 1 tsp = 4.2 g)", "https://fdc.nal.usda.gov/food-details/169655/nutrients", level="B", excl="sweet")
+addin("honey", "Honey", "honey", 7.0, "1 tsp, 7 g", ["med", "medom", "meda", "honey"],
+      "Honey: one teaspoon is about 7 g (a third of the USDA tablespoon, 21 g). Its sugars count as free sugars (WHO).",
+      "USDA FoodData Central, SR Legacy 169640: Honey (portion 1 tbsp = 21 g)", "https://fdc.nal.usda.gov/food-details/169640/nutrients", level="B", excl="sweet")
+addin("milk", "Milk", "milk-whole", ("ml", 30), "a splash, 30 ml", ["mlijeko", "mlijekom", "mlijeka", "milk", "mlekom", "mleko"],
+      "Milk: a splash is our estimate, 30 ml of whole milk (people pour about 15–50 ml). Milk sugar (lactose) is not a free sugar.",
+      "USDA FoodData Central, SR Legacy 171265: Milk, whole, 3.25% milkfat", "https://fdc.nal.usda.gov/food-details/171265/nutrients", max=1)
+addin("shot", "Extra shot", "espresso", ("ml", 30), "1 shot, 30 ml", ["extra shot", "dupli", "double shot"],
+      "Extra shot: one more espresso, 30 ml (USDA restaurant espresso, about 64 mg caffeine).",
+      "USDA FoodData Central, SR Legacy 171891: Beverages, coffee, brewed, espresso, restaurant-prepared", "https://fdc.nal.usda.gov/food-details/171891/nutrients", level="B", max=1)
+
+ask("espresso", "Which espresso?", "Regular")
+var("espresso", "decaf", "Decaf", "Decaf espresso", usda=174125, words=["decaf", "bez kofeina", "dekofeinizirana"],
+    aliases=["decaf espresso", "kava bez kofeina", "decaf", "dekofeinizirana kava", "espresso bez kofeina"],
+    text="Decaf espresso: values from the USDA record for decaffeinated restaurant espresso (about 0.3 mg caffeine per shot).")
+addins("espresso", ["sugar"])
+size("espresso", [("single", "Single", 1), ("double", "Double", 2)], "A double espresso is two shots (2 × 30 ml).", "Common serving sizes")
+ask("filter-coffee", "Which filter coffee?", "Brewed")
+var("filter-coffee", "instant", "Instant", "Instant coffee", usda=174130, words=["instant", "nescafe", "nes"],
+    aliases=["instant coffee", "instant kava", "nescafe", "nes kava", "topljiva kava"],
+    text="Instant coffee: values from the USDA record for instant coffee prepared with water (26 mg caffeine per 100 g, about 65 mg per 250 ml).")
+var("filter-coffee", "decaf", "Decaf", "Decaf filter coffee", usda=171889, words=["decaf", "bez kofeina"],
+    aliases=["decaf coffee", "decaf filter coffee"], text="Decaf filter coffee: values from the USDA record for decaffeinated brewed coffee.")
+addins("filter-coffee", ["sugar", "milk"])
+ask("coffee-with-milk", "Which coffee with milk?", "Classic")
+var("coffee-with-milk", "macchiato", "Macchiato", "Macchiato", recipe=[("espresso", ("ml", 30)), ("milk-whole", ("ml", 30))],
+    serving=('g', None, "1 cup, 60 ml", "our recipe"), words=["macchiato", "makijato"],
+    aliases=["macchiato", "makijato", "machiato", "espresso macchiato", "espresso s mlijekom", "mala bijela"],
+    text="Macchiato is our recipe: one espresso (30 ml, USDA) with 30 ml of whole milk. Cafés add about 15–60 ml of milk and foam.")
+var("coffee-with-milk", "instant", "Instant", "Instant coffee with milk", recipe=[((174130, "none"), 149.0), ("milk-whole", ("ml", 50))],
+    serving=('g', None, "1 cup, 200 ml", "our recipe"), words=["instant", "nescafe"], aliases=["instant kava s mlijekom", "nescafe s mlijekom", "instant coffee with milk"],
+    text="Instant coffee with milk is our recipe: 150 ml instant coffee (USDA) + 50 ml whole milk (USDA).")
+addins("coffee-with-milk", ["sugar"])
+for cid, ml in (("cappuccino", 120), ("latte", 220)):
+    ask(cid, "Which milk?", "Whole")
+    for v, chip, mid, nm in (("2", "2%", "milk-semi-skimmed", "2% milk"), ("skim", "Skim", "milk-skimmed", "skim milk"),
+                             ("soy", "Soy", "soy-milk", "soy milk"), ("almond", "Almond", "almond-milk", "almond milk")):
+        var(cid, v, chip, "%s with %s" % (cid.capitalize(), nm), recipe=[("espresso", ("ml", 30)), (mid, ("ml", ml))],
+            serving=('g', None, "1 cup, %d ml" % (30 + ml), "our recipe"), words=[nm.split()[0]] if v in ("soy", "almond") else [],
+            aliases=["%s with %s" % (cid, nm)] + (["%s sa sojinim mlijekom" % cid] if v == "soy" else ["%s s bademovim mlijekom" % cid] if v == "almond" else []),
+            text="%s with %s is our recipe: one espresso (30 ml, USDA) + %d ml %s (USDA). There is no USDA SR Legacy record for oat milk, so oat is not offered." % (cid.capitalize(), nm, ml, nm))
+    addins(cid, ["sugar", "shot"])
+
+for t in ("black-tea", "green-tea", "herbal-tea"):
+    addins(t, ["sugar", "honey", "milk"] if t == "black-tea" else ["sugar", "honey"])
+ask("iced-tea", "Which iced tea?", "Sweetened")
+var("iced-tea", "diet", "Diet", "Diet iced tea", usda=171892, serving=('mlx', 250, 175111, r'fl oz'), words=["diet", "zero", "bez secera"],
+    aliases=["diet iced tea", "ledeni čaj bez šećera", "iced tea zero"], text="Diet iced tea: values from the USDA record for diet lemon black tea, ready to drink.")
+ask("hot-chocolate", "Made with?", "Milk")
+var("hot-chocolate", "water", "Water", "Hot chocolate made with water", usda=174123, serving=('mlx', 250, 171277, r'cup'),
+    words=["s vodom", "with water", "instant"], aliases=["hot chocolate with water", "kakao s vodom", "instant hot chocolate"],
+    text="Hot chocolate from a mix with water: values from the USDA record “Beverages, Cocoa mix, powder, prepared with water”.")
+ask("protein-shake", "Made with?", "Milk")
+var("protein-shake", "water", "Water", "Protein shake with water", recipe=[((173180, "none"), 30), ("water", ("ml", 250))],
+    serving=('g', None, "1 shaker, 280 ml", "our recipe"), words=["s vodom", "with water"], aliases=["protein shake with water", "proteinski shake s vodom"],
+    text="Protein shake with water is our recipe: 30 g whey protein powder (USDA) in 250 ml water. Powders differ a lot by brand.")
+ask("oatmeal", "Made with?", "Water")
+var("oatmeal", "milk", "Milk", "Oatmeal made with milk", recipe=[((173904, "none", "porridge"), 40), ("milk-semi-skimmed", ("ml", 200))],
+    serving=('g', None, "1 bowl, 246 g", "our recipe"), words=["s mlijekom", "with milk", "na mlijeku"], aliases=["oatmeal with milk", "zobena kaša s mlijekom", "porridge with milk"],
+    text="Oatmeal with milk is our recipe: 40 g rolled oats (USDA, dry) cooked in 200 ml 2% milk (USDA). Its GI is the oats’ porridge value and milk’s value, weighted by their carbohydrate.")
+
+# ---------------- SWEETS ----------------
+ask("cake-sponge", "Which cake?", "Sponge")
+var("cake-sponge", "chocolate", "Chocolate", "Chocolate cake", usda=174934, serving=('p', r'1/12 of a cake'), words=["cokoladna"],
+    aliases=["chocolate cake", "čokoladna torta", "cokoladna torta"], text="Chocolate cake: values from the USDA record for chocolate cake with chocolate frosting (in-store bakery); 1 piece = 1/12 of a cake, 138 g.")
+var("cake-sponge", "cheesecake", "Cheesecake", "Cheesecake", usda=172711, serving=('p', r'1/6 of 17 oz'), words=["cheesecake"],
+    aliases=["cheesecake", "torta od sira", "sirnica torta"], text="Cheesecake: values from the USDA record for commercial cheesecake; 1 piece = 1/6 of a cake, 80 g.")
+var("cake-sponge", "strudel", "Strudel", "Apple strudel", usda=175032, serving=('p', r'^piece'), words=["strudel", "strudla", "savijaca"],
+    aliases=["strudel", "štrudla", "strudla", "apple strudel", "savijača", "savijaca"], text="Apple strudel: values from the USDA record “Strudel, apple”; 1 piece = 71 g.")
+var("cake-sponge", "cream", "Cream cake", "Cream cake", usda=172696, serving=('p', r'piece'), proxy=True, words=["krem", "kremna"],
+    aliases=["cream cake", "kremna torta", "krempita"], text="Cream cake: the closest USDA record is a Boston cream pie (sponge with custard filling and chocolate glaze); 1 piece = 92 g. Croatian cream cakes differ.")
+ask("ice-cream", "Which ice cream?", "Vanilla")
+var("ice-cream", "chocolate", "Chocolate", "Chocolate ice cream", usda=168809, serving=('p', r'cup \(4'), words=["cokoladni"],
+    aliases=["chocolate ice cream", "čokoladni sladoled", "cokoladni sladoled"], text="Chocolate ice cream: values from the USDA record “Ice creams, chocolate”; 1 portion = ½ cup, 66 g.")
+size("ice-cream", [("1", "1 scoop", 1), ("2", "2 scoops", 2), ("3", "3 scoops", 3)],
+     "One scoop is the USDA ½-cup portion, 66 g. Scoops in cafés vary, so this is our estimate of a scoop.", "USDA FoodData Central, SR Legacy 167575 (portion ½ cup = 66 g)", "https://fdc.nal.usda.gov/food-details/167575/nutrients")
+ask("chocolate-milk-bar", "Which chocolate?", "Milk")
+var("chocolate-milk-bar", "white", "White", "White chocolate", usda=167571, free="upper", serving=('g', 44, "1 bar, 44 g", "our assumption: the same bar as the milk chocolate (USDA 1.55 oz)"),
+    words=["bijela"], aliases=["white chocolate", "bijela čokolada", "bijela cokolada"], text="White chocolate: values from the USDA record “Candies, white chocolate”. All its sugar is counted as free sugar (upper bound).")
+
+# ---------------- MEALS, SAVORY ----------------
+ask("fries", "Which fries?", "Deep-fried")
+var("fries", "oven", "Oven-baked", "Oven-baked fries", usda=169264, gi="inherit", serving=('g', 71.0, "1 small portion", "our assumption: the same portion as the fried fries (USDA fast-food serving small, 71 g)"),
+    words=["iz pecnice", "pecene", "oven"], aliases=["oven fries", "pomfrit iz pećnice", "pomfrit iz pecnice", "oven-baked fries", "baked fries"],
+    text="Oven-baked fries: values from the USDA record for frozen fries heated in the oven: about half the fat of deep-fried fries.")
+size("fries", [("small", "Small", 1), ("medium", "Medium", 117 / 71.0), ("large", "Large", 154 / 71.0)],
+     "Sizes are USDA’s fast-food fries portions: small 71 g, medium 117 g, large 154 g.", "USDA FoodData Central, SR Legacy 170698 portions", "https://fdc.nal.usda.gov/food-details/170698/nutrients", level="A")
+size("cevapi", [("5", "5 pcs", 1), ("10", "10 pcs", 2)],
+     "5 or 10 pieces of about 16 g grilled (Sarajevo standard: 10 pieces = 200–250 g raw).", "Wikipedia ‘Ćevapi’, ref. 38; USDA raw-to-cooked factor", "https://en.wikipedia.org/wiki/%C4%86evapi")
+ask("vegetable-soup", "Which vegetable soup?", "Vegetable")
+var("vegetable-soup", "broth", "Clear broth", "Vegetable broth", usda=171583, serving=('p', r'^cup', "1 bowl, 221 g"), words=["bistra"],
+    aliases=["vegetable broth", "povrtni temeljac", "bistra juha od povrća"], text="Vegetable broth: values from the USDA record “Soup, vegetable broth, ready to serve”.")
+var("vegetable-soup", "cream", "Cream soup", "Cream of mushroom soup", usda=172915, serving=('p', r'serving 1 cup', "1 bowl, 248 g"), words=["krem", "kremasta"],
+    aliases=["cream soup", "krem juha", "krem juha od gljiva", "cream of mushroom soup"], text="Cream soup: values from the USDA record for canned cream of mushroom soup made with water.")
+ask("chicken-soup", "Which soup?", "Chicken noodle")
+var("chicken-soup", "beef-noodle", "Beef noodle", "Beef noodle soup", usda=172906, serving=('p', r'cup', "1 bowl, 244 g"), words=["goveda"],
+    aliases=["goveđa juha", "goveda juha", "beef soup", "beef noodle soup", "goveđa juha s rezancima"], proxy=True,
+    text="Beef soup: the closest USDA record is canned beef noodle soup made with water; home-made goveđa juha is usually richer.")
+ask("tomato-soup", "Made with?", "Water")
+var("tomato-soup", "milk", "Milk", "Tomato soup made with milk", usda=174546, free="minusLactose", gi="inherit", serving=('p', r'serving', "1 bowl, 252 g"),
+    words=["s mlijekom", "with milk"], aliases=["tomato soup with milk", "krem juha od rajčice"], text="Tomato soup with milk: values from the USDA record for canned tomato soup made with 2% milk. Milk sugar is not counted as free sugar.")
+ask("bean-soup", "Which bean stew?", "With ham")
+var("bean-soup", "sausage", "With sausage", "Bean soup with sausage", usda=172905, serving=('p', r'cup', "1 bowl, 250 g"), proxy=True,
+    words=["kobasicom", "s kobasicom"], aliases=["grah s kobasicom", "grah sa kobasicom", "bean soup with sausage", "grah varivo s kobasicom"],
+    text="Bean stew with sausage: the closest USDA record is canned bean soup with frankfurters (made with water). USDA lists no fiber or sugar for it.")
+ask("sausage", "Which sausage?", "Pork")
+var("sausage", "smoked", "Smoked", "Smoked sausage", usda=174584, serving=('p', r'link \(4'), words=["dimljena", "smoked"],
+    aliases=["dimljena kobasica", "smoked sausage", "kranjska kobasica"], text="Smoked sausage: values from the USDA record “Sausage, smoked link sausage, pork”; 1 link = 68 g.")
+var("sausage", "bratwurst", "Bratwurst", "Bratwurst", usda=171620, serving=('p', r'link cooked'), words=["bratwurst"],
+    aliases=["bratwurst", "bratvurst", "pečenica"], text="Bratwurst: values from the USDA record “Bratwurst, pork, cooked”; 1 link = 85 g.")
+var("sausage", "chicken", "Chicken", "Chicken or turkey sausage", usda=173871, serving=('p', r'serving'), words=["pileca", "pureca", "turkey"],
+    aliases=["pileća kobasica", "pureća kobasica", "chicken sausage", "turkey sausage"], text="Chicken or turkey sausage: values from the USDA record “Sausage, turkey, fresh, cooked”; 1 serving = 57 g.")
+ask("ham", "Which ham?", "Pork")
+var("ham", "turkey", "Turkey", "Turkey ham", usda=168092, serving=('g', 28, "1 slice", "our assumption: the same slice as the pork ham (USDA 28 g)"),
+    words=["pureca", "turkey"], aliases=["pureća šunka", "pureca sunka", "turkey ham", "pureća prsa narezak"], text="Turkey ham: values from the USDA record “Ham, turkey, sliced, extra lean, prepackaged or deli”.")
+ask("tuna-canned", "Canned in?", "Water")
+var("tuna-canned", "oil", "Oil", "Tuna canned in oil", usda=173708, serving=('p', r'^can$'), words=["u ulju", "in oil"],
+    aliases=["tuna u ulju", "tuna in oil", "tunjevina u ulju"], text="Tuna in oil: values from the USDA record for light tuna canned in oil, drained; 1 can = 171 g.")
+ask("cheese-cottage", "Which cottage cheese?", "Creamed")
+var("cheese-cottage", "lowfat", "Low-fat", "Low-fat cottage cheese", usda=172182, serving=('g', 105, "1 portion, 105 g", "our assumption: the same portion as the creamed cottage cheese"),
+    words=["nemasni", "posni", "lowfat"], aliases=["nemasni svježi sir", "posni sir", "low-fat cottage cheese"], text="Low-fat cottage cheese: values from the USDA record for 2% milkfat cottage cheese.")
+ask("bread-white", "Which bread?", "Sliced")
+var("bread-white", "roll", "Roll", "Bread roll", usda=172793, serving=('p', r'hamburger', "1 roll"), words=["kifla", "zemicka"],
+    aliases=["kifla", "kifle", "zemička", "zemicka", "bread roll", "roll", "bun"],
+    text="Bread roll: values from the USDA record for plain dinner rolls; 1 roll = 43 g (USDA size for a hamburger bun or large roll). A Croatian kifla is often bigger.")
+
+# ---------------- BUILDERS ("What's on it?") ----------------
+# Portion sources (research/audit/builder-portions-research.md, read 2026-10-18):
+#  PIZZA  Burke Corporation / PizzaMarketplace.com "Pizza Toppings Portion Guide" (v3.0), per WHOLE pie, 12" and 14";
+#         a 14" pie is 8 slices (USDA 173292: slice 107 g, pie 853 g; Pizza Hut "1 slice = 1/8 pizza"). Our pizza is
+#         USDA's 14" chain cheese pizza, so a topping per slice = the 14" amount / 8; the range runs to the 12" amount / 8.
+#  BURGER, SANDWICH  USDA FNDDS 2021-2023 "guideline amount on regular sandwich" (lettuce 8, tomato 20, onion 15,
+#         ketchup 17, mayonnaise 14, butter 14, bacon 16 g; large sandwich = the top of the range); cheese 21 g.
+#  KEBAB  USDA FNDDS gyro sandwich 2706962 (200 g: pita 60, meat 60, tzatziki 30, tomato 30, onion 20 g); meat weighed
+#         in German döner 80-173 g (RTL test via Mallorca Revue); flour wrap USDA 175037 (10" = 72 g).
+#  BUREK  labels: Vindija Latica cheese burek "svježi polumasni sir 34%"; Krajina Klas meat burek "juneće meso 38,60%";
+#         Croatian Pravilnik (NN 78/05) art. 46: at least 10% fat.
+PZ = "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)"
+PZU = "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf"
+def pz(k, chip, name, ref, g12, g14, words, extra="", level="C"):
+    """A topping from the Burke chart: grams per slice = the 14-inch pie amount / 8 (range from the 12-inch amount)."""
+    return opt(k, chip, name, ref, round(g14 / 8.0, 1), rng=(round(g12 / 8.0, 1), round(g14 / 8.0, 1)), words=words, level=level, cite=PZ, url=PZU,
+               src="%s on pizza: our estimate %.1f g per slice, from a pizza-industry portion chart (%d g on a 14-inch pie, %d g on a 12-inch pie, 8 slices).%s" % (
+                   name.capitalize(), g14 / 8.0, g14, g12, extra))
+builder("pizza", "What's on it?", [
+    grp("base", "Base", [opt("base", "Cheese pizza", "cheese pizza", "pizza", on=True, level="A",
+        src="The base is USDA’s 14-inch chain cheese pizza (dough, tomato sauce, mozzarella): 1 slice = 107 g, the whole pizza 853 g.")], one=True),
+    grp("top", "Toppings", [
+        opt("cheese", "Extra cheese", "extra cheese", 170845, 14.2, rng=(12.4, 14.2), words=["sirom", "extra cheese", "dupli sir", "vise sira", "cheese"],
+            src="Extra cheese on pizza: our estimate 14.2 g per slice: about 4 oz on a 14-inch pie, roughly half of the base cheese (pizza operators on PMQ Think Tank; a weaker source, seen only as a search excerpt). Mozzarella, USDA.",
+            cite="PMQ Think Tank forum, ‘How much extra cheese’ (search excerpt)", url="https://thinktank.pmq.com/t/how-much-extra-cheese/15619"),
+        pz("pepperoni", "Pepperoni", "pepperoni", 174575, 35, 50, ["pepperoni", "peperoni", "feferoni salama"]),
+        pz("salami", "Salami", "salami", "salami", 35, 50, ["salamom", "salama", "kulenom", "salami"], " Salami is not in the chart: we use the pepperoni amount."),
+        pz("ham", "Ham", "ham", "ham", 128, 170, ["sunkom", "sunka", "ham", "sunke"]),
+        pz("sausage", "Sausage", "sausage", 174586, 128, 170, ["kobasicom", "kobasica", "sausage"]),
+        pz("bacon", "Bacon", "bacon", "bacon", 71, 99, ["slaninom", "pancetom", "slanina", "bacon"]),
+        pz("mushrooms", "Mushrooms", "mushrooms", "mushrooms", 50, 78, ["gljivama", "gljive", "sampinjonima", "sampinjoni", "mushrooms", "mushroom", "funghi"]),
+        pz("peppers", "Peppers", "peppers", 170427, 78, 113, ["paprikom", "paprika", "peppers", "pepper"]),
+        pz("onion", "Onion", "onion", "onion", 78, 113, ["lukom", "luk", "onion", "onions"]),
+        pz("olives", "Olives", "olives", "olives", 78, 113, ["maslinama", "masline", "olives"]),
+        pz("corn", "Corn", "sweet corn", 169214, 85, 99, ["kukuruzom", "kukuruz", "corn"]),
+        pz("tuna", "Tuna", "tuna", "tuna-canned", 128, 170, ["tunom", "tunjevinom", "tuna"], " Tuna is not in the chart: we use its amount for cooked meat toppings."),
+        opt("egg", "Egg", "egg", 171287, 6.2, rng=(5.5, 7.0), words=["jajem", "jaje", "egg", "jajetom"],
+            src="Egg on pizza: our estimate, one large egg (50 g, USDA) per pizza, so 6.2 g per slice. No portion source was found for egg."),
+    ]),
+], "Pizza is our builder: USDA’s 14-inch chain cheese pizza plus the toppings you pick, each a USDA record in a pizza-industry chart amount. Water lost in the oven is not modeled. Check: our pepperoni slice (113 g, 316 kcal, 13.2 g fat) matches USDA’s own 14-inch pepperoni slice (111 g, 313 kcal, 13.2 g fat).",
+    presets=[preset("margherita", "Margherita", "Pizza Margherita", []),
+             preset("capricciosa", "Capricciosa", "Pizza Capricciosa", ["ham", "mushrooms"], aliases=["capricciosa", "kapričoza", "kapricoza", "pizza capricciosa", "pizza kapricoza", "capricciosa pizza"]),
+             preset("pepperoni", "Pepperoni", "Pepperoni pizza", ["pepperoni"], aliases=["pepperoni pizza", "pizza pepperoni", "pizza s pepperonijem"]),
+             preset("veggie", "Veggie", "Veggie pizza", ["mushrooms", "peppers", "onion", "olives", "corn"], aliases=["veggie pizza", "vegetarijanska pizza", "vege pizza", "pizza vegetariana"]),
+             preset("loaded", "Loaded", "Loaded pizza", ["cheese", "pepperoni", "ham", "sausage", "bacon", "mushrooms", "peppers", "onion"], aliases=["loaded pizza", "supreme pizza", "pizza supreme"])],
+    unit="slice", ask="Which pizza?", cite=PZ, url=PZU)
+size("pizza", [("slice", "Slice", 1), ("half", "Half", 4), ("whole", "Whole", 8)],
+     "Sizes: a slice is 1/8 of a 14-inch pizza (USDA: slice 107 g, whole pizza 853 g); half is 4 slices, whole is 8.",
+     "USDA FoodData Central, SR Legacy 173292 portions", "https://fdc.nal.usda.gov/food-details/173292/nutrients", level="A")
+
+FN = "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients"
+FNU = "https://fdc.nal.usda.gov/download-datasets"
+def fn(k, chip, name, ref, g, rng, words, what=""):
+    return opt(k, chip, name, ref, g, rng=rng, words=words, cite=FN, url=FNU,
+               src="%s: our estimate %g g, USDA’s guideline amount on a regular sandwich (%g–%g g, regular to large)%s." % (name.capitalize(), g, rng[0], rng[1], what))
+SANDWICH_EXTRAS = lambda: [
+    fn("cheese", "Cheese", "cheese", "cheese-gouda", 21, (21, 28), ["sirom", "sir", "cheese", "gaudom", "goudom"], "; gouda, USDA"),
+    fn("butter", "Butter", "butter", "butter", 14, (7, 28), ["maslacem", "puterom", "butter"]),
+    fn("mayo", "Mayo", "mayonnaise", 171009, 14, (9, 28), ["majonezom", "majoneza", "mayo", "mayonnaise"]),
+    fn("ketchup", "Ketchup", "ketchup", 168556, 17, (5, 34), ["kecapom", "kecap", "ketchup"]),
+    fn("lettuce", "Lettuce", "lettuce", 169248, 8, (8, 16), ["salatom", "zelenom salatom", "lettuce"]),
+    fn("tomato", "Tomato", "tomato", "tomato", 20, (20, 40), ["rajcicom", "paradajzom", "tomato"]),
+]
+builder("hamburger", "What's on it?", [
+    grp("type", "Burger", [
+        opt("hamburger", "Hamburger", "hamburger", "hamburger", on=True, level="A", src="Hamburger: USDA’s record for a McDonald’s hamburger, 95 g (with ketchup, pickle, onion and mustard)."),
+        opt("cheeseburger", "Cheeseburger", "cheeseburger", (170320, "null"), 119, level="A", aliases=["cheeseburger", "čizburger", "cizburger"],
+            src="Cheeseburger: USDA’s record for a McDonald’s cheeseburger, 119 g."),
+        opt("double", "Double", "double burger", (170720, "null"), 219, level="A", aliases=["big mac", "double burger", "dupli burger"],
+            src="Double burger: USDA’s record for a McDonald’s Big Mac (two patties), 219 g."),
+        opt("large", "Large", "large cheeseburger", (170728, "null"), 316, level="A", aliases=["whopper", "large burger", "veliki burger"],
+            src="Large cheeseburger: USDA’s record for a Burger King Whopper with cheese, 316 g."),
+        opt("pljeskavica", "Pljeskavica", "pljeskavica", [(171798, 150), (174915, 150), ("onion", 15)], aliases=["pljeskavica", "pljeskavica u lepinji", "pljeskavicu", "balkan burger"],
+            src="Pljeskavica is our recipe: a 150 g grilled beef patty (USDA ground beef 80/20; menus list 100–350 g, most often 150 or 200 g) in a 150 g lepinja (USDA pita bread stands in; a lepinja on a Serbian menu weighs 150 g) with 15 g onion. Real pljeskavica is often beef and pork with salt, so sodium is higher than shown.",
+            cite="Glovo menus (Kod Čika Gurmana, Kragujevac; Sarajevo sub, Subotica); USDA SR Legacy 171798, 174915", url="https://glovoapp.com/sr/rs/kragujevac/stores/kod-cika-gurmana-krg"),
+    ], one=True),
+    grp("extra", "Extras", [
+        opt("cheese", "Cheese", "cheese slice", 171290, 21, rng=(10, 32), words=["sirom", "cheese"], cite="USDA SR Legacy 171290 portion; USDA FNDDS", url=FNU,
+            src="Cheese: one slice of American cheese, 21 g (USDA portion; 10–32 g from a slider to a large burger)."),
+        fn("bacon", "Bacon", "bacon", "bacon", 16, (16, 24), ["slaninom", "bacon"]),
+        opt("patty", "Extra patty", "extra patty", 171798, 40, rng=(40, 115), words=["dupla pljeskavica", "extra patty"], cite="USDA FNDDS fast-food burger patties", url=FNU,
+            src="Extra patty: a small fast-food beef patty, 40 g cooked (USDA: 40 g small, 85 g medium, 115 g large)."),
+        fn("onion", "Onion", "onion", "onion", 15, (15, 30), ["lukom", "onion"]),
+        fn("lettuce", "Lettuce", "lettuce", 169248, 8, (8, 16), ["salatom", "lettuce"]),
+        fn("tomato", "Tomato", "tomato", "tomato", 20, (20, 40), ["rajcicom", "tomato"]),
+        opt("pickles", "Pickles", "pickles", 168558, 7, rng=(5, 7), words=["kiselim krastavcima", "pickles"], cite="USDA SR Legacy 168558; USDA FNDDS", url=FNU,
+            src="Pickles: one slice, 7 g (USDA portion; fast-food burgers carry 5–7 g)."),
+        fn("ketchup", "Ketchup", "ketchup", 168556, 17, (5, 34), ["kecapom", "ketchup"]),
+        fn("mayo", "Mayo", "mayonnaise", 171009, 14, (9, 28), ["majonezom", "mayo"]),
+    ]),
+], "Burger is our builder: a USDA whole-burger record (or our pljeskavica recipe) plus the extras you pick, in USDA’s guideline amounts for sandwich ingredients. The fast-food records already contain their usual sauces and pickles.",
+    ask="Which burger?", unit="burger", cite=FN, url=FNU)
+
+builder("sandwich-ham", "What's on it?", [
+    grp("type", "Sandwich", [
+        opt("sub", "Ham sub", "ham sub", "sandwich-ham", on=True, level="A", src="Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g."),
+        opt("coldcut", "Cold-cut sub", "cold-cut sub", (170696, "null"), 196, level="A", aliases=["cold cut sandwich", "sendvič s narezom", "sendvic s narezom"],
+            src="Cold-cut sub: USDA’s record for a 6-inch cold-cut submarine sandwich, 196 g."),
+        opt("tuna", "Tuna sub", "tuna sub", (170299, "null"), 237, level="A", aliases=["tuna sandwich", "sendvič s tunom", "sendvic s tunom", "sendvič sa tunjevinom"],
+            src="Tuna sub: USDA’s record for a 6-inch tuna submarine sandwich, 237 g."),
+        opt("baguette", "Baguette", "baguette sandwich", [("bread-french", 110), ("ham", 56), ("cheese-gouda", 21), ("butter", 14)],
+            aliases=["baguette sandwich", "baget sa šunkom i sirom", "baget sendvič", "sendvič od bageta", "baget sendvic"],
+            src="Baguette sandwich is our recipe: 110 g baguette (a Czech shop ham-and-cheese sandwich label: bread 52% of 213 g), 56 g ham, 21 g gouda and 14 g butter (USDA guideline amounts for a home sandwich).",
+            cite="Rohlik.cz Simply Fresh sendvič šunka a sýr (label); USDA FNDDS guideline amounts", url="https://www.rohlik.cz/1343399-simply-fresh-sendvic-sunka-a-syr"),
+        opt("toast", "Toast", "ham and cheese toast", [("bread-white", 60), ("ham", 28), ("cheese-gouda", 21)],
+            aliases=["tost", "toast", "tost sa šunkom i sirom", "tost šunka sir", "toast sandwich", "ham and cheese toast", "toastie"],
+            src="Toast is our recipe: 2 slices of white bread (60 g, USDA FNDDS), 1 slice of ham (28 g, USDA) and 21 g gouda. A shop toastie of 110 g lists 17% cheese and 13% ham, a little less filling.",
+            cite="USDA FNDDS 2706964; PS in foodservice, Tasty Tosti kaas ham (label)", url="https://psinfoodservice.com/en/product/18227-tosti-superieur-kaas-ham-30x1-stuk"),
+    ], one=True),
+    grp("extra", "Extras", SANDWICH_EXTRAS()),
+], "Sandwich is our builder: a USDA sandwich record or our recipe from USDA parts, plus the extras you pick in USDA’s guideline amounts for a regular sandwich.",
+    ask="Which sandwich?", unit="sandwich", cite=FN, url=FNU)
+
+DK = "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)"
+DKU = "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger"
+builder("kebab", "What's on it?", [
+    grp("bread", "Bread", [
+        opt("pita", "Pita", "pita", 174915, 60, rng=(28, 60), on=True, words=["u piti", "pita", "lepinji"], cite=DK, url=DKU,
+            src="Pita: 60 g (a large pita, USDA; the USDA gyro uses 60 g)."),
+        opt("wrap", "Wrap", "wrap", 175037, 72, rng=(49, 117), words=["wrap", "tortilji", "durum", "dürüm"], aliases=["kebab wrap", "durum", "dürüm", "kebab u tortilji", "wrap kebab"], cite=DK, url=DKU,
+            src="Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches)."),
+    ], one=True),
+    grp("meat", "Meat", [
+        opt("chicken", "Chicken", "chicken", 172388, 110, rng=(60, 173), on=True, words=["piletinom", "pileci", "chicken"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DK, url=DKU,
+            src="Chicken: our estimate 110 g of roasted chicken thigh meat (USDA). Measured portions run from 60 g (USDA gyro) to 80–173 g (döner weighed in a German TV test)."),
+        opt("beef", "Beef/veal", "beef", 171797, 110, rng=(60, 173), words=["teletinom", "junetinom", "govedinom", "telecim", "beef"], aliases=["teleći kebab", "teleci kebab", "juneći kebab", "beef kebab", "beef doner"], cite=DK, url=DKU,
+            src="Beef/veal: our estimate 110 g; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Measured portions run from 60 g to 173 g."),
+    ], one=True),
+    grp("extra", "Extras", [
+        opt("tomato", "Tomato", "tomato", "tomato", 30, rng=(20, 40), on=True, words=["rajcicom", "tomato"], cite=DK, url=DKU, src="Tomato: 30 g (USDA gyro recipe)."),
+        opt("onion", "Onion", "onion", "onion", 20, rng=(15, 30), on=True, words=["lukom", "onion"], cite=DK, url=DKU, src="Onion: 20 g (USDA gyro recipe)."),
+        opt("lettuce", "Lettuce", "lettuce", 169248, 8, rng=(8, 16), words=["salatom", "lettuce"], cite=FN, url=FNU, src="Lettuce: 8 g (USDA guideline amount on a regular sandwich)."),
+        opt("yogurt", "Yogurt sauce", "yogurt sauce", "yogurt-plain", 30, rng=(15, 60), on=True, words=["jogurt", "tzatziki", "umakom", "yogurt"], cite=DK, url=DKU,
+            src="Yogurt sauce: 30 g (USDA gyro recipe, as tzatziki); plain whole-milk yogurt stands in."),
+        opt("mayo", "Mayo sauce", "mayonnaise sauce", 171009, 14, rng=(9, 28), words=["majonezom", "mayo"], cite=FN, url=FNU,
+            src="Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich)."),
+    ]),
+], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record, in the amounts of USDA’s gyro sandwich recipe and weighed döner portions. Kebab shops differ a lot, mostly in the meat.",
+    presets=[preset("chicken-pita", "Chicken pita", "Chicken kebab in pita", ["pita", "chicken", "tomato", "onion", "yogurt"]),
+             preset("beef-pita", "Beef pita", "Beef kebab in pita", ["pita", "beef", "tomato", "onion", "yogurt"]),
+             preset("chicken-wrap", "Chicken wrap", "Chicken kebab wrap", ["wrap", "chicken", "tomato", "onion", "yogurt"])],
+    ask="Which kebab?", unit="kebab", base_is_default=True, serving_label="1 kebab", cite=DK, url=DKU)
+CHANGED_ON_PURPOSE["kebab"] = "owner 2026-10-18: kebab returns as a builder (was all null and left out of the app)"
+
+BU = "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)"
+BUU = "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g"
+builder("burek", "What's in it?", [
+    grp("filling", "Filling", [
+        opt("bakery", "Bakery", "bakery burek", "burek", on=True, level="B",
+            src="Bakery burek: one Croatian producer label (Čakovečki mlinovi, 150 g piece); the label does not name the filling."),
+        opt("cheese", "Cheese", "burek with cheese", [(172791, 84), ("cheese-cottage", 51), (171017, 15)], words=["sirom", "sa sirom", "s sirom"],
+            aliases=["burek sa sirom", "burek s sirom", "sirnica", "sirna pita", "burek od sira", "cheese burek"], cite=BU, url=BUU,
+            src="Burek with cheese is our recipe for a 150 g piece: 84 g phyllo (USDA), 51 g fresh cheese (34%, as on the Vindija label; USDA cottage cheese) and 15 g sunflower oil (Croatian rules ask for at least 10% fat). Labels give 247–316 kcal per 100 g; water lost in baking is not modeled."),
+        opt("meat", "Meat", "burek with meat", [(172791, 77), (171798, 58), (171017, 15)], words=["mesom", "s mesom", "sa mesom"],
+            aliases=["burek s mesom", "burek sa mesom", "mesni burek", "meat burek", "burek od mesa"], cite=BU, url=BUU,
+            src="Burek with meat is our recipe for a 150 g piece: 77 g phyllo (USDA), 58 g ground beef (38.6%, as on a Krajina Klas label; USDA cooked ground beef 80/20) and 15 g sunflower oil (at least 10% fat by Croatian rules)."),
+        opt("spinach", "Spinach", "spinach burek", [(172791, 75), ("spinach", 30), ("cheese-cottage", 30), (171017, 15)], words=["spinatom", "zeljem", "sa spinatom"],
+            aliases=["zeljanica", "burek sa špinatom", "burek sa zeljem", "spinach burek", "pita sa zeljem"], cite=BU, url=BUU,
+            src="Spinach burek (zeljanica) is our recipe for a 150 g piece: 75 g phyllo, 30 g cooked spinach, 30 g fresh cheese and 15 g sunflower oil (USDA parts). We found no label with its proportions, so they are our estimate."),
+        opt("potato", "Potato", "potato burek", [(172791, 75), ("potato-boiled", 45), ("onion", 15), (171017, 15)], words=["krumpirom", "krompirom"],
+            aliases=["krumpiruša", "krumpirusa", "krompiruša", "burek s krumpirom", "potato burek", "burek od krumpira"], cite=BU, url=BUU,
+            src="Potato burek (krumpiruša) is our recipe for a 150 g piece: 75 g phyllo, 45 g boiled potato, 15 g onion and 15 g sunflower oil (USDA parts). We found no label with its proportions, so they are our estimate."),
+    ], one=True),
+], "Burek: the bakery label, or our recipes for each filling from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
+    ask="Which burek?", unit="piece", cite=BU, url=BUU)
+CHANGED_ON_PURPOSE["bread-white"] = "alias 'tost' moved to the sandwich builder (Croatian 'tost' is a toasted ham-and-cheese sandwich)"
+CHANGED_ON_PURPOSE["burek"] = "aliases 'burek sa sirom', 'sirnica', 'sirna pita', 'mesni burek', 'burek s mesom' moved to the burek fillings (builder)"
+
+DR = "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)"
+DRU = "https://www.law.cornell.edu/cfr/text/21/101.12"
+def dressing(base, label):
+    return [grp("base", "Base", [opt("base", label, label.lower(), base, on=True, level="A", src=label + ": the USDA record of the database food, its usual serving.")], one=True), grp("dressing", "Dressing", [
+        opt("olive-oil", "Olive oil", "olive oil", "olive-oil", 13.5, rng=(4.5, 27), words=["maslinovim uljem", "uljem", "olive oil", "oil"], cite=DR, url=DRU,
+            src="Olive oil: 1 tablespoon, 13.5 g (USDA portion; people use about 1 teaspoon to 2 tablespoons)."),
+        opt("sunflower-oil", "Sunflower oil", "sunflower oil", 171017, 13.6, rng=(4.5, 27), words=["suncokretovim uljem", "sunflower oil"], cite=DR, url=DRU,
+            src="Sunflower oil: 1 tablespoon, 13.6 g (USDA portion)."),
+        opt("vinegar", "Vinegar", "vinegar", 172237, 14.9, rng=(5, 30), words=["octom", "ocat", "vinegar"], cite=DR, url=DRU,
+            src="Vinegar: 1 tablespoon, 14.9 g of distilled (spirit) vinegar (USDA portion), the kind most used in Croatia."),
+        opt("salt", "Salt", "salt", 173468, 0.4, rng=(0.4, 1.5), words=["solju", "salt"], cite=DR, url=DRU,
+            src="Salt: a dash, 0.4 g (USDA portion ‘dash’), about 155 mg sodium. People often use more."),
+    ])]
+builder("salad-lettuce", "Dressing?", dressing("salad-lettuce", "Lettuce"), "Green salad: USDA romaine lettuce plus the dressing you pick, in USDA spoon portions.", ask="Dressing?", cite=DR, url=DRU)
+builder("cabbage", "Dressing?", dressing("cabbage", "Cabbage"), "Cabbage salad: USDA raw cabbage plus the dressing you pick, in USDA spoon portions.", ask="Dressing?", cite=DR, url=DRU)
+
+# ---------------- "WHICH …?" CHOOSERS ----------------
+# Owner 2026-10-18: a word that names several foods asks ("Which tea?"); the app starts on the ALIAS_OWNER food and
+# keeps the chooser visible until a pick. Every shared word in the spec must be covered (the build fails otherwise).
+chooser("tea", "Which tea?", [("black-tea", "Black"), ("green-tea", "Green"), ("herbal-tea", "Herbal"), ("iced-tea", "Iced")], words=["čaj", "tea", "čaja", "čajem"])
+chooser("coffee", "Which coffee?", [("espresso", "Espresso"), ("filter-coffee", "Filter"), ("coffee-with-milk", "With milk"), ("cappuccino", "Cappuccino"), ("latte", "Latte")],
+        words=["kava", "coffee", "kave", "kavu", "kafa", "crna kava"])
+chooser("juice", "Which juice?", [("orange-juice", "Orange"), ("apple-juice", "Apple"), ("tomato-juice", "Tomato")], words=["sok", "juice", "soka", "voćni sok"])
+chooser("milk", "Which milk?", [("milk-whole", "Whole"), ("milk-semi-skimmed", "2%"), ("milk-skimmed", "Skim")], words=["mlijeko", "milk", "mlijeka", "mleko"])
+chooser("plant-milk", "Which plant milk?", [("soy-milk", "Soy"), ("almond-milk", "Almond"), ("rice-milk", "Rice")], words=["biljno mlijeko", "plant milk"])
+chooser("cheese", "Which cheese?", [("cheese-gouda", "Gouda"), ("cheese-cheddar", "Cheddar"), ("cheese-mozzarella", "Mozzarella"), ("cheese-feta", "Feta"),
+        ("cheese-cottage", "Cottage"), ("cheese-parmesan", "Parmesan")], words=["sir", "cheese", "sira"])
+chooser("bread", "Which bread?", [("bread-white", "White"), ("bread-wholemeal", "Wholemeal"), ("bread-rye", "Rye"), ("bread-french", "Baguette"), ("bread-white.roll", "Roll")],
+        words=["kruh", "bread", "kruha"])
+chooser("wine", "Which wine?", [("red-wine", "Red"), ("white-wine", "White"), ("white-wine.rose", "Rosé"), ("white-wine.spritzer", "Spritzer"),
+        ("red-wine.bevanda", "With water"), ("red-wine.dessert", "Dessert")], words=["vino", "wine", "vina"])
+chooser("sausage", "Which sausage?", [("sausage", "Pork"), ("sausage.smoked", "Smoked"), ("sausage.bratwurst", "Bratwurst"), ("sausage.chicken", "Chicken"),
+        ("frankfurter", "Hot dog")], words=["kobasica", "kobasice", "sausage", "kobasicu"])
+chooser("soup", "Which soup?", [("vegetable-soup", "Vegetable"), ("chicken-soup", "Chicken"), ("tomato-soup", "Tomato"), ("bean-soup", "Bean stew")], words=["juha", "soup", "juhu"])
+chooser("beans", "Which beans?", [("beans-kidney", "Red"), ("beans-white", "White")], words=["grah", "beans"])
+chooser("chocolate", "Which chocolate?", [("chocolate-milk-bar", "Milk"), ("chocolate-dark", "Dark"), ("chocolate-milk-bar.white", "White")], words=["čokolada", "chocolate", "čokoladu"])
+chooser("cocoa", "Which cocoa?", [("chocolate-milk", "Cold"), ("hot-chocolate", "Hot")], words=["kakao"])
+chooser("fish", "Which fish?", [("cod", "White fish"), ("salmon", "Salmon"), ("sardines", "Sardines"), ("tuna-canned", "Tuna")], words=["riba", "fish", "ribu"])
+chooser("cereal", "Which cereal?", [("cornflakes", "Cornflakes"), ("muesli", "Muesli")], words=["žitarice", "cereal"])
+chooser("dried-fruit", "Which dried fruit?", [("raisins", "Raisins"), ("dried-apricots", "Apricots"), ("dried-figs", "Figs"), ("dates", "Dates")], words=["dried fruit", "sušeno voće"])
+chooser("eggs", "Which eggs?", [("egg-boiled", "Boiled"), ("egg-fried", "Fried")], words=["jaja", "egg", "eggs"])
+chooser("cold-cuts", "Which cold cuts?", [("ham", "Ham"), ("ham.turkey", "Turkey ham"), ("salami", "Salami")], words=["narezak"])
+chooser("pasta", "Which pasta?", [("pasta", "White"), ("pasta-wholewheat", "Whole-wheat")], words=["tjestenina", "pasta"])
+chooser("potato", "Which potatoes?", [("potato-boiled", "Boiled"), ("potato-mashed", "Mashed"), ("fries", "Fries")], words=["krumpir", "potato", "potatoes", "krompir"])
+chooser("rice", "Which rice?", [("rice-white", "White"), ("rice-brown", "Brown")], words=["riža", "rice"])
+chooser("yogurt", "Which yogurt?", [("yogurt-plain", "Plain"), ("yogurt-lowfat", "Low-fat"), ("yogurt-greek", "Greek"), ("yogurt-fruit", "Fruit")], words=["jogurt", "yogurt", "yoghurt"])
+chooser("nuts", "Which nuts?", [("almonds", "Almonds"), ("walnuts", "Walnuts"), ("hazelnuts", "Hazelnuts"), ("peanuts", "Peanuts")], words=["nuts", "orašasti plodovi"])
 
 

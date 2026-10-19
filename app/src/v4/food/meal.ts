@@ -2,7 +2,7 @@
 // Pure helpers for the meal builder (chips, "+ add"), the deep-link code and the popular presets.
 // Science: science/foodSim.ts (two-phase stomach, per-item sugar curves); evidence: research/meals.md.
 import { ALCOHOL_DRINKS, alcoholClass, type Meal, type MealItem } from '../../science/foodSim';
-import { FOOD_BY_ID, gramsPart, macros, servingPart, type Food, type Macros, type Part } from './parse';
+import { foodFromKey, foodKey, gramsPart, macros, servingPart, type Food, type Macros, type Part } from './parse';
 
 /** More than ~5 things stops being "a meal" on a phone screen. */
 export const MAX_ITEMS = 5;
@@ -55,7 +55,7 @@ export function stepOf(p: Part): number | null {
 export function addParts(meal: Part[], add: Part[]): Part[] {
   const out = [...meal];
   for (const a of add) {
-    const i = out.findIndex((p) => p.food.id === a.food.id);
+    const i = out.findIndex((p) => foodKey(p.food) === foodKey(a.food)); // two kinds of the same food stay two items
     if (i >= 0) { const n = Math.min(3, servingsOf(out[i]) + servingsOf(a)); out[i] = stepOrGrams(out[i].food, n); continue; }
     if (out.length >= MAX_ITEMS) break;
     out.push(a);
@@ -64,23 +64,27 @@ export function addParts(meal: Part[], add: Part[]): Part[] {
 }
 export const removePart = (meal: Part[], i: number): Part[] => meal.filter((_, j) => j !== i);
 export const setServings = (meal: Part[], i: number, n: number): Part[] => meal.map((p, j) => (j === i ? servingPart(p.food, n) : p));
+/** Another kind of item i (variant, toppings, add-ins), keeping how many servings it was. */
+export const setFood = (meal: Part[], i: number, food: Food): Part[] => meal.map((p, j) => (j === i ? stepOrGrams(food, servingsOf(p)) : p));
 const stepOrGrams = (f: Food, n: number) => (ITEM_STEPS as readonly number[]).includes(n) ? servingPart(f, n) : gramsPart(f, n * f.serving.grams);
 
-// ---- deep-link code: "hamburger fries*2 cola" (servings) or "rice-white*200g" (grams). Space-separated, so it reads
+// ---- deep-link code: "hamburger fries*2 cola" (servings) or "rice-white*200g" (grams); since 2026-10-18 a token can carry a
+// variant, add-ins and builder parts: <id>[.<v>][~<addin><n>]*[_<part>]*[*<n>[g]] ("pizza_base_ham*2", "espresso~sugar1"). Space-separated, so it reads
 // as "m=hamburger+fries*2+cola" in the address bar. Unknown ids are skipped, so a link never breaks the app.
 export function mealCode(parts: Part[]): string {
   return parts.map((p) => {
     const s = servingsOf(p), q = Math.round(s * 4) / 4;
-    if (Math.abs(s - q) * p.food.serving.grams < 0.5 && q > 0) return q === 1 ? p.food.id : `${p.food.id}*${q}`;
-    return `${p.food.id}*${Math.round(p.grams)}g`;
+    const k = foodKey(p.food);
+    if (Math.abs(s - q) * p.food.serving.grams < 0.5 && q > 0) return q === 1 ? k : `${k}*${q}`;
+    return `${k}*${Math.round(p.grams)}g`;
   }).join(' ');
 }
 export function mealFromCode(code: string | null | undefined): Part[] {
   if (!code) return [];
   const out: Part[] = [];
   for (const tok of code.trim().split(/[\s+,]+/).filter(Boolean)) {
-    const m = /^([a-z0-9-]+)(?:\*(\d+(?:\.\d+)?)(g)?)?$/.exec(tok.toLowerCase());
-    const f = m && Object.prototype.hasOwnProperty.call(FOOD_BY_ID, m[1]) ? FOOD_BY_ID[m[1]] : undefined; // never Object.prototype keys
+    const m = /^([a-z0-9-]+(?:\.[a-z0-9-]+)?(?:~[a-z]+\d+)*(?:_[a-z0-9-]+)*)(?:\*(\d+(?:\.\d+)?)(g)?)?$/.exec(tok.toLowerCase());
+    const f = m ? foodFromKey(m[1]) : undefined; // own keys only; an unknown variant or part falls back to the default
     if (!m || !f) continue;
     const v = m[2] === undefined ? 1 : Number(m[2]);
     if (!(v > 0) || v > (m[3] ? 5000 : 10)) continue;

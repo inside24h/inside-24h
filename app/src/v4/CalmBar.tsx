@@ -4,18 +4,20 @@
 // each light is a button that explains itself ("Brain · high stress" → what it means now + one thing to do).
 import { useEffect, useState } from 'react';
 import { MAX_MIN, minutesFromU } from '../time';
-import type { Level, System } from './status';
+import { SHORT_LABEL, type Level, type System } from './status';
 import { TIPS } from '../content/tips';
 
 const DOT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
-const SHORT: Record<System['key'], string> = { energy: 'Sugar', heart: 'Heart', water: 'Water', brain: 'Brain' };
+const SHORT: Record<System['key'], string> = SHORT_LABEL; // "Blood sugar", not "Sugar" (sense audit 2026-10-18)
 const WORD = ['fine', 'mild stress', 'high stress'];
+const PORTIONS = [0.5, 1, 2, 3].map((f) => ({ k: String(f), label: `${f === 0.5 ? '½' : f}×`, mult: f, aria: `${f === 0.5 ? 'Half' : f === 1 ? 'One' : f === 2 ? 'Two' : 'Three'} ${f === 1 ? 'serving' : f === 0.5 ? 'a serving' : 'servings'}` }));
 
-export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, systems, minute, where, onMore, eatenAt, setEatenAt, noun, portion, onPortion, onRules }: {
+export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, systems, minute, where, onMore, eatenAt, setEatenAt, noun, portion, onPortion, onRules, sizes }: {
   title: string; text: string; clock: string; since: string; playing: boolean; onPlay: () => void;
   u: number; setU: (v: number) => void; systems: System[]; minute: number; where?: string; onMore: () => void;
   eatenAt: number; setEatenAt: (min: number) => void; noun: string;
   portion: number; onPortion: (f: number) => void;
+  /** named sizes of this food (Slice · Half · Whole, 0.3 · 0.33 · 0.5 l); else ½ · 1 · 2 · 3× */ sizes?: { k: string; label: string; mult: number }[] | null;
   /** opens "How the colours work" */ onRules?: () => void;
 }) {
   const [open, setOpen] = useState<System['key'] | null>(null);
@@ -48,7 +50,7 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
             aria-valuetext={since} onChange={(e) => setU(+e.target.value / 1000)} />
         </div>
         <span className="calmend" aria-hidden="true">{Math.round(minutesFromU(1) / 60)} h</span>
-        <span className="portion" role="group" aria-label="How much"><span className="plabel" aria-hidden="true">How much?</span>{[0.5, 1, 2, 3].map((f) => <button key={f} aria-pressed={portion === f} aria-label={`${f === 0.5 ? 'Half' : f === 1 ? 'One' : f === 2 ? 'Two' : 'Three'} ${f === 1 ? 'serving' : f === 0.5 ? 'a serving' : 'servings'}`} onClick={() => onPortion(f)}>{f === 0.5 ? '½' : f}×</button>)}</span>
+        <span className="portion" role="group" aria-label="How much"><span className="plabel" aria-hidden="true">How much?</span>{(sizes ?? PORTIONS).map((z) => <button key={z.k} className={sizes ? 'named' : undefined} aria-pressed={Math.abs(portion - z.mult) < 1e-6} aria-label={'aria' in z ? (z as { aria: string }).aria : z.label} onClick={() => onPortion(z.mult)}>{z.label}</button>)}</span>
         <label className="eatenat" title={`When you had the ${noun}`}><span className="plabel">Had it at</span><input type="time" value={hhmm} onChange={(e) => { const [h, mm] = e.target.value.split(':').map(Number); if (!Number.isNaN(h)) setEatenAt(h * 60 + (mm || 0)); }} /></label>
       </div>
       <div className="calmdots" role="group" aria-label="How your body is doing now: tap one to see why">

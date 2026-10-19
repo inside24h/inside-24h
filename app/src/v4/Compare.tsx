@@ -10,7 +10,7 @@ import { worstMoment } from './status';
 
 const DOT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 const WORD = ['fine all day', 'mild stress', 'high stress'];
-const SHORT = { energy: 'Sugar', heart: 'Heart', water: 'Water', brain: 'Brain' } as const;
+const SHORT = { energy: 'Blood sugar', heart: 'Heart', water: 'Water', brain: 'Brain' } as const; // never "Sugar" alone (status.ts SHORT_LABEL)
 const LINE = ['#ffc83d', '#5cd3ff'];
 
 // everyday questions people actually argue about

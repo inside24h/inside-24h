@@ -90,9 +90,14 @@ const GOLDEN: [string, [string, number][]][] = [
   ['sendvič', [['sandwich-ham', 184]]],
   // must find NOTHING: these name foods we do not have (a wrong food would be worse)
   ['maline', []], ['cockta', []], ['zobene pahuljice', []], ['oats', []], ['bijeli luk', []], ['bundeva', []],
-  ['blitva', []], ['višnje', []], ['njoki', []], ['pljeskavica', []], ['turska kava', []], ['mljeveno meso', []],
-  ['pureća šunka', []], ['ovčji sir', []], ['goveđa juha', []], ['kebab', []], ['marelice', []], ['smokve', []],
-  ['macchiato', []], ['pecivo', []], ['leblebije', []],
+  ['blitva', []], ['višnje', []], ['njoki', []], ['turska kava', []], ['mljeveno meso', []],
+  ['ovčji sir', []], ['marelice', []], ['smokve', []],
+  ['pecivo', []], ['leblebije', []],
+  // 2026-10-18 (owner, VARIANTS-PLAN.md): these now have a food of their own (variant or builder), checked by kind
+  // in variants.test.ts: pljeskavica (burger builder), kebab (builder), pureća šunka (turkey ham), goveđa juha (beef
+  // noodle soup, closest record), macchiato (espresso + milk recipe)
+  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 250]]], ['pureća šunka', [['ham', 28]]],
+  ['goveđa juha', [['chicken-soup', 244]]], ['macchiato', [['coffee-with-milk', 61]]],
 ];
 
 describe('golden queries: Croatian and English text → food and amount', () => {
@@ -103,7 +108,7 @@ describe('golden queries: Croatian and English text → food and amount', () => 
     });
   }
   it('nothing found degrades gracefully: no wrong suggestion either', () => {
-    for (const q of ['maline', 'cockta', 'zobene pahuljice', 'bijeli luk', 'bundeva', 'pljeskavica', 'kebab', 'xyzzy'])
+    for (const q of ['maline', 'cockta', 'zobene pahuljice', 'bijeli luk', 'bundeva', 'xyzzy'])
       expect(suggest(q).map((s) => s.parts.map((p) => p.food.id).join('+')), q).toEqual([]);
   });
   it('labels read as English: "2 slices", "10 pieces", "1 can (500 ml)"', () => {
@@ -222,8 +227,9 @@ describe('servings and health bars read the database (one number everywhere)', (
       expect(d, id).toBeGreaterThan(0.99); expect(d, id).toBeLessThan(1.06);
     }
   });
-  it('kebab stays out of the app (no data); new GI values from Atkinson 2008 Suppl. A1 are in', () => {
-    expect(FOOD_BY_ID.kebab).toBeUndefined();
+  it('kebab is back as a builder of USDA parts (owner 2026-10-18); new GI values from Atkinson 2008 Suppl. A1 are in', () => {
+    expect(FOOD_BY_ID.kebab.recipe).toBe(true);
+    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(393); // chicken in pita, the default
     expect([FOOD_BY_ID.carrot.gi, FOOD_BY_ID['dried-apricots'].gi, FOOD_BY_ID['tomato-soup'].gi, FOOD_BY_ID['dried-figs'].gi, FOOD_BY_ID.raisins.gi]).toEqual([35, 31, 52, 61, 64]);
   });
 });

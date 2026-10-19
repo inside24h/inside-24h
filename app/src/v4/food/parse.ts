@@ -12,8 +12,25 @@ export interface Per100 {
   kcal: number; carbs: number | null; sugars: number | null; freeSugars: number | null; fiber: number | null; fat: number | null;
   satFat: number | null; protein: number | null; sodiumMg: number | null; caffeineMg: number | null; alcoholG: number | null; waterG: number | null;
 }
-/** A value that is not from USDA: which fields, the evidence level, the sentence for "How do we know?" and the source. */
-export interface FoodSource { fields: string[]; level: 'A' | 'B' | 'C'; text: string; cite: string; url: string }
+/** A value that is not from USDA: which fields, the evidence level, the sentence for "How do we know?" and the source.
+ *  `claim`: the claim id (content/food.ts) for variant, builder, add-in and size rows; base label rows use DBO-<id>-<i>. */
+export interface FoodSource { fields: string[]; level: 'A' | 'B' | 'C'; text: string; cite: string; url: string; claim?: string }
+/** 2026-10-18 (research/tools/build_variants.py): a variant keeps the base id and adds `v` ("beer.radler"). */
+export interface Variant {
+  v: string; chip: string; name: string; words: string[]; aliases: string[]; kind: Food['kind']; serving: { label: string; grams: number };
+  p: Per100; gi: number | null; color: string; proxy: boolean; recipe: boolean; fdc: number | null; src: FoodSource[];
+  assumedServing?: boolean; range?: Record<string, [number, number]>;
+}
+/** Named amounts for "How much?": `mult` × the serving, or an absolute `ml` (beer 0.3 l). */
+export interface SizeOpt { k: string; label: string; mult?: number; ml?: number }
+/** Sugar, honey, milk, an extra shot: folded INTO the drink (a mix), never a separate solid in the stomach. */
+export interface AddIn { k: string; label: string; unit: string; grams: number; max: number; excl: string | null; p: Per100; gi: number | null; words: string[]; food: string | null; fdc: number | null; src: FoodSource[] }
+export interface BuilderOpt { k: string; chip: string; name: string; grams: number; rng: [number, number] | null; on: boolean; p: Per100; gi: number | null; fdc: number | null; food: string | null; words: string[]; aliases: string[]; src: FoodSource[] }
+export interface BuilderGroup { k: string; label: string; one: boolean; opts: BuilderOpt[] }
+export interface Preset { k: string; chip: string; name: string; on: string[]; aliases: string[]; words: string[]; check?: { grams: number; kcal: number; fat: number; gi: number | null } }
+export interface Builder { title: string; ask: string | null; unit: string; src: FoodSource[]; presets: Preset[]; groups: BuilderGroup[] }
+/** One word, several foods ("čaj"): the app starts on the word's owner and shows "Which tea?". Options are food keys. */
+export interface Chooser { k: string; ask: string; words: string[]; opts: { k: string; chip: string }[] }
 export interface Food {
   id: string; name: string; aliases: string[]; kind: 'liquid' | 'semi' | 'solid';
   serving: { label: string; grams: number }; p: Per100; gi: number | null; color: string; proxy: boolean; recipe: boolean; fdc: number | null;
@@ -24,11 +41,19 @@ export interface Food {
   /** a brand alias with its own pack: "monster" → 1 can (500 ml) */
   aliasServing?: Record<string, { label: string; grams: number }>;
   src?: FoodSource[];
+  // ---- choices (only on foods that have them; see research/audit/VARIANTS-DONE.md) ----
+  ask?: string; chip?: string; variants?: Variant[]; sizes?: { opts: SizeOpt[]; src: FoodSource[] }; addins?: AddIn[]; builder?: Builder; choose?: Chooser;
+  // ---- a DERIVED food (variant / builder selection / add-ins); FOODS never contains one ----
+  /** the database food this was made from */ base?: Food;
+  v?: string;
+  /** builder selection (option keys), only when it differs from the default */ on?: string[];
+  /** add-ins and how many (sugar: 2) */ add?: Record<string, number>;
 }
-export const FOODS: Food[] = raw as Food[];
+export const FOODS: Food[] = raw as unknown as Food[];
 export const FOOD_BY_ID: Record<string, Food> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
 
-export interface Part { food: Food; grams: number; amountLabel: string; assumed: boolean }
+/** `ask`: the text named several foods ("čaj"), so the screen shows "Which tea?" until the person picks. */
+export interface Part { food: Food; grams: number; amountLabel: string; assumed: boolean; ask?: boolean }
 export interface Macros {
   grams: number; kcal: number; carbs: number; availCarbs: number; sugars: number; fiber: number; fat: number; protein: number;
   waterG: number; caffeineMg: number; alcoholG: number; sodiumMg: number;
@@ -95,11 +120,14 @@ function stemMatch(a: string, b: string): number {
 
 /** How well a text (already folded, no numbers) names this food. 0 = not at all. */
 export function matchScore(text: string, food: Food): number {
+  return aliasScore(text, [food.name, food.id.replace(/-/g, ' '), ...food.aliases].map(fold));
+}
+function aliasScore(text: string, aliases: string[]): number {
   if (!text) return 0;
   const words = text.split(' ').filter((w) => !FILLER.has(w));
   if (!words.length) return 0;
   let best = 0;
-  for (const alias of [food.name, food.id.replace(/-/g, ' '), ...food.aliases].map(fold)) {
+  for (const alias of aliases) {
     if (alias === text) return 10;
     if (alias.startsWith(text) && text.length >= 2) best = Math.max(best, 6 + text.length / alias.length);
     const aw = alias.replace(/[()/,]/g, ' ').split(' ').filter(Boolean);
@@ -124,9 +152,10 @@ export const MIN_SCORE = 3.8;
 export const MIN_LOG = 4.1;
 
 function bestFoods(text: string, n = 8): { food: Food; score: number }[] {
-  return FOODS.map((food) => ({ food, score: matchScore(text, food) }))
+  const rank = (f: Food) => FOODS.indexOf(baseOf(f)) + (f.base ? 0.5 : 0);
+  return [...FOODS.map((food) => ({ food, score: matchScore(text, food) })), ...altMatches(text)]
     .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score || FOODS.indexOf(a.food) - FOODS.indexOf(b.food)) // ties: the database lists the everyday choice first
+    .sort((a, b) => b.score - a.score || rank(a.food) - rank(b.food)) // ties: the database lists the everyday choice first, base before its variants
     .slice(0, n);
 }
 
@@ -204,21 +233,38 @@ function toPart(food: Food, q: Qty, rest = ''): Part {
 }
 
 const SPLIT = / (?:s|sa|i|and|with|uz|plus|\+) |,|\+|;/;
+const SPLIT_KEEP = /( (?:s|sa|i|and|with|uz|plus|\+) |,|\+|;)/;
+const WITH = /^ (?:s|sa|with|uz) $/;
+const AND = /^(?: (?:i|and) |,)$/;
 
-/** Best reading of the whole text. Tries the full phrase first (so "kava s mlijekom" stays one drink). */
+/** Best reading of the whole text. Tries the full phrase first (so "kava s mlijekom" stays one drink). After the
+ *  split, "with …" (s/sa/with/uz) that names an add-in, a topping or a variant of the thing before it goes INTO that
+ *  thing: "kava sa šećerom" = espresso with sugar, "pizza sa šunkom i gljivama" = one pizza, "burek sa sirom i jogurt"
+ *  = burek with cheese + a yogurt. A plain "and" starts a new thing ("pizza i pivo"). */
 export function parseMeal(input: string): Part[] {
   const text = fold(input);
   if (!text) return [];
   const whole = readQty(text);
   const top = bestFoods(whole.rest, 1)[0];
-  if (top && top.score >= 8) return [toPart(top.food, whole.q, whole.rest)];
+  if (top && top.score >= 8) return [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)];
   const parts: Part[] = [];
-  for (const seg of text.split(SPLIT).map((s) => s.trim()).filter(Boolean)) {
+  const pieces = text.split(SPLIT_KEEP);
+  let chain = false;
+  for (let i = 0; i < pieces.length; i += 2) {
+    const seg = (pieces[i] ?? '').trim();
+    if (!seg) continue;
+    const sep = i > 0 ? pieces[i - 1] ?? '' : '';
     const { rest, q } = readQty(seg);
+    const prev = parts[parts.length - 1];
+    if (prev && (WITH.test(sep) || (chain && AND.test(sep)))) {
+      const merged = applyWords(prev, rest, q);
+      if (merged) { parts[parts.length - 1] = merged; chain = true; continue; }
+    }
+    chain = false;
     const f = bestFoods(rest, 1)[0];
-    if (f && f.score >= MIN_LOG) parts.push(toPart(f.food, q, rest));
+    if (f && f.score >= MIN_LOG) parts.push(withAsk(toPart(f.food, q, rest), rest));
   }
-  if (!parts.length && top && top.score >= MIN_LOG) return [toPart(top.food, whole.q, whole.rest)];
+  if (!parts.length && top && top.score >= MIN_LOG) return [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)];
   return parts;
 }
 
@@ -234,7 +280,7 @@ export function suggest(input: string, n = 7): Suggestion[] {
   const seen = new Set<string>();
   const out: Suggestion[] = [];
   const push = (parts: Part[]) => {
-    const key = parts.map((p) => `${p.food.id}:${Math.round(p.grams)}`).join('+');
+    const key = parts.map((p) => `${foodKey(p.food)}:${Math.round(p.grams)}`).join('+');
     if (!parts.length || seen.has(key)) return;
     seen.add(key); out.push({ parts, text: parts.map((p) => p.food.name).join(' + ') });
   };
@@ -283,3 +329,265 @@ export function servingPart(food: Food, n: number): Part {
   return n === 0.5 ? { ...p, amountLabel: p.amountLabel.replace(/^0\.5 × /, '½ × ').replace(/^0\.5 /, '½ ') } : p;
 }
 export const gramsPart = (food: Food, grams: number): Part => toPart(food, { count: null, grams });
+
+// ======================= CHOICES: variants, builders, add-ins, sizes, "Which …?" (2026-10-18) =======================
+// Data: research/tools/fooddb_spec.py (section VARIANTS …) → build_variants.py → fooddb.json. A derived food keeps the
+// base id (so isDrink, Browse groups, HABIT_OF and SWAPS keep working) and carries v / on / add; FOODS stays base-only.
+// mixParts() is the same rule as build_variants.mix() (a test compares them): gram-weighted, null if any part is null,
+// GI carbohydrate-weighted over parts with ≥ 1 g available carbohydrate and only if all of those have a measured GI.
+
+const hasOwn = <T,>(o: Record<string, T> | undefined | null, k: string): o is Record<string, T> => !!o && Object.prototype.hasOwnProperty.call(o, k);
+export const baseOf = (f: Food): Food => f.base ?? f;
+/** A database food as it is (the curated espresso/cola/water models and the label overrides apply only to these). */
+export const isPlain = (f: Food) => !f.base;
+export interface Choice { v?: string; on?: string[]; add?: Record<string, number> }
+const NUM_KEYS: (keyof Per100)[] = ['kcal', 'carbs', 'sugars', 'freeSugars', 'fiber', 'fat', 'satFat', 'protein', 'sodiumMg', 'caffeineMg', 'alcoholG', 'waterG'];
+export const CARB_MIN = 1;
+export interface MixPart { p: Per100; gi: number | null; grams: number }
+export function mixParts(parts: MixPart[]): { p: Per100; grams: number; gi: number | null } {
+  const ps = parts.filter((x) => x.grams > 0);
+  const tot = ps.reduce((s, x) => s + x.grams, 0);
+  const p = {} as Record<keyof Per100, number | null>;
+  for (const k of NUM_KEYS) {
+    let s = 0, nul = false;
+    for (const x of ps) { const v = x.p[k]; if (v === null || v === undefined) { nul = true; break; } s += v * x.grams; }
+    p[k] = nul || !tot ? null : s / tot;
+  }
+  const carb = ps.map((x) => ({ x, a: (Math.max(0, (x.p.carbs ?? 0) - (x.p.fiber ?? 0)) * x.grams) / 100 })).filter((c) => c.a >= CARB_MIN);
+  const gi = carb.length && carb.every((c) => c.x.gi !== null) ? Math.round(carb.reduce((s, c) => s + c.x.gi! * c.a, 0) / carb.reduce((s, c) => s + c.a, 0)) : null;
+  return { p: { ...(p as unknown as Per100), kcal: p.kcal ?? 0 }, grams: tot, gi };
+}
+
+// ---- builders ----
+const allOpts = (b: Builder) => b.groups.flatMap((g) => g.opts);
+export const defaultSel = (b: Builder) => allOpts(b).filter((o) => o.on).map((o) => o.k);
+/** Known keys only, exactly one per one-of group (the last one named wins, else the default), in builder order. */
+export function normSel(b: Builder, keys: string[]): string[] {
+  const out: string[] = [];
+  for (const g of b.groups) {
+    if (g.one) {
+      const named = keys.filter((k) => g.opts.some((o) => o.k === k));
+      out.push(named.length ? named[named.length - 1] : g.opts.find((o) => o.on)!.k);
+    } else for (const o of g.opts) if (keys.includes(o.k)) out.push(o.k);
+  }
+  return out;
+}
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+export const presetOf = (b: Builder, sel: string[]) => b.presets.find((p) => sameSet(p.on, sel));
+export const selOf = (f: Food): string[] => { const b = baseOf(f).builder; return b ? f.on ?? defaultSel(b) : []; };
+const cap1 = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const listWords = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+const plainName = (f: Food) => f.name.replace(/\s*\(.*\)$/, '');
+function builderName(base: Food, sel: string[]): string {
+  const b = base.builder!;
+  const pr = presetOf(b, sel);
+  if (pr) return pr.name;
+  const ones = b.groups.filter((g) => g.one);
+  const chosen = ones.map((g) => g.opts.find((o) => sel.includes(o.k))!);
+  const anyOn = (keys: string[]) => b.groups.filter((g) => !g.one).flatMap((g) => g.opts).filter((o) => keys.includes(o.k));
+  let noun: string, ref: string[];
+  const prOne = b.presets.find((p) => chosen.every((c) => p.on.includes(c.k)));
+  if (ones.length === 1 && ones[0].opts.length === 1) { noun = plainName(base); ref = defaultSel(b); }
+  else if (ones.length > 1 && prOne) { noun = prOne.name; ref = prOne.on; }
+  else if (ones.length > 1) { noun = plainName(base); ref = defaultSel(b); }
+  else { noun = cap1(chosen[0].name); ref = defaultSel(b); }
+  const added = anyOn(sel).filter((o) => !ref.includes(o.k)).map((o) => o.name);
+  const removed = anyOn(ref).filter((o) => !sel.includes(o.k)).map((o) => o.name);
+  return `${noun}${added.length ? ` with ${listWords(added)}` : ''}${removed.length ? ` without ${listWords(removed)}` : ''}`;
+}
+
+// ---- add-ins ----
+function normAdd(base: Food, add: Record<string, number> | undefined): Record<string, number> | undefined {
+  if (!base.addins || !add) return undefined;
+  const out: Record<string, number> = {};
+  for (const k of Object.keys(add)) {
+    const a = base.addins.find((x) => x.k === k);
+    const n = Math.round(Number(add[k]));
+    if (!a || !(n >= 1)) continue;
+    if (a.excl) for (const o of base.addins) if (o.excl === a.excl && o.k !== a.k) delete out[o.k]; // honey replaces sugar
+    out[k] = Math.min(a.max, n);
+  }
+  const ks = base.addins.map((a) => a.k).filter((k) => hasOwn(out, k));
+  return ks.length ? Object.fromEntries(ks.map((k) => [k, out[k]])) : undefined;
+}
+const addWord = (a: AddIn, n: number) => (a.k === 'shot' ? (n > 1 ? `${n} extra shots` : 'an extra shot') : n > 1 ? `${n} tsp ${a.label.toLowerCase()}` : a.label.toLowerCase());
+const addUnit = (a: AddIn, n: number) => (a.k === 'milk' ? 'a splash of milk' : a.k === 'shot' ? `${n} extra shot${n > 1 ? 's' : ''}` : `${n} tsp ${a.label.toLowerCase()}`);
+
+/** "beer.radler", "espresso~sugar1", "pizza_base_ham_mushrooms": the same food always gets the same key. */
+export function foodKey(f: Food): string {
+  const b = baseOf(f);
+  const add = f.add ? Object.entries(f.add).map(([k, n]) => `~${k}${n}`).join('') : '';
+  return `${b.id}${f.v ? `.${f.v}` : ''}${add}${f.on ? f.on.map((k) => `_${k}`).join('') : ''}`;
+}
+
+const DERIVED = new Map<string, Food>();
+/** The food for this choice (variant / builder selection / add-ins), cached; the plain database food when it is the
+ *  default. Unknown or impossible choices fall back to the default (a link never breaks). */
+export function deriveFood(food: Food, ch: Choice): Food {
+  const base = baseOf(food);
+  const vr = ch.v && base.variants ? base.variants.find((x) => x.v === ch.v) : undefined;
+  let on: string[] | undefined;
+  if (base.builder && ch.on) { const s = normSel(base.builder, ch.on); on = sameSet(s, defaultSel(base.builder)) ? undefined : s; }
+  const add = normAdd(base, ch.add);
+  if (!vr && !on && !add) return base;
+  const probe = { id: base.id, base, v: vr?.v, on, add } as Food;
+  const key = foodKey(probe);
+  const hit = DERIVED.get(key);
+  if (hit) return hit;
+  const src: FoodSource[] = [];
+  let parts: MixPart[], name: string, label: string, kind = base.kind, color = base.color, proxy = base.proxy, fdc = base.fdc, assumed = !!base.assumedServing;
+  const baseSrc = (base.src ?? []).map((s, i) => ({ ...s, claim: s.claim ?? `DBO-${base.id}-${i}` }));
+  if (base.builder) {
+    const b = base.builder, sel = on ?? defaultSel(b);
+    const opts = allOpts(b).filter((o) => sel.includes(o.k));
+    parts = opts.map((o) => ({ p: o.p, gi: o.gi, grams: o.grams }));
+    src.push(...b.src, ...opts.flatMap((o) => o.src));
+    if (opts.some((o) => o.food === base.id)) src.push(...baseSrc);
+    name = builderName(base, sel);
+    const single = b.groups.find((g) => g.one && g.opts.length === 1);
+    label = single ? base.serving.label : `1 ${b.unit || 'serving'}`;
+    fdc = null; assumed = true; proxy = proxy && opts.some((o) => o.food === base.id);
+  } else if (vr) {
+    parts = [{ p: vr.p, gi: vr.gi, grams: vr.serving.grams }];
+    src.push(...vr.src);
+    name = vr.name; label = vr.serving.label; kind = vr.kind; color = vr.color; proxy = vr.proxy; fdc = vr.fdc; assumed = !!vr.assumedServing;
+  } else {
+    parts = [{ p: base.p, gi: base.gi, grams: base.serving.grams }];
+    src.push(...baseSrc);
+    name = plainName(base); label = base.serving.label;
+  }
+  if (add) {
+    for (const a of base.addins!) if (hasOwn(add, a.k)) { parts.push({ p: a.p, gi: a.gi, grams: a.grams * add[a.k] }); src.push(...a.src); }
+    const ws = base.addins!.filter((a) => hasOwn(add, a.k));
+    name = `${name.replace(/\s*\(.*\)$/, '')} with ${listWords(ws.map((a) => addWord(a, add[a.k])))}`;
+    label = `${label} with ${listWords(ws.map((a) => addUnit(a, add[a.k])))}`;
+  }
+  const m = parts.length === 1 ? { p: parts[0].p, grams: parts[0].grams, gi: parts[0].gi } : mixParts(parts);
+  const f: Food = {
+    ...base, id: base.id, name, aliases: [], kind, color, proxy, fdc, recipe: base.builder || add ? true : vr ? vr.recipe : base.recipe,
+    serving: { label, grams: Math.round(m.grams * 10) / 10 }, p: m.p, gi: m.gi, assumedServing: assumed || undefined,
+    piece: undefined, aliasServing: undefined, src, base, v: vr?.v, on, add,
+  };
+  DERIVED.set(key, f);
+  return f;
+}
+/** The same food with one more change ("+ sugar", another topping, another variant). */
+export const withChoice = (f: Food, ch: Choice): Food => deriveFood(f, { v: f.v, on: f.on, add: f.add, ...ch });
+
+/** A token like "pizza_ham_mushrooms" or "espresso.decaf~sugar1" → the food (unknown parts fall back to defaults). */
+export function foodFromKey(key: string): Food | undefined {
+  const m = /^([a-z0-9-]+)(?:\.([a-z0-9-]+))?((?:~[a-z]+\d+)*)((?:_[a-z0-9-]+)*)$/.exec(key);
+  if (!m || !hasOwn(FOOD_BY_ID, m[1])) return undefined;
+  const add: Record<string, number> = {};
+  for (const x of m[3].match(/~[a-z]+\d+/g) ?? []) { const mm = /^~([a-z]+)(\d+)$/.exec(x)!; add[mm[1]] = Number(mm[2]); }
+  const on = m[4] ? m[4].split('_').filter(Boolean) : undefined;
+  return deriveFood(FOOD_BY_ID[m[1]], { v: m[2], on, add: Object.keys(add).length ? add : undefined });
+}
+
+// ---- search: variants, builder parts and presets as extra candidates ----
+interface Alt { food: Food; aliases: string[]; words: string[] }
+let ALTS: Alt[] | null = null;
+function altList(): Alt[] {
+  if (ALTS) return ALTS;
+  const out: Alt[] = [];
+  for (const base of FOODS) {
+    for (const v of base.variants ?? []) out.push({ food: deriveFood(base, { v: v.v }), aliases: v.aliases.map(fold), words: v.words });
+    const b = base.builder;
+    if (!b) continue;
+    for (const g of b.groups) for (const o of g.opts) if (o.aliases.length) {
+      out.push({ food: deriveFood(base, { on: [...defaultSel(b), o.k] }), aliases: o.aliases.map(fold), words: [] });
+    }
+    for (const p of b.presets) if (p.aliases.length || p.words.length) out.push({ food: deriveFood(base, { on: p.on }), aliases: p.aliases.map(fold), words: p.words });
+  }
+  return (ALTS = out);
+}
+const hasWord = (text: string, w: string) => (w.includes(' ') ? ` ${text} `.includes(` ${w} `) : text.split(' ').includes(w));
+/** Variant candidates appear only when one of their words is present; an exact alias is a whole-phrase hit (10). */
+function altMatches(text: string): { food: Food; score: number }[] {
+  if (!text) return [];
+  const out: { food: Food; score: number }[] = [];
+  for (const a of altList()) {
+    if (a.aliases.includes(text)) { out.push({ food: a.food, score: 10 }); continue; }
+    if (a.words.some((w) => hasWord(text, w))) { const s = aliasScore(text, a.aliases); if (s > 0) out.push({ food: a.food, score: Math.min(9, s) }); }
+  }
+  return out;
+}
+
+/** The text after "with" names one of this food's add-ins, toppings or variants. */
+const wordHit = (rest: string, words: string[]) => !!rest && (words.includes(rest) || (!rest.includes(' ') && words.some((w) => !w.includes(' ') && stemMatch(rest, w) >= 0.85)));
+function applyWords(prev: Part, rest: string, q: Qty): Part | null {
+  const f = prev.food, base = baseOf(f);
+  let ch: Choice | null = null;
+  const a = base.addins?.find((x) => wordHit(rest, x.words));
+  if (a) { const n = q.count && Number.isInteger(q.count) && q.count >= 1 ? q.count : 1; ch = { add: { ...(f.add ?? {}), [a.k]: n } }; }
+  if (!ch && base.builder) {
+    for (const g of base.builder.groups) {
+      const o = g.opts.find((x) => wordHit(rest, x.words));
+      if (o) { const sel = selOf(f); ch = { on: g.one ? [...sel, o.k] : [...sel.filter((k) => k !== o.k), o.k] }; break; }
+    }
+  }
+  if (!ch && base.variants) { const v = base.variants.find((x) => wordHit(rest, x.words)); if (v) ch = { v: v.v }; }
+  if (!ch) return null;
+  const nf = withChoice(f, ch);
+  const n = prev.grams / Math.max(1e-9, f.serving.grams);
+  const q4 = Math.round(n * 4) / 4;
+  const p = Math.abs(n - q4) * f.serving.grams < 1 && q4 > 0 ? servingPart(nf, q4) : gramsPart(nf, prev.grams);
+  return { ...p, ask: prev.ask };
+}
+function withAsk(p: Part, rest: string): Part {
+  const c = baseOf(p.food).choose;
+  return c && wordHit(rest, c.words) ? { ...p, ask: true } : p;
+}
+
+// ---- what the screen offers for one food ----
+export interface ChoiceOpt { key: string; chip: string; food: Food; on: boolean }
+export interface ChoiceRow { ask: string; opts: ChoiceOpt[] }
+const sameKind = (a: Food, b: Food) => baseOf(a).id === baseOf(b).id && (a.v ?? '') === (b.v ?? '');
+/** Row A: the "Which …?" row (the word's foods, else this food's variants, presets or main builder group). */
+export function choiceRow(f: Food): ChoiceRow | null {
+  const base = baseOf(f);
+  if (base.choose) {
+    const opts = base.choose.opts.map((o) => {
+      const food = foodFromKey(o.k)!;
+      return { key: o.k, chip: o.chip, food, on: sameKind(food, f) || (!food.v && baseOf(food).id === base.id && !base.choose!.opts.some((x) => x.k === `${base.id}.${f.v}`)) };
+    });
+    return { ask: base.choose.ask, opts };
+  }
+  return ownRow(f);
+}
+/** Row B: this food's own variants when Row A is the word's chooser and does not list them. */
+export function variantRow(f: Food): ChoiceRow | null {
+  const base = baseOf(f);
+  if (!base.choose) return null;
+  const row = ownRow(f);
+  if (!row) return null;
+  const listed = new Set(base.choose.opts.map((o) => o.k));
+  return row.opts.some((o) => !listed.has(o.key) && o.key !== base.id) ? row : null;
+}
+function ownRow(f: Food): ChoiceRow | null {
+  const base = baseOf(f);
+  if (base.variants?.length) {
+    return { ask: base.ask ?? 'Which one?', opts: [{ key: base.id, chip: base.chip ?? 'Regular', food: base, on: !f.v },
+      ...base.variants.map((v) => ({ key: `${base.id}.${v.v}`, chip: v.chip, food: deriveFood(base, { v: v.v }), on: f.v === v.v }))] };
+  }
+  const b = base.builder;
+  if (!b) return null;
+  const sel = selOf(f);
+  if (b.presets.length) return { ask: b.ask ?? 'Which one?', opts: b.presets.map((p) => ({ key: p.k, chip: p.chip, food: deriveFood(base, { on: p.on }), on: sameSet(p.on, sel) })) };
+  const g = b.groups.find((x) => x.one && x.opts.length > 1);
+  if (!g) return null;
+  return { ask: b.ask ?? 'Which one?', opts: g.opts.map((o) => ({ key: o.k, chip: o.chip, food: deriveFood(base, { on: [...sel, o.k] }), on: sel.includes(o.k) })) };
+}
+/** "· 5 kinds" in search and Browse. */
+export const kindsOf = (f: Food): number => {
+  const r = choiceRow(f);
+  return r ? r.opts.length : 0;
+};
+/** Named sizes for "How much?" as multiples of this food's serving (beer 0.3 l = 0.6 × the 0.5 l serving). */
+export function sizesOf(f: Food): { k: string; label: string; mult: number }[] | null {
+  const s = baseOf(f).sizes;
+  if (!s) return null;
+  const m = /([\d.]+)\s*ml/.exec(f.serving.label);
+  const out = s.opts.map((o) => ({ k: o.k, label: o.label, mult: o.mult ?? (m && o.ml ? o.ml / Number(m[1]) : NaN) })).filter((o) => Number.isFinite(o.mult) && o.mult > 0);
+  return out.length ? out : null;
+}

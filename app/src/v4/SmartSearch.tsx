@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Browse } from './lazyUi'; // loaded on first use
 import './browse.css';
 import './meals.css';
-import { FOODS, macros, suggest, type Part, type Suggestion } from './food/parse';
+import { FOODS, foodKey, kindsOf, macros, suggest, type Part, type Suggestion } from './food/parse';
 import { PRESETS, presetParts } from './food/meal';
 
 // Type like you talk: "1 jabuka", "2 slices of bread", "kava s mlijekom", "pizza and a beer".
@@ -75,11 +75,11 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
             const gw = giWord(m.gi, m.availCarbs);
             const assumed = s.parts.some((p) => p.assumed || p.food.recipe || p.food.proxy);
             return (
-              <li key={s.parts.map((p) => p.food.id + p.grams).join('+')} id={`${listId}-${i}`} role="option" aria-selected={i === active}
+              <li key={s.parts.map((p) => foodKey(p.food) + p.grams).join('+')} id={`${listId}-${i}`} role="option" aria-selected={i === active}
                 className={`${i === active ? 'active' : ''} ${onAdd && !adding ? 'canadd' : ''}`} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(s)}>
                 <span className="sdots" aria-hidden="true">{s.parts.map((p) => <i key={p.food.id} style={{ background: p.food.color }} />)}</span>
                 <span className="rname">{s.parts.map((p) => p.food.name).join(' + ')}
-                  <small>{s.parts.map((p) => p.amountLabel).join(' + ')}{assumed ? ' · typical serving' : ''}</small></span>
+                  <small>{s.parts.map((p) => p.amountLabel).join(' + ')}{assumed ? ' · typical serving' : ''}{s.parts.length === 1 && kindsOf(s.parts[0].food) > 1 ? ` · ${kindsOf(s.parts[0].food)} kinds` : ''}</small></span>
                 <span className="rkcal">{Math.round(m.kcal)} kcal</span>
                 <span className={`rgi ${gw.c}`}>{gw.w}</span>
                 {onAdd && !adding && (

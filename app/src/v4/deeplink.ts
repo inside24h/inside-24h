@@ -4,13 +4,13 @@
 // MEALS: #m=hamburger+fries*2+cola (food ids, *servings or *grams g; food/meal.ts). Exact and short; old meal links
 // written as text (#q=118 g Banana + 250 g Milk) still open through the text parser.
 import { MAX_MIN } from '../time';
-import { parseMeal, type Part } from './food/parse';
+import { baseOf, deriveFood, foodKey, isPlain, parseMeal, servingPart, sizesOf, type Choice, type Part } from './food/parse';
 import { mealCode, mealFromCode } from './food/meal';
 
 export type View = 'simple' | 'full' | 'detailed';
 export const PORTIONS = [0.5, 1, 2, 3] as const;
 /** Keys this module owns; any other key in the hash (dose, city, QA keys…) is passed through untouched. */
-const OWN = ['q', 'm', 'p', 'n', 't', 'view', 'vs', 'compare'];
+const OWN = ['q', 'm', 'p', 'n', 't', 'view', 'vs', 'compare', 'v', 's', 'add', 'on'];
 /** Old keys that describe a stale UI state and are dropped as soon as the app writes its own hash. */
 const DROP = ['organ', 'panel'];
 
@@ -22,6 +22,11 @@ export interface Link {
   t: number | null; // minutes after eating; null = not given
   view: View;
   vs?: string;     // comparison partner (old key: compare)
+  // 2026-10-18, one food only (with q): which kind and how much (research/audit/VARIANTS-DONE.md)
+  v?: string;      // variant: #q=beer&v=radler
+  s?: string;      // named size, wins over n: #q=pizza&s=whole
+  add?: string;    // add-ins: #q=espresso&add=sugar1 (several: "sugar1 milk1")
+  on?: string;     // builder parts: #q=pizza&on=base+ham+mushrooms
 }
 
 /** "45m", "2h", "1h30m", "1.5h", or old plain minutes "90" → minutes (clamped to the day); null if unreadable. */
@@ -60,6 +65,10 @@ export function readLink(hash: string): Link {
     t: parseTime(h.get('t')),
     view: v === 'detailed' || v === 'full' ? v : 'simple',
     vs: (h.get('vs') ?? h.get('compare'))?.trim() || undefined,
+    v: h.get('v')?.trim() || undefined,
+    s: h.get('s')?.trim() || undefined,
+    add: h.get('add')?.trim() || undefined,
+    on: h.get('on')?.trim() || undefined,
   };
 }
 
@@ -67,7 +76,9 @@ export function readLink(hash: string): Link {
 export function writeLink(l: Partial<Link>, prev = ''): string {
   const out = new URLSearchParams();
   if (l.m) out.set('m', l.m); else if (l.q) out.set('q', l.q); else if (l.p) out.set('p', l.p);
-  if (l.n !== undefined && l.n !== 1) out.set('n', String(l.n));
+  if (!l.m && l.q) { if (l.v) out.set('v', l.v); if (l.add) out.set('add', l.add); if (l.on) out.set('on', l.on); }
+  if (!l.m && l.q && l.s) out.set('s', l.s);
+  else if (l.n !== undefined && l.n !== 1) out.set('n', String(l.n));
   if (l.t !== undefined && l.t !== null) out.set('t', formatTime(l.t));
   if (l.view && l.view !== 'simple') out.set('view', l.view);
   if (l.vs) out.set('vs', l.vs);
@@ -81,8 +92,9 @@ export function writeLink(l: Partial<Link>, prev = ''): string {
 export const CURATED_Q: Record<string, string> = { cola: 'cola', espresso: 'espresso', water: 'glass of water' };
 /** Own key only: link text like "constructor" or "__proto__" must never reach Object.prototype. */
 export const own = <T,>(o: Record<string, T>, k: string | undefined | null): T | undefined => (k != null && Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined);
-export const isCuratedServing = (parts: Part[]) => parts.length === 1 && !!own(CURATED_Q, parts[0].food.id) && Math.abs(parts[0].grams - parts[0].food.serving.grams) < 1;
-const sameMeal = (a: Part[], b: Part[]) => a.length === b.length && a.every((p, i) => p.food.id === b[i].food.id && Math.abs(p.grams - b[i].grams) < 1);
+/** Only the plain default (not decaf, not with sugar, not a 500 ml cola) reopens in the curated model. */
+export const isCuratedServing = (parts: Part[]) => parts.length === 1 && isPlain(parts[0].food) && !!own(CURATED_Q, parts[0].food.id) && Math.abs(parts[0].grams - parts[0].food.serving.grams) < 1;
+const sameMeal = (a: Part[], b: Part[]) => a.length === b.length && a.every((p, i) => foodKey(p.food) === foodKey(b[i].food) && Math.abs(p.grams - b[i].grams) < 1);
 const cache = new Map<string, string>();
 /** Shortest text that parses back to exactly these foods and grams: "cola", "banana", else "118 g Banana + 250 g Milk". */
 export function mealText(parts: Part[]): string {
@@ -100,9 +112,29 @@ export function mealText(parts: Part[]): string {
 }
 
 /** What a link names: a meal code first, else the text, else nothing (curated #p= links are handled by the app). */
-export function linkParts(l: Pick<Link, 'q' | 'm'>): Part[] {
+export function linkParts(l: Pick<Link, 'q' | 'm'> & Partial<Pick<Link, 'v' | 'add' | 'on'>>): Part[] {
   const meal = mealFromCode(l.m);
-  return meal.length ? meal : l.q ? parseMeal(l.q) : [];
+  if (meal.length) return meal;
+  const parts = l.q ? parseMeal(l.q) : [];
+  if (parts.length !== 1 || !(l.v || l.add || l.on)) return parts;
+  // the kind named in the link; an unknown v / add / on falls back to the default (no miss: the food is there)
+  const p = parts[0];
+  const ch: Choice = { v: l.v ?? p.food.v, on: l.on ? l.on.split(/[\s+,]+/).filter(Boolean) : p.food.on, add: l.add ? readAdd(l.add) : p.food.add };
+  const f = deriveFood(baseOf(p.food), ch);
+  return [servingPart(f, p.grams / Math.max(1e-9, p.food.serving.grams))];
+}
+const readAdd = (s: string): Record<string, number> => {
+  const out: Record<string, number> = {};
+  for (const tok of s.split(/[\s+,]+/)) {
+    const m = /^([a-z]+)(\d+)?$/.exec(tok);
+    if (m && !Object.prototype.hasOwnProperty.call(out, m[1])) out[m[1]] = Number(m[2] ?? 1);
+  }
+  return out;
+};
+/** The multiple of one serving the link asks for: a named size (s) wins over n; an unknown size falls back to n. */
+export function linkMult(l: Pick<Link, 'n'> & Partial<Pick<Link, 's'>>, base: Part[]): number {
+  if (l.s && base.length === 1) { const z = sizesOf(base[0].food)?.find((x) => x.k === l.s); if (z) return z.mult; }
+  return l.n;
 }
 export interface Resolved {
   link: Link;
@@ -114,6 +146,8 @@ export interface Resolved {
   vs?: Part[];
   /** the partner the link asked for but we could not find */
   vsMiss?: string;
+  /** how many servings to show: the named size (s) when it is one of this food's sizes, else n */
+  mult: number;
 }
 const safeParts = (f: () => Part[]): Part[] => { try { const p = f(); return Array.isArray(p) ? p : []; } catch { return []; } };
 /** Everything a (possibly old, mistyped or hand-edited) link asks for, without ever throwing. Unknown foods and
@@ -127,8 +161,16 @@ export function resolveLink(hash: string, isProduct: (id: string) => boolean = (
     : link.p && own(CURATED_Q, link.p) && link.n !== 1 ? safeParts(() => parseMeal(own(CURATED_Q, link.p)!)) : [];
   const miss = named && !base.length ? named : !named && link.p && !isProduct(link.p) ? link.p : undefined;
   const vsParts = link.vs ? safeParts(() => parseMeal(link.vs!)) : [];
-  return { link, base, miss, vs: vsParts.length ? vsParts : undefined, vsMiss: link.vs && !vsParts.length ? link.vs : undefined };
+  return { link, base, miss, mult: linkMult(link, base), vs: vsParts.length ? vsParts : undefined, vsMiss: link.vs && !vsParts.length ? link.vs : undefined };
 }
 
 /** Link fields for what is on screen: two or more things → exact meal code (m); one → the short text (q). */
-export const linkFor = (parts: Part[]): Pick<Link, 'q' | 'm'> => (parts.length > 1 ? { m: mealCode(parts) } : { q: mealText(parts) });
+export const linkFor = (parts: Part[]): Pick<Link, 'q' | 'm' | 'v' | 'add' | 'on'> => {
+  if (parts.length > 1) return { m: mealCode(parts) };
+  const p = parts[0];
+  if (!p || isPlain(p.food)) return { q: mealText(parts) };
+  // one food of another kind: #q=<base>&v=…&add=…&on=… at one serving; an odd amount uses the exact meal code
+  if (Math.abs(p.grams - p.food.serving.grams) >= 1) return { m: mealCode(parts) };
+  const f = p.food;
+  return { q: mealText([servingPart(baseOf(f), 1)]), v: f.v, add: f.add ? Object.entries(f.add).map(([k, x]) => `${k}${x}`).join(' ') : undefined, on: f.on?.join(' ') };
+};

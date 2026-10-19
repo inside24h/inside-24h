@@ -11,6 +11,7 @@ import { Disclaimer } from './HowWeKnow';
 import { FACTORS, FED_PEAK_RATIO, type PersonalNotes } from '../science/personal';
 import { simulateFood } from '../science/foodSim';
 import { walkingKm, walkingMinutes } from '../science/walking';
+import { alcoholClock, clockLabel, GONE_GL, poisonRisk } from '../science/alcoholClock';
 import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesToBed, SLEEP_WINDOW_MIN, type SleepRisk } from '../science/daily';
 import type { Profile } from '../science/profile';
 import { toMeal } from './food/meal';
@@ -57,7 +58,14 @@ export function quickAnswers(x: AnswerInput): Answer[] {
   const at0 = (m: number) => hh(x.drinkAt + m);
   // Sugar
   const g = x.glucoseDeltaMgDl;
-  if (g) {
+  // Alcohol has no sugar curve of its own but slows the liver's sugar-making [AL10 B]; with diabetes medicines the dip
+  // can come the next morning [AL11 B, Turner 2001 at 0.75 g/kg]. Yellow edge from the high band (> 0.75 g/kg).
+  const alcGPerKg = x.bac ? (x.alcoholG ?? 0) / Math.max(30, x.weightKg) : 0;
+  const alcSugar = x.bac ? ` Alcohol can even lower blood sugar later: it slows your liver’s sugar-making for hours. In healthy people who have eaten this rarely matters; after a long fast, heavy drinking, or with insulin or diabetes tablets, blood sugar can drop hours later, even the next morning.` : '';
+  const alcSugarNote = 'Evidence B: mechanism measured (Siler 1998); the morning dip measured with type 1 diabetes (Turner 2001, 6 men)';
+  if (g && x.bac && Math.max(0, ...Array.from(g.subarray(0, 600))) / 18.016 < 0.3) {
+    out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: `No: there is almost no sugar in it to raise it.${alcSugar}`, tone: alcGPerKg > 0.75 ? 1 : 0, tag: 'typical', note: alcSugarNote });
+  } else if (g) {
     let peak = 0, peakAt = 0, low = 0, lowAt = 0, backAt = -1;
     for (let m = 0; m < Math.min(g.length, 600); m++) { if (g[m] > peak) { peak = g[m]; peakAt = m; } if (g[m] < low) { low = g[m]; lowAt = m; } }
     for (let m = peakAt; m < Math.min(g.length, 600); m++) if (g[m] < 0.15 * peak) { backAt = m; break; }
@@ -70,8 +78,10 @@ export function quickAnswers(x: AnswerInput): Answer[] {
       note: 'Typical response, not personalized', title: SUGAR_WHY, tag: 'typical' });
     if (low / 18.016 <= -0.3) out.push({ icon: '🍽️', q: 'Will I get hungry again soon?', a: `Probably around ${at0(lowAt)}, when your blood sugar dips below where it started.`, tone: 1, tag: 'typical' });
   } else out.push({ icon: '⚡', q: 'Will my blood sugar rise?', a: x.bac
-    ? 'Hard to say: alcohol changes how your liver handles sugar, so we don’t draw a curve.'
-    : 'We can’t say: its glycemic index hasn’t been measured yet.', tone: 0 });
+    ? `We don’t draw a curve: its glycemic index hasn’t been measured.${alcSugar}`
+    : 'We can’t say: its glycemic index hasn’t been measured yet.', tone: x.bac && alcGPerKg > 0.75 ? 1 : 0, ...(x.bac ? { note: alcSugarNote } : {}) });
+  // a sugar curve drawn for a meal WITH alcohol (e.g. rakija + cola) still gets the later-dip sentence
+  if (g && x.bac && out[0].q === 'Will my blood sugar rise?' && !out[0].a.includes('Alcohol can even')) out[0] = { ...out[0], a: `${out[0].a}${alcSugar}`, note: `${out[0].note ? `${out[0].note}. ` : ''}${alcSugarNote}` };
   // Meal as a whole: names the item behind each effect (food/mealWords.ts); the single-food answers stay as they are
   if (x.mealLines?.length) out.push({ icon: '🍱', q: 'How does this meal work?', a: x.mealLines.join(' '), tone: 0, note: 'The meal as a whole, estimated from its parts' });
   // Sleep
@@ -102,10 +112,11 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     const cafTone = x.extraSleepMin >= 20 ? 2 : x.extraSleepMin >= 1 || (x.sleepRisk !== undefined && x.sleepRisk !== 'none') ? 1 : 0;
     const tone = Math.max(tier === 'high' ? 2 : 1, cafTone, lightSleep) as 0 | 1 | 2;
     const cafAlso = caffeineAlsoSentence(x.sleepRisk ?? (x.extraSleepMin >= 1 ? 'delay' : 'none'), x.extraSleepMin);
-    out.push({ icon: '🌙', q: 'Will I sleep well?', a: `${tier === 'low' ? 'Not quite' : 'Not as well'}: alcohol is still in your blood ${bedWord}. ${alcoholSleepSentence(tier)}${cafAlso}`, tone, tag: sleepTag,
+    out.push({ icon: '🌙', q: 'Will I sleep well?', a: `${tier === 'low' ? 'Not quite' : 'Not as well'}: alcohol is still in your blood ${bedRel < 30 ? 'when you go to bed' : bedWord}. ${alcoholSleepSentence(tier)}${cafAlso}`, tone, tag: sleepTag,
       note: `Evidence A for the direction, B for the size. ${tier === 'low' ? 'Low' : tier === 'moderate' ? 'Moderate' : 'High'} dose for your weight (low ≤ 0.25 g/kg, high > 0.75 g/kg)`,
       title: 'Ebrahim 2013 (review of sleep-lab studies); Pietilä 2018 (4,098 people wearing heart monitors). How the dose bands map onto the lab studies is our estimate.' });
-  } else if (x.bac && x.caffeineAtBedMg < 1) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Probably: by ${hh(x.bedtimeMin)} almost no alcohol should be left in your blood. Sleep studies test alcohol taken shortly before bed, so for a drink this early we can’t promise zero effect.`, tone: lightSleep as 0 | 1 | 2, tag: sleepTag, note: 'Our estimate (C): no study read on alcohol that is already gone by bedtime' });
+  // (also when a little caffeine is left that doesn't matter: rakija + cola at 21:00 used to get a flat "Yes")
+  } else if (x.bac && (x.caffeineAtBedMg < 1 || (x.extraSleepMin < 5 && (x.sleepRisk ?? 'none') === 'none'))) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `Probably: by ${hh(x.bedtimeMin)} almost no alcohol should be left in your blood. Sleep studies test alcohol taken shortly before bed, so for a drink this early we can’t promise zero effect.`, tone: lightSleep as 0 | 1 | 2, tag: sleepTag, note: 'Our estimate (C): no study read on alcohol that is already gone by bedtime' });
   else if (x.extraSleepMin >= 5) out.push({ icon: '🌙', q: 'Will I sleep well?', a: `It may take you about ${Math.round(x.extraSleepMin)} min longer to fall asleep (${bedRel < 90 ? 'you had it shortly before bed, so it reaches your blood while you fall asleep' : `${Math.round(x.caffeineAtBedMg)} mg of caffeine is still in you ${bedWord}`}).`, tone: Math.max(x.extraSleepMin >= 20 ? 2 : 1, lightSleep) as 0 | 1 | 2, note: sleepNote, tag: sleepTag });
   // below the 5-min delay: "too little" only when it is also under the meta-analysis level (VS1); otherwise be honest
   // that caffeine-sensitive people can still sleep less (VS4), e.g. an espresso at 20:45 leaves ≈ 51 mg at 23:00
@@ -131,6 +142,37 @@ export function quickAnswers(x: AnswerInput): Answer[] {
       note: pn ? (pn.withMeal
         ? `For you: after a meal the peak is about ${Math.round(FED_PEAK_RATIO[0] * 100)}–${Math.round(FED_PEAK_RATIO[1] * 100)}% of the peak on an empty stomach (evidence ${FACTORS.withMeal.level})`
         : 'For your sex, height and weight, on an empty stomach') : undefined });
+    // Danger: the top of the range reaches the levels seen in alcohol-poisoning deaths [AL9, Jones & Holmgren 2003]
+    if (poisonRisk(peak)) out.push({ icon: '🚑', q: 'Is this much dangerous?', a: `Yes. The top of your range (${bacRangeText(peak)}) reaches levels at which people have died of alcohol poisoning (most such deaths: 2.2–5 ‰). If someone can’t be woken, breathes slowly or irregularly, vomits or has a seizure, call the emergency number (112 in Europe). Blood alcohol can keep rising after drinking stops.`, tone: 2,
+      note: 'Evidence A: 693 deaths from alcohol poisoning (Jones & Holmgren 2003); warning signs from NIAAA', title: 'We show this when the top of our range (model + 50%) reaches 2.2 ‰, the 5th percentile of blood alcohol in deaths from acute alcohol poisoning.' });
+    // When is it gone? The liver works at a fixed speed, 0.10–0.20 ‰ an hour for most people, asleep or awake [AL2, A].
+    // The model's own day stops at 24 h: past that we say so and extrapolate at the same speed (never a silent cut).
+    const clk = alcoholClock(x.bac);
+    const day = (m: number) => clockLabel(x.drinkAt, m);
+    const hrs = (m: number) => { const h = m / 60; return h < 1.5 ? `${Math.max(1, Math.round(m / 10) * 10)} min` : `${h < 10 ? Math.round(h * 2) / 2 : Math.round(h)} h`; };
+    const spread = (x.alcoholG ?? 0) > 21 ? ' This assumes you drink it all at once; spread over an evening the peak is lower, but it is gone at about the same time.' : '';
+    out.push({ icon: '⏳', q: 'When is the alcohol gone?', a: clk.beyond24
+      ? `Not within the 24 hours shown here. A typical body like yours needs about ${hrs(clk.goneMin)}, until around ${day(clk.goneMin)}; with a slow liver until about ${day(clk.latestMin)}, with a fast one about ${day(clk.earliestMin)}. Sleep, coffee, water or a shower don’t speed it up.${spread}`
+      : `In a typical body like yours around ${day(clk.goneMin)}, about ${hrs(clk.goneMin)} after the first sip. Livers clear about 0.10–0.20 ‰ an hour, so for most people somewhere between ${day(clk.earliestMin)} and ${day(clk.latestMin)}. Sleep, coffee, water or a shower don’t speed it up.${spread}`,
+      tone: clk.beyond24 ? 2 : 1, tag: pn ? 'you' : undefined,
+      note: 'Evidence A for the liver speed (Jones 2010); the times are our estimate (C)', title: 'Typical time from our model; the earliest and latest times re-run the same downslope at 0.20 and 0.10 ‰ per hour. Your body water can shift them further (see the peak range).' });
+    // The next morning (evening or night drinking): the honest answer, with the range across people. Never "safe".
+    const wakeRel = (((x.wakeMin ?? 7 * 60) - x.drinkAt) % 1440 + 1440) % 1440;
+    const evening = x.drinkAt >= 12 * 60 || x.drinkAt < (x.wakeMin ?? 7 * 60);
+    if (evening && wakeRel >= 60) {
+      const W = day(wakeRel).replace(' tomorrow', '');
+      const typ = clk.typicalAt(wakeRel), slow = clk.slowAt(wakeRel);
+      const limits = ' Limits differ by country. In Croatia: 0.5 ‰ for most drivers and 0 ‰ for novice and professional drivers.';
+      const a = typ >= 0.2
+        ? `No. At ${W} a typical body like yours would still have about ${bacRangeText(typ)} in the blood${typ >= 0.5 ? ', even above the general 0.5 ‰ limit' : ''}. Sleeping doesn’t make it go faster.`
+        : typ > GONE_GL
+          ? `No. At ${W} a typical body like yours would still have a little alcohol in the blood (about ${bacRangeText(typ)}): a breath test can be positive.`
+          : slow > GONE_GL
+            ? `Not for sure. A typical body like yours would be clear by ${day(clk.goneMin)}, but with a slow liver some alcohol could still be there at ${W} (up to about ${slow.toFixed(2)} ‰), and a breath test can be positive.`
+            : `The alcohol itself should be gone by ${W}, even with a slow liver. But a hangover can still make you drive worse at 0 ‰, and this app can’t tell you you’re safe.`;
+      out.push({ icon: '🌅', q: x.drinkAt >= 12 * 60 ? 'Can I drive tomorrow morning?' : 'Can I drive in the morning?', a: `${a}${limits}`, tone: typ > GONE_GL ? 2 : 1, tag: pn ? 'you' : undefined,
+        note: 'Evidence A for the liver speed and the limits; B for hangover driving (Alford 2020)', title: `Your wake-up time (${W}) from “Your body”. A slow liver = 0.10 ‰ an hour. In 52 social drinkers half still blew positive the next morning, and both halves drove worse in a simulator.` });
+    }
     // pregnancy: WHO — alcohol in pregnancy raises the risk of FASD (alcohol.md L12)
     if (pn?.pregnant) out.push({ icon: '🤰', q: 'And in pregnancy?', a: 'Best to have none: alcohol reaches the baby and raises the risk of lasting harm (WHO).', tone: 2, tag: 'you' });
   }
@@ -142,7 +184,15 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     out.push({ icon: '🚶', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal ≈ ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`} of brisk walking for you${km >= 1 ? ` (about ${km >= 10 ? Math.round(km) : km.toFixed(1).replace(/\.0$/, '')} km)` : ''}.`, tone: 0, tag: pn ? 'you' : undefined,
       note: pn ? 'Energy used on top of sitting still, at 5 km/h, for your weight' : undefined });
   } else out.push({ icon: '🚶', q: 'How much energy is that?', a: 'Almost none.', tone: 0 });
-  if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', a: `Yes: it gives your body about ${Math.round(x.waterMl)} ml of water.`, tone: 0, tag: pn ? 'typical' : undefined });
+  // alcohol: beer with ≤ ≈ 40 g of alcohol was tested (no extra urine); wine and spirits give a little more urine for
+  // 4 h; more than that was never tested, so no plain "Yes" [AL7, AL13: Maughan 2016, Polhuis 2017]
+  const aG = x.bac ? x.alcoholG ?? 0 : 0;
+  const beerLike = aG > 0 && aG / Math.max(1, x.waterMl) < 0.06;
+  if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', tone: 0, tag: pn ? 'typical' : undefined,
+    a: aG > 40 ? `Not reliably: it has about ${Math.round(x.waterMl)} ml of water, but studies only tested drinks with up to about 30–40 g of alcohol, so we don’t know how much of it you keep with this much.`
+      : aG > 1 && !beerLike ? `Mostly: it gives about ${Math.round(x.waterMl)} ml of water, but wine and spirits make you pee a little more for a few hours (no difference after 24 hours).`
+      : `Yes: it gives your body about ${Math.round(x.waterMl)} ml of water.`,
+    ...(aG > 1 ? { note: 'Evidence B: urine after beer, wine and spirits with 30 g of alcohol (Polhuis 2017); 1 liter of lager (Maughan 2016)' } : {}) });
   const tip = nextStep(x.systems, !!x.bac);
   if (tip) out.push({ icon: '👣', q: 'What can I do?', a: tip.text, tone: 0, note: `Evidence ${tip.level}: ${LEVEL_LABEL[tip.level].toLowerCase()}`, title: tip.why });
   return out;

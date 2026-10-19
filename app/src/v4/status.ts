@@ -4,6 +4,7 @@
 import { at, type Timeline } from '../science/espressoSim';
 import { SLEEP_WINDOW_MIN, type Vitals } from '../science/daily';
 import { bacRangeText } from '../science/ranges';
+import { GONE_GL, poisonRisk } from '../science/alcoholClock';
 import type { TipKey } from '../content/tips';
 
 export type Level = 0 | 1 | 2; // green, yellow, red
@@ -19,7 +20,13 @@ export interface System {
   tip?: (lvl: Level, m: number) => TipKey | null;
   /** gentler words for the day summary when a yellow span starting at minute m only means "maybe" (verdict) */
   soft?: (m: number) => { word: string; tail: string } | undefined;
+  /** the day summary for a light that stays green but should not read "no real effect" (e.g. a little alcohol) */
+  calmNote?: (clock: (m: number) => string) => string;
 }
+
+/** Short names for the small lights (Simple view, Compare, video). "Blood sugar", never "Sugar" alone: next to a
+ *  sugar-free drink "Sugar fine" reads like a statement about sugar IN the drink (sense audit 2026-10-18). */
+export const SHORT_LABEL: Record<System['key'], string> = { energy: 'Blood sugar', heart: 'Heart', water: 'Water', brain: 'Brain' };
 
 const N = 1441;
 const fill = (f: (m: number) => Level) => { const a = new Uint8Array(N); for (let m = 0; m < N; m++) a[m] = f(m); return a; };
@@ -46,6 +53,9 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
   // Brain & sleep: caffeine by day (EFSA: up to 200 mg at once is fine), delayed sleep at night.
   // Alcohol (g/L = ‰): attention worse from 0.2, reaction time and balance from 0.5 (Jongen 2014; Croatian limit 0.5).
   const alc = (m: number) => (bac ? at(bac, m) : 0);
+  let alcFrom = -1, alcTo = -1;
+  if (bac) for (let m = 0; m < Math.min(N, bac.length); m++) if (bac[m] > 0.02) { if (alcFrom < 0) alcFrom = m; alcTo = m; }
+  const hasAlc = alcFrom >= 0;
   // "night" = asleep, or in bed falling asleep (lights-out to 90 min after, the window the sleep answer looks at)
   const bedAt = v.toBedMin;
   const night = (m: number) => asleep(m) || (bedAt !== undefined && m >= bedAt && m <= bedAt + SLEEP_WINDOW_MIN);
@@ -73,12 +83,14 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
 
   return [
     {
-      key: 'energy', label: 'Energy & sugar', organ: 'pancreas', levels: energy, unknown: sugarUnknown,
-      rule: 'Green: blood sugar within 1.5 mmol/L of where you started. Yellow: a jump of 1.5–3 mmol/L, a dip of 0.5–1 mmol/L, or above 7.8. Red: a jump over 3, a dip over 1, or above 10 mmol/L.',
+      key: 'energy', label: 'Blood sugar & energy', organ: 'pancreas', levels: energy, unknown: sugarUnknown,
+      rule: 'This light is about the sugar in your BLOOD, not the sugar in the food. Green: blood sugar within 1.5 mmol/L of where you started. Yellow: a jump of 1.5–3 mmol/L, a dip of 0.5–1 mmol/L, or above 7.8. Red: a jump over 3, a dip over 1, or above 10 mmol/L. Alcohol has no sugar curve of its own; it slows the liver’s sugar-making, which can lower blood sugar hours later after a long fast, heavy drinking or with diabetes medicines (not drawn).',
       says: (l, m) => {
         const d = at(v.effect.glucose, m) / 18;
-        if (sugarUnknown) return 'Not measured for this food (no glycemic index yet), so we don’t rate it.';
-        if (l === 0) return 'Steady energy: your blood sugar is in its normal range.';
+        // alcohol: no curve of its own, but it slows the liver's sugar-making [AL10 B, AL11 B]
+        const alcNote = hasAlc ? ' Alcohol slows your liver’s sugar-making for hours: after a long fast, heavy drinking or with insulin or diabetes tablets, blood sugar can dip later, even the next morning.' : '';
+        if (sugarUnknown) return `Not measured for this food (no glycemic index yet), so we don’t rate it.${alcNote}`;
+        if (l === 0) return hasAlc && Math.abs(d) < 0.3 ? `No rise in blood sugar from the alcohol itself.${alcNote}` : `Steady energy: your blood sugar is in its normal range.${alcNote}`;
         return d > 0 ? `Blood sugar peak: ${l === 2 ? 'a big rise' : 'a moderate rise'}. Insulin is bringing it back down.` : 'Energy dip: your blood sugar is below where you started. You may feel hungry or tired.';
       },
       tip: (l, m) => (l === 0 || sugarUnknown ? null : at(v.effect.glucose, m) >= 0 ? 'sugarSpike' : 'sugarDip'),
@@ -87,7 +99,9 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
       key: 'heart', label: 'Heart & pressure', organ: 'heart', levels: heart,
       rule: 'Green: this adds less than 5 mmHg or 5 beats a minute, and your pressure is below 130. Yellow: +5–10, or 130–139 (AHA stage 1). Red: more than +10, or 140 and above (AHA stage 2).',
       says: (l) => (l === 0 ? 'Your heart is working normally.' : l === 1 ? 'Pulse or blood pressure slightly up: mild stress that your body handles easily.' : 'Pulse or blood pressure clearly up: your heart is working harder for now.'),
-      tip: (l) => (l === 0 ? null : 'heart'),
+      // "have your resting pressure checked" only when YOUR own pressure is the reason, not a short rise from the drink
+      // (sense audit: 10 beers or 3 colas showed a resting-pressure tip for a pulse rise caused by the drink)
+      tip: (l, m) => (l === 0 || at(v.sbp, m) - at(v.effect.sbp, m) < 130 ? null : 'heart'),
     },
     {
       key: 'water', label: 'Hydration', organ: 'kidney_l', levels: water,
@@ -105,10 +119,12 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
     },
     {
       key: 'brain', label: 'Brain & sleep', organ: 'brain', levels: brain,
-      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit). At night: yellow if caffeine delays your sleep by up to 20 minutes, while enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
+      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; Croatian driving limit); when the top of our range reaches 2.2 ‰ we add a danger warning (the lowest levels seen in deaths from alcohol poisoning). At night: yellow if caffeine delays your sleep by up to 20 minutes, while enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
       says: (l, m) => {
         const a = alc(m);
         // a range, never one number: Widmark estimates are off by 20–40% (alcohol.md W6)
+        // the top of the range reaches the level seen in alcohol-poisoning deaths (≥ 2.2 ‰) [AL9]
+        if (poisonRisk(a)) return `Blood alcohol about ${bacRangeText(a)}: dangerous. People have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).`;
         if (a >= 0.5) return `Blood alcohol about ${bacRangeText(a)}: reaction time and balance are worse. Don’t drive.`;
         if (a >= 0.2) return `Blood alcohol about ${bacRangeText(a)}: your attention is already worse. Don’t drive.`;
         if (night(m) && a > 0.02) return 'Alcohol is still in your blood: you may fall asleep faster, but the second half of the night will be lighter and more broken.';
@@ -120,6 +136,8 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
       tip: (l, m) => (alc(m) > 0.02 ? 'alcohol' : l === 0 ? null : 'caffeine'),
       // the cautious caffeine tier at night is a "maybe" for sensitive people, not stress (wave 7)
       soft: (m) => (night(m) && alc(m) <= 0.02 && cautiousNow(m) ? { word: 'maybe lighter sleep', tail: ' if caffeine affects you easily' } : undefined),
+      // a little alcohol that never turns the light yellow is still not "no real effect": the driving answer says No
+      calmNote: hasAlc ? (clock) => `a little alcohol in your blood ${clock(alcFrom)}–${alcTo >= N - 1 && bac && at(bac, N - 1) > GONE_GL ? 'past 24 h' : clock(alcTo + 1)}, not zero: don’t drive` : undefined,
     },
   ];
 }
@@ -128,9 +146,13 @@ const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 /** The day in one or two plain sentences: which parts of you are affected, when, and which are not. */
 export function verdict(systems: System[], drinkAt: number): string {
   const hh = (m: number) => `${String(Math.floor((drinkAt + m) / 60) % 24).padStart(2, '0')}:${String(Math.floor(drinkAt + m) % 60).padStart(2, '0')}`;
-  const NAME: Record<System['key'], string> = { energy: 'sugar', heart: 'heart', water: 'water', brain: 'brain' };
+  const NAME: Record<System['key'], string> = { energy: 'blood sugar', heart: 'heart', water: 'water', brain: 'brain' };
   const parts: string[] = [], calm: string[] = [];
+  // a span that runs to the end of the 24 h is not "19:01–19:01" (that read as one minute): say it goes on
+  const end = (b: number, l: number[] | Uint8Array) => (b >= l.length - 1 ? 'past 24 h' : hh(b + 1));
   for (const s of systems) {
+    // "not measured" is not "no real effect" (the light is grey)
+    if (s.unknown) { parts.push(`${s.label}: not measured`); continue; }
     const spans: [number, number, number][] = []; // from, to, worst level
     for (let m = 0; m < s.levels.length; m++) {
       const l = s.levels[m];
@@ -139,18 +161,18 @@ export function verdict(systems: System[], drinkAt: number): string {
         if (last && m - last[1] <= 10) { last[1] = m; last[2] = Math.max(last[2], l); } else spans.push([m, m, l]);
       }
     }
-    if (!spans.length) { calm.push(NAME[s.key]); continue; }
+    if (!spans.length) { const note = s.calmNote?.(hh); if (note) parts.push(`${s.label}: ${note}`); else calm.push(NAME[s.key]); continue; }
     // "mild stress 16:13–16:42 and again 17:15–18:17" (same level twice), "mild stress …, then high stress …" otherwise
     // a yellow span that only means "maybe, for sensitive people" gets its own gentle words (System.soft, wave 7)
     const softs = spans.slice(0, 2).map(([a, , l]) => (l === 1 ? s.soft?.(a) : undefined));
     const words = spans.slice(0, 2).map(([a, b, l], i) => {
       const soft = softs[i];
-      if (soft) return `${soft.word} ${hh(a)}–${hh(b + 1)}${soft.tail}`;
-      return `${i === 1 && l === spans[0][2] && !softs[0] ? 'again' : l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${hh(b + 1)}`;
+      if (soft) return `${soft.word} ${hh(a)}–${end(b, s.levels)}${soft.tail}`;
+      return `${i === 1 && l === spans[0][2] && !softs[0] ? 'again' : l === 2 ? 'high stress' : 'mild stress'} ${hh(a)}–${end(b, s.levels)}`;
     });
     parts.push(`${s.label}: ${words.length === 2 && spans[1][2] === spans[0][2] ? words.join(' and ') : words.join(', then ')}`);
   }
-  const calmTxt = calm.length ? `${calm.length === 4 ? 'Sugar, heart, water and brain' : calm.length > 2 ? `${cap(calm.slice(0, -1).join(', '))} and ${calm[calm.length - 1]}` : cap(calm.join(' and '))}: no real effect.` : '';
+  const calmTxt = calm.length ? `${calm.length === 4 ? 'Blood sugar, heart, water and brain' : calm.length > 2 ? `${cap(calm.slice(0, -1).join(', '))} and ${calm[calm.length - 1]}` : cap(calm.join(' and '))}: no real effect.` : '';
   return parts.length ? `${parts.join('. ')}. ${calmTxt}`.trim() : `Your body handles this easily. ${calmTxt}`;
 }
 

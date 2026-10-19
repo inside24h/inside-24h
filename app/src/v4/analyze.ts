@@ -7,7 +7,7 @@ import { MG_DL_PER_MMOL_L, type Profile } from '../science/profile';
 import { bodyStatus } from './status';
 import { quickAnswers } from './Answers';
 import { climateNow, findCity, cityLabel } from './climate/cities';
-import { macros, type Part } from './food/parse';
+import { isPlain, macros, type Part } from './food/parse';
 import { makeFoodProduct } from './food/foodProduct';
 import { PRODUCTS } from './products';
 
@@ -17,7 +17,8 @@ const CURATED = new Set(['espresso', 'cola', 'water']);
 
 export function analyze(parts: Part[], p: Profile) {
   const one = parts.length === 1 ? parts[0] : null;
-  const curated = one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1 ? one.food.id : null;
+  // the curated models only for the plain default (a decaf espresso or a 500 ml cola uses the generic model)
+  const curated = one && isPlain(one.food) && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1 ? one.food.id : null;
   const def = curated ? PRODUCTS[curated] : makeFoodProduct(parts, 'food');
   const built = def.build(p, 63);
   const v = buildVitals(p, built.caffeine, sleepAnchors(), true, built.effects);

@@ -1,5 +1,15 @@
 # Variants plan (Plan agent, 2026-10-17)
 
+## OWNER OVERRIDES (2026-10-18). These win over anything below.
+1. **When a word is ambiguous, ask; never guess.** Searching "tea" or "čaj" shows "Which tea?" with Black · Green · Herbal · Iced. "kava"/"coffee" shows Espresso · Filter · With milk · Cappuccino · Latte. "sok"/"juice" shows Orange · Apple · Tomato. Apply this to every word that matches several foods.
+   - The simulation may start on the most common choice, but the chooser stays visible and obvious until the user picks.
+2. **Composite foods are BUILDERS, not just a few presets.** Pizza: a base (dough, tomato, mozzarella), then the user ticks what is on it: extra cheese, salami/pepperoni, ham, sausage, bacon, mushrooms, peppers, onion, olives, corn, tuna, egg, and so on. Each topping has a sourced USDA record and a sourced typical grams-per-slice (or per-pie), labeled "our estimate" with a range.
+   - Size is still separate: Slice · Half · Whole.
+   - A few one-tap presets (Margherita, Capricciosa, Pepperoni, Veggie, Loaded) just pre-tick toppings.
+   - Use the same builder for sandwich, burger/pljeskavica, kebab, salad, burek filling, and coffee/tea add-ins.
+3. **Kebab comes back as a builder:** pita or wrap, chicken or beef/veal, vegetables, sauces. It is an existing DB food, not a new one.
+4. Every number must be sourced, with honest ranges. No guessing.
+
 Read-only design. Implement only **after** the food data fixes in FIXES.md are done.
 
 ## Key facts

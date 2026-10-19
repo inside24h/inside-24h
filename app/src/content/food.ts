@@ -36,6 +36,15 @@ export const FOOD_SOURCES = {
   ebrahim2013: { id: 'ebrahim2013', cite: 'Ebrahim IO et al. 2013, Alcohol Clin Exp Res', url: pm('23347102') },
   pietila2018: { id: 'pietila2018', cite: 'Pietilä J et al. 2018, JMIR Ment Health (4,098 people, heart rate variability in sleep)', url: 'https://europepmc.org/article/PMC/PMC5878366' },
   maughan2016: { id: 'maughan2016', cite: 'Maughan RJ et al. 2016, Am J Clin Nutr', url: pm('26702122') },
+  jonesHolmgren2003: { id: 'jonesHolmgren2003', cite: 'Jones AW, Holmgren P 2003, J Forensic Sci (693 deaths from alcohol poisoning)', url: pm('12877310') },
+  niaaaOverdose: { id: 'niaaaOverdose', cite: 'NIAAA: Understanding the dangers of alcohol overdose', url: 'https://www.niaaa.nih.gov/publications/brochures-and-fact-sheets/understanding-dangers-of-alcohol-overdose' },
+  siler1998: { id: 'siler1998', cite: 'Siler SQ et al. 1998, Am J Physiol (alcohol and gluconeogenesis)', url: pm('9815011') },
+  looi2025: { id: 'looi2025', cite: 'Looi E, Lawler HM 2025, J Clin Med (review: hypoglycemia without diabetes)', url: 'https://europepmc.org/article/PMC/PMC12250112' },
+  turner2001: { id: 'turner2001', cite: 'Turner BC et al. 2001, Diabetes Care (evening wine, next-morning glucose, type 1 diabetes)', url: pm('11679452') },
+  holt2021: { id: 'holt2021', cite: 'Holt RIG et al. 2021, ADA/EASD consensus on type 1 diabetes', url: 'https://europepmc.org/article/PMC/PMC8481000' },
+  alford2020: { id: 'alford2020', cite: 'Alford C et al. 2020, J Clin Med (hangover and simulated driving, 52 people)', url: 'https://europepmc.org/article/PMC/PMC7291334' },
+  polhuis2017: { id: 'polhuis2017', cite: 'Polhuis KCMM et al. 2017, Nutrients (urine after beer, wine and spirits)', url: 'https://europepmc.org/article/PMC/PMC5537780' },
+  usdaSpirits: { id: 'usdaSpirits', cite: 'USDA FoodData Central SR Legacy 174815 (distilled spirits, 80 proof: 0 g carbohydrate) and 175097 (coffee liqueur: 46.8 g per 100 g)', url: 'https://fdc.nal.usda.gov/food-details/174815/nutrients' },
   euCroatia: { id: 'euCroatia', cite: 'European Commission, Your Europe: Croatia road rules', url: 'https://europa.eu/youreurope/citizens/travel/driving-abroad/road-rules-and-safety/croatia/index_en.htm' },
   mudie2014: { id: 'mudie2014', cite: 'Mudie DM et al. 2014, Mol Pharm (MRI)', url: pm('25115349') },
   wilson2025: { id: 'wilson2025', cite: 'Wilson ML et al. 2025, Nutr Rev (systematic review, 16 trials)', url: 'https://europepmc.org/article/PMC/PMC11819491' },
@@ -56,6 +65,24 @@ const SOURCE_CLAIMS: Claim[] = (foodDb as { id: string; src?: SrcRow[] }[]).flat
   (SOURCE_CLAIM_IDS[f.id] ??= []).push(id);
   return c(id, s.level, s.text, [sid], s.level === 'C' ? 'Our calculation from the labels named in the source (research/tools/fooddb_spec.py OVERRIDES).' : undefined);
 }));
+
+// Variants, builder parts, add-ins and sizes (2026-10-18, research/tools/build_variants.py): each source row carries its
+// own claim id (DBV-, DBB-, DBA-, DBS-); a variant's own label rows are DBO-<id>.<v>-<i>. Registered once here.
+type RowC = SrcRow & { claim?: string };
+type DbFood = { id: string; variants?: { src: RowC[] }[]; builder?: { src: RowC[]; groups: { opts: { src: RowC[] }[] }[] }; addins?: { src: RowC[] }[]; sizes?: { src: RowC[] } };
+const CHOICE_CLAIMS: Claim[] = [];
+const seenChoice = new Set<string>();
+for (const f of foodDb as unknown as DbFood[]) {
+  const rows: RowC[] = [...(f.variants ?? []).flatMap((v) => v.src), ...(f.builder?.src ?? []), ...(f.builder?.groups ?? []).flatMap((g) => g.opts.flatMap((o) => o.src)),
+    ...(f.addins ?? []).flatMap((a) => a.src), ...(f.sizes?.src ?? [])];
+  for (const s of rows) {
+    if (!s.claim || seenChoice.has(s.claim) || /^DBO-[a-z0-9-]+-\d+$/.test(s.claim)) continue; // base label rows: SOURCE_CLAIMS
+    seenChoice.add(s.claim);
+    const sid = `src-${s.claim}`;
+    if (!SOURCES[sid]) SOURCES[sid] = { id: sid, cite: s.cite, url: s.url };
+    CHOICE_CLAIMS.push(c(s.claim, s.level, s.text, [sid], s.level === 'C' ? 'Our recipe or estimate from the sources named (research/tools/fooddb_spec.py, section VARIANTS).' : undefined));
+  }
+}
 
 export const FOOD_CLAIMS: Record<string, Claim> = Object.fromEntries([
   c('DB1', 'A', 'Calories, carbohydrate, sugar, fiber, fat, protein, water, caffeine and alcohol per 100 g come from the USDA SR Legacy database, unless a statement here names a product label instead. Portion sizes like “1 medium apple” are USDA portion weights.', ['usdaSR']),
@@ -86,8 +113,16 @@ export const FOOD_CLAIMS: Record<string, Claim> = Object.fromEntries([
   c('AL6', 'A', 'Alcohol before bed helps you fall asleep faster at every dose studied, but disturbs the second half of the night, and the first dream (REM) sleep comes later. At moderate and high doses it also cuts total dream sleep; at low doses that effect is unclear (review of sleep-lab studies in healthy people).', ['ebrahim2013']),
   c('AL8', 'B', 'The effect grows with the dose. In 4,098 Finnish employees wearing heart monitors, the heart’s “recovery” in the first 3 hours of sleep fell by about 9, 24 and 39 percentage points after low (up to 0.25 g per kg; mostly one drink), moderate (0.25–0.75 g/kg) and high (over 0.75 g/kg) alcohol, compared with the same people’s nights without alcohol. Observational, not a trial.', ['pietila2018'], 'We use these g/kg bands to pick the wording for one drink, a few drinks or many (our mapping, C).'),
   c('AL7', 'A', 'A beer does not dehydrate you: in 72 men, 1 liter of lager gave the same urine over 4 hours as 1 liter of water. Stronger drinks (wine, spirits) were not tested.', ['maughan2016']),
+  c('AL9', 'A', 'Danger zone: in 693 people who died of acute alcohol poisoning, blood alcohol was 2.2–5.0 ‰ in 9 of 10 (median 3.6 ‰). Signs of an overdose: you can’t wake the person, slow or irregular breathing, vomiting, seizures, very cold, pale or bluish skin. Call the emergency number (112 in Europe). Blood alcohol can keep rising after drinking stops.', ['jonesHolmgren2003', 'niaaaOverdose']),
+  c('AL10', 'B', 'Alcohol and blood sugar: alcohol has no sugar curve of its own, but it slows the liver’s production of new sugar (by 45% for 5 hours after 48 g in men who had fasted overnight). In healthy people who have eaten, blood sugar stays normal because the liver uses its sugar stores; low blood sugar from alcohol mostly happens after a long fast, heavy drinking, or with insulin or diabetes tablets.', ['siler1998', 'looi2025', 'holt2021'], 'Mechanism A (Siler 1998, tracer study); who is at risk from a review (Looi 2025) and the ADA/EASD consensus. Not drawn as a curve.'),
+  c('AL11', 'B', 'With diabetes the dip can come the next morning: 6 men with type 1 diabetes drank dry white wine at 21:00 (0.75 g of alcohol per kg, about 4 glasses for 70 kg); the next morning 5 of 6 needed treatment for low blood sugar after breakfast. None did after water.', ['turner2001']),
+  c('AL12', 'B', 'The morning after: in 52 social drinkers, half still had alcohol on a breath test in the morning, and in a driving simulator both groups, with or without alcohol left, drove worse than after a night without alcohol.', ['alford2020']),
+  c('AL13', 'B', 'Water from alcoholic drinks: with 30 g of alcohol, beer gave no more urine than alcohol-free beer, while wine and spirits gave a little more for 4 hours and no difference over 24 hours (older men). Larger amounts were not tested.', ['polhuis2017', 'maughan2016']),
+  c('AL14', 'C', 'We assume you drink everything at once. Spread over an evening, the peak is lower, but because the liver works at a fixed speed, the alcohol is gone at about the same time, counted from the first drink.', ['jones2010'], 'Follows from zero-order elimination (AL2) as long as some alcohol stays in the blood between drinks.'),
+  c('AL15', 'A', 'Plain distilled spirits (rakija, vodka, whisky at 40%) have no carbohydrate or sugar; all their calories come from the alcohol. Sweet liqueurs and honey brandy (medica) are different: a coffee liqueur has about 47 g of carbohydrate per 100 g.', ['usdaSpirits']),
   c('WK1', 'A', 'Extra water leaves through the kidneys within a few hours: after 1 liter of water, healthy men passed about 1.3 kg of urine over 4 hours.', ['maughan2016']),
   ...SOURCE_CLAIMS,
+  ...CHOICE_CLAIMS,
 ].map((x) => [x.id, x]));
 
 /** "How do we know?" for this food's non-USDA values (label overrides), e.g. ['DBO-cola-0']. */

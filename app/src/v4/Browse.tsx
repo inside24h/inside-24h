@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FOODS, fold, servingText, type Food, type Part } from './food/parse';
+import { FOODS, fold, kindsOf, servingText, type Food, type Part } from './food/parse';
 import { PRESETS, presetParts } from './food/meal';
 import './meals.css';
 import { useModal } from './a11y';
@@ -69,7 +69,7 @@ export function Browse({ onPick, onClose, onAdd }: { onPick: (parts: Part[], tex
                 <li key={f.id} className={onAdd ? 'withadd' : ''}>
                   <button onClick={() => onPick(one(f), f.name)}>
                     <i style={{ background: f.color }} aria-hidden="true" />
-                    <span className="bn">{f.name}<small>{servingText(f)}</small></span>                  </button>
+                    <span className="bn">{f.name}<small>{servingText(f)}{kindsOf(f) > 1 ? ` · ${kindsOf(f)} kinds` : ''}</small></span>                  </button>
                   {onAdd && <button className="badd" aria-label={`Add ${f.name} to the meal`} title="Add to the meal" onClick={() => onAdd(one(f), f.name)}>+</button>}
                 </li>
               ))}

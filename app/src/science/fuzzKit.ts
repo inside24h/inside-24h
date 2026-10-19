@@ -4,7 +4,7 @@
 // times outside 0–24 h, curves that never come back, or text with "NaN", "undefined" or empty strings.
 import type { FoodSim } from './foodSim';
 import { DEFAULT_PROFILE, type Profile } from './profile';
-import type { Part } from '../v4/food/parse';
+import { isPlain, type Part } from '../v4/food/parse';
 import { makeFoodProduct } from '../v4/food/foodProduct';
 import { analyze } from '../v4/analyze';
 import { PRODUCTS } from '../v4/products';
@@ -82,7 +82,7 @@ export function checkSim(where: string, s: FoodSim, alcoholG: number, grams: num
 export function checkScreen(where: string, parts: Part[], p: Profile, answers = true) {
   // the same product analyze() picked: the curated espresso / cola / water at one serving, else the generic food model
   const one = parts.length === 1 ? parts[0] : null;
-  const curated = one && PRODUCTS[one.food.id] && Math.abs(one.grams - one.food.serving.grams) < 1;
+  const curated = one && isPlain(one.food) && PRODUCTS[one.food.id] && Math.abs(one.grams - one.food.serving.grams) < 1;
   const def = curated ? PRODUCTS[one!.food.id] : makeFoodProduct(parts, 'food');
   const b = def.build(p, 63);
   if (answers) {

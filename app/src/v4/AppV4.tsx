@@ -31,7 +31,7 @@ import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, sta
 import { verdict, worstMoment } from './status';
 
 const ICON_OF = { energy: '⚡', heart: '❤', water: '💧', brain: '🧠' } as const;
-const SHORT_OF = { energy: 'Sugar', heart: 'Heart', water: 'Water', brain: 'Brain' } as const; // fits the video chips
+const SHORT_OF = { energy: 'Blood sugar', heart: 'Heart', water: 'Water', brain: 'Brain' } as const; // fits the video chips; never "Sugar" alone (status.ts SHORT_LABEL)
 import { cityLabel, climateNow, findCity } from './climate/cities';
 import { simulateHydration } from '../science/hydration';
 import { SUPPORT } from './support';
@@ -54,7 +54,8 @@ import { MomentShare, type Moment } from './MomentShare';
 
 
 import { SmartSearch } from './SmartSearch';
-import { macros, parseMeal, suggest, type Part } from './food/parse';
+import { isPlain, macros, parseMeal, sizesOf, suggest, type Food, type Part } from './food/parse';
+import { setFood } from './food/meal';
 import { makeFoodProduct } from './food/foodProduct';
 
 // Water each drink brings (ml): espresso 30 ml shot, cola 330 ml can (≈ 89% water), water 250 ml glass.
@@ -67,7 +68,8 @@ const T50_OF: Record<string, number> = { espresso: 13, cola: 32, water: 13 }; //
 const HABIT_OF: Record<string, string> = { banana: 'banana', 'bread-white': 'bread', pizza: 'pizza', 'orange-juice': 'juice', 'green-tea': 'tea', beer: 'beer', 'red-wine': 'wine', 'white-wine': 'wine', 'chocolate-milk-bar': 'chocolate' };
 // Default servings of these have their own, more detailed models (level A/B) instead of the generic one
 const CURATED = new Set(['espresso', 'cola', 'water']);
-const canonical = (parts: Part[]) => parts.map((p) => `${Math.round(p.grams)} g ${p.food.name.replace(/\s*\(.*\)$/, '')}`).join(' + ');
+// 2026-10-18: links are written by deeplink.linkFor (exact text, or v/add/on for another kind); the old text form was:
+// const canonical = (parts: Part[]) => parts.map((p) => `${Math.round(p.grams)} g ${p.food.name.replace(/\s*\(.*\)$/, '')}`).join(' + ');
 
 const PLAY_SECONDS = 45;
 const REC_SECONDS = 15; // length of the shared video's 24 h run
@@ -90,12 +92,18 @@ const RESOLVED = resolveLink(window.location.hash, (id) => !!own(PRODUCTS, id));
 const LINK = RESOLVED.link;
 const HASH_T = LINK.t;
 const HASH_DOSE = Math.max(20, Math.min(330, Number(HASH.get('dose')) || 63));
-const scaleParts = (base: Part[], f: number) => (f === 1 ? base : base.map((p) => ({ ...p, grams: p.grams * f, amountLabel: `${f === 0.5 ? '½ ×' : `${f} ×`} ${p.amountLabel}` })));
+// a named size ("0.3 l", "Whole") reads as itself; other multiples as "2 × 1 slice"
+const scaleParts = (base: Part[], f: number) => (f === 1 ? base : base.map((p) => {
+  const z = base.length === 1 ? sizesOf(p.food)?.find((x) => Math.abs(x.mult - f) < 1e-6) : undefined;
+  const label = z ? (/\b(ml|l|dl|cl)$/.test(z.label) ? z.label : `${z.label} · ${Math.round(p.grams * f)} g`) : `${f === 0.5 ? '½ ×' : `${f} ×`} ${p.amountLabel}`;
+  return { ...p, grams: p.grams * f, amountLabel: label };
+}));
+const LINK_MULT = RESOLVED.mult; // n, or the named size (#s=whole)
 // curated products (#q=cola) reopen in their own detailed model, like picking them in the app
 const LINK_BASE: Part[] = RESOLVED.base;
 const LINK_MISS = RESOLVED.miss; // "#q=zzzz": we say we don't have it and open the search, instead of showing espresso
 const LINK_FOOD = LINK_BASE.length > 0 || !!(LINK.p && own(PRODUCTS, LINK.p)); // the link names a food: open it, skip the start screen
-const HASH_Q = LINK_BASE.length && !(LINK.n === 1 && isCuratedServing(LINK_BASE)) ? scaleParts(LINK_BASE, LINK.n) : [];
+const HASH_Q = LINK_BASE.length && !(LINK_MULT === 1 && isCuratedServing(LINK_BASE)) ? scaleParts(LINK_BASE, LINK_MULT) : [];
 const HASH_P = HASH_Q.length ? 'food' : LINK_BASE.length && isCuratedServing(LINK_BASE) ? LINK_BASE[0].food.id : own(PRODUCTS, LINK.p) ? LINK.p! : 'espresso';
 const HASH_ORGAN = (() => { const o = HASH.get('organ'); return o && /^[a-z_]{2,24}$/.test(o) ? o : null; })();
 
@@ -257,15 +265,30 @@ export default function AppV4() {
   }, [built, productId, foodParts]);
   const swap = useSwap(currentParts, profile, peakNow);
   // portion: ½ · 1 · 2 · 3 of what was chosen (scales the parts; 1 returns to the original, incl. curated models)
-  const [portion, setPortion] = useState(LINK_BASE.length ? LINK.n : 1);
-  const [portionBase, setPortionBase] = useState<Part[] | null>(LINK_BASE.length && LINK.n !== 1 ? LINK_BASE : null);
+  const [portion, setPortion] = useState(LINK_BASE.length ? LINK_MULT : 1);
+  const [portionBase, setPortionBase] = useState<Part[] | null>(LINK_BASE.length && LINK_MULT !== 1 ? LINK_BASE : null);
   const applyPortion = (f: number) => {
     const base = portionBase ?? currentParts;
     setPortionBase(base); setPortion(f);
     const one = base.length === 1 ? base[0] : null;
-    if (f === 1 && one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { setProductId(one.food.id); return; }
+    if (f === 1 && one && isPlain(one.food) && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { setProductId(one.food.id); return; }
     setFoodParts(scaleParts(base, f));
     setProductId('food');
+  };
+  // "Which tea?" stays highlighted until the person picks (the text named several foods)
+  const [asking, setAsking] = useState(LINK_BASE.length === 1 && !!LINK_BASE[0].ask);
+  // the 1-serving parts and the named sizes of a single food ("How much?" shows Slice · Half · Whole)
+  const baseParts = portionBase ?? currentParts;
+  const sizes = baseParts.length === 1 ? sizesOf(baseParts[0].food) : null;
+  /** Another kind of item i (Which …? chips, toppings, add-ins): the minute, play state and size stay. */
+  const switchFood = (i: number, food: Food) => {
+    setAsking(false);
+    const nb = setFood(baseParts, i, food);
+    const offered = nb.length === 1 && sizesOf(nb[0].food) ? sizesOf(nb[0].food)!.map((x) => x.mult) : [0.5, 1, 2, 3];
+    const f = offered.some((x) => Math.abs(x - portion) < 1e-6) ? portion : 1;
+    setPortion(f); setPortionBase(f === 1 ? null : nb);
+    if (f === 1 && isCuratedServing(nb)) { setProductId(nb[0].food.id); return; }
+    setFoodParts(scaleParts(nb, f)); setProductId('food');
   };
   const [compare, setCompare] = useState<{ with?: Part[] } | null>(() => (RESOLVED.vs ? { with: RESOLVED.vs } : null));
   const [vsParts, setVsParts] = useState<Part[] | null>(null); // the partner currently chosen inside Compare
@@ -339,10 +362,11 @@ export default function AppV4() {
     if (!parts.length) return;
     setPortion(1); setPortionBase(null);
     const one = parts.length === 1 ? parts[0] : null;
-    if (one && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
+    setAsking(parts.length === 1 && !!parts[0].ask);
+    if (one && isPlain(one.food) && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
     setFoodParts(parts); setProductId('food'); setMissText(null);
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
-    try { history.replaceState(null, '', parts.length > 1 ? writeLink(linkFor(parts)) : `#q=${encodeURIComponent(canonical(parts))}`); } catch { /* sandboxed: fine */ }
+    try { history.replaceState(null, '', writeLink(linkFor(parts))); } catch { /* sandboxed: fine */ }
   };
 
   // ---- Share: hook → the whole day following the liquid → summary card, recorded into a Reel or a feed video ----
@@ -447,7 +471,7 @@ export default function AppV4() {
       return {
         name: x.name, color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
         where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
-        sugar: x.sugarPeak === null ? 'Sugar ?' : Math.abs(dg) < 0.15 ? 'Sugar steady' : `Sugar ${sugarDeltaText(dg, profile.glucoseUnit)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
+        sugar: x.sugarPeak === null ? 'Blood sugar ?' : Math.abs(dg) < 0.15 ? 'Blood sugar steady' : `Blood sugar ${sugarDeltaText(dg, profile.glucoseUnit)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
         summary: { kcal: x.kcal, sugarPeak: sugarPeakText(x.sugarPeak, profile.glucoseUnit),
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'high stress'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
@@ -505,7 +529,9 @@ export default function AppV4() {
   // ---- deep link: the address bar always describes what is on screen (replaceState, so no history spam).
   // The minute goes in only while paused / after scrubbing, never every frame.
   const linkHash = (t: number | null) => writeLink({
-    ...linkFor(portion !== 1 && portionBase ? portionBase : currentParts), n: portion, t,
+    ...linkFor(portion !== 1 && portionBase ? portionBase : currentParts), t,
+    ...(sizes?.find((x) => Math.abs(x.mult - portion) < 1e-6 && x.mult !== 1) && productId === 'food' && currentParts.length === 1
+      ? { s: sizes.find((x) => Math.abs(x.mult - portion) < 1e-6)!.k } : { n: portion }),
     view: mode === 'detailed' ? 'detailed' : calm ? 'simple' : 'full',
     vs: compare && vsParts?.length ? mealText(vsParts) : undefined,
   }, window.location.hash);
@@ -568,7 +594,7 @@ export default function AppV4() {
           setStarted(false); setPlaying(false); setPanel(null); setEvidence(null); setCompare(null); setShare(null); setSelected(null);
           try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch { /* sandboxed */ }
         }}>Inside <em>24h</em></button>
-        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={chooseFood} />}</div>
+        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={chooseFood} asking={asking} onSwitch={switchFood} />}</div>
         <div className="topactions">
           <div className="seg2 mode" role="group" aria-label="View">
             <button aria-pressed={mode === 'simple' && calm} onClick={() => { setMode('simple'); setCalm(true); }}>Simple</button>
@@ -709,7 +735,7 @@ export default function AppV4() {
           playing={playing} onPlay={togglePlay} u={u} setU={(v) => { setU(v); setPlaying(false); }} systems={systems} minute={minute}
           where={overlayRef.current?.where} onMore={() => setCalm(false)}
           eatenAt={profile.drinkAtMin} setEatenAt={(m) => setProfile({ ...profile, drinkAtMin: m })} noun={lower}
-          portion={portion} onPortion={applyPortion} onRules={() => setPanel('colours')} />
+          portion={portion} onPortion={applyPortion} sizes={sizes} onRules={() => setPanel('colours')} />
       )}
       {mode === 'simple' && !calmNow && <StatusStrips systems={systems} minute={minute} onSeek={jump} clock={(m) => hhmm(profile.drinkAtMin + m)} />}
       {mode === 'simple' && !calmNow && (

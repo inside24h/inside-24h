@@ -13,8 +13,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 SRC = os.path.join(ROOT, "research", "fooddb.json")
 DST = os.path.join(ROOT, "app", "src", "v4", "food", "fooddb.json")
 
-# kebab: no SR Legacy record, every value null. Composite foods get their own variants plan (owner, 2026-10-17).
-EXCLUDE = {"kebab": "no data: SR Legacy has no doner/kebab record (all values null)"}
+# kebab was excluded (no SR Legacy record, every value null) until 2026-10-18; it is now a builder of USDA parts.
+EXCLUDE = {}
 
 
 def slim(e):
@@ -29,7 +29,27 @@ def slim(e):
     if e.get("aliasServing"): out["aliasServing"] = {k: {"label": v["label"], "grams": v["grams"]} for k, v in e["aliasServing"].items()}
     if e.get("overrides"):
         out["src"] = [{"fields": o["fields"], "level": o["level"], "text": o["text"], "cite": o["source"], "url": o["url"]} for o in e["overrides"]]
+    # 2026-10-18 (build_variants.py): new keys only, so a food without them is written exactly as before
+    for k in ("ask", "chip", "sizes", "addins", "choose"):
+        if e.get(k) is not None: out[k] = e[k]
+    if e.get("variants"):
+        out["variants"] = [slim_variant(v) for v in e["variants"]]
+    if e.get("builder"):
+        b = e["builder"]
+        out["builder"] = {"title": b["title"], "ask": b["ask"], "unit": b["unit"], "src": b["src"], "presets": b["presets"],
+                          "groups": [{"k": g["k"], "label": g["label"], "one": g["one"], "opts": [
+                              {k: o[k] for k in ("k", "chip", "name", "grams", "rng", "on", "p", "gi", "fdc", "food", "words", "aliases", "src")} for o in g["opts"]]}
+                              for g in b["groups"]]}
     return out
+
+
+def slim_variant(v):
+    o = {"v": v["v"], "chip": v["chip"], "name": v["name"], "words": v["words"], "aliases": v["aliases"], "kind": v["kind"],
+         "serving": {"label": v["serving"]["label"], "grams": v["serving"]["grams"]}, "p": v["per100g"], "gi": v["gi"],
+         "color": v["color"], "proxy": v["usdaProxy"], "recipe": bool(v["recipe"]), "fdc": v["usdaFdcId"], "src": v["src"]}
+    if v["serving"].get("assumed"): o["assumedServing"] = True
+    if v.get("range"): o["range"] = v["range"]
+    return o
 
 
 def main():

@@ -277,7 +277,7 @@ function drawCmpOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Cm
     ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(cx, 330, 34, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = '#ffffff'; ctx.font = `400 60px ${SERIF}`; ctx.fillText(fit(ctx, s.name, W / 2 - 60), cx, 430);
     ctx.font = `700 40px ${SANS}`; ctx.fillStyle = '#e6edf5'; ctx.fillText(`${Math.round(s.summary.kcal)} kcal`, cx, 520);
-    ctx.font = `600 32px ${SANS}`; ctx.fillStyle = '#9fd7ff'; ctx.fillText(`Sugar ${s.summary.sugarPeak}`, cx, 575);
+    ctx.font = `600 32px ${SANS}`; ctx.fillStyle = '#9fd7ff'; ctx.fillText(fit(ctx, `Blood sugar ${s.summary.sugarPeak}`, W / 2 - 60), cx, 575);
     s.summary.worst.forEach((l, j) => {
       const y = 680 + j * 120;
       ctx.fillStyle = LIGHTC[l.level]; ctx.beginPath(); ctx.arc(cx - 170, y, 28, 0, Math.PI * 2); ctx.fill();
