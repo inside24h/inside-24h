@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { Browse } from './lazyUi'; // loaded on first use
 import './browse.css';
 import './meals.css';
-import { FOODS, foodKey, kindsOf, macros, suggest, type Part, type Suggestion } from './food/parse';
-import { PRESETS, presetParts } from './food/meal';
+import { FOODS, foodKey, kindsOf, macros, readPace, suggest, type Part, type Suggestion } from './food/parse';
+import { canPace, PRESETS, presetParts } from './food/meal';
 
 // Type like you talk: "1 jabuka", "2 slices of bread", "kava s mlijekom", "pizza and a beer".
 // Each suggestion already shows the amount, calories and how fast it raises blood sugar, so nobody needs a nutrition table.
@@ -22,6 +22,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
   const [browse, setBrowse] = useState(false);
   const [active, setActive] = useState(0);
   const results = useMemo(() => suggest(q, 30), [q]);
+  const paceSaid = useMemo(() => readPace(q), [q]); // "… kroz 2 sata": the pick also sets "Over how long?"
   const listId = useId();
   const input = useRef<HTMLInputElement>(null);
   // After a pick in Browse, the dialog hands focus back to this input; that must not reopen the list over the result.
@@ -79,7 +80,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
                 className={`${i === active ? 'active' : ''} ${onAdd && !adding ? 'canadd' : ''}`} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(s)}>
                 <span className="sdots" aria-hidden="true">{s.parts.map((p) => <i key={p.food.id} style={{ background: p.food.color }} />)}</span>
                 <span className="rname">{s.parts.map((p) => p.food.name).join(' + ')}
-                  <small>{s.parts.map((p) => p.amountLabel).join(' + ')}{assumed ? ' · typical serving' : ''}{s.parts.length === 1 && kindsOf(s.parts[0].food) > 1 ? ` · ${kindsOf(s.parts[0].food)} kinds` : ''}</small></span>
+                  <small>{s.parts.map((p) => p.amountLabel).join(' + ')}{assumed ? ' · typical serving' : ''}{paceSaid && !adding && canPace(s.parts) ?` · over ${paceSaid / 60} h` : ''}{s.parts.length === 1 && kindsOf(s.parts[0].food) > 1 ? ` · ${kindsOf(s.parts[0].food)} kinds` : ''}</small></span>
                 <span className="rkcal">{Math.round(m.kcal)} kcal</span>
                 <span className={`rgi ${gw.c}`}>{gw.w}</span>
                 {onAdd && !adding && (

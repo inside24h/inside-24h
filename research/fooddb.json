@@ -6743,9 +6743,9 @@
      "one": true,
      "opts": [
       {
-       "k": "bakery",
-       "chip": "Bakery",
-       "name": "bakery burek",
+       "k": "cheese",
+       "chip": "Cheese",
+       "name": "cheese burek",
        "grams": 150,
        "rng": null,
        "on": true,
@@ -6766,8 +6766,19 @@
        "gi": null,
        "fdc": 168963,
        "food": "burek",
-       "words": [],
-       "aliases": [],
+       "words": [
+        "s sirom",
+        "sa sirom",
+        "sirom"
+       ],
+       "aliases": [
+        "burek od sira",
+        "burek s sirom",
+        "burek sa sirom",
+        "cheese burek",
+        "sirna pita",
+        "sirnica"
+       ],
        "recipe": null,
        "src": [
         {
@@ -6775,10 +6786,10 @@
           "all"
          ],
          "level": "B",
-         "text": "Bakery burek: a cheese burek from a Croatian bakery producer (Čakovečki mlinovi, 150 g piece: “layers of dough and cheese filling”), values from its nutrition table, which is per 100 g as EU law requires.",
+         "text": "Cheese burek: the nutrition label of a Croatian bakery producer’s cheese burek (Čakovečki mlinovi, 150 g piece: “layers of dough and cheese filling”), read per 100 g as EU law requires. We use the label, not our own recipe (phyllo, 34% fresh cheese as on the Vindija label, oil), which came to 289 kcal per 100 g against the label’s 297. Cheese burek labels give 247–316 kcal per 100 g.",
          "cite": "USDA FoodData Central, SR Legacy 168963: Turnover, filled with egg, meat and cheese, frozen",
          "url": "https://fdc.nal.usda.gov/food-details/168963/nutrients",
-         "claim": "DBB-burek-bakery"
+         "claim": "DBB-burek-cheese"
         },
         {
          "fields": [
@@ -6796,76 +6807,6 @@
          "cite": "Čakovečki mlinovi, Burek (net weight 150 g; “slojevi tijesta i sirnog nadjeva”, layers of dough and cheese filling): energy 1241 kJ / 297 kcal, fat 16 g, saturates 7.5 g, carbohydrate 29 g, sugars 3.3 g, protein 9.7 g, salt 1.4 g. Basis: Regulation (EU) 1169/2011 Art. 32(2) “shall be expressed per 100 g or per 100 ml”. Range: Sofka beef burek 247 kcal, Lidl meat burek 316 kcal (Open Food Facts 9120018535583, 4056489610953)",
          "url": "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
          "claim": "DBO-burek-0"
-        }
-       ]
-      },
-      {
-       "k": "cheese",
-       "chip": "Cheese",
-       "name": "burek with cheese",
-       "grams": 150.0,
-       "rng": null,
-       "on": false,
-       "p": {
-        "kcal": 289.2,
-        "carbs": 30.605,
-        "sugars": 1.009,
-        "freeSugars": null,
-        "fiber": 1.064,
-        "fat": 14.822,
-        "satFat": 2.418,
-        "protein": 7.757,
-        "sodiumMg": 377.58,
-        "caffeineMg": 0.0,
-        "alcoholG": 0.0,
-        "waterG": 45.388
-       },
-       "gi": null,
-       "fdc": null,
-       "food": null,
-       "words": [
-        "s sirom",
-        "sa sirom",
-        "sirom"
-       ],
-       "aliases": [
-        "burek od sira",
-        "burek s sirom",
-        "burek sa sirom",
-        "cheese burek",
-        "sirna pita",
-        "sirnica"
-       ],
-       "recipe": [
-        {
-         "ref": 172791,
-         "usdaFdcId": 172791,
-         "usdaDescription": "Phyllo dough",
-         "grams": 84.0
-        },
-        {
-         "ref": "cheese-cottage",
-         "usdaFdcId": 172179,
-         "usdaDescription": "Cheese, cottage, creamed, large or small curd",
-         "grams": 51.0
-        },
-        {
-         "ref": 171017,
-         "usdaFdcId": 171017,
-         "usdaDescription": "Oil, sunflower, linoleic (less than 60%)",
-         "grams": 15.0
-        }
-       ],
-       "src": [
-        {
-         "fields": [
-          "all"
-         ],
-         "level": "C",
-         "text": "Burek with cheese is our recipe for a 150 g piece: 84 g phyllo (USDA), 51 g fresh cheese (34%, as on the Vindija label; USDA cottage cheese) and 15 g sunflower oil (Croatian rules ask for at least 10% fat). Labels give 247–316 kcal per 100 g; water lost in baking is not modeled.",
-         "cite": "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)",
-         "url": "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g",
-         "claim": "DBB-burek-cheese"
         }
        ]
       },
@@ -7100,13 +7041,13 @@
       "all"
      ],
      "level": "C",
-     "text": "Burek: the bakery label, or our recipes for each filling from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
+     "text": "Burek: cheese is a Croatian producer’s label; meat, spinach and potato are our recipes from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
      "cite": "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)",
      "url": "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g",
      "claim": "DBB-burek"
     }
    ],
-   "combinations": 5
+   "combinations": 4
   }
  },
  {
@@ -15714,26 +15655,26 @@
   "kind": "solid",
   "serving": {
    "label": "1 kebab",
-   "grams": 290.0,
-   "source": "our builder default: 60 g pita + 150 g chicken + 30 g tomato + 20 g onion + 30 g yogurt sauce",
+   "grams": 330.0,
+   "source": "our builder default: 100 g pita + 150 g chicken + 30 g tomato + 20 g onion + 30 g yogurt sauce",
    "assumed": true
   },
   "piece": null,
   "aliasServing": null,
   "overrides": null,
   "per100g": {
-   "kcal": 160.0,
-   "carbs": 13.05,
-   "sugars": 1.32,
+   "kcal": 174.0,
+   "carbs": 18.22,
+   "sugars": 1.31,
    "freeSugars": null,
-   "fiber": 0.7,
-   "fat": 4.83,
-   "satFat": 1.45,
-   "protein": 15.22,
-   "sodiumMg": 171.3,
+   "fiber": 0.88,
+   "fat": 4.39,
+   "satFat": 1.3,
+   "protein": 14.47,
+   "sodiumMg": 215.5,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 66.3
+   "waterG": 62.2
   },
   "freeSugarsBasis": "not determined: a part has no free-sugar value",
   "gi": null,
@@ -15747,7 +15688,7 @@
     "ref": "pita",
     "usdaFdcId": 174915,
     "usdaDescription": "pita",
-    "grams": 60.0
+    "grams": 100.0
    },
    {
     "ref": "chicken",
@@ -15790,10 +15731,10 @@
        "k": "pita",
        "chip": "Pita",
        "name": "pita",
-       "grams": 60.0,
+       "grams": 100.0,
        "rng": [
-        28,
-        60
+        60,
+        153
        ],
        "on": true,
        "p": {
@@ -15826,9 +15767,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Pita: 60 g (a large pita, USDA; the USDA gyro uses 60 g).",
-         "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-         "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+         "text": "Pita: 100 g of bread (USDA white pita). Twenty döner kebabs bought and weighed in Italy (the same study as the meat) were 22–27% bread, about 100 g of a 402 g kebab; USDA’s gyro uses a 60 g pita.",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-pita"
         }
        ]
@@ -16258,9 +16199,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 290.0,
-      "kcal": 465.2,
-      "fat": 14.0,
+      "grams": 330.0,
+      "kcal": 575.2,
+      "fat": 14.48,
       "gi": null
      }
     },
@@ -16278,9 +16219,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 290.0,
-      "kcal": 601.7,
-      "fat": 28.44,
+      "grams": 330.0,
+      "kcal": 711.7,
+      "fat": 28.93,
       "gi": null
      }
     },
@@ -16311,7 +16252,7 @@
       "all"
      ],
      "level": "C",
-     "text": "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) is from döner kebabs weighed in Italian shops; bread, vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat; the weighed Italian kebabs also had more bread (about 100 g).",
+     "text": "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) and the pita (100 g) are from döner kebabs weighed in Italian shops; vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat.",
      "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
      "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
      "claim": "DBB-kebab"

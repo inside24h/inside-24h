@@ -311,3 +311,10 @@
   .mealbar:has(.results) > .search { grid-column: 1 / -1; }
   .mealbar:has(.results) > .mealchips { display: none; }
 }
+/* QA 2026-10-19: "0.3 l" broke into "0.3 / l" at 360 px, and a typed amount ("3×") needs a fourth button */
+.calmctl .portion button { white-space: nowrap; }
+@media (max-width: 400px) {
+  .calmctl { column-gap: 6px; }
+  .calmctl .portion { gap: 1px; }
+  .calmctl .portion button.named, .calmctl .portion button.cur { min-width: 34px; padding: 0 3px; font-size: 11px; }
+}

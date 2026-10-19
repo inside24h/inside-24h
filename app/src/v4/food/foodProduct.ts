@@ -124,6 +124,7 @@ export function makeFoodProduct(parts: Part[], id: string, overMin = 0): Product
       traits: { drink: isDrink, fat: m.fat >= 10, sugar: m.sugars >= 10, alcohol: meal.alcoholG > 1, caffeine: meal.caffeineMg >= 10, fibre: m.fiber >= 1 },
       bac: meal.alcoholG > 1 ? s.bac : undefined,
       alcoholG: meal.alcoholG > 1 ? meal.alcoholG : undefined,
+      alcoholFed: meal.alcoholG > 1 && !!meal.fed,
       waterMl: meal.waterG,
       pace: s.pace ? { doses: s.pace.doses, overMin: s.pace.overMin, everyMin: s.pace.everyMin, bacOnce: once } : undefined,
     };
@@ -217,7 +218,8 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     { min: 0, title: mixed ? 'First bite and sip' : isDrink || parts.every((x) => isDrinkFood(x.food)) ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', ...labelClaims(parts), 'DB2', 'DB3', ...(spiritsNoSugar ? ['AL15'] : [])], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}.${paceLine} ${macroLine}${giLine}${spiritsNoSugar ? ' No sugar: plain distilled spirits like this have none, so all the calories come from the alcohol (sweet liqueurs and honey brandy such as medica do have sugar).' : ''}` },
     { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow, and it slides down your food pipe into your stomach.' },
     { min: 1, title: 'In your stomach', focus: 'stomach', claims: mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
-      text: mixed ? `${pc ? 'Each round: ' : ''}${mealStomachText(s, parts)}` : isDrink
+      // paced meal: "Each round has two speeds: …" (was "Each round: Two speeds: …", QA 2026-10-19)
+      text: mixed ? (pc ? mealStomachText(s, parts).replace(/^Two speeds: /, 'Each round has two speeds: ').replace(/^Everything/, 'Each round: everything') : mealStomachText(s, parts)) : isDrink
         // only nutrient calories slow the stomach (alcohol's don't: GE12 counts kcal minus 7 × alcohol g); never "slowed
         // down … water would be gone in about 13" when it IS 13 (rakija, sense audit 2026-10-18)
         ? `${pc ? `Each ${roundWord}: half of it` : 'Half of it'} leaves your stomach within about ${st50} minutes${(meal.kcal - 7 * meal.alcoholG) / (pc?.doses ?? 1) > 30 && st50 >= 16 ?': calories slow the stomach down (water would be gone in about 13)' : ', about as fast as water'}.`

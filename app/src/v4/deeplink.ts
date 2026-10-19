@@ -4,7 +4,7 @@
 // MEALS: #m=hamburger+fries*2+cola (food ids, *servings or *grams g; food/meal.ts). Exact and short; old meal links
 // written as text (#q=118 g Banana + 250 g Milk) still open through the text parser.
 import { MAX_MIN } from '../time';
-import { baseOf, deriveFood, foodKey, isPlain, parseMeal, servingPart, sizesOf, type Choice, type Part } from './food/parse';
+import { baseOf, deriveFood, foodKey, isPlain, parseMeal, readPace, servingPart, sizesOf, type Choice, type Part } from './food/parse';
 import { cleanPace, mealCode, mealFromCode } from './food/meal';
 
 export type View = 'simple' | 'full' | 'detailed';
@@ -163,6 +163,8 @@ const safeParts = (f: () => Part[]): Part[] => { try { const p = f(); return Arr
 export function resolveLink(hash: string, isProduct: (id: string) => boolean = (id) => !!own(CURATED_Q, id)): Resolved {
   let link: Link;
   try { link = readLink(hash); } catch { link = { n: 1, t: null, view: 'simple' }; }
+  // "#q=2 piva kroz 2 sata": the pace written in the text counts when the link has no over= (QA 2026-10-19)
+  if (!link.over && link.q && !link.m) { const said = readPace(link.q); if (said) link = { ...link, over: said }; }
   const named = link.m || link.q;
   const base = named ? safeParts(() => linkParts(link))
     : link.p && own(CURATED_Q, link.p) && link.n !== 1 ? safeParts(() => parseMeal(own(CURATED_Q, link.p)!)) : [];

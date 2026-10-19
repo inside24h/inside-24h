@@ -50,7 +50,9 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
             aria-valuetext={since} onChange={(e) => setU(+e.target.value / 1000)} />
         </div>
         <span className="calmend" aria-hidden="true">{Math.round(minutesFromU(1) / 60)} h</span>
-        <span className="portion" role="group" aria-label="How much"><span className="plabel" aria-hidden="true">How much?</span>{(sizes ?? PORTIONS).map((z) => <button key={z.k} className={sizes ? 'named' : undefined} aria-pressed={Math.abs(portion - z.mult) < 1e-6} aria-label={'aria' in z ? (z as { aria: string }).aria : z.label} onClick={() => onPortion(z.mult)}>{z.label}</button>)}</span>
+        <span className="portion" role="group" aria-label="How much"><span className="plabel" aria-hidden="true">How much?</span>{(sizes ?? PORTIONS).map((z) => <button key={z.k} className={sizes ? 'named' : undefined} aria-pressed={Math.abs(portion - z.mult) < 1e-6} aria-label={'aria' in z ? (z as { aria: string }).aria : z.label} onClick={() => onPortion(z.mult)}>{z.label}</button>)}
+          {/* an amount none of the buttons says ("3 beers", "200 g of rice"): shown pressed, so the screen says how much (QA 2026-10-19) */}
+          {!(sizes ?? PORTIONS).some((z) => Math.abs(portion - z.mult) < 1e-6) && <button className="cur" aria-pressed="true" aria-label={`${+portion.toFixed(2)} servings, as you typed`} onClick={() => onPortion(portion)}>{Number.isInteger(+portion.toFixed(1)) ? Math.round(portion) : +portion.toFixed(1)}×</button>}</span>
         <label className="eatenat" title={`When you had the ${noun}`}><span className="plabel">Had it at</span><input type="time" value={hhmm} onChange={(e) => { const [h, mm] = e.target.value.split(':').map(Number); if (!Number.isNaN(h)) setEatenAt(h * 60 + (mm || 0)); }} /></label>
       </div>
       <div className="calmdots" role="group" aria-label="How your body is doing now: tap one to see why">

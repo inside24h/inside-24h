@@ -20,9 +20,9 @@ const GOLDEN: [string, [string, number][]][] = [
   ['pizza capricciosa', [['pizza_base_ham_mushrooms', 138]]],
   ['2 slices of pizza with ham', [['pizza_base_ham', 256]]],
   ['pizza i pivo', [['pizza', 107], ['beer', 502]]],
-  ['burek sa sirom', [['burek_cheese', 150]]],
+  ['burek sa sirom', [['burek', 150]]], // QA 2026-10-19: the cheese burek IS the default (the producer's label)
   ['burek s mesom', [['burek_meat', 150]]],
-  ['burek sa sirom i jogurt', [['burek_cheese', 150], ['yogurt-plain', 245]]],
+  ['burek sa sirom i jogurt', [['burek', 150], ['yogurt-plain', 245]]],
   ['zeljanica', [['burek_spinach', 150]]],
   ['kava sa šećerom', [['espresso~sugar1', 34]]],
   ['kava s mlijekom', [['coffee-with-milk', 200]]],
@@ -34,8 +34,8 @@ const GOLDEN: [string, [string, number][]][] = [
   ['bezalkoholno pivo', [['beer.alcohol-free', 500]]],
   ['pljeskavica', [['hamburger_pljeskavica', 315]]],
   ['cheeseburger', [['hamburger_cheeseburger', 119]]],
-  ['kebab', [['kebab', 290]]],
-  ['kebab s teletinom', [['kebab_pita_beef_tomato_onion_yogurt', 290]]],
+  ['kebab', [['kebab', 330]]], // QA 2026-10-19: pita 100 g (Panozzo 2015, the same weighed study as the meat)
+  ['kebab s teletinom', [['kebab_pita_beef_tomato_onion_yogurt', 330]]],
   // data round 2 (2026-10-19)
   ['turska kava', [['filter-coffee.turkish', 70]]],
   ['bosanska kava', [['filter-coffee.turkish', 70]]],
@@ -339,10 +339,11 @@ describe('data round 2: sourced portions and new variants', () => {
   it('kebab meat: 150 g (weighed Italian döner), range 60–227 g', () => {
     for (const k of ['chicken', 'beef']) { expect(opt('kebab', k).grams).toBe(150); expect(opt('kebab', k).rng).toEqual([60, 227]); }
   });
-  it('burek: the bakery default is a cheese burek, its label read per 100 g; melon GI stays 65 (Atkinson A1 row 1021)', () => {
-    const b = opt('burek', 'bakery');
-    expect(b.on).toBe(true);
-    expect(b.src[0].text).toMatch(/cheese/); expect(b.src[0].text).toMatch(/per 100 g/);
+  it('burek: the default is the cheese burek label read per 100 g, not our 289 kcal recipe (QA 2026-10-19); melon GI stays 65 (Atkinson A1 row 1021)', () => {
+    const b = opt('burek', 'cheese');
+    expect(b.on).toBe(true); expect(b.chip).toBe('Cheese');
+    expect(b.src[0].text).toMatch(/label/); expect(b.src[0].text).toMatch(/per 100 g/); expect(b.src[0].text).toMatch(/289/);
+    expect(FOOD_BY_ID.burek.builder!.groups[0].opts.map((o) => o.k)).toEqual(['cheese', 'meat', 'spinach', 'potato']);
     expect(Math.round(FOOD_BY_ID.burek.p.kcal)).toBe(297);
     expect(FOOD_BY_ID.melon.gi).toBe(65);
   });

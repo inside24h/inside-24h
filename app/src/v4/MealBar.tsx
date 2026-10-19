@@ -15,7 +15,7 @@ function PaceBar({ over, set, hot }: { over: number; set: (min: number) => void;
   return (
     <div className={`choices pace ${hot ? 'asking' : ''}`}>
       <div className="crow">
-        <span className="cask" id="pace-ask">Over how long?{hot ? <em> Few people drink them all in one go: pick yours.</em> : null}</span>
+        <span className="cask" id="pace-ask">Over how long?{hot ? <em><span className="plong"> Few people drink them all in one go: pick yours.</span><span className="pshort"> Not all at once? Pick:</span></em> : null}</span>
         <div className="cchips small" role="radiogroup" aria-labelledby="pace-ask">
           {PACE_OPTIONS.map((m) => (
             <button key={m} type="button" role="radio" aria-checked={over === m} className={over === m ? 'on' : ''}

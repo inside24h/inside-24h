@@ -97,7 +97,7 @@ const GOLDEN: [string, [string, number][]][] = [
   // in variants.test.ts: pljeskavica (burger builder), kebab (builder), pureća šunka (turkey ham), goveđa juha (beef
   // noodle soup, closest record), macchiato (espresso + milk recipe). Data round 2 (2026-10-19): turska kava (filter
   // coffee variant "turkish", checked in variants.test.ts); kebab meat 150 g (weighed Italian döner), so 290 g
-  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 290]]], ['pureća šunka', [['ham', 28]]],
+  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 330]]], ['pureća šunka', [['ham', 28]]],
   ['turska kava', [['filter-coffee', 70]]],
   ['goveđa juha', [['chicken-soup', 244]]], ['macchiato', [['coffee-with-milk', 61]]],
 ];
@@ -112,6 +112,13 @@ describe('golden queries: Croatian and English text → food and amount', () => 
   it('nothing found degrades gracefully: no wrong suggestion either', () => {
     for (const q of ['maline', 'cockta', 'zobene pahuljice', 'bijeli luk', 'bundeva', 'xyzzy'])
       expect(suggest(q).map((s) => s.parts.map((p) => p.food.id).join('+')), q).toEqual([]);
+  });
+  it('a short prefix of an unrelated word only suggests, it never logs a food (QA 2026-10-19: "nar" was ham)', () => {
+    for (const q of ['nar', 'kro', 'mar', 'sla', 'pi', 'ba', 'co', 'esp']) expect(parseMeal(q).map((p) => p.food.id), q).toEqual([]);
+    expect(suggest('nar').map((s) => s.parts[0].food.id)).toEqual(expect.arrayContaining(['ham', 'orange'])); // still offered
+    expect(suggest('esp')[0].parts[0].food.id).toBe('espresso'); // Enter still picks it
+    for (const [q, id] of [['ban', 'banana'], ['piz', 'pizza'], ['piv', 'beer'], ['keb', 'kebab'], ['naran', 'orange'], ['krump', 'potato-boiled']])
+      expect(parseMeal(q).map((p) => p.food.id), q).toEqual([id]);
   });
   it('labels read as English: "2 slices", "10 pieces", "1 can (500 ml)"', () => {
     expect(parseMeal('2 kriške kruha')[0].amountLabel).toBe('2 slices');
@@ -231,7 +238,7 @@ describe('servings and health bars read the database (one number everywhere)', (
   });
   it('kebab is back as a builder of USDA parts (owner 2026-10-18); new GI values from Atkinson 2008 Suppl. A1 are in', () => {
     expect(FOOD_BY_ID.kebab.recipe).toBe(true);
-    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(464); // chicken in pita, the default (150 g meat, data round 2)
+    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(574); // chicken in pita, the default (150 g meat, data round 2; 100 g pita, QA 2026-10-19)
     expect([FOOD_BY_ID.carrot.gi, FOOD_BY_ID['dried-apricots'].gi, FOOD_BY_ID['tomato-soup'].gi, FOOD_BY_ID['dried-figs'].gi, FOOD_BY_ID.raisins.gi]).toEqual([35, 31, 52, 61, 64]);
   });
 });

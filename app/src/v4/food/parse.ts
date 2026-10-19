@@ -64,6 +64,28 @@ export interface Macros {
 
 export const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
 
+// "… kroz 2 sata", "… over 2 hours", "tijekom 3 h" (QA 2026-10-19): how long the servings were spread over. Before,
+// the phrase was read as part of the last food, and "2 piva kroz 2 sata" found nothing. Not "u 2 sata" / "in 2 hours"
+// / "za 2 sata": in Croatian and English those also mean a clock time or "later".
+const PACE_NUM: Record<string, number> = { jedan: 1, jednog: 1, jedna: 1, one: 1, an: 1, a: 1, dva: 2, dvije: 2, two: 2, tri: 3, three: 3, cetiri: 4, four: 4, pet: 5, five: 5, pola: 0.5, half: 0.5 };
+const PACE_RE = /(?:^|[ ,])(?:kroz|tijekom|over|during|across)( (?:\d+(?:[.,]\d+)?|jedan|jednog|jedna|one|an|a|dva|dvije|two|tri|three|cetiri|four|pet|five|pola|half(?: an?)?))? ?(h|hrs?|sat|sata|sati|hours?|min|mins|minuta|minute|minutes)\b(?: vremena)?/;
+/** "tijekom večeri", "during the evening": no length given, so no pace (the "Over how long?" row asks), but the words
+ *  must not be read as a food. */
+const PACE_VAGUE = /(?:^|[ ,])(?:kroz|tijekom|over|during|across) (?:the )?(?:veceri|vecer|noci|noc|evening|night|party|zabave)\b/;
+/** Minutes the text says the servings were spread over, rounded to the offered choices (1–4 h; longer = 4 h, the
+ *  cautious end; under half an hour = all at once). 0 = not said. */
+export function readPace(input: string): number {
+  const m = fold(input ?? '').match(PACE_RE);
+  if (!m) return 0;
+  const w = (m[1] ?? '').trim().replace(/^half an?$/, 'half').replace(',', '.');
+  const n = w ? PACE_NUM[w] ?? Number(w) : 1;
+  const min = /^min/.test(m[2]) ? n : n * 60;
+  if (!Number.isFinite(min) || min < 30) return 0;
+  return Math.min(4, Math.max(1, Math.round(min / 60))) * 60;
+}
+/** The text without its pace phrase (the foods are read from what is left). */
+const stripPace = (text: string) => text.replace(PACE_RE, ' ').replace(PACE_VAGUE, ' ').replace(/\s+/g, ' ').trim();
+
 const NUMBER_WORDS: Record<string, number> = {
   a: 1, an: 1, one: 1, jedan: 1, jedna: 1, jedno: 1, jednu: 1, jednog: 1, two: 2, dva: 2, dvije: 2, dvi: 2, three: 3, tri: 3,
   four: 4, cetiri: 4, five: 5, pet: 5, six: 6, sest: 6, half: 0.5, pola: 0.5, polovica: 0.5, polovicu: 0.5, quarter: 0.25, cetvrt: 0.25,
@@ -129,12 +151,18 @@ function aliasScore(text: string, aliases: string[]): number {
   let best = 0;
   for (const alias of aliases) {
     if (alias === text) return 10;
-    if (alias.startsWith(text) && text.length >= 2) best = Math.max(best, 6 + text.length / alias.length);
+    // A typed prefix LOGS a food only when it is at least 3 letters and covers at least half of the alias ("ban" →
+    // banana, "piz" → pizza). Shorter prefixes only SUGGEST (score between MIN_SCORE and MIN_LOG): "nar" is naranča as
+    // much as narezak, "sun" is not šunka, "kro" is not krompir (QA 2026-10-19).
+    if (alias.startsWith(text) && text.length >= 2) {
+      const r = text.length / alias.length;
+      best = Math.max(best, text.length >= 3 && r >= 0.5 ? 6 + r : MIN_SCORE + 0.25 * r);
+    }
     const aw = alias.replace(/[()/,]/g, ' ').split(' ').filter(Boolean);
     let hit = 0;
     for (const w of words) {
       let h = 0;
-      for (const x of aw) h = Math.max(h, stemMatch(w, x), x.startsWith(w) && w.length >= 3 ? 0.7 : 0);
+      for (const x of aw) h = Math.max(h, stemMatch(w, x), x.startsWith(w) && w.length >= 3 && w.length / x.length >= 0.5 ? 0.7 : 0);
       hit += h;
     }
     const cover = hit / Math.max(words.length, aw.length); // reward matching ALL words of a short alias
@@ -242,7 +270,7 @@ const AND = /^(?: (?:i|and) |,)$/;
  *  thing: "kava sa šećerom" = espresso with sugar, "pizza sa šunkom i gljivama" = one pizza, "burek sa sirom i jogurt"
  *  = burek with cheese + a yogurt. A plain "and" starts a new thing ("pizza i pivo"). */
 export function parseMeal(input: string): Part[] {
-  const text = fold(input);
+  const text = stripPace(fold(input));
   if (!text) return [];
   const whole = readQty(text);
   const top = bestFoods(whole.rest, 1)[0];
@@ -271,7 +299,7 @@ export function parseMeal(input: string): Part[] {
 export interface Suggestion { parts: Part[]; text: string }
 /** Suggestions for the dropdown: the full reading first, then other foods that match the last thing typed. */
 export function suggest(input: string, n = 7): Suggestion[] {
-  const text = fold(input);
+  const text = stripPace(fold(input));
   if (!text) return POPULAR.map((t) => ({ text: t, parts: parseMeal(t) }));
   const main = parseMeal(input);
   const segs = text.split(SPLIT);

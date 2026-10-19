@@ -942,8 +942,12 @@ DKM = "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); R
 DKMU = "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187"
 builder("kebab", "What's on it?", [
     grp("bread", "Bread", [
-        opt("pita", "Pita", "pita", 174915, 60, rng=(28, 60), on=True, words=["u piti", "pita", "lepinji"], cite=DK, url=DKU,
-            src="Pita: 60 g (a large pita, USDA; the USDA gyro uses 60 g)."),
+        # QA 2026-10-19 (owner decision): bread from the same weighed study as the meat. Panozzo 2015 Table 1 (PDF
+        # re-read 2026-10-19): "Bread 26.9±3.4 22.5±6.1" (% of the kebab, Verona / Vicenza); mean serving 402 g.
+        # CALC: mean of the town means 24.7% × 402 g = 99 g → 100 g; range from USDA's gyro pita (60 g) to 24.7% of
+        # the heaviest kebab (618 g → 153 g). Was USDA 60 g. USDA pita 174915 stays the record.
+        opt("pita", "Pita", "pita", 174915, 100, rng=(60, 153), on=True, words=["u piti", "pita", "lepinji"], cite=DKM, url=DKMU,
+            src="Pita: 100 g of bread (USDA white pita). Twenty döner kebabs bought and weighed in Italy (the same study as the meat) were 22–27% bread, about 100 g of a 402 g kebab; USDA’s gyro uses a 60 g pita."),
         opt("wrap", "Wrap", "wrap", 175037, 72, rng=(49, 117), words=["wrap", "tortilji", "durum", "dürüm"], aliases=["kebab wrap", "durum", "dürüm", "kebab u tortilji", "wrap kebab"], cite=DK, url=DKU,
             src="Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches)."),
     ], one=True),
@@ -962,12 +966,12 @@ builder("kebab", "What's on it?", [
         opt("mayo", "Mayo sauce", "mayonnaise sauce", 171009, 14, rng=(9, 28), words=["majonezom", "mayo"], cite=FN, url=FNU,
             src="Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich)."),
     ]),
-], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) is from döner kebabs weighed in Italian shops; bread, vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat; the weighed Italian kebabs also had more bread (about 100 g).",
+], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) and the pita (100 g) are from döner kebabs weighed in Italian shops; vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat.",
     presets=[preset("chicken-pita", "Chicken pita", "Chicken kebab in pita", ["pita", "chicken", "tomato", "onion", "yogurt"]),
              preset("beef-pita", "Beef pita", "Beef kebab in pita", ["pita", "beef", "tomato", "onion", "yogurt"]),
              preset("chicken-wrap", "Chicken wrap", "Chicken kebab wrap", ["wrap", "chicken", "tomato", "onion", "yogurt"])],
     ask="Which kebab?", unit="kebab", base_is_default=True, serving_label="1 kebab", cite=DK, url=DKU)
-CHANGED_ON_PURPOSE["kebab"] = "owner 2026-10-18: kebab returns as a builder (was all null and left out of the app)"
+CHANGED_ON_PURPOSE["kebab"] = "owner 2026-10-18: kebab returns as a builder (was all null and left out of the app); QA 2026-10-19: pita 60 to 100 g (Panozzo 2015, same weighed study as the meat)"
 
 BU = "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)"
 BUU = "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g"
@@ -982,11 +986,16 @@ BUP = "Our recipe (no label gives the shares); check: Open Food Facts ‘Burek p
 BUPU = "https://world.openfoodfacts.org/product/7350039279179"
 builder("burek", "What's in it?", [
     grp("filling", "Filling", [
-        opt("bakery", "Bakery", "bakery burek", "burek", on=True, level="B",
-            src="Bakery burek: a cheese burek from a Croatian bakery producer (Čakovečki mlinovi, 150 g piece: “layers of dough and cheese filling”), values from its nutrition table, which is per 100 g as EU law requires."),
-        opt("cheese", "Cheese", "burek with cheese", [(172791, 84), ("cheese-cottage", 51), (171017, 15)], words=["sirom", "sa sirom", "s sirom"],
-            aliases=["burek sa sirom", "burek s sirom", "sirnica", "sirna pita", "burek od sira", "cheese burek"], cite=BU, url=BUU,
-            src="Burek with cheese is our recipe for a 150 g piece: 84 g phyllo (USDA), 51 g fresh cheese (34%, as on the Vindija label; USDA cottage cheese) and 15 g sunflower oil (Croatian rules ask for at least 10% fat). Labels give 247–316 kcal per 100 g; water lost in baking is not modeled."),
+        # QA 2026-10-19 (owner decision): plain "burek" and "burek sa sirom" are one thing, the producer's cheese burek
+        # label (297 kcal per 100 g). The old "bakery" option (chip "Bakery") and our cheese recipe (289 kcal per 100 g)
+        # are merged into this one option; key "cheese" keeps old on=cheese links, on=bakery falls back to it as default.
+        opt("cheese", "Cheese", "cheese burek", "burek", on=True, level="B", words=["sirom", "sa sirom", "s sirom"],
+            aliases=["burek sa sirom", "burek s sirom", "sirnica", "sirna pita", "burek od sira", "cheese burek"],
+            src="Cheese burek: the nutrition label of a Croatian bakery producer’s cheese burek (Čakovečki mlinovi, 150 g piece: “layers of dough and cheese filling”), read per 100 g as EU law requires. We use the label, not our own recipe (phyllo, 34% fresh cheese as on the Vindija label, oil), which came to 289 kcal per 100 g against the label’s 297. Cheese burek labels give 247–316 kcal per 100 g."),
+        # The retired recipe, kept for the record (not offered any more):
+        # opt("cheese", "Cheese", "burek with cheese", [(172791, 84), ("cheese-cottage", 51), (171017, 15)], words=["sirom", "sa sirom", "s sirom"],
+        #     aliases=["burek sa sirom", "burek s sirom", "sirnica", "sirna pita", "burek od sira", "cheese burek"], cite=BU, url=BUU,
+        #     src="Burek with cheese is our recipe for a 150 g piece: 84 g phyllo (USDA), 51 g fresh cheese (34%, as on the Vindija label; USDA cottage cheese) and 15 g sunflower oil (Croatian rules ask for at least 10% fat). Labels give 247–316 kcal per 100 g; water lost in baking is not modeled."),
         opt("meat", "Meat", "burek with meat", [(172791, 77), (171798, 58), (171017, 15)], words=["mesom", "s mesom", "sa mesom"],
             aliases=["burek s mesom", "burek sa mesom", "mesni burek", "meat burek", "burek od mesa"], cite=BU, url=BUU,
             src="Burek with meat is our recipe for a 150 g piece: 77 g phyllo (USDA), 58 g ground beef (38.6%, as on a Krajina Klas label; USDA cooked ground beef 80/20) and 15 g sunflower oil (at least 10% fat by Croatian rules)."),
@@ -997,7 +1006,7 @@ builder("burek", "What's in it?", [
             aliases=["krumpiruša", "krumpirusa", "krompiruša", "burek s krumpirom", "potato burek", "burek od krumpira"], cite=BUP, url=BUPU,
             src="Potato burek (krumpiruša) is our recipe for a 150 g piece: 75 g phyllo, 45 g boiled potato, 15 g onion and 15 g sunflower oil (USDA parts), 268 kcal per 100 g. We found no label that gives the proportions, so they are our estimate; the one potato burek label we found gives 253 kcal, 9.5 g fat and 36 g carbohydrate per 100 g (ours: 13 g fat, 33 g carbohydrate)."),
     ], one=True),
-], "Burek: the bakery label, or our recipes for each filling from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
+], "Burek: cheese is a Croatian producer’s label; meat, spinach and potato are our recipes from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
     ask="Which burek?", unit="piece", cite=BU, url=BUU)
 CHANGED_ON_PURPOSE["melon"] = "data round 2: giSource text says why row 1021 (65) wins over row 1022 (70); the GI value is unchanged"
 CHANGED_ON_PURPOSE["bread-white"] = "alias 'tost' moved to the sandwich builder (Croatian 'tost' is a toasted ham-and-cheese sandwich)"

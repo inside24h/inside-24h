@@ -25,6 +25,8 @@ export interface AnswerInput {
   bac?: Float64Array; waterMl: number;
   /** grams of alcohol in the item (for the dose-aware sleep answer); without it the dose is estimated from peak blood alcohol */
   alcoholG?: number;
+  /** the meal has food in it, so the alcohol was absorbed "fed" (QA 2026-10-19: the note said "on an empty stomach") */
+  alcoholFed?: boolean;
   /** usual wake time; a drink between bedtime and waking means bed right after it (science/daily.ts minutesToBed) */
   wakeMin?: number;
   /** caffeine in the item (mg); without it, "has caffeine" is guessed from latestForSleep and the amount at bedtime,
@@ -152,6 +154,7 @@ export function quickAnswers(x: AnswerInput): Answer[] {
       tag: pn ? 'you' : undefined,
       note: pn ? (pn.withMeal
         ? `For you: after a meal the peak is about ${Math.round(FED_PEAK_RATIO[0] * 100)}–${Math.round(FED_PEAK_RATIO[1] * 100)}% of the peak on an empty stomach (evidence ${FACTORS.withMeal.level})`
+        : x.alcoholFed ? 'For your sex, height and weight, with the food in this meal (lower than on an empty stomach)'
         : 'For your sex, height and weight, on an empty stomach') : undefined });
     // Danger: the top of the range reaches the levels seen in alcohol-poisoning deaths [AL9, Jones & Holmgren 2003]
     if (poisonRisk(peak)) out.push({ icon: '🚑', q: 'Is this much dangerous?', a: `Yes. The top of your range (${bacRangeText(peak)}) reaches levels at which people have died of alcohol poisoning (most such deaths: 2.2–5 ‰). If someone can’t be woken, breathes slowly or irregularly, vomits or has a seizure, call the emergency number (112 in Europe). Blood alcohol can keep rising after drinking stops.`, tone: 2,

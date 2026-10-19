@@ -33,7 +33,7 @@ export function analyze(parts: Part[], p: Profile, overMin = 0) {
   const answers = quickAnswers({
     systems, drinkAt: p.drinkAtMin, bedtimeMin: p.bedtimeMin, weightKg: p.weightKg, kcal: built.energy.total,
     glucoseDeltaMgDl: unknownSugar ? undefined : built.effects.glucoseMgDl ?? new Float64Array(1441),
-    extraSleepMin: v.extraLatencyMin, caffeineAtBedMg: v.mgAtBed, caffeineDoseMg: built.caffeine.doseMg, sleepRisk: v.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, wakeMin: p.wakeMin, waterMl,
+    extraSleepMin: v.extraLatencyMin, caffeineAtBedMg: v.mgAtBed, caffeineDoseMg: built.caffeine.doseMg, sleepRisk: v.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, alcoholFed: built.alcoholFed, wakeMin: p.wakeMin, waterMl,
     glucoseUnit: p.glucoseUnit, // Compare shows the unit picked in "Your body"
     pace: built.pace, canPace: !curated && canPace(parts),
   });

@@ -37,6 +37,8 @@ export interface Built {
   bac?: Float64Array;
   /** Grams of alcohol in the item (dose-aware sleep answer, science/daily.ts alcoholSleepTier). */
   alcoholG?: number;
+  /** The meal itself has food in it, so its alcohol was absorbed "fed" (meal.ts; the drive answer must not say "empty stomach"). */
+  alcoholFed?: boolean;
   /** Water the product brings (ml). */
   waterMl?: number;
   /** PACING ("Over how long?", 2026-10-19): the rounds, one every `everyMin`; for alcohol also the same drinks all at once

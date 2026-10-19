@@ -10,6 +10,7 @@ import { paceStarts, simulateFood } from '../science/foodSim';
 import { simulateEspresso } from '../science/espressoSim';
 import { canPace, cleanPace, paceDoses, toMeal } from './food/meal';
 import { parsePace, readLink, resolveLink, writeLink } from './deeplink';
+import { readPace } from './food/parse';
 import { makeFoodProduct } from './food/foodProduct';
 
 const P = (o: Partial<Profile> = {}): Profile => ({ ...DEFAULT_PROFILE, drinkAtMin: 21 * 60, bedtimeMin: 23 * 60, wakeMin: 7 * 60, ...o });
@@ -152,5 +153,28 @@ describe('what the screen says', () => {
     expect(b.pace).toMatchObject({ doses: 3, overMin: 120 });
     expect(b.story.chapters[0].text).toMatch(/3 rounds, one about every 40 minutes \(each round a share of everything\)/);
     expect(b.story.chapters.some((c) => c.title === 'Last round')).toBe(true);
+  });
+});
+
+// QA 2026-10-19: "pizza sa šunkom i gljivama i 2 piva kroz 2 sata" lost the beer (the pace phrase was read as food).
+describe('pace written in the text ("kroz 2 sata", "over 2 hours")', () => {
+  it('reads the pace and still finds every food', () => {
+    expect(parseMeal('pizza sa šunkom i gljivama i 2 piva kroz 2 sata').map((x) => [x.food.id, Math.round(x.grams)])).toEqual([['pizza', 138], ['beer', 1004]]);
+    expect(readPace('pizza sa šunkom i gljivama i 2 piva kroz 2 sata')).toBe(120);
+    expect(parseMeal('2 beers over 2 hours').map((x) => x.food.id)).toEqual(['beer']);
+    expect(parseMeal('3 rakije tijekom večeri').map((x) => x.food.id)).toEqual(['rakija']);
+    const cases: [string, number][] = [['5 beers over an hour', 60], ['kroz sat vremena 3 piva', 60], ['4 beers over 90 minutes', 120],
+      ['3 beers over 7 hours', 240], ['tijekom 3 h', 180], ['2 piva', 0], ['u 2 sata 2 piva', 0], ['3 rakije tijekom večeri', 0], ['over 10 minutes', 0]];
+    for (const [q, m] of cases) expect(readPace(q), q).toBe(m);
+  });
+  it('a link with the pace only in its text opens paced; an explicit over= wins', () => {
+    expect(resolveLink('#q=2%20piva%20kroz%203%20sata').link.over).toBe(180);
+    expect(resolveLink('#q=2%20piva%20kroz%203%20sata&over=1h').link.over).toBe(60);
+    expect(resolveLink('#q=2%20piva').link.over).toBeUndefined();
+  });
+  it('a meal with food does not call the alcohol peak "on an empty stomach"', () => {
+    const meal = [servingPart(FOOD_BY_ID.pizza, 2), servingPart(FOOD_BY_ID.beer, 2)];
+    expect(analyze(meal, P(), 120).built.alcoholFed).toBe(true); // → note "with the food in this meal" (Answers.tsx)
+    expect(analyze([servingPart(FOOD_BY_ID.beer, 2)], P()).built.alcoholFed).toBe(false);
   });
 });

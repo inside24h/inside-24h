@@ -47,14 +47,14 @@ import { Compare, EveryDay, Pro, VideoFallback, YourBody } from './lazyUi'; // l
 import { isTouch } from './perf/device';
 import { analyze, sugarDeltaText, sugarPeakText, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
-import { formatTime, isCuratedServing, linkFor, mealText, own, resolveLink, writeLink } from './deeplink';
+import { formatTime, isCuratedServing, linkFor, mealText, own, PORTIONS, resolveLink, writeLink } from './deeplink';
 import { MealBar } from './MealBar';
 import { drawMomentCard } from './shareCard';
 import { MomentShare, type Moment } from './MomentShare';
 
 
 import { SmartSearch } from './SmartSearch';
-import { isPlain, macros, parseMeal, sizesOf, suggest, type Food, type Part } from './food/parse';
+import { isPlain, macros, parseMeal, readPace, servingPart, sizesOf, suggest, type Food, type Part } from './food/parse';
 import { canPace, paceLabel, paceMatters, setFood } from './food/meal';
 import { makeFoodProduct } from './food/foodProduct';
 
@@ -104,6 +104,11 @@ const LINK_BASE: Part[] = RESOLVED.base;
 const LINK_MISS = RESOLVED.miss; // "#q=zzzz": we say we don't have it and open the search, instead of showing espresso
 const LINK_FOOD = LINK_BASE.length > 0 || !!(LINK.p && own(PRODUCTS, LINK.p)); // the link names a food: open it, skip the start screen
 const HASH_Q = LINK_BASE.length && !(LINK_MULT === 1 && isCuratedServing(LINK_BASE)) ? scaleParts(LINK_BASE, LINK_MULT) : [];
+// A link whose text carries its own amount ("#q=2 piva kroz 3 sata", "#q=3 beers"): "How much?" counts from ONE serving,
+// as after a pick in the search (pickFood), so the sizes mean what they say and the amount shows (QA 2026-10-19).
+const LINK_SOLO = LINK_BASE.length === 1 && LINK_MULT === 1 ? LINK_BASE[0] : null;
+const LINK_TYPED = LINK_SOLO ? Math.round((LINK_SOLO.grams / LINK_SOLO.food.serving.grams) * 1e4) / 1e4 : 1;
+const LINK_TYPED_ON = LINK_SOLO !== null && Number.isFinite(LINK_TYPED) && LINK_TYPED > 0 && Math.abs(LINK_TYPED - 1) > 1e-3;
 const HASH_P = HASH_Q.length ? 'food' : LINK_BASE.length && isCuratedServing(LINK_BASE) ? LINK_BASE[0].food.id : own(PRODUCTS, LINK.p) ? LINK.p! : 'espresso';
 const HASH_ORGAN = (() => { const o = HASH.get('organ'); return o && /^[a-z_]{2,24}$/.test(o) ? o : null; })();
 
@@ -257,7 +262,7 @@ export default function AppV4() {
     const unknownSugar = !!m && m.gl === null && m.availCarbs >= 3;
     const g = built.effects.glucoseMgDl ?? (unknownSugar ? undefined : new Float64Array(1441));
     return quickAnswers({ systems, drinkAt: profile.drinkAtMin, bedtimeMin: profile.bedtimeMin, weightKg: profile.weightKg, kcal: built.energy.total,
-      glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, caffeineDoseMg: built.caffeine.doseMg, sleepRisk: vYou.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, wakeMin: profile.wakeMin, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
+      glucoseDeltaMgDl: unknownSugar ? undefined : g, extraSleepMin: vYou.extraLatencyMin, caffeineAtBedMg: vYou.mgAtBed, caffeineDoseMg: built.caffeine.doseMg, sleepRisk: vYou.sleepRisk, bac: built.bac, alcoholG: built.alcoholG, alcoholFed: built.alcoholFed, wakeMin: profile.wakeMin, waterMl: built.waterMl ?? WATER_ML[productId] ?? 0,
       latestForSleep: latestForSleep(built.caffeine, profile), personal: personalNotes(profile, built.caffeine.halfLifeH),
       mealLines: productId === 'food' ? mealLinesFor(foodParts, profile, overEff) : undefined, glucoseUnit: profile.glucoseUnit,
       pace: built.pace, canPace: paceable });
@@ -272,8 +277,8 @@ export default function AppV4() {
   }, [built, productId, foodParts]);
   const swap = useSwap(currentParts, profile, peakNow);
   // portion: ½ · 1 · 2 · 3 of what was chosen (scales the parts; 1 returns to the original, incl. curated models)
-  const [portion, setPortion] = useState(LINK_BASE.length ? LINK_MULT : 1);
-  const [portionBase, setPortionBase] = useState<Part[] | null>(LINK_BASE.length && LINK_MULT !== 1 ? LINK_BASE : null);
+  const [portion, setPortion] = useState(LINK_TYPED_ON ? LINK_TYPED : LINK_BASE.length ? LINK_MULT : 1);
+  const [portionBase, setPortionBase] = useState<Part[] | null>(LINK_TYPED_ON && LINK_SOLO ? [servingPart(LINK_SOLO.food, 1)] : LINK_BASE.length && LINK_MULT !== 1 ? LINK_BASE : null);
   const applyPortion = (f: number) => {
     const base = portionBase ?? currentParts;
     setPortionBase(base); setPortion(f);
@@ -291,8 +296,12 @@ export default function AppV4() {
   const switchFood = (i: number, food: Food) => {
     setAsking(false);
     const nb = setFood(baseParts, i, food);
-    const offered = nb.length === 1 && sizesOf(nb[0].food) ? sizesOf(nb[0].food)!.map((x) => x.mult) : [0.5, 1, 2, 3];
-    const f = offered.some((x) => Math.abs(x - portion) < 1e-6) ? portion : 1;
+    // A named size of the old kind ("Double" espresso) stays only if the new kind has that same size (beer 0.3 l →
+    // light beer 0.3 l, whole pizza → whole pepperoni); else back to 1 (a double espresso is not 2 mugs of filter
+    // coffee). A count ("3 beers" → Light) stays: 3 light beers, not 1 (QA 2026-10-19).
+    const newSizes = nb.length === 1 ? sizesOf(nb[0].food) : null;
+    const wasSize = sizes?.find((x) => Math.abs(x.mult - portion) < 1e-6 && x.mult !== 1);
+    const f = !wasSize || newSizes?.some((x) => x.k === wasSize.k && Math.abs(x.mult - portion) < 1e-6) ? portion : 1;
     setPortion(f); setPortionBase(f === 1 ? null : nb);
     if (f === 1 && isCuratedServing(nb)) { setProductId(nb[0].food.id); return; }
     setFoodParts(scaleParts(nb, f)); setProductId('food');
@@ -366,18 +375,26 @@ export default function AppV4() {
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
   };
   /** `keepPace`: the meal itself changed (an amount, an item added or removed), so "Over how long?" stays */
-  const chooseFood = (parts: Part[]) => pickFood(parts, false);
+  // typed "… kroz 2 sata" / "… over 2 hours" sets "Over how long?" too (QA 2026-10-19)
+  const chooseFood = (parts: Part[], text?: string) => pickFood(parts, false, text ? readPace(text) : 0);
   const changeMeal = (parts: Part[]) => pickFood(parts, true);
-  const pickFood = (parts: Part[], keepPace: boolean) => {
+  const pickFood = (parts: Part[], keepPace: boolean, said = 0) => {
     if (!parts.length) return;
-    setPortion(1); setPortionBase(null);
-    if (!keepPace) { setOver(0); setPaceTouched(false); }
+    // One food at another amount ("3 piva", "2 slices of pizza", "200 g riže"): "How much?" counts from ONE serving,
+    // as for a link (#q=beer&n=3). Before, the typed amount became the base, so "3 beers" showed "0.5 l" as pressed and
+    // "0.3 l" gave 0.6 × 3 beers; "Whole" on 2 slices gave 16 slices (QA 2026-10-19).
+    const solo = parts.length === 1 ? parts[0] : null;
+    const mult = solo ? Math.round((solo.grams / solo.food.serving.grams) * 1e4) / 1e4 : 1;
+    if (solo && Number.isFinite(mult) && mult > 0 && Math.abs(mult - 1) > 1e-3) { setPortion(mult); setPortionBase([servingPart(solo.food, 1)]); }
+    else { setPortion(1); setPortionBase(null); }
+    const saidPace = said && canPace(parts) ? said : 0;
+    if (!keepPace) { setOver(saidPace); setPaceTouched(saidPace > 0); }
     const one = parts.length === 1 ? parts[0] : null;
     setAsking(parts.length === 1 && !!parts[0].ask);
     if (one && isPlain(one.food) && CURATED.has(one.food.id) && Math.abs(one.grams - one.food.serving.grams) < 1) { choose(CATALOG.find((c) => c.id === one.food.id)!); return; }
     setFoodParts(parts); setProductId('food'); setMissText(null);
     setNotice(null); setStarted(true); setSelected(null); setWholeBody(false); setU(0); setPlaying(!prefersReducedMotion());
-    try { history.replaceState(null, '', writeLink({ ...linkFor(parts), over: keepPace && canPace(parts) ? over : 0 })); } catch { /* sandboxed: fine */ }
+    try { history.replaceState(null, '', writeLink({ ...linkFor(parts), over: keepPace && canPace(parts) ? over : saidPace })); } catch { /* sandboxed: fine */ }
   };
 
   // ---- Share: hook → the whole day following the liquid → summary card, recorded into a Reel or a feed video ----
@@ -539,10 +556,12 @@ export default function AppV4() {
 
   // ---- deep link: the address bar always describes what is on screen (replaceState, so no history spam).
   // The minute goes in only while paused / after scrubbing, never every frame.
+  const sizeNow = productId === 'food' && currentParts.length === 1 ? sizes?.find((x) => Math.abs(x.mult - portion) < 1e-6 && x.mult !== 1) : undefined;
+  // an amount a link can say (a size, or ½ · 1 · 2 · 3); anything else (5 beers, 200 g of rice) goes as the exact meal code
+  const portionLinkable = !!sizeNow || (PORTIONS as readonly number[]).some((x) => Math.abs(x - portion) < 1e-6);
   const linkHash = (t: number | null) => writeLink({
-    ...linkFor(portion !== 1 && portionBase ? portionBase : currentParts), t, over: overEff,
-    ...(sizes?.find((x) => Math.abs(x.mult - portion) < 1e-6 && x.mult !== 1) && productId === 'food' && currentParts.length === 1
-      ? { s: sizes.find((x) => Math.abs(x.mult - portion) < 1e-6)!.k } : { n: portion }),
+    ...linkFor(portion !== 1 && portionBase && portionLinkable ? portionBase : currentParts), t, over: overEff,
+    ...(sizeNow ? { s: sizeNow.k } : portionLinkable ? { n: portion } : {}),
     view: mode === 'detailed' ? 'detailed' : calm ? 'simple' : 'full',
     vs: compare && vsParts?.length ? mealText(vsParts) : undefined,
   }, window.location.hash);
