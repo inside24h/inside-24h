@@ -1597,8 +1597,8 @@
    "waterG": 90.1
   },
   "freeSugarsBasis": "computed mix: its sugars are milk lactose only (the other ingredients have 0 g sugar in USDA), so no free sugars (WHO definition)",
-  "gi": null,
-  "giSource": null,
+  "gi": 39,
+  "giSource": "Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, 39 ± 3, mean of multiple studies. All the carbohydrate in this drink is the milk's lactose (USDA espresso has 0 g), so the milk's GI is used (our calculation, level C; the latte made with 2% milk already gets it the same way)",
   "color": "#b88a5e",
   "usdaFdcId": null,
   "usdaDescription": null,
@@ -2055,8 +2055,8 @@
    "waterG": 89.3
   },
   "freeSugarsBasis": "computed mix: its sugars are milk lactose only (the other ingredients have 0 g sugar in USDA), so no free sugars (WHO definition)",
-  "gi": null,
-  "giSource": null,
+  "gi": 39,
+  "giSource": "Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, 39 ± 3, mean of multiple studies. All the carbohydrate in this drink is the milk's lactose (USDA espresso has 0 g), so the milk's GI is used (our calculation, level C; the latte made with 2% milk already gets it the same way)",
   "color": "#c9a47c",
   "usdaFdcId": null,
   "usdaDescription": null,
@@ -3046,8 +3046,8 @@
    "waterG": 89.0
   },
   "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
-  "gi": null,
-  "giSource": null,
+  "gi": 74,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 89: Ice Lemon Tea, ready-to-drink black tea with lemon flavor (F&N, Singapore), 74 ± 7, 14 subjects; Estathé lemon iced tea (Italy, row 91) 72 ± 6, 9 subjects",
   "color": "#c98a2b",
   "usdaFdcId": 171888,
   "usdaDescription": "Beverages, tea, black, ready-to-drink, lemon, sweetened",
@@ -3397,8 +3397,8 @@
    "waterG": 82.2
   },
   "freeSugarsBasis": "total sugars minus USDA lactose (milk sugar is not free)",
-  "gi": null,
-  "giSource": null,
+  "gi": 29,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Milk, reduced- or low-fat, flavored, mean of seven foods 29 (chocolate, strawberry, coffee and malt milks, Australia, 24 to 37); our record is a reduced-fat chocolate milk",
   "color": "#8a5a3c",
   "usdaFdcId": 170880,
   "usdaDescription": "Milk, chocolate, fluid, commercial, reduced fat, with added vitamin A and vitamin D",
@@ -3510,8 +3510,8 @@
      "waterG": 86.3
     },
     "freeSugarsBasis": "USDA reports no lactose value, split not possible",
-    "gi": null,
-    "giSource": null,
+    "gi": 51,
+    "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 85: Complete Hot Chocolate mix made with hot water (Nestlé, Australia), 51 ± 3, 10 subjects, single test",
     "color": "#6b4028",
     "usdaFdcId": 174123,
     "usdaDescription": "Beverages, Cocoa mix, powder, prepared with water",
@@ -3831,8 +3831,8 @@
    "waterG": 89.7
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 36,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 933: Kefir, low-fat, plain (Lifeway Foods, USA), 36 ± 9, 10 subjects: the same product as the USDA record",
   "color": "#f5f1e6",
   "usdaFdcId": 170904,
   "usdaDescription": "Kefir, lowfat, plain, LIFEWAY",
@@ -5062,8 +5062,8 @@
    "waterG": 87.3
   },
   "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
-  "gi": null,
-  "giSource": null,
+  "gi": 39,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 123: Smoothie, strawberry and banana (Innocent, UK), 39 ± 4, 10 subjects: a fruit-only smoothie like the USDA record (Naked Juice strawberry-banana); smoothies, mean of nine foods 38",
   "color": "#e8708a",
   "usdaFdcId": 168214,
   "usdaDescription": "Fruit juice smoothie, NAKED JUICE, strawberry banana",
@@ -5283,8 +5283,8 @@
    "waterG": 87.9
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 17,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1046: No Added Sugar Natural yoghurt (Tamar Valley Dairy, Australia), 17 ± 2, 10 subjects (fat level not stated); Atkinson 2008 A1 row 892, fat-free natural yoghurt, 19 ± 5",
   "color": "#f7f3ea",
   "usdaFdcId": 171284,
   "usdaDescription": "Yogurt, plain, whole milk",
@@ -5355,8 +5355,8 @@
    "waterG": 85.1
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 35,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1047: Yoghurt, low fat, natural (UK), 35 ± 10, 9 subjects, single test",
   "color": "#f7f3ea",
   "usdaFdcId": 170886,
   "usdaDescription": "Yogurt, plain, low fat",
@@ -6360,8 +6360,8 @@
      "waterG": 28.4
     },
     "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-    "gi": null,
-    "giSource": null,
+    "gi": 75,
+    "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, mean of multiple studies; Table 1 notes that low-GI varieties were also identified, so the type matters; the base food's GI, used for this variant too",
     "color": "#efe0b8",
     "usdaFdcId": 172793,
     "usdaDescription": "Rolls, dinner, plain, commercially prepared (includes brown-and-serve)",
@@ -6524,8 +6524,8 @@
    "waterG": 37.3
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 60,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Rye breads, mean of 13 foods 60; single rye breads differ by type (sourdough rye 48 ± 5, pumpernickel 49 ± 4, rye-wheat sourdough 62 ± 4)",
   "color": "#8c6a3f",
   "usdaFdcId": 172684,
   "usdaDescription": "Bread, rye",
@@ -7086,8 +7086,8 @@
    "waterG": 43.2
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 43,
+  "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)",
   "color": "#e8b04a",
   "usdaFdcId": 173292,
   "usdaDescription": "Fast Food, Pizza Chain, 14\" pizza, cheese topping, regular crust",
@@ -7126,7 +7126,7 @@
         "alcoholG": 0.0,
         "waterG": 43.2
        },
-       "gi": null,
+       "gi": 43,
        "fdc": 173292,
        "food": "pizza",
        "words": [],
@@ -7138,7 +7138,7 @@
           "all"
          ],
          "level": "A",
-         "text": "The base is USDA’s 14-inch chain cheese pizza (dough, tomato sauce, mozzarella): 1 slice = 107 g, the whole pizza 853 g.",
+         "text": "The base is USDA’s 14-inch chain cheese pizza (dough, tomato sauce, mozzarella): 1 slice = 107 g, the whole pizza 853 g. Blood sugar: the mean of the whole pizzas tested in healthy people (30–56; no plain cheese pizza was tested), Atkinson 2008 and 2021 tables, GI 43.",
          "cite": "USDA FoodData Central, SR Legacy 173292: Fast Food, Pizza Chain, 14\" pizza, cheese topping, regular crust",
          "url": "https://fdc.nal.usda.gov/food-details/173292/nutrients",
          "claim": "DBB-pizza-base"
@@ -7463,7 +7463,7 @@
         "alcoholG": 0.0,
         "waterG": 92.5
        },
-       "gi": null,
+       "gi": 43,
        "fdc": 169251,
        "food": "mushrooms",
        "words": [
@@ -7483,7 +7483,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Mushrooms on pizza: our estimate 9.8 g per slice, from a pizza-industry portion chart (78 g on a 14-inch pie, 50 g on a 12-inch pie, 8 slices).",
+         "text": "Mushrooms on pizza: our estimate 9.8 g per slice, from a pizza-industry portion chart (78 g on a 14-inch pie, 50 g on a 12-inch pie, 8 slices). Blood sugar: on a pizza this counts at the GI measured on whole topped pizzas (Atkinson 2008 and 2021 tables), not at a GI of its own, GI 43.",
          "cite": "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)",
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-mushrooms"
@@ -7514,7 +7514,7 @@
         "alcoholG": 0.0,
         "waterG": 93.9
        },
-       "gi": null,
+       "gi": 43,
        "fdc": 170427,
        "food": null,
        "words": [
@@ -7531,7 +7531,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Peppers on pizza: our estimate 14.1 g per slice, from a pizza-industry portion chart (113 g on a 14-inch pie, 78 g on a 12-inch pie, 8 slices).",
+         "text": "Peppers on pizza: our estimate 14.1 g per slice, from a pizza-industry portion chart (113 g on a 14-inch pie, 78 g on a 12-inch pie, 8 slices). Blood sugar: on a pizza this counts at the GI measured on whole topped pizzas (Atkinson 2008 and 2021 tables), not at a GI of its own, GI 43.",
          "cite": "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)",
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-peppers"
@@ -7562,7 +7562,7 @@
         "alcoholG": 0.0,
         "waterG": 89.1
        },
-       "gi": null,
+       "gi": 43,
        "fdc": 170000,
        "food": "onion",
        "words": [
@@ -7579,7 +7579,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Onion on pizza: our estimate 14.1 g per slice, from a pizza-industry portion chart (113 g on a 14-inch pie, 78 g on a 12-inch pie, 8 slices).",
+         "text": "Onion on pizza: our estimate 14.1 g per slice, from a pizza-industry portion chart (113 g on a 14-inch pie, 78 g on a 12-inch pie, 8 slices). Blood sugar: on a pizza this counts at the GI measured on whole topped pizzas (Atkinson 2008 and 2021 tables), not at a GI of its own, GI 43.",
          "cite": "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)",
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-onion"
@@ -7610,7 +7610,7 @@
         "alcoholG": 0.0,
         "waterG": 80.0
        },
-       "gi": null,
+       "gi": 43,
        "fdc": 169094,
        "food": "olives",
        "words": [
@@ -7626,7 +7626,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Olives on pizza: our estimate 14.1 g per slice, from a pizza-industry portion chart (113 g on a 14-inch pie, 78 g on a 12-inch pie, 8 slices).",
+         "text": "Olives on pizza: our estimate 14.1 g per slice, from a pizza-industry portion chart (113 g on a 14-inch pie, 78 g on a 12-inch pie, 8 slices). Blood sugar: on a pizza this counts at the GI measured on whole topped pizzas (Atkinson 2008 and 2021 tables), not at a GI of its own, GI 43.",
          "cite": "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)",
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-olives"
@@ -7667,7 +7667,7 @@
         "alcoholG": 0.0,
         "waterG": 81.4
        },
-       "gi": null,
+       "gi": 43,
        "fdc": 169214,
        "food": null,
        "words": [
@@ -7683,7 +7683,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Sweet corn on pizza: our estimate 12.4 g per slice, from a pizza-industry portion chart (99 g on a 14-inch pie, 85 g on a 12-inch pie, 8 slices).",
+         "text": "Sweet corn on pizza: our estimate 12.4 g per slice, from a pizza-industry portion chart (99 g on a 14-inch pie, 85 g on a 12-inch pie, 8 slices). Blood sugar: on a pizza this counts at the GI measured on whole topped pizzas (Atkinson 2008 and 2021 tables), not at a GI of its own, GI 43.",
          "cite": "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)",
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-corn"
@@ -7802,7 +7802,7 @@
       "grams": 107.0,
       "kcal": 284.6,
       "fat": 10.37,
-      "gi": null
+      "gi": 43
      }
     },
     {
@@ -7827,7 +7827,7 @@
       "grams": 138.0,
       "kcal": 321.5,
       "fat": 12.27,
-      "gi": null
+      "gi": 43
      }
     },
     {
@@ -7848,7 +7848,7 @@
       "grams": 113.2,
       "kcal": 315.9,
       "fat": 13.24,
-      "gi": null
+      "gi": 43
      }
     },
     {
@@ -7874,7 +7874,7 @@
       "grams": 171.5,
       "kcal": 319.9,
       "fat": 12.13,
-      "gi": null
+      "gi": 43
      }
     },
     {
@@ -7902,7 +7902,7 @@
       "grams": 212.3,
       "kcal": 516.7,
       "fat": 27.53,
-      "gi": null
+      "gi": 43
      }
     }
    ],
@@ -8409,8 +8409,8 @@
    "waterG": 75.6
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 79,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Mashed potato, mean of five studies 79 (rows 1861-1865, 73 to 91)",
   "color": "#f3e5ad",
   "usdaFdcId": 168555,
   "usdaDescription": "Potatoes, mashed, home-prepared, whole milk and butter added",
@@ -12595,8 +12595,8 @@
    "waterG": 85.2
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 52,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1140: Mandarin orange (Citrus reticulata), Italy, 52 ± 8, 9 subjects, 25 g carbohydrate portions, single test",
   "color": "#f6891c",
   "usdaFdcId": 169105,
   "usdaDescription": "Tangerines, (mandarin oranges), raw",
@@ -12819,8 +12819,8 @@
    "waterG": 84.0
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 33,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1161: Pear, Williams, raw, ripe/soft (Australia), 33 ± 4, 10 subjects; under-ripe/crunchy 24 ± 3 (row 1160)",
   "color": "#c9d46a",
   "usdaFdcId": 169118,
   "usdaDescription": "Pears, raw",
@@ -12863,8 +12863,8 @@
    "waterG": 88.9
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 76,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1155: Peach (Prunus persica), Italy, 76 ± 9, 9 subjects, 25 g carbohydrate portions, single test (the only raw peach tested; canned peaches gave 30-64 in Atkinson 2008 A1 rows 1000-1005)",
   "color": "#f4b05a",
   "usdaFdcId": 169928,
   "usdaDescription": "Peaches, yellow, raw",
@@ -13083,8 +13083,8 @@
    "waterG": 84.2
   },
   "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-  "gi": null,
-  "giSource": null,
+  "gi": 53,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1092 (= Atkinson 2008 A1 row 965): Blueberries, wild (Canada), 53 ± 7, 10 subjects, bread reference; wild, not cultivated blueberries: the nearest tested food",
   "color": "#4a4a8a",
   "usdaFdcId": 171711,
   "usdaDescription": "Blueberries, raw",
@@ -13958,8 +13958,8 @@
      "waterG": 1.3
     },
     "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-    "gi": null,
-    "giSource": null,
+    "gi": 41,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Chocolate, white, mean of four studies 41 (rows 1598-1601, 34 to 44)",
     "color": "#6a3a22",
     "usdaFdcId": 167571,
     "usdaDescription": "Candies, white chocolate",
@@ -14294,8 +14294,8 @@
    "waterG": 23.2
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 56,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Croissant, mean of two foods 56 (row 22 all-butter croissant, Australia, 45 ± 6; row 23 croissant, Oman, 67 ± 2); the two tests differ, so the croissant type matters",
   "color": "#e2b25e",
   "usdaFdcId": 174987,
   "usdaDescription": "Croissants, butter",
@@ -14388,8 +14388,8 @@
      "waterG": 22.0
     },
     "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-    "gi": null,
-    "giSource": null,
+    "gi": 38,
+    "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 4: Chocolate cake made from packet mix with chocolate frosting (Betty Crocker), 38 ± 3, 10 subjects, single test",
     "color": "#f0d890",
     "usdaFdcId": 174934,
     "usdaDescription": "Cake, chocolate, commercially prepared with chocolate frosting, in-store bakery",
@@ -15026,7 +15026,7 @@
         "alcoholG": null,
         "waterG": 45.0
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 170320,
        "food": null,
        "words": [],
@@ -15042,7 +15042,7 @@
           "all"
          ],
          "level": "A",
-         "text": "Cheeseburger: USDA’s record for a McDonald’s cheeseburger, 119 g.",
+         "text": "Cheeseburger: USDA’s record for a McDonald’s cheeseburger, 119 g. Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FoodData Central, SR Legacy 170320: McDONALD'S, Cheeseburger",
          "url": "https://fdc.nal.usda.gov/food-details/170320/nutrients",
          "claim": "DBB-hamburger-cheeseburger"
@@ -15070,7 +15070,7 @@
         "alcoholG": null,
         "waterG": 51.3
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 170720,
        "food": null,
        "words": [],
@@ -15086,7 +15086,7 @@
           "all"
          ],
          "level": "A",
-         "text": "Double burger: USDA’s record for a McDonald’s Big Mac (two patties), 219 g.",
+         "text": "Double burger: USDA’s record for a McDonald’s Big Mac (two patties), 219 g. Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FoodData Central, SR Legacy 170720: McDONALD'S, BIG MAC",
          "url": "https://fdc.nal.usda.gov/food-details/170720/nutrients",
          "claim": "DBB-hamburger-double"
@@ -15114,7 +15114,7 @@
         "alcoholG": null,
         "waterG": 54.9
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 170728,
        "food": null,
        "words": [],
@@ -15130,7 +15130,7 @@
           "all"
          ],
          "level": "A",
-         "text": "Large cheeseburger: USDA’s record for a Burger King Whopper with cheese, 316 g.",
+         "text": "Large cheeseburger: USDA’s record for a Burger King Whopper with cheese, 316 g. Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FoodData Central, SR Legacy 170728: BURGER KING, WHOPPER, with cheese",
          "url": "https://fdc.nal.usda.gov/food-details/170728/nutrients",
          "claim": "DBB-hamburger-large"
@@ -15158,7 +15158,7 @@
         "alcoholG": 0.0,
         "waterG": 47.671
        },
-       "gi": null,
+       "gi": 66,
        "fdc": null,
        "food": null,
        "words": [],
@@ -15194,7 +15194,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Pljeskavica is our recipe: a 150 g grilled beef patty (USDA ground beef 80/20; menus list 100–350 g, most often 150 or 200 g) in a 150 g lepinja (USDA pita bread stands in; a lepinja on a Serbian menu weighs 150 g) with 15 g onion. Real pljeskavica is often beef and pork with salt, so sodium is higher than shown.",
+         "text": "Pljeskavica is our recipe: a 150 g grilled beef patty (USDA ground beef 80/20; menus list 100–350 g, most often 150 or 200 g) in a 150 g lepinja (USDA pita bread stands in; a lepinja on a Serbian menu weighs 150 g) with 15 g onion. Real pljeskavica is often beef and pork with salt, so sodium is higher than shown. Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "Glovo menus (Kod Čika Gurmana, Kragujevac; Sarajevo sub, Subotica); USDA SR Legacy 171798, 174915",
          "url": "https://glovoapp.com/sr/rs/kragujevac/stores/kod-cika-gurmana-krg",
          "claim": "DBB-hamburger-pljeskavica"
@@ -15370,7 +15370,7 @@
         "alcoholG": 0.0,
         "waterG": 89.1
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 170000,
        "food": "onion",
        "words": [
@@ -15385,7 +15385,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Onion: our estimate 15 g, USDA’s guideline amount on a regular sandwich (15–30 g, regular to large).",
+         "text": "Onion: our estimate 15 g, USDA’s guideline amount on a regular sandwich (15–30 g, regular to large). Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients",
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-onion"
@@ -15416,7 +15416,7 @@
         "alcoholG": 0.0,
         "waterG": 95.6
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 169248,
        "food": null,
        "words": [
@@ -15431,7 +15431,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Lettuce: our estimate 8 g, USDA’s guideline amount on a regular sandwich (8–16 g, regular to large).",
+         "text": "Lettuce: our estimate 8 g, USDA’s guideline amount on a regular sandwich (8–16 g, regular to large). Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients",
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-lettuce"
@@ -15462,7 +15462,7 @@
         "alcoholG": 0.0,
         "waterG": 94.5
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 170457,
        "food": "tomato",
        "words": [
@@ -15477,7 +15477,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Tomato: our estimate 20 g, USDA’s guideline amount on a regular sandwich (20–40 g, regular to large).",
+         "text": "Tomato: our estimate 20 g, USDA’s guideline amount on a regular sandwich (20–40 g, regular to large). Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients",
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-tomato"
@@ -15508,7 +15508,7 @@
         "alcoholG": 0.0,
         "waterG": 94.3
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 168558,
        "food": null,
        "words": [
@@ -15523,7 +15523,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Pickles: one slice, 7 g (USDA portion; fast-food burgers carry 5–7 g).",
+         "text": "Pickles: one slice, 7 g (USDA portion; fast-food burgers carry 5–7 g). Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA SR Legacy 168558; USDA FNDDS",
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-pickles"
@@ -15554,7 +15554,7 @@
         "alcoholG": 0.0,
         "waterG": 68.5
        },
-       "gi": null,
+       "gi": 66,
        "fdc": 168556,
        "food": null,
        "words": [
@@ -15569,7 +15569,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Ketchup: our estimate 17 g, USDA’s guideline amount on a regular sandwich (5–34 g, regular to large).",
+         "text": "Ketchup: our estimate 17 g, USDA’s guideline amount on a regular sandwich (5–34 g, regular to large). Blood sugar: counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1), GI 66.",
          "cite": "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients",
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-ketchup"
@@ -15655,26 +15655,26 @@
   "kind": "solid",
   "serving": {
    "label": "1 kebab",
-   "grams": 330.0,
-   "source": "our builder default: 100 g pita + 150 g chicken + 30 g tomato + 20 g onion + 30 g yogurt sauce",
+   "grams": 397.0,
+   "source": "our builder default: 100 g pita + 150 g chicken + 40 g tomato + 25 g onion + 30 g lettuce + 38 g yogurt sauce + 14 g mayonnaise sauce",
    "assumed": true
   },
   "piece": null,
   "aliasServing": null,
   "overrides": null,
   "per100g": {
-   "kcal": 174.0,
-   "carbs": 18.22,
-   "sugars": 1.31,
+   "kcal": 192.0,
+   "carbs": 15.7,
+   "sugars": 1.47,
    "freeSugars": null,
-   "fiber": 0.88,
-   "fat": 4.39,
-   "satFat": 1.3,
-   "protein": 14.47,
-   "sodiumMg": 215.5,
+   "fiber": 0.87,
+   "fat": 8.85,
+   "satFat": 2.22,
+   "protein": 11.67,
+   "sodiumMg": 201.9,
    "caffeineMg": 0.0,
    "alcoholG": 0.0,
-   "waterG": 62.2
+   "waterG": 63.0
   },
   "freeSugarsBasis": "not determined: a part has no free-sugar value",
   "gi": null,
@@ -15692,7 +15692,7 @@
    },
    {
     "ref": "chicken",
-    "usdaFdcId": 172388,
+    "usdaFdcId": 173625,
     "usdaDescription": "chicken",
     "grams": 150.0
    },
@@ -15700,19 +15700,31 @@
     "ref": "tomato",
     "usdaFdcId": 170457,
     "usdaDescription": "tomato",
-    "grams": 30.0
+    "grams": 40.0
    },
    {
     "ref": "onion",
     "usdaFdcId": 170000,
     "usdaDescription": "onion",
-    "grams": 20.0
+    "grams": 25.0
+   },
+   {
+    "ref": "lettuce",
+    "usdaFdcId": 169248,
+    "usdaDescription": "lettuce",
+    "grams": 30.0
    },
    {
     "ref": "yogurt",
     "usdaFdcId": 171284,
     "usdaDescription": "yogurt sauce",
-    "grams": 30.0
+    "grams": 38.0
+   },
+   {
+    "ref": "mayo",
+    "usdaFdcId": 171009,
+    "usdaDescription": "mayonnaise sauce",
+    "grams": 14.0
    }
   ],
   "usdaProxy": false,
@@ -15751,7 +15763,7 @@
         "alcoholG": 0.0,
         "waterG": 32.1
        },
-       "gi": null,
+       "gi": 68,
        "fdc": 174915,
        "food": null,
        "words": [
@@ -15767,7 +15779,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Pita: 100 g of bread (USDA white pita). Twenty döner kebabs bought and weighed in Italy (the same study as the meat) were 22–27% bread, about 100 g of a 402 g kebab; USDA’s gyro uses a 60 g pita.",
+         "text": "Pita: 100 g of bread (USDA white pita). Twenty döner kebabs bought and weighed in Italy (the same study as the meat) were 22–27% bread, about 100 g of a 402 g kebab; USDA’s gyro uses a 60 g pita. Blood sugar: white pita bread as tested in healthy people (Atkinson 2008 table A1, 68 ± 5), GI 68.",
          "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-pita"
@@ -15798,7 +15810,7 @@
         "alcoholG": 0.0,
         "waterG": 32.0
        },
-       "gi": null,
+       "gi": 30,
        "fdc": 175037,
        "food": null,
        "words": [
@@ -15820,7 +15832,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches).",
+         "text": "Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches). Blood sugar: the only wheat-flour tortilla tested in healthy people (Mexico, 8 people, one test; Atkinson 2008 table A1), so it is uncertain, GI 30.",
          "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
          "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
          "claim": "DBB-kebab-wrap"
@@ -15845,21 +15857,21 @@
        ],
        "on": true,
        "p": {
-        "kcal": 179.0,
+        "kcal": 232.0,
         "carbs": 0.0,
         "sugars": 0.0,
         "freeSugars": null,
         "fiber": 0.0,
-        "fat": 8.15,
-        "satFat": 2.31,
-        "protein": 24.76,
-        "sodiumMg": 106.0,
+        "fat": 14.71,
+        "satFat": 4.11,
+        "protein": 23.26,
+        "sodiumMg": 102.0,
         "caffeineMg": 0.0,
         "alcoholG": 0.0,
-        "waterG": 67.0
+        "waterG": 62.0
        },
        "gi": null,
-       "fdc": 172388,
+       "fdc": 173625,
        "food": null,
        "words": [
         "chicken",
@@ -15879,7 +15891,7 @@
           "all"
          ],
          "level": "C",
-         "text": "Chicken: 150 g of meat (roasted chicken thigh, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g.",
+         "text": "Chicken: 150 g of meat (roasted chicken thigh with skin, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g. The study found skin in the döner meat and 8.6 g of fat per 100 g of kebab, which skinless thigh meat cannot reach, so we use thigh with skin.",
          "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-chicken"
@@ -15953,10 +15965,10 @@
        "k": "tomato",
        "chip": "Tomato",
        "name": "tomato",
-       "grams": 30.0,
+       "grams": 40.0,
        "rng": [
         20,
-        40
+        60
        ],
        "on": true,
        "p": {
@@ -15988,9 +16000,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Tomato: 30 g (USDA gyro recipe).",
-         "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-         "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+         "text": "Tomato: 40 g. The weighed Italian kebabs carried about 100 g of vegetables in all (25% of 402 g); we split that into tomato 40 g, onion 25 g and lettuce 30 g (USDA’s gyro uses 30 g of tomato).",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-tomato"
         }
        ]
@@ -15999,10 +16011,10 @@
        "k": "onion",
        "chip": "Onion",
        "name": "onion",
-       "grams": 20.0,
+       "grams": 25.0,
        "rng": [
         15,
-        30
+        40
        ],
        "on": true,
        "p": {
@@ -16034,9 +16046,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Onion: 20 g (USDA gyro recipe).",
-         "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-         "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+         "text": "Onion: 25 g, part of the about 100 g of vegetables in the weighed Italian kebabs (USDA’s gyro uses 20 g).",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-onion"
         }
        ]
@@ -16045,12 +16057,12 @@
        "k": "lettuce",
        "chip": "Lettuce",
        "name": "lettuce",
-       "grams": 8.0,
+       "grams": 30.0,
        "rng": [
         8,
-        16
+        40
        ],
-       "on": false,
+       "on": true,
        "p": {
         "kcal": 14.0,
         "carbs": 2.97,
@@ -16080,9 +16092,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Lettuce: 8 g (USDA guideline amount on a regular sandwich).",
-         "cite": "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients",
-         "url": "https://fdc.nal.usda.gov/download-datasets",
+         "text": "Lettuce: 30 g, standing in for the salad and cabbage in the weighed Italian kebabs (about 100 g of vegetables in all).",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-lettuce"
         }
        ]
@@ -16091,7 +16103,7 @@
        "k": "yogurt",
        "chip": "Yogurt sauce",
        "name": "yogurt sauce",
-       "grams": 30.0,
+       "grams": 38.0,
        "rng": [
         15,
         60
@@ -16111,7 +16123,7 @@
         "alcoholG": 0.0,
         "waterG": 87.9
        },
-       "gi": null,
+       "gi": 17,
        "fdc": 171284,
        "food": "yogurt-plain",
        "words": [
@@ -16128,9 +16140,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Yogurt sauce: 30 g (USDA gyro recipe, as tzatziki); plain whole-milk yogurt stands in.",
-         "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-         "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+         "text": "Yogurt sauce: 38 g; plain whole-milk yogurt stands in. The weighed Italian kebabs carried about 52 g of sauce (13% of 402 g), often yogurt-based; with the 14 g of mayonnaise that makes 52 g (USDA’s gyro uses 30 g of tzatziki).",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-yogurt"
         }
        ]
@@ -16144,7 +16156,7 @@
         9,
         28
        ],
-       "on": false,
+       "on": true,
        "p": {
         "kcal": 680.0,
         "carbs": 0.57,
@@ -16174,9 +16186,9 @@
           "all"
          ],
          "level": "C",
-         "text": "Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich).",
-         "cite": "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients",
-         "url": "https://fdc.nal.usda.gov/download-datasets",
+         "text": "Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich). The Italian study reports that kebab shops mostly used supermarket mayonnaise and ketchup; without it the kebab has about a third less fat than the study measured.",
+         "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+         "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-mayo"
         }
        ]
@@ -16191,6 +16203,8 @@
      "name": "Chicken kebab in pita",
      "on": [
       "chicken",
+      "lettuce",
+      "mayo",
       "onion",
       "pita",
       "tomato",
@@ -16199,9 +16213,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 330.0,
-      "kcal": 575.2,
-      "fat": 14.48,
+      "grams": 397.0,
+      "kcal": 762.8,
+      "fat": 35.13,
       "gi": null
      }
     },
@@ -16211,6 +16225,8 @@
      "name": "Beef kebab in pita",
      "on": [
       "beef",
+      "lettuce",
+      "mayo",
       "onion",
       "pita",
       "tomato",
@@ -16219,9 +16235,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 330.0,
-      "kcal": 711.7,
-      "fat": 28.93,
+      "grams": 397.0,
+      "kcal": 819.8,
+      "fat": 39.73,
       "gi": null
      }
     },
@@ -16231,6 +16247,8 @@
      "name": "Chicken kebab wrap",
      "on": [
       "chicken",
+      "lettuce",
+      "mayo",
       "onion",
       "tomato",
       "wrap",
@@ -16239,9 +16257,9 @@
      "aliases": [],
      "words": [],
      "check": {
-      "grams": 302.0,
-      "kcal": 520.5,
-      "fat": 19.03,
+      "grams": 369.0,
+      "kcal": 708.1,
+      "fat": 39.68,
       "gi": null
      }
     }
@@ -16252,9 +16270,9 @@
       "all"
      ],
      "level": "C",
-     "text": "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) and the pita (100 g) are from döner kebabs weighed in Italian shops; vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat.",
-     "cite": "USDA FNDDS 2706962 gyro sandwich; weighed döner meat (RTL test, Mallorca Revue)",
-     "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
+     "text": "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The amounts follow twenty döner kebabs bought and weighed in Italian shops (402 g: 37% meat, 25% bread, 25% vegetables, 13% sauce). Our default has about the study’s measured fat and protein per 100 g. The study’s 226 kcal per 100 g is gross energy from burning the food in a calorimeter; the energy the body can use from its measured protein, fat and starch is about 177–187 kcal per 100 g, and ours is 192. Kebab shops differ a lot, mostly in the meat.",
+     "cite": "Panozzo et al. 2015, Ital J Food Saf 4:4535 (20 weighed döner kebabs); RTL test via Mallorca Revue; USDA FNDDS 2706962 gyro",
+     "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
      "claim": "DBB-kebab"
     }
    ],
@@ -16299,8 +16317,8 @@
    "waterG": 63.3
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 75,
+  "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, 75 ± 2, mean of multiple studies. Nearly all the carbohydrate in a sub is the white roll, so the white-bread GI is used (our calculation, level C). Whole sandwiches tested on white bread vary with the filling: chicken tandoori on a white French roll 78 ± 7, a white roll with cheese 50 ± 5, white toast with cheddar 35 ± 2 (Suppl. Table A1 rows 1259, 1264, 1270)",
   "color": "#e8c888",
   "usdaFdcId": 170707,
   "usdaDescription": "Fast foods, submarine sandwich, ham on white bread with lettuce and tomato",
@@ -16339,7 +16357,7 @@
         "alcoholG": 0.0,
         "waterG": 63.3
        },
-       "gi": null,
+       "gi": 75,
        "fdc": 170707,
        "food": "sandwich-ham",
        "words": [],
@@ -16351,7 +16369,7 @@
           "all"
          ],
          "level": "A",
-         "text": "Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g.",
+         "text": "Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g. Blood sugar: no whole sub was tested; nearly all its carbohydrate is the white roll, so it counts at the white-bread GI (our calculation; tested sandwiches gave 35–78 depending on the filling), GI 75.",
          "cite": "USDA FoodData Central, SR Legacy 170707: Fast foods, submarine sandwich, ham on white bread with lettuce and tomato",
          "url": "https://fdc.nal.usda.gov/food-details/170707/nutrients",
          "claim": "DBB-sandwich-ham-sub"
@@ -16379,7 +16397,7 @@
         "alcoholG": 0.0,
         "waterG": 56.5
        },
-       "gi": null,
+       "gi": 75,
        "fdc": 170696,
        "food": null,
        "words": [],
@@ -16395,7 +16413,7 @@
           "all"
          ],
          "level": "A",
-         "text": "Cold-cut sub: USDA’s record for a 6-inch cold-cut submarine sandwich, 196 g.",
+         "text": "Cold-cut sub: USDA’s record for a 6-inch cold-cut submarine sandwich, 196 g. Blood sugar: no whole sub was tested; nearly all its carbohydrate is the white roll, so it counts at the white-bread GI (our calculation; tested sandwiches gave 35–78 depending on the filling), GI 75.",
          "cite": "USDA FoodData Central, SR Legacy 170696: Fast foods, submarine sandwich, cold cut on white bread with lettuce and tomato",
          "url": "https://fdc.nal.usda.gov/food-details/170696/nutrients",
          "claim": "DBB-sandwich-ham-coldcut"
@@ -16423,7 +16441,7 @@
         "alcoholG": 0.0,
         "waterG": 58.2
        },
-       "gi": null,
+       "gi": 75,
        "fdc": 170299,
        "food": null,
        "words": [],
@@ -16441,7 +16459,7 @@
           "all"
          ],
          "level": "A",
-         "text": "Tuna sub: USDA’s record for a 6-inch tuna submarine sandwich, 237 g.",
+         "text": "Tuna sub: USDA’s record for a 6-inch tuna submarine sandwich, 237 g. Blood sugar: no whole sub was tested; nearly all its carbohydrate is the white roll, so it counts at the white-bread GI (our calculation; tested sandwiches gave 35–78 depending on the filling), GI 75.",
          "cite": "USDA FoodData Central, SR Legacy 170299: Fast foods, submarine sandwich, tuna on white bread with lettuce and tomato",
          "url": "https://fdc.nal.usda.gov/food-details/170299/nutrients",
          "claim": "DBB-sandwich-ham-tuna"

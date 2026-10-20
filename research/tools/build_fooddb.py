@@ -58,7 +58,41 @@ GI_SUPP = {
  "a1_tomato_soup": (52, A1 + " row 1555: Tomato soup, condensed, prepared with water (Campbell's), 52 ± 4, 10 subjects, single test"),
  "a1_dried_figs": (61, A1 + " row 979: Figs, dried, tenderised (Dessert Maid), 61 ± 6, 10 subjects, single test"),
  "a1_raisins": (64, A1 + " row 1018: Raisins (Canada), 64 ± 11, 6 subjects, single test; sultanas: printed mean of three studies 57 (rows 1029-1031)"),
+ # ---- Data round 3 (2026-10-19): every food with > 10 g available carbohydrate per serving and no GI was checked
+ # against A1/A2 (dc08-1239_1/_2.pdf, pdftotext -raw) and the 2021 edition: Atkinson FS, Brand-Miller JC,
+ # Foster-Powell K, Buyken AE, Goletzke J, "International tables of glycemic index and glycemic load values 2021",
+ # AJCN 114:1625 (PMID 34258626). The publisher page returned HTTP 403; the online supplement was read as PDF
+ # (Supplemental Tables 1 and 2, mirrored at nutritotal.com.br/pro/wp-content/uploads/2021/09/Tabela1_IG.pdf and
+ # Tabela2_IG.pdf; header: "Online Supplemental Material - Atkinson FS ... 2021"). Table 1 = ISO 26642 method,
+ # >= 10 healthy adults; Table 2 = less robust methods. Rows are quoted as read. Details: VARIANTS-DONE.md round 3.
+ "pizza_healthy": (43, "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"),
+ "a1_burgers": (66, A1 + " rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"),
+ "a1_pita": (68, A1 + " row 295: Pita bread, white, mini (UK), 68 ± 5, 10 subjects; listed again in Atkinson 2021 Suppl. Table 1 row 347 (ISO method)"),
+ "a1_wheat_tortilla": (30, A1 + " row 1845: Wheat tortilla (Mexico), 30 on the glucose scale (43 ± 7 on the bread scale), 8 subjects, single test; the 2021 edition lists it in Suppl. Table 2 because of the small number; no white flour wrap was tested"),
+ "white_bread_sub": (75, "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, 75 ± 2, mean of multiple studies. Nearly all the carbohydrate in a sub is the white roll, so the white-bread GI is used (our calculation, level C). Whole sandwiches tested on white bread vary with the filling: chicken tandoori on a white French roll 78 ± 7, a white roll with cheese 50 ± 5, white toast with cheddar 35 ± 2 (Suppl. Table A1 rows 1259, 1264, 1270)"),
+ "milk_in_coffee": (39, "Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, 39 ± 3, mean of multiple studies. All the carbohydrate in this drink is the milk's lactose (USDA espresso has 0 g), so the milk's GI is used (our calculation, level C; the latte made with 2% milk already gets it the same way)"),
+ "t21_kefir": (36, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 933: Kefir, low-fat, plain (Lifeway Foods, USA), 36 ± 9, 10 subjects: the same product as the USDA record"),
+ "t21_yog_natural": (17, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1046: No Added Sugar Natural yoghurt (Tamar Valley Dairy, Australia), 17 ± 2, 10 subjects (fat level not stated); Atkinson 2008 A1 row 892, fat-free natural yoghurt, 19 ± 5"),
+ "t21_yog_lowfat": (35, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1047: Yoghurt, low fat, natural (UK), 35 ± 10, 9 subjects, single test"),
+ "t21_croissant": (56, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Croissant, mean of two foods 56 (row 22 all-butter croissant, Australia, 45 ± 6; row 23 croissant, Oman, 67 ± 2); the two tests differ, so the croissant type matters"),
+ "t21_mashed": (79, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Mashed potato, mean of five studies 79 (rows 1861-1865, 73 to 91)"),
+ "t21_flav_milk": (29, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Milk, reduced- or low-fat, flavored, mean of seven foods 29 (chocolate, strawberry, coffee and malt milks, Australia, 24 to 37); our record is a reduced-fat chocolate milk"),
+ "t21_smoothie": (39, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 123: Smoothie, strawberry and banana (Innocent, UK), 39 ± 4, 10 subjects: a fruit-only smoothie like the USDA record (Naked Juice strawberry-banana); smoothies, mean of nine foods 38"),
+ "t21_mandarin": (52, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1140: Mandarin orange (Citrus reticulata), Italy, 52 ± 8, 9 subjects, 25 g carbohydrate portions, single test"),
+ "t21_rye": (60, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Rye breads, mean of 13 foods 60; single rye breads differ by type (sourdough rye 48 ± 5, pumpernickel 49 ± 4, rye-wheat sourdough 62 ± 4)"),
+ "t21_iced_tea": (74, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 89: Ice Lemon Tea, ready-to-drink black tea with lemon flavor (F&N, Singapore), 74 ± 7, 14 subjects; Estathé lemon iced tea (Italy, row 91) 72 ± 6, 9 subjects"),
+ "t21_peach": (76, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1155: Peach (Prunus persica), Italy, 76 ± 9, 9 subjects, 25 g carbohydrate portions, single test (the only raw peach tested; canned peaches gave 30-64 in Atkinson 2008 A1 rows 1000-1005)"),
+ "t21_pear": (33, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1161: Pear, Williams, raw, ripe/soft (Australia), 33 ± 4, 10 subjects; under-ripe/crunchy 24 ± 3 (row 1160)"),
+ "t21_blueberries": (53, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1092 (= Atkinson 2008 A1 row 965): Blueberries, wild (Canada), 53 ± 7, 10 subjects, bread reference; wild, not cultivated blueberries: the nearest tested food"),
+ "t21_white_choc": (41, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Chocolate, white, mean of four studies 41 (rows 1598-1601, 34 to 44)"),
+ "a1_choc_cake": (38, A1 + " row 4: Chocolate cake made from packet mix with chocolate frosting (Betty Crocker), 38 ± 3, 10 subjects, single test"),
+ "a1_hot_choc_water": (51, A1 + " row 85: Complete Hot Chocolate mix made with hot water (Nestlé, Australia), 51 ± 3, 10 subjects, single test"),
 }
+# Data round 3: GI keys used only to override a builder option (opt(..., gi=KEY)); see build_variants.build_option.
+def gi_lookup(key):
+    if key in GI_SUPP: return GI_SUPP[key]
+    gv, gl = GI[key]
+    return gv, "Atkinson 2008 (PMC2584181) Table 1: %s, mean of multiple studies" % gl
 
 def fold(s):
     """The app's fold() (parse.ts): lower case, strip diacritics, đ → d, single spaces."""

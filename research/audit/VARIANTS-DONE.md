@@ -184,3 +184,112 @@ Backup of every touched file: `backups/20261019-142350-data2/`. Build: `python -
 2. Tuna default water vs oil (see above).
 3. Kebab bread: weighed Italian kebabs carry ≈ 100 g of bread; we keep USDA's 60 g pita.
 4. Medica sugar is a legal minimum; a pack label would settle it.
+
+## Data round 3 (2026-10-19): kebab vs the weighed study, GI for pizza and every carb food
+
+Backup of every touched file: `backups/20261019-191951-data3/`. Files changed: `research/tools/build_fooddb.py` (GI rows, `gi_lookup`), `research/tools/build_variants.py` (builder option GI override), `research/tools/fooddb_spec.py`, `app/src/v4/foodData.test.ts`, `app/src/v4/variants.test.ts`, this file. Nothing deleted, nothing committed, no app build.
+
+**The build was NOT run into the project.** `python -I research/tools/build_fooddb.py build` was refused by the permission system (it writes `research/fooddb.json` and `app/src/v4/food/fooddb.json`). A dry run of exactly the same steps, writing only to the session scratchpad, gave `fails 0` (gate passes; 50 variants, 7 builders, 11,236 combinations). Against that dry JSON: `npx tsc --noEmit -p .` clean, `npx vitest run` **27 files, 402/402**. Against the stale project JSON, 11 kebab/GI tests fail until the build runs. **Next step: run the build, then `npx vitest run`.**
+
+### 1. Kebab: recalibrated to the composition the study measured, not to "226 kcal"
+
+Panozzo et al. 2015, Ital J Food Saf 4:4535 (PDF re-read; Table 1 with `pdftotext -raw`):
+- Table 1 (% of the kebab, Verona / Vicenza, mean ± SD): meat 34.8 ± 10.2 / 39.5 ± 6.8; bread 26.9 ± 3.4 / 22.5 ± 6.1; vegetables 24.7 ± 9.1 / 25.8 ± 7.4; sauces 13.6 ± 2.7 / 12.2 ± 4.5.
+- Table 2 / Table 4 / text: energy 226.1 ± 25.7 kcal/100 g; fat 8.6 g (town SD 1.8); protein 12.95 ± 2.12 g; carbohydrate 11.3 ± 3.7 g (starch only, enzymatic AOAC 979.10); fibre 1.15 g; 402 g serving = 900.9 kcal, 34.7 g fat, 51.7 g protein, 43.8 g carbohydrate.
+- **The 226 is gross energy.** Methods: "Gross energy was measured by combustion of 1 g of sample … in a bomb calorimeter". Food labels and USDA give metabolizable (Atwater) energy, which is lower (protein burns at about 5.65 kcal/g but gives the body 4). The study's own macros give 12.95×4 + 8.6×9 + 11.3×4 + 1.15×2 = **177 kcal/100 g** (town and meat-group means 170–187; sugars were not measured, so a few kcal more). Matching 226 would overstate the energy by about a quarter. So the target was the measured **composition**.
+- Our old default (330 g, 174 kcal/100 g) was about right in energy, but by accident: half the study's fat (4.4 g vs 8.6 g/100 g), half its vegetables (50 g vs about 100 g) and too little sauce (30 g vs about 52 g).
+
+| part | before | after | why |
+|---|---|---|---|
+| chicken | USDA 172388 thigh meat only (8.2% fat), 150 g | **USDA 173625 thigh meat and skin** (14.7% fat), 150 g | The study: collagen "increases as a function of the amount of skin that is inserted in the Döner preparation". Without skin, the measured 8.6 g fat/100 g cannot be reached at the measured sauce share. |
+| vegetables | tomato 30 + onion 20 = 50 g | **tomato 40 + onion 25 + lettuce 30 (now on) = 95 g** | 25.25% × 402 g = 101 g. The split between them is ours; lettuce stands in for the study's salad and cabbage. |
+| sauce | yogurt 30 g | **yogurt 38 g + mayonnaise 14 g (now on) = 52 g** | 12.9% × 402 g = 52 g. The study: "the sauces used, like mayonnaise and ketchup, were bought at the supermarket"; the sauce pH points to "frequent use of yoghurt". The yogurt/mayo split is ours. |
+| pita | 100 g | 100 g | unchanged (24.7% × 402 g) |
+
+- **Result** (default chicken in pita): 397 g, **192 kcal/100 g, 762 kcal**; fat 8.85, protein 11.7 g/100 g. Fat and protein sit inside the study's mean ± SD. The energy lies between the study's Atwater value (177) and its gross value (226). The meat, bread, vegetable and sauce shares also sit inside the study's ranges.
+- Beef/veal pita: 820 kcal. Chicken wrap: 708 kcal.
+- The presets now include lettuce and mayo. The builder note in the app explains gross vs usable energy in one sentence.
+- Test: `variants.test.ts` "the default kebab sits inside the weighed Italian study" (serving 274–618 g; fat 8.6 ± 1.8; protein 12.95 ± 2.12; kcal between 170 and 226.1; the four shares inside Table 1's mean ± SD).
+
+### 2. GI: pizza and every food with > 10 g available carbohydrate
+
+**Sources read:**
+- Atkinson 2008 Suppl. Tables A1 (healthy) and A2 (`dc08-1239_1/_2.pdf`, `pdftotext -raw`).
+- The 2021 edition, Atkinson FS, Brand-Miller JC, Foster-Powell K, Buyken AE, Goletzke J. AJCN 114:1625 (PMID 34258626):
+  - The OUP page returned HTTP 403.
+  - The online supplement was read as PDF from a mirror: `nutritotal.com.br/pro/wp-content/uploads/2021/09/Tabela1_IG.pdf` and `Tabela2_IG.pdf`. The header reads "Online Supplemental Material - Atkinson FS … 2021".
+  - Suppl. Table 1 follows ISO 26642 (≥ 10 healthy adults). Suppl. Table 2 uses less robust methods.
+- The 2021 edition has no mixed-meal section: no pizza chain or hamburger rows.
+
+**Decision: the measured whole-food GI wins.**
+- Where a whole food of the same kind was tested in healthy people, the builder uses that value for every combination.
+  - Mechanism: `opt(..., gi=KEY, gi_why=...)` in the spec. Each carbohydrate part counts at the whole-food GI, so the app's unchanged mixing rule gives the same number. The reason is appended to the option's "How do we know?" text.
+- Otherwise the GI is the carbohydrate-weighted mean of parts that have tested GIs (level C). It is null if any part with ≥ 1 g carbohydrate has none. That is the existing rule (`CARB_MIN`), and `parse.ts` is unchanged.
+
+| food | GI | rows |
+|---|---|---|
+| **pizza** (base and all 5 presets, every topping) | **43** | Healthy whole-pizza tests: A1 1222–1224 Pizza Hut Super Supreme pan 36 ± 6, thin 30 ± 4, Vegetarian Supreme thin 49 ± 6; 2021 T2 3761 ham/mozzarella/onion pizza (Lebanon) 56 ± 7, 12 subjects. Mean 43, range 30–56. Not used: whole-wheat pizza (A1 1225, 54); people with diabetes (A2 2248 cheese pizza 60, 2249 plain dough 80). No plain cheese pizza was tested in healthy people. The dough alone (2021 T1 68, Boboli base) is 52. |
+| **burger** (all 5 types, every extra) | **66** | A1 1175–1178: hamburger 66 ± 8, lean beef burger with cheese 66 ± 4, Fillet-O-Fish 66 ± 10, McChicken 66 ± 3 (10 subjects each). The tested hamburger had ketchup and onion, so extras count at 66. |
+| **sandwich** (ham, cold-cut, tuna sub; toast) | **75** | Table 1 white wheat bread 75 ± 2. No sub was tested; the roll carries the carbohydrate (level C). Whole sandwiches on white vary with the filling: A1 1259 tandoori chicken on a white French roll 78 ± 7; 1264 white roll with cheese 50 ± 5; 1270 white toast with cheddar 35 ± 2. |
+| kebab pita / wrap (parts) | 68 / 30 | A1 295 white pita (UK) 68 ± 5 (also 2021 T1 347); A1 1845 wheat tortilla (Mexico) 30, 8 subjects (2021 T2). |
+| kefir | 36 | 2021 T1 933 Lifeway low-fat plain kefir 36 ± 9: the same product as the USDA record |
+| yogurt, plain / low-fat | 17 / 35 | 2021 T1 1046 natural yoghurt, no added sugar 17 ± 2; 1047 low-fat natural (UK) 35 ± 10, 9 subjects |
+| croissant | 56 | 2021 T1 "Croissant, mean of two foods 56" (45 ± 6 and 67 ± 2) |
+| mashed potato | 79 | 2021 T1 "Mashed potato, mean of five studies 79" (73–91) |
+| chocolate milk | 29 | 2021 T1 "Milk, reduced- or low-fat, flavored, mean of seven foods 29" |
+| smoothie | 39 | 2021 T1 123 Innocent strawberry & banana 39 ± 4 (class mean of 9: 38) |
+| mandarin | 52 | 2021 T1 1140, Italy, 52 ± 8, 9 subjects |
+| rye bread | 60 | 2021 T1 "Rye breads, mean of 13 foods 60" |
+| iced tea | 74 | 2021 T1 89 RTD black tea with lemon (Singapore) 74 ± 7, 14 subjects; Estathé lemon 72 ± 6 |
+| peach | 76 | 2021 T1 1155, Italy, 76 ± 9, 9 subjects (the only raw peach; canned 30–64) |
+| pear | 33 | 2021 T1 1161 Williams, ripe 33 ± 4 (unripe 24 ± 3) |
+| blueberries | 53 | 2021 T1 1092 = A1 965, wild blueberries 53 ± 7 (nearest tested: wild, not cultivated) |
+| latte, cappuccino | 39 | Table 1 full-fat milk 39 ± 3: all their carbohydrate is milk lactose. The 2% and skim variants already had their milk's GI, so the plain drink did not. |
+| white chocolate (variant) | 41 | 2021 T1 "Chocolate, white, mean of four studies 41" |
+| chocolate cake (variant) | 38 | A1 4, packet-mix chocolate cake with frosting 38 ± 3 |
+| hot chocolate with water (variant) | 51 | A1 85, Nestlé hot chocolate mix made with hot water 51 ± 3 |
+| bread roll (variant) | 75 | inherits white bread (Table 1 class) |
+
+**Still no GI (> 10 g available carbohydrate). This allow-list, with its reasons, is in `variants.test.ts`, and the test fails on any new gap:**
+- **beer**: 2021 T1 has two beers, 119 ± 10 and 89 ± 2 (mean 104). Not adopted: the two disagree by 30, and a beer glucose curve would change the alcohol story and its tests. **Owner decision.** Alcohol-free beer and radler: no test.
+- **kebab** (every combination with tomato or onion): pita, wrap and yogurt have tested GIs, but tomato (1.1 g carbohydrate) and onion (1.9 g) have none, and the rule needs every part with ≥ 1 g. **Proposal (parse.ts, not my file):** set the builder `CARB_MIN` to 3 g in both `parse.ts` and `build_variants.py`, the same 3 g that `macros()` already uses for a meal ("no meaningful sugar response"). The default kebab would then get 66, from pita 68 and yogurt 17. A test proves the mechanism today: a kebab without tomato and onion shows 66.
+- **burek** (all four): no burek or phyllo pie was tested. The nearest disagree: fatayer pastries 78–80 (2021 T2, Qatar, 19 subjects) vs puff pastry 47 and 56 (2021 T1).
+- **Other foods:**
+  - hot chocolate made with milk: no test;
+  - buttermilk: not listed;
+  - dessert wine: no test;
+  - protein shake: the powder is untested;
+  - baguette and the baguette sandwich: tests disagree, as decided in the 2026-10-17 audit;
+  - saltine crackers: not tested;
+  - US pancakes: 46–102 by recipe;
+  - bean soup with or without sausage: no test;
+  - chocolate ice cream: only one low-fat brand was tested;
+  - cheesecake, strudel and cream cake: no test;
+  - sub with ketchup: ketchup was never tested.
+- **What the app shows then** (`foodProduct.ts`, `CalmBar`):
+  - a single food: "Its glycemic index has not been measured, so we don't draw a sugar curve." and "Blood sugar: not measured";
+  - in a meal: "The glycemic index of … has not been measured, so the sugar curve leaves it out: the real rise is likely higher."
+  - This is honest: there is no invented curve, and the user is told that a missing part means a higher real rise.
+
+### Tests (all in my files)
+
+- `variants.test.ts`, new block "data round 3" (7 tests):
+  - GI coverage over every food, variant, preset and one-tap builder change, with the allow-list;
+  - the allow-list is not stale;
+  - pizza 43 everywhere;
+  - burger 66 everywhere;
+  - subs 75, kebab parts 68/30 and a kebab without tomato/onion at 66;
+  - the new GI values;
+  - the kebab inside the study.
+- Golden updates:
+  - kebab 397 g;
+  - "kebab s teletinom" now has the key `kebab_pita_beef_tomato_onion_lettuce_yogurt_mayo`;
+  - the kebab name test.
+- `foodData.test.ts`: kebab 397 g / 762 kcal.
+
+### Open (owner)
+
+1. **Run the build** (`python -I research/tools/build_fooddb.py build`). It was refused by the permission system for me; the dry run is clean.
+2. Beer GI 104 (two tests, 89 and 119): adopt or keep it null?
+3. Builder `CARB_MIN` 1 → 3 g (`parse.ts` + `build_variants.py`), so that the kebab gets its GI.
+4. Kebab chicken skin: no döner-skewer label could be read (REWE pages 403; Open Food Facts search down). A label would make the meat record firmer than "thigh with skin".

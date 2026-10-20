@@ -13,7 +13,8 @@ const HEIGHTS: Record<Profile['sex'], [string, number][]> = {
 const BUILDS: [string, number][] = [['Slim', 20], ['Average', 23.5], ['Heavier', 27.5], ['Heavy', 32]];
 const AGES: [string, number][] = [['18–29', 25], ['30–44', 37], ['45–59', 52], ['60+', 68]];
 
-export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; setProfile: (p: Profile) => void; onNext: () => void }) {
+/** `inline` (UX calm 2026-10-19): inside the "Make it you" drawer, no step label or big title, "Done" instead of "Next". */
+export function BodyStart({ profile, setProfile, onNext, inline = false }: { profile: Profile; setProfile: (p: Profile) => void; onNext: () => void; inline?: boolean }) {
   const [build, setBuild] = useState<number | null>(null);
   const [exact, setExact] = useState(false);
   const weightFor = (h: number, bmi: number) => Math.round(bmi * (h / 100) ** 2);
@@ -30,9 +31,9 @@ export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; s
     setProfile({ ...profile, sex, heightCm: h, weightKg: weightFor(h, build ?? 23.5), ...(sex === 'male' ? { oralContraceptives: false, latePregnancy: false } : {}) });
   };
   return (
-    <div className="startbox body">
-      <div className="step">Step 1 of 2 · You</div>
-      <h1>Tell us about you</h1>
+    <div className={`startbox body ${inline ? 'inline' : ''}`}>
+      {!inline && <div className="step">Step 1 of 2 · You</div>}
+      {!inline && <h1>Tell us about you</h1>}
       <p className="then">Tap what fits you best. It changes how strongly food and drink affect your body.</p>
 
       <div className="pick">
@@ -66,7 +67,7 @@ export function BodyStart({ profile, setProfile, onNext }: { profile: Profile; s
         </div>
       )}
       <div className="summary">{profile.sex === 'female' ? 'Woman' : 'Man'} · {profile.ageY} years · {profile.heightCm} cm · {profile.weightKg} kg{profile.city ? ` · ${profile.city.split(',')[0]}` : ''}</div>
-      <button className="primary big" onClick={onNext}>Next: what did you have?</button>
+      <button className="primary big" onClick={onNext}>{inline ? 'Done' : 'Next: what did you have?'}</button>
       <p className="fine">Free · An educational simulation, not medical advice · Nothing you enter leaves your device</p>
     </div>
   );

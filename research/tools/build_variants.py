@@ -250,12 +250,18 @@ def build_option(ctx, bid, o):
         if comp is None: return None
         grams = comp["serving"]["grams"] if o.get("grams") is None else ctx.grams(comp, o["grams"], where)
         rows, recipe = part_claim_rows([(comp, grams)]), None
+    gi_text_extra = ""
+    if o.get("gi"):  # data round 3: the GI this part counts at inside this builder (see fooddb_spec.opt)
+        if not o.get("gi_why"): fail("%s: a GI override needs gi_why" % where)
+        gv, gs = ctx.B.gi_lookup(o["gi"])
+        comp = dict(comp, gi=gv, giSource=gs)
+        gi_text_extra = " Blood sugar: %s, GI %d." % (o["gi_why"], gv)
     rng = o.get("rng")
     if rng and not (rng[0] <= grams + 1e-6 and grams - 1e-6 <= rng[1]): fail("%s: %g g outside its range %r" % (where, grams, rng))
     if len(o["chip"]) > 16 or HR.search(o["chip"]): fail("%s: chip %r" % (where, o["chip"]))
     off = atwater(comp["p"])
     if abs(off) > 0.17 and comp["fdc"] not in ATWATER_EXEMPT: warn("%s: Atwater %+.0f%% (USDA food-specific factors)" % (where, 100 * off))
-    src = [{"fields": ["all"], "level": o.get("level", "C"), "text": o["src"], "cite": o.get("cite") or (
+    src = [{"fields": ["all"], "level": o.get("level", "C"), "text": o["src"] + gi_text_extra, "cite": o.get("cite") or (
         "USDA FoodData Central, SR Legacy %s: %s" % (comp["fdc"], comp["desc"]) if comp["fdc"] else "Our recipe from USDA SR Legacy parts"),
         "url": o.get("url") or (usda_url(comp["fdc"]) if comp["fdc"] else "https://fdc.nal.usda.gov/"), "claim": "DBB-%s-%s" % (bid, o["k"])}] + rows
     return {"k": o["k"], "chip": o["chip"], "name": o["name"], "grams": round(grams, 1), "rng": list(rng) if rng else None,

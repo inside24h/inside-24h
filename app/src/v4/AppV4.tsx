@@ -61,6 +61,22 @@ import { makeFoodProduct } from './food/foodProduct';
 // Water each drink brings (ml): espresso 30 ml shot, cola 330 ml can (≈ 89% water), water 250 ml glass.
 const WATER_ML: Record<string, number> = { espresso: 29, cola: 295, water: 250 };
 const PROFILE_KEY = 'i24-profile';
+// UX calm 2026-10-19: the first visit no longer starts with two full screens (about you, then choose). The body is
+// visible at once with one question under it; "about you" became a small "Personalize" prompt a few seconds into the
+// first simulation (and a link in the start sheet). Set to true to bring back the old two-step start screens.
+const LEGACY_START = false;
+const PERSONAL_KEY = 'i24-personalized'; // '1' once the person personalized or said "not now"
+const NUDGE_AFTER_MS = 9000;
+const START_TILES = [
+  { q: 'cola', name: 'Cola', sub: '330 ml can', color: '#2a120a' },
+  { q: 'espresso', name: 'Espresso', sub: '1 shot', color: '#2b1608' },
+  { q: 'beer', name: 'Beer', sub: '0.5 l', color: '#e5a823' },
+  { q: 'pizza', name: 'Pizza', sub: '1 slice', color: '#e8b04a', solid: true },
+  { q: '1 banana', name: 'Banana', sub: '1 medium', color: '#f1de8c', solid: true },
+  { q: 'water', name: 'Water', sub: '250 ml glass', color: '#cfe8ff' },
+  { q: '1 apple', name: 'Apple', sub: '1 medium', color: '#c8e06a', solid: true },
+  { q: 'glass of milk', name: 'Milk', sub: '250 ml glass', color: '#f4f1ea' },
+];
 const CMP_STOPS = [0, 5, 20, 45, 90, 180, 360, 720, 1440];
 const CMP_SHORT = [0, 20, 90, 1440];
 const T50_OF: Record<string, number> = { espresso: 13, cola: 32, water: 13 }; // gastric half-times of the curated models
@@ -172,13 +188,17 @@ export default function AppV4() {
   useEffect(() => { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* fine */ } }, [profile]);
   const [selected, setSelected] = useState<string | null>(HASH_ORGAN);
   const [evidence, setEvidence] = useState<Evidence | null>(null);
-  const [panel, setPanel] = useState<'body' | 'about' | 'every' | 'rules' | 'colours' | 'support' | 'pro' | 'method' | null>(
+  const [panel, setPanel] = useState<'body' | 'you' | 'about' | 'every' | 'rules' | 'colours' | 'support' | 'pro' | 'method' | null>(
     (['body', 'about', 'every', 'rules', 'colours', 'support', 'pro'] as const).find((x) => x === HASH.get('panel')) ?? null);
   const [sceneError, setSceneError] = useState<unknown>(null);
   const [touched, setTouched] = useState(false);
   const [productId, setProductId] = useState(HASH_P);
   const [mode, setMode] = useState<'simple' | 'detailed'>(HASH.get('view') === 'detailed' ? 'detailed' : 'simple');
-  const [bodyAsked, setBodyAsked] = useState(() => { if (LINK_MISS || HASH_T !== null || LINK_FOOD) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
+  const [bodyAsked, setBodyAsked] = useState(() => { if (!LEGACY_START || LINK_MISS || HASH_T !== null || LINK_FOOD) return true; try { return !!localStorage.getItem(PROFILE_KEY); } catch { return false; } });
+  // "Personalize": offered once, unobtrusively, a few seconds into the first simulation (never a blocking screen)
+  const [personalized, setPersonalized] = useState(() => { try { return localStorage.getItem(PERSONAL_KEY) === '1'; } catch { return false; } });
+  const markPersonal = useCallback(() => { setPersonalized(true); try { localStorage.setItem(PERSONAL_KEY, '1'); } catch { /* storage blocked */ } }, []);
+  const [nudge, setNudge] = useState(false);
   const [habits, setHabits] = useState<Habits>({});
   const [foodParts, setFoodParts] = useState<Part[]>(HASH_Q);
   // "Over how long?" (PACING, 2026-10-19): minutes the servings are spread over; 0 = all at once (every older link).
@@ -207,12 +227,19 @@ export default function AppV4() {
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     let idle = 0;
     const go = () => { if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setShow3d(true), { timeout: 2000 }); else setShow3d(true); };
-    const id = setTimeout(go, bodyAsked ? 0 : 2500);
+    const id = setTimeout(go, LEGACY_START && !bodyAsked ? 2500 : 0); // the body is visible on the first screen now
     return () => { clearTimeout(id); if (idle) w.cancelIdleCallback?.(idle); };
   }, [show3d, started, bodyAsked]);
   // Calm = the default for everyone: body, one sentence, play. 'Full' adds the lights, the trip and the steps.
   const [calm, setCalm] = useState(HASH.get('view') !== 'full');
   const calmNow = mode === 'simple' && calm;
+  // the "Personalize" prompt: a few seconds after the first simulation starts; gone for good once used or dismissed
+  useEffect(() => {
+    if (!started || personalized || nudge) return;
+    const id = setTimeout(() => setNudge(true), NUDGE_AFTER_MS);
+    return () => clearTimeout(id);
+  }, [started, personalized, nudge]);
+  useEffect(() => { if (panel === 'body') markPersonal(); }, [panel, markPersonal]); // found "Your body" on their own
   const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string } | null>(null);
   const [handle, setHandle] = useState(() => { try { return localStorage.getItem('i24-handle') || '@inside24h'; } catch { return '@inside24h'; } });
   const recRef = useRef(false);
@@ -289,6 +316,7 @@ export default function AppV4() {
   };
   // "Which tea?" stays highlighted until the person picks (the text named several foods)
   const [asking, setAsking] = useState(LINK_BASE.length === 1 && !!LINK_BASE[0].ask);
+  const [linkChosen, setLinkChosen] = useState(!!(LINK.v || LINK.on || LINK.add)); // a link that names the kind opens with the pill
   // the 1-serving parts and the named sizes of a single food ("How much?" shows Slice · Half · Whole)
   const baseParts = portionBase ?? currentParts;
   const sizes = baseParts.length === 1 ? sizesOf(baseParts[0].food) : null;
@@ -380,6 +408,7 @@ export default function AppV4() {
   const changeMeal = (parts: Part[]) => pickFood(parts, true);
   const pickFood = (parts: Part[], keepPace: boolean, said = 0) => {
     if (!parts.length) return;
+    setLinkChosen(false);
     // One food at another amount ("3 piva", "2 slices of pizza", "200 g riže"): "How much?" counts from ONE serving,
     // as for a link (#q=beer&n=3). Before, the typed amount became the base, so "3 beers" showed "0.5 l" as pressed and
     // "0.3 l" gave 0.6 × 3 beers; "Whole" on 2 slices gave 16 slices (QA 2026-10-19).
@@ -600,7 +629,7 @@ export default function AppV4() {
   const menuBox = useRef<HTMLElement>(null), ansBox = useRef<HTMLDivElement>(null);
   // the two start screens are modal too: Tab stays inside them (not in the app behind); Esc does nothing (no way back yet)
   const startBox = useRef<HTMLDivElement>(null);
-  useModal(startBox, !started, () => {});
+  useModal(startBox, LEGACY_START && !started, () => {}); // the new start sheet is part of the page, not a modal
   useModal(shareBox, !!share && share.state !== 'rec', () => setShare(null));
   useModal(noticeBox, !!notice, () => setNotice(null));
   useModal(menuBox, menuOpen, () => setMenuOpen(false));
@@ -617,14 +646,16 @@ export default function AppV4() {
   const stageText = `${sinceText(minute, lower)}${stageWhere ? `: ${stageWhere.replace(' · ', ' ')}` : ''}. ${chapter.title}.`;
 
   return (
-    <div className={`v4 ${calmNow ? 'calmlay' : ''} ${ansOpen && calmNow ? 'ansopen' : ''}`}>
+    <div className={`v4 ${calmNow || !started ? 'calmlay' : ''} ${!started ? 'cold' : ''} ${ansOpen && calmNow ? 'ansopen' : ''}`}>
       <header className="top">
+        {/* keyboard: the first Tab stop jumps straight to the one question (shown only while focused) */}
+        {!started && <button className="skipq" onClick={() => document.querySelector<HTMLInputElement>('.startsheet input')?.focus()}>Skip to the search</button>}
         <button className="brand" title="Home" aria-label="Inside 24h, go to the start page" onClick={() => {
           // home = the "what did you have?" screen (your body stays remembered; "← Back to you" edits it)
           setStarted(false); setPlaying(false); setPanel(null); setEvidence(null); setCompare(null); setShare(null); setSelected(null);
           try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch { /* sandboxed */ }
         }}>Inside <em>24h</em></button>
-        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={changeMeal} asking={asking} onSwitch={switchFood}
+        <div className="topsearch">{started && <MealBar parts={currentParts} current={PRODUCT.name} onPick={chooseFood} onChange={changeMeal} asking={asking} onSwitch={switchFood} chosen={linkChosen}
           pace={paceable ? { over: overEff, set: (v) => { setOver(v); setPaceTouched(true); }, hot: paceMatters(currentParts) && !overEff && !paceTouched } : undefined} />}</div>
         <div className="topactions">
           <div className="seg2 mode" role="group" aria-label="View">
@@ -637,7 +668,8 @@ export default function AppV4() {
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
           <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>coming soon</small></button>
           <button className="ghost hdr support" onClick={() => setPanel('support')}><span aria-hidden="true">♥ </span>Support</button>
-          <button className="primary" onClick={() => setPanel('body')}>Your body</button>
+          {/* first screen: one obvious action (the start sheet), so "Your body" steps back (phones: "Personalize" in the sheet) */}
+          <button className={started ? 'primary' : 'ghost hdr yourbody'} onClick={() => setPanel('body')}>Your body</button>
           {/* phones: everything that doesn't fit the header, in one menu */}
           <button className="menubtn" aria-label="Menu" aria-expanded={menuOpen} aria-controls="topmenu" onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
         </div>
@@ -658,8 +690,8 @@ export default function AppV4() {
         </>}
       </header>
 
-      <main className={`grid ${mode} ${calmNow ? 'calm' : ''}`}>
-        {mode === 'simple' && !calmNow && (
+      <main className={`grid ${started ? mode : 'simple'} ${calmNow || !started ? 'calm' : ''}`}>
+        {started && mode === 'simple' && !calmNow && (
           <StoryPanel story={story} chapterIdx={chapterIdx} minute={minute} vitals={vYou} profile={profile} name={PRODUCT.name}
             productId={habitId} habit={habit} setHabit={(h) => setHabits({ ...habits, [habitId]: h })}
             clock={hhmm(profile.drinkAtMin + minute)} since={sinceText(minute, lower)}
@@ -668,7 +700,7 @@ export default function AppV4() {
             onPrev={() => goChapter(chapterIdx - 1)} onNext={() => goChapter(chapterIdx + 1)}
             verdict={verdict(systems, profile.drinkAtMin)} passport={answersBlock} />
         )}
-        {mode === 'detailed' && <section className="now" aria-label="What is happening now">
+        {started && mode === 'detailed' && <section className="now" aria-label="What is happening now">
           <div className="clock">{hhmm(profile.drinkAtMin + minute)}</div>
           <div className="since">{sinceText(minute, lower)}</div>
           <div className="stagelabel" aria-live="polite">{head.label}</div>
@@ -695,23 +727,32 @@ export default function AppV4() {
                 <ExposeState into={r3f} />
                 <Suspense fallback={null}>
                   {cmpRec ? <CompareScene a={cmpRec.a} b={cmpRec.b} minute={minutesFromU(cmpRec.u)} /> : <>
-                  <Body glow={mode === 'simple' ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
-                    liquid={mode === 'simple' ? softenTubes(story.liquid(minute), !!built.route) : {}} liquidColor={story.color} onBounds={setBounds}
-                    dim={keepOrgans.length ? 0.32 : 1} keep={keepOrgans} />
-                  {mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}
-                  {mode === 'simple' && (built.route
+                  <Body glow={mode === 'simple' || !started ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
+                    liquid={mode === 'simple' && started ? softenTubes(story.liquid(minute), !!built.route) : {}} liquidColor={story.color} onBounds={setBounds}
+                    dim={keepOrgans.length && started ? 0.32 : 1} keep={keepOrgans} />
+                  {/* first screen (nothing chosen yet): the body on its own, no liquid */}
+                  {started && mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}
+                  {started && mode === 'simple' && (built.route
                     ? <LiquidRoute route={built.route} color={story.color} minute={minute} labels={share?.state !== 'rec'} maxLabels={calmNow ? 1 : 3} />
                     : <FlowPaths bounds={bounds} color={story.color} flows={story.flows(minute)} toKidneys={story.toKidneys} />)}
                   </>}
                 </Suspense>
                 <OrbitControls makeDefault target={[0, 1.15, 0]} enablePan={false} minDistance={0.3} maxDistance={3.2} />
-                {mode === 'simple' && !cmpRec && <CameraRig focus={share?.state === 'rec' ? liquidFocus ?? 'torso' : selected ?? (wholeBody ? null : liquidFocus ?? chapter.focus)} bounds={bounds} minDist={share?.state === 'rec' ? 1.05 : !selected && liquidFocus ? 0.95 : 0.5} flightKey={`${productId}-${chapterIdx}-${selected}-${flightKey}`} />}
+                {mode === 'simple' && !cmpRec && <CameraRig focus={share?.state === 'rec' ? liquidFocus ?? 'torso' : selected ?? (wholeBody || !started ? null : liquidFocus ?? chapter.focus)} bounds={bounds} minDist={share?.state === 'rec' ? 1.05 : !selected && liquidFocus ? 0.95 : 0.5} flightKey={`${productId}-${chapterIdx}-${selected}-${flightKey}`} />}
               </SafeCanvas></Suspense>
             )}
           </ErrorBoundary>
           {/* after the canvas on purpose: CSS places the canvas wrapper as the stage's first child (.stage > div:first-child) */}
           <p id="stage-now" className="sr" aria-live={playing ? 'off' : 'polite'}>{started ? stageText : ''}</p>
-          {calmNow && <>
+          {started && nudge && !personalized && !share && !compare && (
+            <div className="pnudge" aria-live="polite">
+              <button className="pngo" onClick={() => { setNudge(false); setPanel('you'); }}>
+                <span>For a typical {profile.sex === 'female' ? 'woman' : 'man'}, {profile.ageY}</span><b>Personalize<span aria-hidden="true"> →</span></b>
+              </button>
+              <button className="pnx" aria-label="Not now: keep the typical body" onClick={() => { setNudge(false); markPersonal(); }}>×</button>
+            </div>
+          )}
+          {started && calmNow && <>
             {/* phones/tablets: the answers wait in a bottom sheet so the body stays visible; desktop: a column on the right */}
             <button className="anstoggle" aria-expanded={ansOpen} aria-controls="stageanswers" onClick={() => setAnsOpen(!ansOpen)}>
               <span aria-hidden="true">💬</span> Quick answers <b>{answers.length}</b><span className="chev" aria-hidden="true">▴</span>
@@ -722,21 +763,21 @@ export default function AppV4() {
               {answersBlock}
             </div>
           </>}
-          {mode === 'simple' && !calmNow && <StatusLights systems={systems} minute={minute} onRules={() => setPanel('colours')}
+          {started && mode === 'simple' && !calmNow && <StatusLights systems={systems} minute={minute} onRules={() => setPanel('colours')}
             weather={city && weather && hyd ? {
               city: city.name, range: `${Math.round(weather.tmin)}–${Math.round(weather.tmax)} °C`, month: weather.month,
               extra: profile.airCon ? 0 : Math.round(hyd.extraPerDayMl / 50) * 50, onChange: () => setPanel('body'),
             } : undefined}
             onJump={(m, organ) => { jump(m); setSelected(organ); setFlightKey((k) => k + 1); }} />}
-          {mode === 'simple' && !calmNow && built.route && built.traits && (
+          {started && mode === 'simple' && !calmNow && built.route && built.traits && (
             <div className="stagetrip">
               <Passport compact route={built.route} minute={minute} drinkAt={profile.drinkAtMin} kind={built.traits}
                 onJump={(m, organ) => { jump(m); setSelected(organ); setWholeBody(false); setFlightKey((k) => k + 1); }} />
             </div>
           )}
-          {(mode === 'detailed' || !built.route) && <Journey steps={built.journey} unit={built.journeyUnit} minute={minute} selected={selected} onPick={setSelected} />}
+          {started && (mode === 'detailed' || !built.route) && <Journey steps={built.journey} unit={built.journeyUnit} minute={minute} selected={selected} onPick={setSelected} />}
           {!touched && <div className="hint">{isTouch() ? 'Swipe to turn · pinch to zoom · tap an organ' : 'Drag to turn · scroll to zoom · tap an organ'}</div>}
-          {mode === 'detailed' ? (
+          {!started ? null : mode === 'detailed' ? (
             <div className="legend">
               {built.legend.map((l) => <span key={l.label}><i style={{ background: l.color }} />{l.label}</span>)}
               <span className="dim">{built.dotNote}</span>
@@ -747,7 +788,7 @@ export default function AppV4() {
             </div>
           )}
           <div className="credit">Anatomy: BodyParts3D © DBCLS · CC BY 4.0</div>
-          {info && (
+          {info && started && (
             <div className="organ" role="dialog" aria-label={info.name}>
               <div className="ohead"><b>{info.name}</b><button className="x" aria-label="Close" onClick={() => setSelected(null)}>×</button></div>
               {info.lines.map((l) => <div key={l.label} className="oline"><span>{l.label}</span><b>{l.value}</b></div>)}
@@ -757,19 +798,37 @@ export default function AppV4() {
           )}
         </section>
 
-        {mode === 'detailed' && <Readings you={vYou} sim={you} twin={vTwin} profile={profile} minute={minute} vitalClaims={def.vitalClaims} name={lower}
+        {started && mode === 'detailed' && <Readings you={vYou} sim={you} twin={vTwin} profile={profile} minute={minute} vitalClaims={def.vitalClaims} name={lower}
           insulin={built.insulin} energy={built.energy} onOpen={(title, claims) => setEvidence({ title, claims })} />}
       </main>
 
-      {calmNow && (
+      {!started && !LEGACY_START && (
+        // The first screen: the body above, ONE question here. One tap on a tile (or a search) starts the simulation.
+        <section className="startsheet" aria-labelledby="start-h">
+          {missText && <MissNote text={missText} onPick={chooseFood} />}
+          <h1 id="start-h">What should we follow through your body?</h1>
+          <SmartSearch onPick={chooseFood} big /* no autofocus: focusing opens the suggestion list over the tiles */ />
+          <div className="tiles quick" role="group" aria-label="Or pick one">
+            {START_TILES.map((t) => (
+              <button key={t.q} className={`tile ${t.solid ? 'solid' : ''}`} style={{ ['--tc' as string]: t.color }} onClick={() => chooseFood(parseMeal(t.q))}
+                aria-label={`${t.name}, ${t.sub}`}>
+                <i aria-hidden="true" /><b>{t.name}</b><span>{t.sub}</span>
+              </button>
+            ))}
+          </div>
+          <p className="then">Simulated for: {profile.sex === 'female' ? 'woman' : 'man'}, {profile.ageY} ·{profile.heightCm} cm · {profile.weightKg} kg. <button className="link" onClick={() => setPanel('you')}>Personalize</button></p>
+          <p className="fine">Free · Not medical advice · Nothing leaves your device</p>
+        </section>
+      )}
+      {started && calmNow && (
         <CalmBar title={chapter.title} text={captionOf(chapterText(chapter, minute), 170)} clock={hhmm(profile.drinkAtMin + minute)} since={sinceText(minute, lower)}
           playing={playing} onPlay={togglePlay} u={u} setU={(v) => { setU(v); setPlaying(false); }} systems={systems} minute={minute}
           where={overlayRef.current?.where} onMore={() => setCalm(false)}
           eatenAt={profile.drinkAtMin} setEatenAt={(m) => setProfile({ ...profile, drinkAtMin: m })} noun={lower}
           portion={portion} onPortion={applyPortion} sizes={sizes} onRules={() => setPanel('colours')} />
       )}
-      {mode === 'simple' && !calmNow && <StatusStrips systems={systems} minute={minute} onSeek={jump} clock={(m) => hhmm(profile.drinkAtMin + m)} />}
-      {mode === 'simple' && !calmNow && (
+      {started && mode === 'simple' && !calmNow && <StatusStrips systems={systems} minute={minute} onSeek={jump} clock={(m) => hhmm(profile.drinkAtMin + m)} />}
+      {started && mode === 'simple' && !calmNow && (
         <nav className="moments" aria-label="Steps of the journey">
           <button className="play" onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'}>{playing ? '❚❚' : '▶'}</button>
           {story.chapters.map((c, i) => (
@@ -779,16 +838,16 @@ export default function AppV4() {
           ))}
         </nav>
       )}
-      {!started && !bodyAsked && (
+      {LEGACY_START && !started && !bodyAsked && (
         <div className="start" role="dialog" aria-modal="true" aria-label="Tell us about you" ref={startBox} tabIndex={-1} data-autofocus>
           <BodyStart profile={profile} setProfile={setProfile} onNext={() => setBodyAsked(true)} />
         </div>
       )}
 
-      {mode === 'detailed' && <TimelineBar u={u} minute={minute} playing={playing} togglePlay={togglePlay} setU={(v) => { setU(v); setPlaying(false); }}
+      {started && mode === 'detailed' && <TimelineBar u={u} minute={minute} playing={playing} togglePlay={togglePlay} setU={(v) => { setU(v); setPlaying(false); }}
         stages={PRODUCT.stages} stageIndex={stageIndex} jump={jump} toBed={toBed} bedLabel={hhmm(profile.bedtimeMin)} drinkAt={profile.drinkAtMin} />}
 
-      {!started && bodyAsked && (
+      {LEGACY_START && !started && bodyAsked && (
         <div className="start" role="dialog" aria-modal="true" aria-label="Choose what you ate or drank" ref={startBox} tabIndex={-1} data-autofocus>
           <div className="startbox">
             <div className="step">Step 2 of 2 · Choose</div>
@@ -883,6 +942,9 @@ export default function AppV4() {
       </Drawer>
       <Drawer open={panel === 'body'} title="Your body" onClose={() => setPanel(null)}>
         <YourBody profile={profile} setProfile={setProfile} dose={dose} setDose={setDose} showDose={def.hasDose} />
+      </Drawer>
+      <Drawer open={panel === 'you'} title="Make it you" onClose={() => { setPanel(null); markPersonal(); }}>
+        <BodyStart inline profile={profile} setProfile={setProfile} onNext={() => { setPanel(null); markPersonal(); }} />
       </Drawer>
       <Drawer open={panel === 'every'} title={`${PRODUCT.name} every day`} onClose={() => setPanel(null)}>
         <EveryDay productId={productId} />

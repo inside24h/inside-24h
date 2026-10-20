@@ -63,10 +63,10 @@ add("coffee-with-milk", "Coffee with milk", ["kava s mlijekom", "bijela kava", "
     mix=[(171890, 150), (171265, 50)], note="COMPUTED mix (our assumption: 150 g brewed coffee + 50 g whole milk). Not a USDA record.")
 add("cappuccino", "Cappuccino", ["cappuccino", "kapučino", "kapucino", "cappucino"], "semi",
     None, "#b88a5e", "none", ('g', 150, "1 cup, 150 g", "our assumption"),
-    mix=[(171891, 30), (171265, 120)], note="COMPUTED mix (our assumption: 30 g espresso + 120 g whole milk, foam not modelled). Not a USDA record.")
+    mix=[(171891, 30), (171265, 120)], gi="milk_in_coffee", note="COMPUTED mix (our assumption: 30 g espresso + 120 g whole milk, foam not modelled). Not a USDA record.")
 add("latte", "Latte", ["latte", "caffe latte", "kava latte", "late", "late macchiato", "café latte"], "liquid",
     None, "#c9a47c", "none", ('g', 250, "1 glass, 250 g", "our assumption"),
-    mix=[(171891, 30), (171265, 220)], note="COMPUTED mix (our assumption: 30 g espresso + 220 g whole milk). Not a USDA record.")
+    mix=[(171891, 30), (171265, 220)], gi="milk_in_coffee", note="COMPUTED mix (our assumption: 30 g espresso + 220 g whole milk). Not a USDA record.")
 add("black-tea", "Black tea", ["crni čaj", "crni caj", "black tea", "čaj", "caj", "tea", "english tea"], "liquid",
     173227, "#8a4a14", "none", ('ml', 250, r'fl oz'), note="Brewed, tap water, no sugar or milk.")
 add("green-tea", "Green tea", ["zeleni čaj", "zeleni caj", "green tea", "čaj", "caj", "tea"], "liquid",
@@ -74,7 +74,7 @@ add("green-tea", "Green tea", ["zeleni čaj", "zeleni caj", "green tea", "čaj",
 add("herbal-tea", "Herbal tea", ["biljni čaj", "biljni caj", "herbal tea", "čaj", "caj", "tea", "kamilica", "menta", "voćni čaj"], "liquid",
     173232, "#d9b25a", "none", ('ml', 250, r'fl oz'), note="USDA record: herb tea other than chamomile, brewed.")
 add("iced-tea", "Iced tea (sweetened)", ["ledeni čaj", "ledeni caj", "iced tea", "ice tea", "ledeni čaj limun"], "liquid",
-    171888, "#c98a2b", "all", ('mlx', 250, 175111, r'fl oz'),
+    171888, "#c98a2b", "all", ('mlx', 250, 175111, r'fl oz'), gi="t21_iced_tea",
     note="Black tea ready-to-drink, lemon, sweetened. Density from USDA 175111 (Lipton Brisk lemon tea, 1 fl oz = 30.6 g, 1.035 g/ml): this record's only portion, 1 cup = 271 g (1.145 g/ml), is impossible for a ~10% sugar drink.")
 add("milk-whole", "Milk (whole)", ["mlijeko", "punomasno mlijeko", "mlijeko 3.2", "whole milk", "milk", "mleko", "mlijeko punomasno"], "liquid",
     171265, "#f4f1ea", "none", ('ml', 250, r'cup'), gi="milk_full", note="3.25% fat, with added vitamin D.")
@@ -83,7 +83,7 @@ add("milk-semi-skimmed", "Milk (2%, reduced-fat)", ["milk (semi-skimmed, 2%)", "
 add("milk-skimmed", "Milk (skim)", ["milk (skimmed)", "obrano mlijeko", "mlijeko 0.5", "skim milk", "skimmed milk", "nonfat milk", "milk", "mlijeko"], "liquid",
     171269, "#f0f0ea", "none", ('ml', 250, r'cup'), gi="milk_skim")
 add("chocolate-milk", "Chocolate milk", ["čokoladno mlijeko", "cokoladno mlijeko", "chocolate milk", "kakao"], "liquid",
-    170880, "#8a5a3c", "minusLactose", ('ml', 250, r'cup'))
+    170880, "#8a5a3c", "minusLactose", ('ml', 250, r'cup'), gi="t21_flav_milk")
 add("hot-chocolate", "Hot chocolate (homemade, with milk)", ["topla čokolada", "topla cokolada", "hot chocolate", "hot cocoa", "kakao", "vruća čokolada"], "liquid",
     171277, "#6b4028", "minusLactose", ('ml', 250, r'cup'))
 add("soy-milk", "Soy milk", ["sojino mlijeko", "soy milk", "soja", "plant milk", "biljno mlijeko"], "liquid",
@@ -98,7 +98,7 @@ add("rice-milk", "Rice milk (unsweetened)", ["rižino mlijeko", "rizino mlijeko"
 add("buttermilk", "Buttermilk / ayran", ["mlaćenica", "mlacenica", "ajran", "ayran", "buttermilk", "acidofil"], "liquid",
     170874, "#f3efe3", "none", ('ml', 250, r'cup'), note="Cultured lowfat buttermilk; used as proxy for ayran/mlaćenica.")
 add("kefir", "Kefir", ["kefir", "kefir lowfat", "jogurt piće"], "semi",
-    170904, "#f5f1e6", "none", ('ml', 250, r'cup'), note="Lifeway low-fat plain kefir (branded record inside SR Legacy).")
+    170904, "#f5f1e6", "none", ('ml', 250, r'cup'), gi="t21_kefir", note="Lifeway low-fat plain kefir (branded record inside SR Legacy).")
 add("beer", "Beer (regular)", ["pivo", "beer", "lager", "svijetlo pivo"], "liquid",
     168746, "#e5a823", "none", ('ml', 500, r'fl oz'), note="Regular beer, all. Sugars in beer are residual from brewing, not added; WHO definition covers added sugars, honey, syrups and juices.")
 add("red-wine", "Red wine", ["crno vino", "red wine", "vino", "wine", "crno"], "liquid",
@@ -109,7 +109,7 @@ add("rakija", "Rakija / brandy (40%)", ["rakija", "šljivovica", "sljivovica", "
     "Alcoholic beverage, distilled, all (gin, rum, vodka, whiskey) 80 proof", "#e8dcc0", "none", ('ml', 40, r'fl oz'),
     note="Proxy: USDA distilled spirits 80 proof (40% ABV, same as typical rakija). Not a brandy-specific record.")
 add("smoothie", "Fruit smoothie (juice-based)", ["smoothie", "smuti", "voćni smoothie", "vocni smoothie"], "semi",
-    168214, "#e8708a", "all", ('mlx', 250, 173933, r'fl oz'),
+    168214, "#e8708a", "all", ('mlx', 250, 173933, r'fl oz'), gi="t21_smoothie",
     note="Branded Naked Juice strawberry-banana, a juice-based smoothie. WHO counts sugars in fruit juices as free sugars. Density from USDA 173933 (apple juice, 1 fl oz = 31 g, 1.048 g/ml): every USDA smoothie 'cup' weight is below 1 g/ml (a fill weight, not a density).")
 add("protein-shake", "Protein shake (whey + milk)", ["proteinski shake", "protein shake", "shake", "proteinski napitak", "whey"], "liquid",
     None, "#e9dfc9", "none", ('g', 280, "1 shaker, 280 g", "our assumption"),
@@ -120,9 +120,9 @@ add("lemonade", "Lemonade (ready to drink)", ["limunada", "lemonade"], "liquid",
 # ---------------- DAIRY / EGGS ----------------
 # audit 2026-10-17: "navlaka" removed (the cream skin on milk, not yogurt)
 add("yogurt-plain", "Yogurt (plain, whole milk)", ["jogurt", "plain yogurt", "yoghurt", "yogurt", "bijeli jogurt", "kiselo mlijeko"], "semi",
-    171284, "#f7f3ea", "none", ('p', r'8 fl oz|cup', "1 bowl, 245 g"))
+    171284, "#f7f3ea", "none", ('p', r'8 fl oz|cup', "1 bowl, 245 g"), gi="t21_yog_natural")
 add("yogurt-lowfat", "Yogurt (plain, low fat)", ["nemasni jogurt", "jogurt 1.5", "lowfat yogurt", "low fat yogurt", "jogurt", "yogurt", "yoghurt"], "semi",
-    170886, "#f7f3ea", "none", ('p', r'8 fl oz|cup', "1 bowl, 245 g"))
+    170886, "#f7f3ea", "none", ('p', r'8 fl oz|cup', "1 bowl, 245 g"), gi="t21_yog_lowfat")
 add("yogurt-greek", "Greek yogurt (plain, low fat)", ["grčki jogurt", "grcki jogurt", "greek yogurt", "grcki", "jogurt"], "semi",
     170903, "#f8f4ea", "none", ('p', r'container'))
 add("yogurt-fruit", "Yogurt (fruit, low fat)", ["voćni jogurt", "vocni jogurt", "fruit yogurt", "jogurt s voćem", "jogurt", "yogurt"], "semi",
@@ -159,7 +159,7 @@ add("bread-white", "White bread", ["bijeli kruh", "kruh", "bread", "white bread"
 add("bread-wholemeal", "Wholemeal bread", ["integralni kruh", "crni kruh", "kruh", "whole wheat bread", "wholemeal bread", "bread"], "solid",
     172688, "#b88a52", "null", ('p', r'slice'), gi="wholemeal_bread")
 add("bread-rye", "Rye bread", ["raženi kruh", "razeni kruh", "kruh", "rye bread", "bread"], "solid",
-    172684, "#8c6a3f", "null", ('p', r'slice'))
+    172684, "#8c6a3f", "null", ('p', r'slice'), gi="t21_rye")
 # audit 2026-10-17: "pecivo" removed here and from croissant (a Croatian roll of ~60-80 g is neither a 30 g baguette slice nor a croissant)
 add("bread-french", "Baguette / French bread", ["baget", "baguette", "french bread", "kruh", "štangica", "bread"], "solid",
     172675, "#e6c88a", "null", ('g', 30, "1 slice", "our assumption: the USDA 'slice' of this record is 139 g"))
@@ -171,7 +171,7 @@ add("burek", "Burek (meat/cheese pastry)", ["burek"], "solid",
     note="PROXY: USDA has no burek record in SR Legacy. Energy and nutrients come from one Croatian producer label (Čakovečki mlinovi, a cheese burek); water from the USDA turnover 'Turnover, filled with egg, meat and cheese, frozen'. Burek labels range 247-316 kcal per 100 g (Sofka beef 247, Čakovečki mlinovi 297, Lidl meat 316).")
 # audit 2026-10-17: was frozen pizza 170317 + an app-side 107 g slice taken from THIS record; now the record itself.
 add("pizza", "Pizza (cheese)", ["pizza", "pica", "margherita", "pizza margherita", "sirna pizza"], "solid",
-    173292, "#e8b04a", "null", ('p', r'^slice$'), note="Fast-food chain 14-inch cheese pizza, regular crust; 1 slice = 107 g (USDA portion).")
+    173292, "#e8b04a", "null", ('p', r'^slice$'), gi="pizza_healthy", note="Fast-food chain 14-inch cheese pizza, regular crust; 1 slice = 107 g (USDA portion).")
 # audit 2026-10-17: "njoki" removed (gnocchi are potato dumplings)
 add("pasta", "Pasta (cooked)", ["tjestenina", "špageti", "spageti", "pasta", "makaroni", "spaghetti", "tjestenine"], "solid",
     "Pasta, cooked, enriched, without added salt", "#f1dd9a", "none", ('p', r'cup', "1 portion, 124 g cooked"), gi="spaghetti_white", note="GI is Table 1 'spaghetti, white'.")
@@ -184,7 +184,7 @@ add("rice-brown", "Brown rice (cooked)", ["smeđa riža", "smeda riza", "integra
 add("potato-boiled", "Potato (boiled)", ["krumpir", "kuhani krumpir", "boiled potato", "potato", "potatoes", "krompir"], "solid",
     "Potatoes, boiled, cooked in skin, flesh, without salt", "#ecd9a0", "none", ('p', r'^potato'), gi="potato_boiled")
 add("potato-mashed", "Mashed potato (milk and butter)", ["pire", "pire krumpir", "mashed potato", "potato", "krumpir"], "semi",
-    "Potatoes, mashed, home-prepared, whole milk and butter added", "#f3e5ad", "none", ('p', r'cup'), gi=None)
+    "Potatoes, mashed, home-prepared, whole milk and butter added", "#f3e5ad", "none", ('p', r'cup'), gi="t21_mashed")
 # Audit 2026-10-16: was the oven-heated frozen record (169264, 158 kcal/100 g, 5.5 g fat). "Fries" as people mean it
 # (and in the burger + fries preset) are deep-fried: USDA fast-food record 170698, 312 kcal/100 g, 14.7 g fat; serving
 # "small" 71 g. "chips" stays with potato crisps only (it was on both; British chips = fries is the rarer reading here).
@@ -330,7 +330,7 @@ add("banana", "Banana", ["banana", "banane", "bananas"], "solid", "Bananas, raw"
 add("orange", "Orange", ["naranča", "naranca", "narance", "orange", "oranges", "naranče"], "solid",
     "Oranges, raw, all commercial varieties", "#f59a1c", "none", ('p', r'fruit|medium'), gi="orange")
 add("mandarin", "Mandarin", ["mandarina", "mandarine", "mandarin", "tangerine", "clementine"], "solid",
-    "Tangerines, (mandarin oranges), raw", "#f6891c", "none", ('p', r'medium'))
+    "Tangerines, (mandarin oranges), raw", "#f6891c", "none", ('p', r'medium'), gi="t21_mandarin")
 add("grapes", "Grapes", ["grožđe", "grozde", "grapes", "groždje", "grozdje"], "solid",
     "Grapes, red or green (European type, such as Thompson seedless), raw", "#8fb04a", "none", ('p', r'cup'), gi="a1_grapes")
 add("strawberries", "Strawberries", ["jagode", "jagoda", "strawberries", "strawberry"], "solid",
@@ -341,10 +341,10 @@ add("watermelon", "Watermelon", ["lubenica", "lubenice", "watermelon", "dinja lu
 add("melon", "Melon (cantaloupe)", ["dinja", "dinje", "melon", "cantaloupe"], "solid",
     "Melons, cantaloupe, raw", "#f4b872", "none", ('p', r'cup|wedge'), gi="a1_melon")
 add("pear", "Pear", ["kruška", "kruska", "kruške", "pear", "pears"], "solid",
-    "Pears, raw", "#c9d46a", "none", ('p', r'medium'))
+    "Pears, raw", "#c9d46a", "none", ('p', r'medium'), gi="t21_pear")
 # audit 2026-10-17: "nektarina" (own USDA record, 44 vs 39 kcal) removed; "višnje" (sour cherries) removed from sweet cherries
 add("peach", "Peach", ["breskva", "breskve", "peach", "peaches"], "solid",
-    "Peaches, yellow, raw", "#f4b05a", "none", ('p', r'medium'))
+    "Peaches, yellow, raw", "#f4b05a", "none", ('p', r'medium'), gi="t21_peach")
 add("cherries", "Cherries (sweet)", ["trešnje", "tresnje", "cherries", "cherry"], "solid",
     "Cherries, sweet, raw", "#9a1a2e", "none", ('p', r'NLEA', "1 bowl, 140 g"), gi="a1_cherries")
 add("plum", "Plum", ["šljiva", "sljiva", "šljive", "sljive", "plum", "plums"], "solid",
@@ -354,7 +354,7 @@ add("kiwi", "Kiwi", ["kivi", "kiwi", "kiwifruit"], "solid",
 add("pineapple", "Pineapple", ["ananas", "pineapple"], "solid",
     "Pineapple, raw, all varieties", "#f2d44a", "none", ('p', r'cup|slice'), gi="pineapple")
 add("blueberries", "Blueberries", ["borovnice", "borovnica", "blueberries", "blueberry"], "solid",
-    "Blueberries, raw", "#4a4a8a", "none", ('p', r'cup'))
+    "Blueberries, raw", "#4a4a8a", "none", ('p', r'cup'), gi="t21_blueberries")
 # audit 2026-10-17: was 'all commercial varieties' with "1 avocado, NS as to Florida or California" = 201 g; the EU
 # market is mostly Hass (California): 1 fruit without skin and seed = 136 g. One whole avocado per serving, so
 # "1 avokado" means one; "pola avokada" gives half.
@@ -405,7 +405,7 @@ add("ice-cream", "Ice cream (vanilla)", ["sladoled", "ice cream", "vanilla ice c
 add("biscuits", "Butter cookies", ["butter biscuits / cookies", "keksi", "cookies", "biscuits", "keks", "kolačići", "kolacici", "petit beurre"], "solid",
     "Cookies, butter, commercially prepared, enriched", "#e0b878", "upper", ('p', r'cookie|oz'))
 add("croissant", "Croissant", ["kroasan", "croissant", "kroasani"], "solid",
-    "Croissants, butter", "#e2b25e", "null", ('p', r'medium'), note="Contains added sugar in dough but USDA gives no split; null.")
+    "Croissants, butter", "#e2b25e", "null", ('p', r'medium'), gi="t21_croissant", note="Contains added sugar in dough but USDA gives no split; null.")
 add("cake-sponge", "Sponge cake", ["torta", "kolač", "kolac", "biskvit torta", "cake", "sponge cake", "kolači"], "solid",
     "Cake, sponge, commercially prepared", "#f0d890", "upper", ('p', r'piece'), gi="a2_sponge")
 # audit 2026-10-17: a Croatian krafna is jam-filled; was the US glazed doughnut 172758 (421 kcal, 60 g).
@@ -435,7 +435,7 @@ add("kebab", "Kebab / doner", ["kebab", "döner", "doner", "gyros", "dener"], "s
     note="COMPUTED: SR Legacy has no doner/gyros/kebab record. Since 2026-10-18 kebab is our builder (BUILD below): the values are its default (chicken in pita with tomato, onion and yogurt sauce), computed from USDA parts.")
 # audit 2026-10-17: was 170308 (turkey + roast beef + ham sub); 170707 is the ham sub, matching "sa šunkom".
 add("sandwich-ham", "Ham sandwich (sub)", ["sendvič", "sendvic", "sandwich", "sub", "sendvic sa sunkom", "sendvič sa šunkom", "ham sandwich"], "solid",
-    170707, "#e8c888", "null", ('p', r'inch sub', "1 sub (15 cm)"), note="US fast-food submarine sandwich, ham on white bread with lettuce and tomato.")
+    170707, "#e8c888", "null", ('p', r'inch sub', "1 sub (15 cm)"), gi="white_bread_sub", note="US fast-food submarine sandwich, ham on white bread with lettuce and tomato.")
 
 
 # ---------------- ALIAS OWNERS ----------------
@@ -558,8 +558,12 @@ def chooser(k, question, opts, words=()):
     """opts: [(food id or "id.v", chip)]; the first option of the word's ALIAS_OWNER is what the app starts on."""
     CHOOSE.append(dict(k=k, ask=question, opts=opts, words=list(words)))
 
-def opt(k, chip, name, ref, grams=None, src="", rng=None, on=False, words=(), aliases=(), level="C", cite=None, url=None):
-    return dict(k=k, chip=chip, name=name, ref=ref, grams=grams, src=src, rng=rng, on=on, words=list(words), aliases=list(aliases), level=level, cite=cite, url=url)
+def opt(k, chip, name, ref, grams=None, src="", rng=None, on=False, words=(), aliases=(), level="C", cite=None, url=None, gi=None, gi_why=None):
+    """gi (data round 3): a GI key (build_fooddb GI / GI_SUPP) that REPLACES the part's own GI inside this builder, with
+    gi_why (plain English, shown in the option's source text). Used where a whole food was measured (pizza, burger:
+    every carb-bearing part counts at the measured whole-food GI) or where a part's own record has no GI key."""
+    return dict(k=k, chip=chip, name=name, ref=ref, grams=grams, src=src, rng=rng, on=on, words=list(words), aliases=list(aliases), level=level, cite=cite, url=url,
+                gi=gi, gi_why=gi_why)
 
 def grp(k, label, opts, one=False):
     return dict(k=k, label=label, opts=opts, one=one)
@@ -704,7 +708,7 @@ ask("iced-tea", "Which iced tea?", "Sweetened")
 var("iced-tea", "diet", "Diet", "Diet iced tea", usda=171892, serving=('mlx', 250, 175111, r'fl oz'), words=["diet", "zero", "bez secera"],
     aliases=["diet iced tea", "ledeni čaj bez šećera", "iced tea zero"], text="Diet iced tea: values from the USDA record for diet lemon black tea, ready to drink.")
 ask("hot-chocolate", "Made with?", "Milk")
-var("hot-chocolate", "water", "Water", "Hot chocolate made with water", usda=174123, serving=('mlx', 250, 171277, r'cup'),
+var("hot-chocolate", "water", "Water", "Hot chocolate made with water", usda=174123, serving=('mlx', 250, 171277, r'cup'), gi="a1_hot_choc_water",
     words=["s vodom", "with water", "instant"], aliases=["hot chocolate with water", "kakao s vodom", "instant hot chocolate"],
     text="Hot chocolate from a mix with water: values from the USDA record “Beverages, Cocoa mix, powder, prepared with water”.")
 ask("protein-shake", "Made with?", "Milk")
@@ -718,7 +722,7 @@ var("oatmeal", "milk", "Milk", "Oatmeal made with milk", recipe=[((173904, "none
 
 # ---------------- SWEETS ----------------
 ask("cake-sponge", "Which cake?", "Sponge")
-var("cake-sponge", "chocolate", "Chocolate", "Chocolate cake", usda=174934, serving=('p', r'1/12 of a cake'), words=["cokoladna"],
+var("cake-sponge", "chocolate", "Chocolate", "Chocolate cake", usda=174934, serving=('p', r'1/12 of a cake'), gi="a1_choc_cake", words=["cokoladna"],
     aliases=["chocolate cake", "čokoladna torta", "cokoladna torta"], text="Chocolate cake: values from the USDA record for chocolate cake with chocolate frosting (in-store bakery); 1 piece = 1/12 of a cake, 138 g.")
 var("cake-sponge", "cheesecake", "Cheesecake", "Cheesecake", usda=172711, serving=('p', r'1/6 of 17 oz'), words=["cheesecake"],
     aliases=["cheesecake", "torta od sira", "sirnica torta"], text="Cheesecake: values from the USDA record for commercial cheesecake; 1 piece = 1/6 of a cake, 80 g.")
@@ -732,7 +736,7 @@ var("ice-cream", "chocolate", "Chocolate", "Chocolate ice cream", usda=168809, s
 size("ice-cream", [("1", "1 scoop", 1), ("2", "2 scoops", 2), ("3", "3 scoops", 3)],
      "One scoop is the USDA ½-cup portion, 66 g. Scoops in cafés vary, so this is our estimate of a scoop.", "USDA FoodData Central, SR Legacy 167575 (portion ½ cup = 66 g)", "https://fdc.nal.usda.gov/food-details/167575/nutrients")
 ask("chocolate-milk-bar", "Which chocolate?", "Milk")
-var("chocolate-milk-bar", "white", "White", "White chocolate", usda=167571, free="upper", serving=('g', 44, "1 bar, 44 g", "our assumption: the same bar as the milk chocolate (USDA 1.55 oz)"),
+var("chocolate-milk-bar", "white", "White", "White chocolate", usda=167571, free="upper", gi="t21_white_choc", serving=('g', 44, "1 bar, 44 g", "our assumption: the same bar as the milk chocolate (USDA 1.55 oz)"),
     words=["bijela"], aliases=["white chocolate", "bijela čokolada", "bijela cokolada"], text="White chocolate: values from the USDA record “Candies, white chocolate”. All its sugar is counted as free sugar (upper bound).")
 
 # ---------------- MEALS, SAVORY ----------------
@@ -798,7 +802,7 @@ ask("cheese-cottage", "Which cottage cheese?", "Creamed")
 var("cheese-cottage", "lowfat", "Low-fat", "Low-fat cottage cheese", usda=172182, serving=('g', 105, "1 portion, 105 g", "our assumption: the same portion as the creamed cottage cheese"),
     words=["nemasni", "posni", "lowfat"], aliases=["nemasni svježi sir", "posni sir", "low-fat cottage cheese"], text="Low-fat cottage cheese: values from the USDA record for 2% milkfat cottage cheese.")
 ask("bread-white", "Which bread?", "Sliced")
-var("bread-white", "roll", "Roll", "Bread roll", usda=172793, serving=('p', r'hamburger', "1 roll"), words=["kifla", "zemicka"],
+var("bread-white", "roll", "Roll", "Bread roll", usda=172793, serving=('p', r'hamburger', "1 roll"), gi="inherit", words=["kifla", "zemicka"],
     aliases=["kifla", "kifle", "zemička", "zemicka", "bread roll", "roll", "bun"],
     text="Bread roll: values from the USDA record for plain dinner rolls; 1 roll = 43 g (USDA size for a hamburger bun or large roll). A Croatian kifla is often bigger.")
 
@@ -815,14 +819,21 @@ var("bread-white", "roll", "Roll", "Bread roll", usda=172793, serving=('p', r'ha
 #         Croatian Pravilnik (NN 78/05) art. 46: at least 10% fat.
 PZ = "Burke Corporation / PizzaMarketplace.com, Pizza Toppings Portion Guide (v3.0)"
 PZU = "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf"
-def pz(k, chip, name, ref, g12, g14, words, extra="", level="C"):
+def pz(k, chip, name, ref, g12, g14, words, extra="", level="C", gi=None, gi_why=None):
     """A topping from the Burke chart: grams per slice = the 14-inch pie amount / 8 (range from the 12-inch amount)."""
     return opt(k, chip, name, ref, round(g14 / 8.0, 1), rng=(round(g12 / 8.0, 1), round(g14 / 8.0, 1)), words=words, level=level, cite=PZ, url=PZU,
                src="%s on pizza: our estimate %.1f g per slice, from a pizza-industry portion chart (%d g on a 14-inch pie, %d g on a 12-inch pie, 8 slices).%s" % (
-                   name.capitalize(), g14 / 8.0, g14, g12, extra))
+                   name.capitalize(), g14 / 8.0, g14, g12, extra), gi=gi, gi_why=gi_why)
+# Data round 3 (2026-10-19), pizza GI: the measured WHOLE-food GI wins over a sum of parts. Whole topped pizzas were
+# tested in healthy people (Atkinson 2008 A1 rows 1222-1224, Pizza Hut Super Supreme pan/thin and Vegetarian Supreme
+# thin: 36, 30, 49; Atkinson 2021 Suppl. Table 2 row 3761, ham, mozzarella, onion and tomato pizza: 56). Mean 43
+# (GI key "pizza_healthy", build_fooddb.GI_SUPP). The base food carries it, and every vegetable topping that adds
+# carbohydrate counts at the same value, so every combination shows 43: we have no test that separates the toppings.
+PZGI = dict(gi="pizza_healthy", gi_why="on a pizza this counts at the GI measured on whole topped pizzas (Atkinson 2008 and 2021 tables), not at a GI of its own")
 builder("pizza", "What's on it?", [
     grp("base", "Base", [opt("base", "Cheese pizza", "cheese pizza", "pizza", on=True, level="A",
-        src="The base is USDA’s 14-inch chain cheese pizza (dough, tomato sauce, mozzarella): 1 slice = 107 g, the whole pizza 853 g.")], one=True),
+        src="The base is USDA’s 14-inch chain cheese pizza (dough, tomato sauce, mozzarella): 1 slice = 107 g, the whole pizza 853 g.",
+        gi="pizza_healthy", gi_why="the mean of the whole pizzas tested in healthy people (30–56; no plain cheese pizza was tested), Atkinson 2008 and 2021 tables")], one=True),
     grp("top", "Toppings", [
         # Data round 2: USDA FNDDS 2021-2023 recipes (input_food.csv): "Pizza, extra cheese, thin crust" (2708622) = 691 g
         # 14-inch chain cheese pizza + 41 g part-skim mozzarella (5.9%); "…, thick crust" (2708623) = 1060 g + 52 g (4.9%).
@@ -836,11 +847,11 @@ builder("pizza", "What's on it?", [
         pz("ham", "Ham", "ham", "ham", 128, 170, ["sunkom", "sunka", "ham", "sunke"]),
         pz("sausage", "Sausage", "sausage", 174586, 128, 170, ["kobasicom", "kobasica", "sausage"]),
         pz("bacon", "Bacon", "bacon", "bacon", 71, 99, ["slaninom", "pancetom", "slanina", "bacon"]),
-        pz("mushrooms", "Mushrooms", "mushrooms", "mushrooms", 50, 78, ["gljivama", "gljive", "sampinjonima", "sampinjoni", "mushrooms", "mushroom", "funghi"]),
-        pz("peppers", "Peppers", "peppers", 170427, 78, 113, ["paprikom", "paprika", "peppers", "pepper"]),
-        pz("onion", "Onion", "onion", "onion", 78, 113, ["lukom", "luk", "onion", "onions"]),
-        pz("olives", "Olives", "olives", "olives", 78, 113, ["maslinama", "masline", "olives"]),
-        pz("corn", "Corn", "sweet corn", 169214, 85, 99, ["kukuruzom", "kukuruz", "corn"]),
+        pz("mushrooms", "Mushrooms", "mushrooms", "mushrooms", 50, 78, ["gljivama", "gljive", "sampinjonima", "sampinjoni", "mushrooms", "mushroom", "funghi"], **PZGI),
+        pz("peppers", "Peppers", "peppers", 170427, 78, 113, ["paprikom", "paprika", "peppers", "pepper"], **PZGI),
+        pz("onion", "Onion", "onion", "onion", 78, 113, ["lukom", "luk", "onion", "onions"], **PZGI),
+        pz("olives", "Olives", "olives", "olives", 78, 113, ["maslinama", "masline", "olives"], **PZGI),
+        pz("corn", "Corn", "sweet corn", 169214, 85, 99, ["kukuruzom", "kukuruz", "corn"], **PZGI),
         # Data round 2: tuna share on EU tuna-pizza labels (Open Food Facts, ingredient lists with QUID %): Dr. Oetker
         # Ristorante Pizza Tonno 4001724039891 "9,2% THUNFISCH"; Dr. Oetker Pizza Tonno 4001724015727 "10% THUNFISCH";
         # Casino Pizza thon 3222477010352 "thon 9,4%"; Auchan Pizza Thon 3596710428595 "thon … 10,7%". The share is of the
@@ -869,9 +880,14 @@ size("pizza", [("slice", "Slice", 1), ("half", "Half", 4), ("whole", "Whole", 8)
 
 FN = "USDA FNDDS 2021-2023, guideline amounts for sandwich ingredients"
 FNU = "https://fdc.nal.usda.gov/download-datasets"
-def fn(k, chip, name, ref, g, rng, words, what=""):
-    return opt(k, chip, name, ref, g, rng=rng, words=words, cite=FN, url=FNU,
+def fn(k, chip, name, ref, g, rng, words, what="", gi=None, gi_why=None):
+    return opt(k, chip, name, ref, g, rng=rng, words=words, cite=FN, url=FNU, gi=gi, gi_why=gi_why,
                src="%s: our estimate %g g, USDA’s guideline amount on a regular sandwich (%g–%g g, regular to large)%s." % (name.capitalize(), g, rng[0], rng[1], what))
+# Data round 3 (2026-10-19), burger GI: four whole burgers on a white bun were tested in healthy people and all gave 66
+# (Atkinson 2008 A1 rows 1175-1178; GI key "a1_burgers"). The measured whole food wins: every burger type and every
+# extra that adds carbohydrate (onion, ketchup: both were on the tested hamburger) counts at 66.
+BGGI = dict(gi="a1_burgers", gi_why="counted at the GI measured on whole burgers (four burgers on a white bun all gave 66, Atkinson 2008 table A1)")
+SUBGI = dict(gi="white_bread_sub", gi_why="no whole sub was tested; nearly all its carbohydrate is the white roll, so it counts at the white-bread GI (our calculation; tested sandwiches gave 35–78 depending on the filling)")
 SANDWICH_EXTRAS = lambda: [
     fn("cheese", "Cheese", "cheese", "cheese-gouda", 21, (21, 28), ["sirom", "sir", "cheese", "gaudom", "goudom"], "; gouda, USDA"),
     fn("butter", "Butter", "butter", "butter", 14, (7, 28), ["maslacem", "puterom", "butter"]),
@@ -884,14 +900,14 @@ builder("hamburger", "What's on it?", [
     grp("type", "Burger", [
         opt("hamburger", "Hamburger", "hamburger", "hamburger", on=True, level="A", src="Hamburger: USDA’s record for a McDonald’s hamburger, 95 g (with ketchup, pickle, onion and mustard)."),
         opt("cheeseburger", "Cheeseburger", "cheeseburger", (170320, "null"), 119, level="A", aliases=["cheeseburger", "čizburger", "cizburger"],
-            src="Cheeseburger: USDA’s record for a McDonald’s cheeseburger, 119 g."),
+            src="Cheeseburger: USDA’s record for a McDonald’s cheeseburger, 119 g.", **BGGI),
         opt("double", "Double", "double burger", (170720, "null"), 219, level="A", aliases=["big mac", "double burger", "dupli burger"],
-            src="Double burger: USDA’s record for a McDonald’s Big Mac (two patties), 219 g."),
+            src="Double burger: USDA’s record for a McDonald’s Big Mac (two patties), 219 g.", **BGGI),
         opt("large", "Large", "large cheeseburger", (170728, "null"), 316, level="A", aliases=["whopper", "large burger", "veliki burger"],
-            src="Large cheeseburger: USDA’s record for a Burger King Whopper with cheese, 316 g."),
+            src="Large cheeseburger: USDA’s record for a Burger King Whopper with cheese, 316 g.", **BGGI),
         opt("pljeskavica", "Pljeskavica", "pljeskavica", [(171798, 150), (174915, 150), ("onion", 15)], aliases=["pljeskavica", "pljeskavica u lepinji", "pljeskavicu", "balkan burger"],
             src="Pljeskavica is our recipe: a 150 g grilled beef patty (USDA ground beef 80/20; menus list 100–350 g, most often 150 or 200 g) in a 150 g lepinja (USDA pita bread stands in; a lepinja on a Serbian menu weighs 150 g) with 15 g onion. Real pljeskavica is often beef and pork with salt, so sodium is higher than shown.",
-            cite="Glovo menus (Kod Čika Gurmana, Kragujevac; Sarajevo sub, Subotica); USDA SR Legacy 171798, 174915", url="https://glovoapp.com/sr/rs/kragujevac/stores/kod-cika-gurmana-krg"),
+            cite="Glovo menus (Kod Čika Gurmana, Kragujevac; Sarajevo sub, Subotica); USDA SR Legacy 171798, 174915", url="https://glovoapp.com/sr/rs/kragujevac/stores/kod-cika-gurmana-krg", **BGGI),
     ], one=True),
     grp("extra", "Extras", [
         opt("cheese", "Cheese", "cheese slice", 171290, 21, rng=(10, 32), words=["sirom", "cheese"], cite="USDA SR Legacy 171290 portion; USDA FNDDS", url=FNU,
@@ -899,12 +915,12 @@ builder("hamburger", "What's on it?", [
         fn("bacon", "Bacon", "bacon", "bacon", 16, (16, 24), ["slaninom", "bacon"]),
         opt("patty", "Extra patty", "extra patty", 171798, 40, rng=(40, 115), words=["dupla pljeskavica", "extra patty"], cite="USDA FNDDS fast-food burger patties", url=FNU,
             src="Extra patty: a small fast-food beef patty, 40 g cooked (USDA: 40 g small, 85 g medium, 115 g large)."),
-        fn("onion", "Onion", "onion", "onion", 15, (15, 30), ["lukom", "onion"]),
-        fn("lettuce", "Lettuce", "lettuce", 169248, 8, (8, 16), ["salatom", "lettuce"]),
-        fn("tomato", "Tomato", "tomato", "tomato", 20, (20, 40), ["rajcicom", "tomato"]),
+        fn("onion", "Onion", "onion", "onion", 15, (15, 30), ["lukom", "onion"], **BGGI),
+        fn("lettuce", "Lettuce", "lettuce", 169248, 8, (8, 16), ["salatom", "lettuce"], **BGGI),
+        fn("tomato", "Tomato", "tomato", "tomato", 20, (20, 40), ["rajcicom", "tomato"], **BGGI),
         opt("pickles", "Pickles", "pickles", 168558, 7, rng=(5, 7), words=["kiselim krastavcima", "pickles"], cite="USDA SR Legacy 168558; USDA FNDDS", url=FNU,
-            src="Pickles: one slice, 7 g (USDA portion; fast-food burgers carry 5–7 g)."),
-        fn("ketchup", "Ketchup", "ketchup", 168556, 17, (5, 34), ["kecapom", "ketchup"]),
+            src="Pickles: one slice, 7 g (USDA portion; fast-food burgers carry 5–7 g).", **BGGI),
+        fn("ketchup", "Ketchup", "ketchup", 168556, 17, (5, 34), ["kecapom", "ketchup"], **BGGI),
         fn("mayo", "Mayo", "mayonnaise", 171009, 14, (9, 28), ["majonezom", "mayo"]),
     ]),
 ], "Burger is our builder: a USDA whole-burger record (or our pljeskavica recipe) plus the extras you pick, in USDA’s guideline amounts for sandwich ingredients. The fast-food records already contain their usual sauces and pickles.",
@@ -912,11 +928,13 @@ builder("hamburger", "What's on it?", [
 
 builder("sandwich-ham", "What's on it?", [
     grp("type", "Sandwich", [
-        opt("sub", "Ham sub", "ham sub", "sandwich-ham", on=True, level="A", src="Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g."),
+        # Data round 3: no whole sub was tested; the white roll carries nearly all the carbohydrate, so the subs count at
+        # the white-bread GI (Table 1, 75). The base food "sandwich-ham" has the same key (the default needs no tap).
+        opt("sub", "Ham sub", "ham sub", "sandwich-ham", on=True, level="A", src="Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g.", **SUBGI),
         opt("coldcut", "Cold-cut sub", "cold-cut sub", (170696, "null"), 196, level="A", aliases=["cold cut sandwich", "sendvič s narezom", "sendvic s narezom"],
-            src="Cold-cut sub: USDA’s record for a 6-inch cold-cut submarine sandwich, 196 g."),
+            src="Cold-cut sub: USDA’s record for a 6-inch cold-cut submarine sandwich, 196 g.", **SUBGI),
         opt("tuna", "Tuna sub", "tuna sub", (170299, "null"), 237, level="A", aliases=["tuna sandwich", "sendvič s tunom", "sendvic s tunom", "sendvič sa tunjevinom"],
-            src="Tuna sub: USDA’s record for a 6-inch tuna submarine sandwich, 237 g."),
+            src="Tuna sub: USDA’s record for a 6-inch tuna submarine sandwich, 237 g.", **SUBGI),
         opt("baguette", "Baguette", "baguette sandwich", [("bread-french", 110), ("ham", 56), ("cheese-gouda", 21), ("butter", 14)],
             aliases=["baguette sandwich", "baget sa šunkom i sirom", "baget sendvič", "sendvič od bageta", "baget sendvic"],
             src="Baguette sandwich is our recipe: 110 g baguette (a Czech shop ham-and-cheese sandwich label: bread 52% of 213 g), 56 g ham, 21 g gouda and 14 g butter (USDA guideline amounts for a home sandwich).",
@@ -947,31 +965,60 @@ builder("kebab", "What's on it?", [
         # CALC: mean of the town means 24.7% × 402 g = 99 g → 100 g; range from USDA's gyro pita (60 g) to 24.7% of
         # the heaviest kebab (618 g → 153 g). Was USDA 60 g. USDA pita 174915 stays the record.
         opt("pita", "Pita", "pita", 174915, 100, rng=(60, 153), on=True, words=["u piti", "pita", "lepinji"], cite=DKM, url=DKMU,
-            src="Pita: 100 g of bread (USDA white pita). Twenty döner kebabs bought and weighed in Italy (the same study as the meat) were 22–27% bread, about 100 g of a 402 g kebab; USDA’s gyro uses a 60 g pita."),
+            src="Pita: 100 g of bread (USDA white pita). Twenty döner kebabs bought and weighed in Italy (the same study as the meat) were 22–27% bread, about 100 g of a 402 g kebab; USDA’s gyro uses a 60 g pita.",
+            gi="a1_pita", gi_why="white pita bread as tested in healthy people (Atkinson 2008 table A1, 68 ± 5)"),
         opt("wrap", "Wrap", "wrap", 175037, 72, rng=(49, 117), words=["wrap", "tortilji", "durum", "dürüm"], aliases=["kebab wrap", "durum", "dürüm", "kebab u tortilji", "wrap kebab"], cite=DK, url=DKU,
-            src="Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches)."),
+            src="Wrap: a 10-inch flour tortilla, 72 g (USDA; 49–117 g from 8 to 12 inches).",
+            gi="a1_wheat_tortilla", gi_why="the only wheat-flour tortilla tested in healthy people (Mexico, 8 people, one test; Atkinson 2008 table A1), so it is uncertain"),
     ], one=True),
+    # Data round 3 (2026-10-19), kebab recalibrated to the SAME weighed study (Panozzo 2015, PDF re-read; Table 1 read
+    # with pdftotext -raw): "Meat 34.8±10.2 39.5±6.8", "Bread 26.9±3.4 22.5±6.1", "Vegetables 24.7±9.1 25.8±7.4",
+    # "Sauces 13.6±2.7 12.2±4.5" (% of the kebab, Verona / Vicenza). Table 2 / Table 4: 226.1 ± 25.7 kcal/100 g, fat 8.6,
+    # protein 12.95 ± 2.12, carbohydrate (starch, enzymatic AOAC 979.10) 11.3 ± 3.7, fibre 1.15 g/100 g; 402 g = 900.9
+    # kcal, 34.7 g fat, 51.7 g protein, 43.8 g carbohydrate. The 226 kcal is GROSS energy: "Gross energy was measured by
+    # combustion of 1 g of sample in an excess of oxygen in a bomb calorimeter". Food labels and USDA give metabolizable
+    # (Atwater) energy, which is lower; the study's own macros give 12.95×4 + 8.6×9 + 11.3×4 + 1.15×2 = 177 kcal/100 g
+    # (town and meat-group means 170–187; sugars were not measured, so a few kcal more). So 226 is NOT our target; the
+    # measured composition is. Before round 3 our kebab (330 g) had fat 4.4 g/100 g (half the study's 8.6), 50 g of
+    # vegetables (study ≈ 100 g) and 30 g of sauce (study ≈ 52 g).
+    # CALC (402 g × mean of the town means): vegetables 25.25% → 101 g; sauces 12.9% → 52 g. Changes:
+    #  - chicken: USDA thigh meat only (172388, 8.2% fat) → thigh meat AND skin (173625, 14.7% fat). The study says the
+    #    meat's collagen "increases as a function of the amount of skin that is inserted in the Döner preparation", and
+    #    the skinless record cannot reach the measured 8.6 g fat/100 g with the measured sauce share.
+    #  - vegetables 50 → 95 g: tomato 40, onion 25, lettuce 30 (on; stands in for the salad and cabbage the study lists).
+    #  - sauce 30 → 52 g: yogurt sauce 38 g + mayonnaise 14 g (on). The study: "the sauces used, like mayonnaise and
+    #    ketchup, were bought at the supermarket" and the low sauce pH points to "frequent use of yoghurt".
+    # Result (default, 397 g): 192 kcal/100 g (Atwater), fat 8.8, protein 11.7 g/100 g: fat and protein inside the
+    # study's mean ± SD; energy between the study's Atwater value (177) and its gross energy (226).
     grp("meat", "Meat", [
-        opt("chicken", "Chicken", "chicken", 172388, 150, rng=(60, 227), on=True, words=["piletinom", "pileci", "chicken"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DKM, url=DKMU,
-            src="Chicken: 150 g of meat (roasted chicken thigh, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g."),
+        opt("chicken", "Chicken", "chicken", 173625, 150, rng=(60, 227), on=True, words=["piletinom", "pileci", "chicken"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DKM, url=DKMU,
+            src="Chicken: 150 g of meat (roasted chicken thigh with skin, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g. The study found skin in the döner meat and 8.6 g of fat per 100 g of kebab, which skinless thigh meat cannot reach, so we use thigh with skin."),
         opt("beef", "Beef/veal", "beef", 171797, 150, rng=(60, 227), words=["teletinom", "junetinom", "govedinom", "telecim", "beef"], aliases=["teleći kebab", "teleci kebab", "juneći kebab", "beef kebab", "beef doner"], cite=DKM, url=DKMU,
             src="Beef/veal: 150 g of meat; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Weighed döner kebabs in Italy carried about 150 g of meat (35–40% of a 402 g kebab); measured portions run from 60 g (USDA gyro) to about 230 g."),
     ], one=True),
     grp("extra", "Extras", [
-        opt("tomato", "Tomato", "tomato", "tomato", 30, rng=(20, 40), on=True, words=["rajcicom", "tomato"], cite=DK, url=DKU, src="Tomato: 30 g (USDA gyro recipe)."),
-        opt("onion", "Onion", "onion", "onion", 20, rng=(15, 30), on=True, words=["lukom", "onion"], cite=DK, url=DKU, src="Onion: 20 g (USDA gyro recipe)."),
-        opt("lettuce", "Lettuce", "lettuce", 169248, 8, rng=(8, 16), words=["salatom", "lettuce"], cite=FN, url=FNU, src="Lettuce: 8 g (USDA guideline amount on a regular sandwich)."),
-        opt("yogurt", "Yogurt sauce", "yogurt sauce", "yogurt-plain", 30, rng=(15, 60), on=True, words=["jogurt", "tzatziki", "umakom", "yogurt"], cite=DK, url=DKU,
-            src="Yogurt sauce: 30 g (USDA gyro recipe, as tzatziki); plain whole-milk yogurt stands in."),
-        opt("mayo", "Mayo sauce", "mayonnaise sauce", 171009, 14, rng=(9, 28), words=["majonezom", "mayo"], cite=FN, url=FNU,
-            src="Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich)."),
+        opt("tomato", "Tomato", "tomato", "tomato", 40, rng=(20, 60), on=True, words=["rajcicom", "tomato"], cite=DKM, url=DKMU,
+            src="Tomato: 40 g. The weighed Italian kebabs carried about 100 g of vegetables in all (25% of 402 g); we split that into tomato 40 g, onion 25 g and lettuce 30 g (USDA’s gyro uses 30 g of tomato)."),
+        opt("onion", "Onion", "onion", "onion", 25, rng=(15, 40), on=True, words=["lukom", "onion"], cite=DKM, url=DKMU,
+            src="Onion: 25 g, part of the about 100 g of vegetables in the weighed Italian kebabs (USDA’s gyro uses 20 g)."),
+        opt("lettuce", "Lettuce", "lettuce", 169248, 30, rng=(8, 40), on=True, words=["salatom", "lettuce"], cite=DKM, url=DKMU,
+            src="Lettuce: 30 g, standing in for the salad and cabbage in the weighed Italian kebabs (about 100 g of vegetables in all)."),
+        opt("yogurt", "Yogurt sauce", "yogurt sauce", "yogurt-plain", 38, rng=(15, 60), on=True, words=["jogurt", "tzatziki", "umakom", "yogurt"], cite=DKM, url=DKMU,
+            src="Yogurt sauce: 38 g; plain whole-milk yogurt stands in. The weighed Italian kebabs carried about 52 g of sauce (13% of 402 g), often yogurt-based; with the 14 g of mayonnaise that makes 52 g (USDA’s gyro uses 30 g of tzatziki)."),
+        opt("mayo", "Mayo sauce", "mayonnaise sauce", 171009, 14, rng=(9, 28), on=True, words=["majonezom", "mayo"], cite=DKM, url=DKMU,
+            src="Mayonnaise sauce: 14 g (USDA guideline amount on a regular sandwich). The Italian study reports that kebab shops mostly used supermarket mayonnaise and ketchup; without it the kebab has about a third less fat than the study measured."),
     ]),
-], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The meat (150 g) and the pita (100 g) are from döner kebabs weighed in Italian shops; vegetables and sauce are USDA’s gyro amounts. Kebab shops differ a lot, mostly in the meat.",
-    presets=[preset("chicken-pita", "Chicken pita", "Chicken kebab in pita", ["pita", "chicken", "tomato", "onion", "yogurt"]),
-             preset("beef-pita", "Beef pita", "Beef kebab in pita", ["pita", "beef", "tomato", "onion", "yogurt"]),
-             preset("chicken-wrap", "Chicken wrap", "Chicken kebab wrap", ["wrap", "chicken", "tomato", "onion", "yogurt"])],
-    ask="Which kebab?", unit="kebab", base_is_default=True, serving_label="1 kebab", cite=DK, url=DKU)
-CHANGED_ON_PURPOSE["kebab"] = "owner 2026-10-18: kebab returns as a builder (was all null and left out of the app); QA 2026-10-19: pita 60 to 100 g (Panozzo 2015, same weighed study as the meat)"
+], "Kebab is our builder: pita or wrap, chicken or beef, vegetables and sauce, each a USDA record. The amounts follow twenty döner kebabs bought and weighed in Italian shops (402 g: 37% meat, 25% bread, 25% vegetables, 13% sauce). Our default has about the study’s measured fat and protein per 100 g. The study’s 226 kcal per 100 g is gross energy from burning the food in a calorimeter; the energy the body can use from its measured protein, fat and starch is about 177–187 kcal per 100 g, and ours is 192. Kebab shops differ a lot, mostly in the meat.",
+    presets=[preset("chicken-pita", "Chicken pita", "Chicken kebab in pita", ["pita", "chicken", "tomato", "onion", "lettuce", "yogurt", "mayo"]),
+             preset("beef-pita", "Beef pita", "Beef kebab in pita", ["pita", "beef", "tomato", "onion", "lettuce", "yogurt", "mayo"]),
+             preset("chicken-wrap", "Chicken wrap", "Chicken kebab wrap", ["wrap", "chicken", "tomato", "onion", "lettuce", "yogurt", "mayo"])],
+    ask="Which kebab?", unit="kebab", base_is_default=True, serving_label="1 kebab", cite=DKM, url=DKMU)
+CHANGED_ON_PURPOSE["kebab"] = "owner 2026-10-18: kebab returns as a builder (was all null and left out of the app); QA 2026-10-19: pita 60 to 100 g (Panozzo 2015, same weighed study as the meat); data round 3: chicken thigh with skin, vegetables 95 g, sauce 52 g (yogurt 38 + mayo 14) to match the study's measured fat, protein and proportions"
+# Data round 3 (2026-10-19): GI added where a sourced value exists (keys and rows in build_fooddb.GI_SUPP).
+for _id in ("pizza", "kefir", "yogurt-plain", "yogurt-lowfat", "croissant", "potato-mashed", "chocolate-milk", "smoothie", "mandarin",
+            "bread-rye", "iced-tea", "peach", "pear", "blueberries", "latte", "cappuccino", "sandwich-ham"):
+    CHANGED_ON_PURPOSE[_id] = (CHANGED_ON_PURPOSE.get(_id, "") + "; " if _id in CHANGED_ON_PURPOSE else "") + \
+        "data round 3: GI added from Atkinson 2008 Suppl. Tables / Atkinson 2021 Suppl. Tables (row in giSource)"
 
 BU = "Labels: Vindija Latica cheese burek (34% cheese); Krajina Klas meat burek (38.6% beef); Pravilnik NN 78/05 art. 46 (≥10% fat)"
 BUU = "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g"

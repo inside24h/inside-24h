@@ -96,8 +96,9 @@ const GOLDEN: [string, [string, number][]][] = [
   // 2026-10-18 (owner, VARIANTS-PLAN.md): these now have a food of their own (variant or builder), checked by kind
   // in variants.test.ts: pljeskavica (burger builder), kebab (builder), pureća šunka (turkey ham), goveđa juha (beef
   // noodle soup, closest record), macchiato (espresso + milk recipe). Data round 2 (2026-10-19): turska kava (filter
-  // coffee variant "turkish", checked in variants.test.ts); kebab meat 150 g (weighed Italian döner), so 290 g
-  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 330]]], ['pureća šunka', [['ham', 28]]],
+  // coffee variant "turkish", checked in variants.test.ts); kebab meat 150 g (weighed Italian döner), so 290 g.
+  // Data round 3: kebab recalibrated to the same weighed study (vegetables 95 g, sauce 52 g), so 397 g
+  ['pljeskavica', [['hamburger', 315]]], ['kebab', [['kebab', 397]]], ['pureća šunka', [['ham', 28]]],
   ['turska kava', [['filter-coffee', 70]]],
   ['goveđa juha', [['chicken-soup', 244]]], ['macchiato', [['coffee-with-milk', 61]]],
 ];
@@ -238,7 +239,7 @@ describe('servings and health bars read the database (one number everywhere)', (
   });
   it('kebab is back as a builder of USDA parts (owner 2026-10-18); new GI values from Atkinson 2008 Suppl. A1 are in', () => {
     expect(FOOD_BY_ID.kebab.recipe).toBe(true);
-    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(574); // chicken in pita, the default (150 g meat, data round 2; 100 g pita, QA 2026-10-19)
+    expect(Math.round((FOOD_BY_ID.kebab.p.kcal * FOOD_BY_ID.kebab.serving.grams) / 100)).toBe(762); // chicken in pita, the default (150 g meat, data round 2; 100 g pita, QA 2026-10-19; data round 3: thigh with skin, 95 g vegetables, 52 g sauce, Panozzo 2015)
     expect([FOOD_BY_ID.carrot.gi, FOOD_BY_ID['dried-apricots'].gi, FOOD_BY_ID['tomato-soup'].gi, FOOD_BY_ID['dried-figs'].gi, FOOD_BY_ID.raisins.gi]).toEqual([35, 31, 52, 61, 64]);
   });
 });

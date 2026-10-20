@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { SmartSearch } from './SmartSearch';
 import './meals.css';
-import { baseOf, kindsOf, type Food, type Part } from './food/parse';
+import { baseOf, choiceRow, kindsOf, type Food, type Part } from './food/parse';
 import { addParts, ITEM_STEPS, MAX_ITEMS, PACE_OPTIONS, paceLabel, removePart, setFood, setServings, shortName, stepOf } from './food/meal';
-import { ChoiceBar, ChoiceSheet } from './Choices';
+import { ChoiceBar, ChoiceSheet, Sheet } from './Choices';
 
 // The search in the header plus the MEAL builder: "+ Add something" next to what you have, and, once there are two or
 // more things, one chip per item with its amount (tap to cycle ½ · 1 · 2 · 3) and ✕ to take it out. Max 5 things.
@@ -11,7 +11,19 @@ const stepLabel = (x: number) => (x === 0.5 ? '½' : `${x}`);
 
 /** "Over how long?" (PACING, 2026-10-19): All at once · 1 h · 2 h · 3 h · 4 h, for two or more servings. Highlighted
  *  (like "Which tea?") for several alcoholic drinks until the person picks: nobody drinks 5 beers in one go. */
-function PaceBar({ over, set, hot }: { over: number; set: (min: number) => void; hot: boolean }) {
+function PaceBar({ over, set, hot, inSheet = false }: { over: number; set: (min: number) => void; hot: boolean; inSheet?: boolean }) {
+  if (inSheet) return (
+    <>
+      <h4 id="pace-ask-s">Over how long?</h4>
+      <div className="cchips wrap" role="radiogroup" aria-labelledby="pace-ask-s">
+        {PACE_OPTIONS.map((m) => (
+          <button key={m} type="button" role="radio" aria-checked={over === m} className={over === m ? 'on' : ''}
+            title={m ? `Spread evenly over ${paceLabel(m)}, the first one now` : 'Everything at the same moment (the highest peak)'} onClick={() => set(m)}>{paceLabel(m)}</button>
+        ))}
+      </div>
+      <p className="cnote">{over ? `Spread evenly over ${paceLabel(over)}, the first one now.` : 'Everything at the same moment: the highest peak.'}</p>
+    </>
+  );
   return (
     <div className={`choices pace ${hot ? 'asking' : ''}`}>
       <div className="crow">
@@ -27,7 +39,8 @@ function PaceBar({ over, set, hot }: { over: number; set: (min: number) => void;
   );
 }
 
-export function MealBar({ parts, current, onPick, onChange, asking = false, onSwitch, pace }: {
+export function MealBar({ parts, current, onPick, onChange, asking = false, onSwitch, pace, chosen = false }: {
+  /** the kind was already chosen (a link with v= / on= / add=): start with the pill, not the question */ chosen?: boolean;
   parts: Part[]; current?: string;
   /** replace everything (search pick, preset) */ onPick: (parts: Part[], text: string) => void;
   /** the meal changed (added, removed, amount) */ onChange: (parts: Part[]) => void;
@@ -37,17 +50,37 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
 }) {
   const [adding, setAdding] = useState(false);
   const [sheet, setSheet] = useState<number | null>(null);
+  // UX calm 2026-10-19: ONE secondary row under the search. "Which …?" shows until it is answered (a pick, or the
+  // sheet opened and closed), then it folds into a pill ("Pizza · Capricciosa · over 2 h ▾") that also holds the pace.
+  // A new food from the search asks again. A meal keeps its chips row; the pace is a chip at its start.
+  const [seen, setSeen] = useState(chosen);
+  const [paceSheet, setPaceSheet] = useState(false);
+  const pick = (p: Part[], text: string) => { setSeen(false); onPick(p, text); };
   const hasChoices = (f: Food) => kindsOf(f) > 0 || !!baseOf(f).addins || !!baseOf(f).builder;
   const switchItem = (i: number, f: Food) => (onSwitch ? onSwitch(i, f) : onChange(setFood(parts, i, f)));
   const full = parts.length >= MAX_ITEMS;
   const add = (more: Part[]) => { if (parts.length) onChange(addParts(parts, more)); else onPick(more, ''); };
+  const one = parts.length === 1 ? parts[0] : null;
+  const paceText = pace ? (pace.over ? `over ${paceLabel(pace.over)}` : 'all at once') : undefined;
+  const paceNode = pace ? <PaceBar {...pace} inSheet /> : undefined;
+  const second: 'ask' | 'pace' | 'pill' | null = adding || !one || !onSwitch ? null
+    : asking && choiceRow(one.food) ? 'ask'
+    : pace?.hot ? 'pace'
+    : choiceRow(one.food) && !seen ? 'ask'
+    : 'pill';
   return (
-    <div className="mealbar">
+    <div className={`mealbar ${parts.length > 1 ? 'meal' : ''}`}>
       {adding
-        ? <SmartSearch key="add" mode="add" autoFocus onPick={onPick} onAdd={(p) => add(p)} onDone={() => setAdding(false)} />
-        : <SmartSearch key="find" onPick={onPick} current={current} onAdd={full || !parts.length ? undefined : (p) => add(p)} />}
+        ? <SmartSearch key="add" mode="add" autoFocus onPick={pick} onAdd={(p) => add(p)} onDone={() => setAdding(false)} />
+        : <SmartSearch key="find" onPick={pick} current={current} onAdd={full || !parts.length ? undefined : (p) => add(p)} />}
       {(parts.length > 1 || !adding) && (
         <ul className="mealchips" aria-label="Your meal">
+          {parts.length > 1 && pace && (
+            <li><button type="button" className={`mpace ${pace.hot ? 'hot' : ''}`} aria-haspopup="dialog" onClick={() => setPaceSheet(true)}
+              aria-label={`Over how long: ${pace.hot ? 'not picked yet' : paceLabel(pace.over).toLowerCase()}. Change`}>
+              <span aria-hidden="true" className="mpi">◷</span>{pace.hot ? 'Over how long?' : pace.over ? `Over ${paceLabel(pace.over)}` : paceLabel(0)}<span aria-hidden="true" className="cpv"> ▾</span>
+            </button></li>
+          )}
           {parts.length > 1 && parts.map((p, i) => {
             const step = stepOf(p);
             const next = ITEM_STEPS[(ITEM_STEPS.indexOf((step ?? 1) as typeof ITEM_STEPS[number]) + 1) % ITEM_STEPS.length];
@@ -71,8 +104,12 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
           {full && <li className="mfull">Up to {MAX_ITEMS} items</li>}
         </ul>
       )}
-      {parts.length === 1 && !adding && onSwitch && <ChoiceBar part={parts[0]} asking={asking} onPick={(f) => switchItem(0, f)} />}
-      {pace && !adding && <PaceBar {...pace} />}
+      {/* before 2026-10-19 all rows stacked: <ChoiceBar part asking onPick /> then <PaceBar {...pace} /> */}
+      {second === 'ask' && <ChoiceBar mode="ask" part={one!} asking={asking} onPick={(f) => switchItem(0, f)} paceNode={paceNode} onSeen={() => setSeen(true)} />}
+      {second === 'pace' && pace && <PaceBar {...pace} />}
+      {second === 'pill' && <ChoiceBar mode="pill" part={one!} asking={false} onPick={(f) => switchItem(0, f)} paceNode={paceNode} paceText={paceText} onSeen={() => setSeen(true)} />}
+      {!onSwitch && pace && !adding && parts.length === 1 && <PaceBar {...pace} />}
+      {paceSheet && pace && <Sheet title="Over how long?" onClose={() => setPaceSheet(false)}><section className="bgrp"><PaceBar {...pace} inSheet /></section></Sheet>}
       {sheet !== null && parts[sheet] && (
         <ChoiceSheet food={parts[sheet].food} title={shortName(baseOf(parts[sheet].food))} full onPick={(f) => switchItem(sheet, f)} onClose={() => setSheet(null)} />
       )}

@@ -34,8 +34,8 @@ const GOLDEN: [string, [string, number][]][] = [
   ['bezalkoholno pivo', [['beer.alcohol-free', 500]]],
   ['pljeskavica', [['hamburger_pljeskavica', 315]]],
   ['cheeseburger', [['hamburger_cheeseburger', 119]]],
-  ['kebab', [['kebab', 330]]], // QA 2026-10-19: pita 100 g (Panozzo 2015, the same weighed study as the meat)
-  ['kebab s teletinom', [['kebab_pita_beef_tomato_onion_yogurt', 330]]],
+  ['kebab', [['kebab', 397]]], // QA 2026-10-19: pita 100 g; data round 3: 95 g vegetables, 52 g sauce (all Panozzo 2015)
+  ['kebab s teletinom', [['kebab_pita_beef_tomato_onion_lettuce_yogurt_mayo', 397]]],
   // data round 2 (2026-10-19)
   ['turska kava', [['filter-coffee.turkish', 70]]],
   ['bosanska kava', [['filter-coffee.turkish', 70]]],
@@ -209,7 +209,7 @@ describe('builders', () => {
   });
   it('names read well', () => {
     expect(deriveFood(FOOD_BY_ID.pizza, { on: ['base', 'ham'] }).name).toBe('Pizza with ham');
-    expect(deriveFood(FOOD_BY_ID.kebab, { on: ['pita', 'chicken', 'tomato', 'yogurt'] }).name).toBe('Chicken kebab in pita without onion');
+    expect(deriveFood(FOOD_BY_ID.kebab, { on: ['pita', 'chicken', 'tomato', 'lettuce', 'yogurt', 'mayo'] }).name).toBe('Chicken kebab in pita without onion');
     expect(deriveFood(FOOD_BY_ID.hamburger, { on: ['cheeseburger', 'bacon'] }).name).toBe('Cheeseburger with bacon');
     expect(deriveFood(FOOD_BY_ID['salad-lettuce'], { on: ['base', 'olive-oil', 'vinegar'] }).name).toBe('Green salad with olive oil and vinegar');
   });
@@ -346,5 +346,109 @@ describe('data round 2: sourced portions and new variants', () => {
     expect(FOOD_BY_ID.burek.builder!.groups[0].opts.map((o) => o.k)).toEqual(['cheese', 'meat', 'spinach', 'potato']);
     expect(Math.round(FOOD_BY_ID.burek.p.kcal)).toBe(297);
     expect(FOOD_BY_ID.melon.gi).toBe(65);
+  });
+});
+
+// Data round 3 (2026-10-19, research/audit/VARIANTS-DONE.md "Data round 3"): GI coverage and the kebab calibration.
+describe('data round 3: every carb food has a GI or a written reason; kebab matches the weighed study', () => {
+  const avail = (f: Food) => (Math.max(0, (f.p.carbs ?? 0) - (f.p.fiber ?? 0)) * f.serving.grams) / 100;
+  const opt = (id: string, k: string) => FOOD_BY_ID[id].builder!.groups.flatMap((g) => g.opts).find((o) => o.k === k)!;
+  // Foods (or "<base>*" for every combination of a builder) with > 10 g available carbohydrate per serving and NO GI,
+  // each with the reason. Atkinson 2008 Suppl. Tables A1/A2 and Atkinson 2021 Suppl. Tables 1/2 were searched for each.
+  const NO_GI: Record<string, string> = {
+    'hot-chocolate': 'no hot chocolate made with milk was tested in healthy people (only a mix made with water: the water variant has it)',
+    buttermilk: 'buttermilk is not in the 2008 or 2021 tables',
+    beer: 'Atkinson 2021 Suppl. Table 1 has two beers, 119 ± 10 and 89 ± 2 (mean 104): they disagree by 30 and a beer sugar curve would change the alcohol story; left for the owner',
+    'beer.alcohol-free': 'no alcohol-free beer tested',
+    'beer.radler': 'beer + lemonade: beer has no GI here (see beer)',
+    'red-wine.dessert': 'no dessert wine tested',
+    'protein-shake': 'the whey powder has no tested GI',
+    'bread-french': 'baguette tests disagree (A1 57 vs healthy-subject rows 78–81), audit 2026-10-17; 2021 adds only a whole-grain baguette',
+    'burek*': 'no burek or phyllo pie tested; the nearest tests disagree: filled fatayer pastry 78–80 (2021 Suppl. Table 2), puff pastry 47 and 56 (2021 Suppl. Table 1)',
+    crackers: 'saltines not tested; other crackers 51–78',
+    pancake: 'US-style pancakes tested 46–102 depending on the recipe (A1 rows 30–35)',
+    'bean-soup': 'no bean soup tested', 'bean-soup.sausage': 'no bean soup tested',
+    'ice-cream.chocolate': 'only one low-fat chocolate ice cream brand was tested (A1 row 770)',
+    'cake-sponge.cheesecake': 'no cheesecake tested', 'cake-sponge.strudel': 'no strudel tested', 'cake-sponge.cream': 'no cream cake tested',
+    'kebab*': 'pita (68), wrap (30) and yogurt (17) have tested GIs, but tomato and onion (1–2 g carbohydrate each) have none, and the mixing rule (parse.ts CARB_MIN = 1 g) needs every part with carbohydrate',
+    'sandwich-ham_baguette': 'the baguette has no GI (see bread-french)',
+    'sandwich-ham_sub_ketchup': 'ketchup (4–5 g carbohydrate) has no tested GI and no whole sub was tested; on a burger it counts at the measured whole-burger GI, which included ketchup',
+  };
+  const reason = (key: string) => NO_GI[key] ?? NO_GI[`${key.split(/[._~]/)[0]}*`];
+  const all: Food[] = [];
+  for (const f of FOODS) {
+    all.push(f);
+    for (const v of f.variants ?? []) all.push(deriveFood(f, { v: v.v }));
+    const b = f.builder;
+    if (!b) continue;
+    for (const pr of b.presets) all.push(deriveFood(f, { on: pr.on }));
+    const def = defaultSel(b);
+    for (const g of b.groups) for (const o of g.opts) {
+      const sel = g.one ? [...def.filter((k) => !g.opts.some((x) => x.k === k)), o.k] : def.includes(o.k) ? def.filter((k) => k !== o.k) : [...def, o.k];
+      all.push(deriveFood(f, { on: sel }));
+    }
+  }
+  it('every food, variant, preset and one-tap builder change with > 10 g available carbohydrate has a GI or a reason', () => {
+    const missing = all.filter((f) => avail(f) > 10 && f.gi === null && !reason(foodKey(f))).map((f) => `${foodKey(f)} (${avail(f).toFixed(1)} g)`);
+    expect(missing).toEqual([]);
+  });
+  it('the allow-list is not stale: an exact entry still exists and still has no GI', () => {
+    for (const key of Object.keys(NO_GI).filter((k) => !k.endsWith('*'))) {
+      const f = foodFromKey(key);
+      expect(f, key).toBeDefined();
+      expect(f!.gi, key).toBeNull();
+      expect(NO_GI[key].length, key).toBeGreaterThan(10);
+    }
+  });
+  it('pizza: the measured whole-pizza GI (43, healthy people) for every preset and every topping', () => {
+    const p = FOOD_BY_ID.pizza;
+    expect(p.gi).toBe(43);
+    for (const pr of p.builder!.presets) expect(deriveFood(p, { on: pr.on }).gi, pr.k).toBe(43);
+    for (const o of p.builder!.groups[1].opts) expect(deriveFood(p, { on: ['base', o.k] }).gi, o.k).toBe(43);
+    expect(deriveFood(p, { on: ['base', 'onion', 'corn', 'peppers'] }).gi).toBe(43);
+  });
+  it('burger: the measured whole-burger GI (66) for every burger type and extra', () => {
+    const h = FOOD_BY_ID.hamburger;
+    for (const o of h.builder!.groups.flatMap((g) => g.opts)) {
+      const on = h.builder!.groups[0].opts.some((x) => x.k === o.k) ? [o.k] : ['hamburger', o.k];
+      expect(deriveFood(h, { on }).gi, o.k).toBe(66);
+    }
+  });
+  it('subs count at the white-bread GI (75); a kebab without tomato and onion gets its computed GI', () => {
+    expect(FOOD_BY_ID['sandwich-ham'].gi).toBe(75);
+    for (const k of ['coldcut', 'tuna', 'toast']) expect(deriveFood(FOOD_BY_ID['sandwich-ham'], { on: [k] }).gi, k).toBe(75);
+    expect(opt('kebab', 'pita').gi).toBe(68);
+    expect(opt('kebab', 'wrap').gi).toBe(30);
+    expect(deriveFood(FOOD_BY_ID.kebab, { on: ['pita', 'chicken', 'lettuce', 'yogurt', 'mayo'] }).gi).toBe(66);
+  });
+  it('new GIs from the 2008/2021 tables are in (row in giSource of research/fooddb.json)', () => {
+    const want: Record<string, number> = {
+      kefir: 36, 'yogurt-plain': 17, 'yogurt-lowfat': 35, croissant: 56, 'potato-mashed': 79, 'chocolate-milk': 29, smoothie: 39,
+      mandarin: 52, 'bread-rye': 60, 'iced-tea': 74, peach: 76, pear: 33, blueberries: 53, latte: 39, cappuccino: 39,
+    };
+    for (const [id, gi] of Object.entries(want)) expect(FOOD_BY_ID[id].gi, id).toBe(gi);
+    expect(foodFromKey('chocolate-milk-bar.white')!.gi).toBe(41);
+    expect(foodFromKey('cake-sponge.chocolate')!.gi).toBe(38);
+    expect(foodFromKey('hot-chocolate.water')!.gi).toBe(51);
+    expect(foodFromKey('bread-white.roll')!.gi).toBe(75);
+  });
+  it('the default kebab sits inside the weighed Italian study (Panozzo 2015, Ital J Food Saf 4:4535, 20 kebabs)', () => {
+    const k = FOOD_BY_ID.kebab, g = k.serving.grams;
+    expect(g).toBeGreaterThanOrEqual(274); expect(g).toBeLessThanOrEqual(618); // serving range
+    // Table 2/4: fat 8.6 g/100 g (town SD 1.8), protein 12.95 ± 2.12 g/100 g
+    expect(k.p.fat!).toBeGreaterThanOrEqual(8.6 - 1.8); expect(k.p.fat!).toBeLessThanOrEqual(8.6 + 1.8);
+    expect(k.p.protein!).toBeGreaterThanOrEqual(12.95 - 2.12); expect(k.p.protein!).toBeLessThanOrEqual(12.95 + 2.12);
+    // Energy: the study's 226.1 ± 25.7 kcal/100 g is GROSS energy (bomb calorimeter). Usable (Atwater) energy is lower:
+    // the study's own protein, fat, starch and fibre give 170–187 kcal/100 g (town and meat-group means). Ours must lie
+    // between that floor and the gross value.
+    expect(k.p.kcal).toBeGreaterThanOrEqual(170); expect(k.p.kcal).toBeLessThanOrEqual(226.1);
+    // Table 1 shares (% of the kebab, town means ± SD): meat 34.8 ± 10.2 / 39.5 ± 6.8, bread 26.9 ± 3.4 / 22.5 ± 6.1,
+    // vegetables 24.7 ± 9.1 / 25.8 ± 7.4, sauces 13.6 ± 2.7 / 12.2 ± 4.5
+    const share = (ks: string[]) => (100 * ks.reduce((s, x) => s + opt('kebab', x).grams, 0)) / g;
+    const within = (v: number, lo: number, hi: number) => { expect(v).toBeGreaterThanOrEqual(lo); expect(v).toBeLessThanOrEqual(hi); };
+    within(share(['chicken']), 34.8 - 10.2, 39.5 + 6.8);
+    within(share(['pita']), 22.5 - 6.1, 26.9 + 3.4);
+    within(share(['tomato', 'onion', 'lettuce']), 24.7 - 9.1, 25.8 + 7.4);
+    within(share(['yogurt', 'mayo']), 12.2 - 4.5, 13.6 + 2.7);
   });
 });

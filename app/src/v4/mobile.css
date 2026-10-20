@@ -318,3 +318,114 @@
   .calmctl .portion { gap: 1px; }
   .calmctl .portion button.named, .calmctl .portion button.cur { min-width: 34px; padding: 0 3px; font-size: 11px; }
 }
+
+/* ==== UX calm 2026-10-19 (research/improvements/ux-calm-2026-10-19.md) ==== */
+
+/* ---- header: search + "+ Add" on one row, then at most ONE secondary row (MealBar decides which) ---- */
+@media (max-width: 720px) { .topsearch:empty { display: none; } } /* desktop keeps it as the spacer that pushes the actions right */
+.mealbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; }
+.mealbar > .search { min-width: 0; max-width: none; }
+.mealbar > .search.adding, .mealbar > .choices, .mealbar.meal > .mealchips, .mealbar:has(.results) > .search { grid-column: 1 / -1; }
+.mealbar:has(.results) > .mealchips { display: none; }
+.mealbar > .mealchips:not(:has(.mchip)) { flex-wrap: nowrap; }
+.mealbar.meal > .mealchips { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; padding-bottom: 1px; }
+.mealbar.meal > .mealchips::-webkit-scrollbar { display: none; }
+.mealbar.meal > .mealchips > li { flex: none; }
+.mealbar.meal > .mealchips > li:first-child { margin-left: auto; }
+.mealbar.meal > .mealchips > li:last-child { margin-right: auto; }
+
+/* the one secondary row: "Which …?" in a single line (scrolls sideways), or the collapsed pill */
+.choices.compact { max-width: none; justify-items: stretch; gap: 0; }
+.choices.compact .crow { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 3px; }
+.choices.compact .crow::-webkit-scrollbar { display: none; }
+.choices.compact .crow > * { flex: none; }
+.choices.compact .crow > :first-child { margin-left: auto; }
+.choices.compact .crow > :last-child { margin-right: auto; }
+.choices.compact.asking .crow { flex-wrap: nowrap; padding: 3px 4px 3px 10px; }
+.choices.compact .cask { white-space: nowrap; }
+.choices.compact .cask em { white-space: nowrap; }
+.cmore { min-height: 32px; padding: 0 12px; border: 1px dashed var(--accent); border-radius: 999px; background: rgba(92, 211, 255, .06); color: var(--accent); font: 500 13px var(--body); cursor: pointer; white-space: nowrap; }
+.cmore:hover, .cmore:focus-visible { background: rgba(92, 211, 255, .14); outline: 2px solid var(--accent); outline-offset: -2px; }
+.cpill { justify-self: center; display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; min-height: 32px; padding: 0 12px 0 10px;
+  border: 1px solid var(--line2); border-radius: 999px; background: var(--surface); color: var(--text); font: 13px var(--body); cursor: pointer; }
+.cpill i { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18); }
+.cpill .cpt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpill .cpv, .mpace .cpv { color: var(--accent); font-size: 11px; flex: none; }
+.cpill:hover, .cpill:focus-visible { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 1px var(--accent); }
+.cnote { margin: 8px 0 0; font-size: 13px; color: var(--mute); }
+/* "Over how long?" while it still asks: one line too */
+.choices.pace .crow { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.choices.pace .crow::-webkit-scrollbar { display: none; }
+.choices.pace .crow > * { flex: none; }
+/* a meal: the pace is the first chip of the meal row */
+.mpace { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border: 1px solid var(--line2); border-radius: 999px; background: var(--surface);
+  color: var(--text); font: 13px var(--body); cursor: pointer; white-space: nowrap; }
+.mpace .mpi { color: var(--accent); }
+.mpace.hot { border-color: var(--accent); background: rgba(92, 211, 255, .12); color: var(--accent); animation: cask 1.6s ease-in-out 2; }
+.mpace:hover, .mpace:focus-visible { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .mpace.hot { animation: none; } }
+@media (max-width: 720px) {
+  .choices.compact .crow > :first-child { margin-left: 0; }
+  .choices.compact .crow > :last-child { margin-right: 0; }
+  .choices.compact .crow, .choices.pace .crow { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 24px; }
+  .choices.compact.asking .crow, .choices.pace.asking .crow { -webkit-mask-image: none; mask-image: none; padding-right: 4px; }
+  /* the long "We started with black: pick yours." stays for screen readers; the highlighted row says it on a phone */
+  .choices.compact .cask em, .choices.pace .cask em { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .cpill { justify-self: start; min-height: 40px; }
+  .cmore, .mpace { min-height: 40px; }
+  .mealbar.meal > .mealchips > li:first-child { margin-left: 0; }
+  .mealbar.meal > .mealchips > li:last-child { margin-right: 0; }
+}
+@media (pointer: coarse) { .cpill, .cmore, .mpace { min-height: 44px; } }
+
+/* ---- the first screen: the body above, one question below (no blocking start screens) ---- */
+.startsheet { display: grid; justify-items: center; gap: 12px; padding: 16px 24px calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line);
+  background: var(--bg); text-align: center; position: relative; z-index: 5; min-width: 0; }
+.startsheet h1 { margin: 0; font: 400 clamp(26px, 3vw, 38px)/1.05 var(--display); text-wrap: balance; }
+.startsheet > .search.big { max-width: 560px; }
+.startsheet .search.big .results { max-height: min(300px, 38dvh); }
+.startsheet .tiles.quick { width: 100%; max-width: 920px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+.startsheet:has(.results) .tiles.quick { display: none; } /* while typing, the list gets the room */
+.startsheet .tile { grid-template-columns: none; grid-template-rows: auto; justify-items: center; align-content: center; gap: 4px; min-width: 0; padding: 10px 4px 9px; border-radius: 14px; text-align: center; }
+.startsheet .tile i { grid-row: auto; width: 26px; height: 34px; border: 2px solid rgba(220, 235, 250, .55); border-radius: 4px 4px 9px 9px; opacity: 1; background: linear-gradient(180deg, transparent 30%, var(--tc) 30%); }
+.startsheet .tile.solid i { width: 30px; height: 30px; border-radius: 50%; background: var(--tc); margin-block: 2px; }
+.startsheet .tile b { font: 400 19px/1 var(--display); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.startsheet .tile span { font: 10.5px var(--mono); color: var(--mute); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.startsheet .tile:hover, .startsheet .tile:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); outline: 0; }
+.startsheet .then { font-size: 13px; }
+.startsheet .then .link { font-size: 13px; }
+.startsheet .fine { margin: -6px 0 0; font: 11px var(--mono); color: var(--faint); }
+.startsheet .missnote { width: min(560px, 100%); }
+.v4.cold .stage .hint { display: none; } /* nothing to point at yet */
+@media (max-width: 1100px) { .v4.calmlay .startsheet { max-height: 70dvh; overflow-y: auto; overscroll-behavior: contain; } }
+@media (max-width: 720px) {
+  .startsheet { gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .startsheet h1 { font-size: 27px; }
+  .startsheet .tiles.quick { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .startsheet .tile { min-height: 60px; padding: 8px 2px 7px; }
+  .startsheet .tile span { display: none; } /* the amount is one tap away under the body ("How much?") */
+  .startsheet .tile b { font-size: 17px; }
+  .startsheet .search.big input { font-size: 16px; padding: 12px 0; }
+  .startsheet .search.big .sfield { border-radius: 14px; }
+  .startsheet .then { font-size: 12.5px; line-height: 1.35; }
+}
+@media (max-width: 720px) and (max-height: 760px) {
+  .startsheet .fine { display: none; } /* also in About and on every answer; the small screen keeps the body */
+}
+
+/* ---- "Personalize": a small prompt on the body a few seconds into the first simulation ---- */
+.pnudge { position: absolute; left: 16px; top: 16px; z-index: 4; display: flex; align-items: stretch; border-radius: 14px; background: rgba(8, 16, 26, .94);
+  border: 1px solid rgba(92, 211, 255, .55); box-shadow: 0 10px 28px rgba(0, 0, 0, .45); animation: nudgein .35s ease-out; }
+@keyframes nudgein { from { opacity: 0; transform: translateY(-6px); } }
+.pngo { display: grid; gap: 1px; justify-items: start; padding: 7px 4px 7px 12px; border: 0; background: none; color: var(--text); cursor: pointer; text-align: left; }
+.pngo span { font: 11.5px var(--body); color: var(--mute); white-space: nowrap; }
+.pngo b { font: 600 14px var(--body); color: var(--accent); white-space: nowrap; }
+.pnx { width: 34px; border: 0; border-left: 1px solid var(--line2); background: none; color: var(--mute); font-size: 18px; cursor: pointer; border-radius: 0 14px 14px 0; }
+.pngo:hover b { text-decoration: underline; }
+.pngo:focus-visible, .pnx:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+@media (max-width: 1100px) { .pnudge { left: 12px; top: 60px; } }
+@media (pointer: coarse) { .pngo { min-height: 44px; } .pnx { min-width: 44px; } }
+.startbox.body.inline { width: 100%; gap: 14px; text-align: left; }
+.startbox.body.inline .summary, .startbox.body.inline .fine { text-align: center; }
+.skipq { position: absolute; left: 12px; top: 8px; z-index: 80; padding: 10px 16px; border-radius: 999px; border: 0; background: var(--accent); color: #03141c; font: 600 14px var(--body); cursor: pointer; transform: translateY(-200%); }
+.skipq:focus, .skipq:focus-visible { transform: none; outline: 2px solid #fff; outline-offset: 2px; }
