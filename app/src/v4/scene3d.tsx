@@ -13,6 +13,7 @@ export { CameraRig } from '../scene/CameraRig';
 export { FlowPaths } from '../scene/FlowPaths';
 export { LiquidRoute } from '../scene/LiquidRoute';
 export { CompareScene } from './CompareVideo';
+export { VideoCam } from './VideoCam';
 export { SafeCanvas } from './perf/SafeCanvas';
 
 /** Hands the r3f state to the app (the video recorder renders and steps frames itself). */

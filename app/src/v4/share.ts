@@ -7,6 +7,7 @@
 // a hook frame as the first frame (= thumbnail) and an end card that loops back to it.
 import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack, SAMPLE_RATE } from './video-audio';
+import type { Gauge } from './video-body';
 
 export type Format = 'reel' | 'feed';
 export interface Light { icon: string; label: string; level: 0 | 1 | 2 }
@@ -16,6 +17,9 @@ export interface Overlay {
   summary: (Light & { note: string })[]; handle: string;
   stamp?: string; // big 'X MIN LATER' line
   pop?: { big: string; small: string; level: 0 | 1 | 2 }; // headline number of this moment
+  // 2026-10-23 body-first video
+  gauges?: PinnedGauge[]; // where the drink is + the number that matters, pinned to their organs
+  solid?: boolean;        // food (the clock says "since the first bite")
 }
 const LIGHT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 const WORD = ['Fine', 'Mild stress', 'High stress'];
@@ -63,11 +67,16 @@ export function pickMime(): { mime: string; ext: 'mp4' | 'webm' } | null {
  * times, same soundtrack), so only the smoothness depends on the computer. `seek(minute)` moves the day; the 3D view
  * keeps drawing itself.
  */
-export async function record(source: HTMLCanvasElement, format: Format, overlay: () => Overlay, seek: (minute: number) => void,
-  plan: Plan, opts: { sound: boolean; onTick?: (f: number) => void } = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+/** Recording options: sound on/off, progress, and (2026-10-23) `prepare` (resolves once the 3D view has the video's
+ *  size) and `onSettled` (called after the warm-up frames, right before the first real frame). */
+export interface RecOpts { sound: boolean; onTick?: (f: number) => void; prepare?: () => Promise<void>; onSettled?: () => void }
+export async function record(source: HTMLCanvasElement, format: Format, overlay: () => Overlay, seek: (minute: number, fr?: VFrame) => void,
+  plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
   const fmt = pickMime();
   if (!fmt) throw new Error('This browser can’t record video.');
   await loadFonts();
+  await opts.prepare?.();
+  seek(0, plan.frames[0]); opts.onSettled?.();
   const [W, H] = SIZE[format];
   const out = document.createElement('canvas');
   out.width = W; out.height = H;
@@ -98,7 +107,7 @@ export async function record(source: HTMLCanvasElement, format: Format, overlay:
       const i = Math.max(0, Math.floor(((now - t0) / 1000) * FPS)); // the first rAF time can be a little before t0
       if (i >= plan.frames.length) { cancelAnimationFrame(raf); rec.stop(); sound?.stop(); stream.getTracks().forEach((s) => s.stop()); return; }
       const fr = plan.frames[i];
-      seek(fr.m);
+      seek(fr.m, fr);
       drawFrame(ctx, W, H, source, overlay(), format, fr, plan, first);
       if (!first) first = snapshot(out);
       opts.onTick?.(i / plan.frames.length);
@@ -182,21 +191,23 @@ async function encodeMp4(out: HTMLCanvasElement, count: number, draw: (i: number
  *  plan = every frame of the video (video-plan.ts). With sound on and an AAC encoder available, our own
  *  soundtrack goes in as a second track; otherwise the video is silent (still valid everywhere). */
 export async function recordFrames(source: HTMLCanvasElement, format: Format, overlay: () => Overlay,
-  step: (minute: number) => void, plan: Plan, opts: { sound: boolean; onTick?: (frac: number) => void } = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+  step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
   await loadFonts();
   const [W, H] = SIZE[format];
   // WebCodecs without an H.264 encoder (some Firefox / Linux builds): film the same plan in real time instead;
   // `step` renders each frame itself, so this works while the 3D view is paused for recording
   try { await h264Config(W, H); } catch (e) { if (pickMime()) return record(source, format, overlay, step, plan, opts); throw e; }
+  await opts.prepare?.();
   const out = document.createElement('canvas');
   out.width = W; out.height = H;
   const ctx = out.getContext('2d')!;
   let first: HTMLCanvasElement | null = null;
   return encodeMp4(out, plan.frames.length, (i) => {
-    // settle (after the encoder setup, when the 3D view has its recording size): camera flies in, liquid fades in
-    if (i === 0) for (let f = 0; f < 20; f++) step(0);
+    // settle (after the encoder setup, when the 3D view has its recording size): the liquid fades in; then the
+    // camera is put at its opening shot
+    if (i === 0) { for (let f = 0; f < 60; f++) step(0, plan.frames[0]); opts.onSettled?.(); }
     const fr = plan.frames[i];
-    step(fr.m);
+    step(fr.m, fr);
     drawFrame(ctx, W, H, source, overlay(), format, fr, plan, first);
     if (!first) first = snapshot(out); // the hook frame, for the loop back at the very end
   }, opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS } : null, opts.onTick);
@@ -204,6 +215,13 @@ export async function recordFrames(source: HTMLCanvasElement, format: Format, ov
 
 /** One video frame of the plan: the main picture, plus the hook card (intro) or the end card (outro). */
 export function drawFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
+  o: Overlay, format: Format, fr: VFrame, plan: Pick<Plan, 'stopsU' | 'introS' | 'outroS'> | null, first: HTMLCanvasElement | null) {
+  // 2026-10-23: the body-first frame (below). The 2026-10-22 layout (body in a band under panels) stays as
+  // drawFrameLegacy for reference.
+  drawBodyFrame(ctx, W, H, src, o, format, fr, plan, first);
+}
+/** The 2026-10-22 frame: hook card, headline, stamp, traffic lights and a caption plate over a band of the body. */
+export function drawFrameLegacy(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
   o: Overlay, format: Format, fr: VFrame, plan: Pick<Plan, 'stopsU' | 'introS' | 'outroS'> | null, first: HTMLCanvasElement | null) {
   // the hook card leaves first, then the headline and the panels come in (no two layers of words at once)
   const introS = plan?.introS ?? INTRO_S.long, ti = fr.k * introS;
@@ -259,22 +277,24 @@ function drawStamp(ctx: CanvasRenderingContext2D, x: number, y: number, s: strin
 
 // ---------- side-by-side comparison Reel ----------
 export interface CmpSide { name: string; color: string; step: string; caption: string; where?: string; sugar: string; sugarLevel: 0 | 1 | 2; lights: Light[];
-  summary: { kcal: number; sugarPeak: string; worst: (Light & { note: string })[] } }
-export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string }
+  summary: { kcal: number; sugarPeak: string; worst: (Light & { note: string })[] };
+  gauge?: PinnedGauge | null } // 2026-10-23 split screen: this body's number, pinned to its organ
+export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean }
 
 /** Comparison Reel (9:16): both bodies side by side at the top, where the whole width is free of platform buttons;
  *  the two captions stacked below, inside the safe column. Timing from planCompare (video-plan.ts). */
 export async function recordCompare(canvA: HTMLCanvasElement, overlay: () => CmpOverlay,
-  step: (minute: number) => void, plan: Plan, opts: { sound: boolean; onTick?: (f: number) => void } = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+  step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
   await loadFonts();
+  await opts.prepare?.();
   const W = 1080, H = 1920;
   const out = document.createElement('canvas'); out.width = W; out.height = H;
   const ctx = out.getContext('2d')!;
   let first: HTMLCanvasElement | null = null;
   return encodeMp4(out, plan.frames.length, (i) => {
-    if (i === 0) for (let f = 0; f < 20; f++) step(0);
+    if (i === 0) { for (let f = 0; f < 60; f++) step(0, plan.frames[0]); opts.onSettled?.(); }
     const fr = plan.frames[i];
-    step(fr.m);
+    step(fr.m, fr);
     drawCmpFrame(ctx, W, H, canvA, overlay(), fr, plan, first);
     if (!first) first = snapshot(out);
   }, opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS } : null, opts.onTick);
@@ -282,6 +302,11 @@ export async function recordCompare(canvA: HTMLCanvasElement, overlay: () => Cmp
 
 /** One comparison frame: main picture + hook card (intro) or end card (outro), as drawFrame for the single video. */
 export function drawCmpFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
+  o: CmpOverlay, fr: VFrame, plan: Pick<Plan, 'stopsU' | 'introS' | 'outroS'> | null, first: HTMLCanvasElement | null) {
+  drawSplitFrame(ctx, W, H, src, o, fr, plan, first); // 2026-10-23 split screen; the earlier layout: drawCmpFrameLegacy
+}
+/** The 2026-10-22 comparison frame (two small bodies at the top, two caption blocks below). */
+export function drawCmpFrameLegacy(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
   o: CmpOverlay, fr: VFrame, plan: Pick<Plan, 'stopsU' | 'introS' | 'outroS'> | null, first: HTMLCanvasElement | null) {
   const introS = plan?.introS ?? INTRO_S.long, ti = fr.k * introS;
   const hookA = fr.phase === 'intro' ? 1 - smooth((ti - (introS - 0.7)) / 0.35) : 0;
@@ -779,4 +804,454 @@ export async function saveFile(filename: string, blob: Blob): Promise<'saved' | 
   a.href = URL.createObjectURL(blob); a.download = filename; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
   return 'saved';
+}
+
+// =====================================================================================================================
+// BODY-FIRST FRAMES (2026-10-23 redesign; research/improvements/video-bodyfirst-2026-10-23.md)
+// The owner: "people find it far more interesting to WATCH how the food goes through the body than text over the
+// screen". So the 3D body now fills the whole 9:16 frame, rendered at the video's own size (AppV4 sizes the canvas
+// to 1080×1920 while recording) and filmed by the video camera (video-cam.ts): wide → push in → follow the drink →
+// pull back. Words are a frame around it: a short hook and the running clock at the top, one short caption at the
+// bottom, and small gauges pinned to the organs (where the drink is, and the number that matters). The comparison
+// is a split screen: two bodies, two colours, one clock.
+// Every word still goes through `text` (safe-zone tests); the reading rule (video-plan.ts) is unchanged.
+// =====================================================================================================================
+
+/** A gauge with its organ's position on the frame (null = the organ is out of the picture). */
+export type PinnedGauge = Gauge & { at?: { x: number; y: number } | null };
+const ACCENT = '#5cd3ff';
+const GLASS = 'rgba(6,12,20,.66)';
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+/** "+0:45", "+12:05", "+24:00": time since the first sip, hours:minutes. */
+export function elapsedText(m: number): string {
+  const r = Math.max(0, Math.min(1440, Math.floor(m + 1e-6)));
+  return `+${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}`;
+}
+
+/** Text drawn in fixed-width digit cells, so a running clock never wobbles. Returns its width. */
+function monoText(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, measureOnly = false): number {
+  const cell = ctx.measureText('0').width;
+  let w = 0;
+  for (const ch of s) w += /\d/.test(ch) ? cell : ctx.measureText(ch).width;
+  if (measureOnly) return w;
+  // logged as one word (safe-zone tests), drawn cell by cell
+  if (textLog && ctx.globalAlpha > 0.02) { const px = fontPx(ctx); textLog.push({ x0: x, x1: x + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco: false }); }
+  let cx = x;
+  const a = ctx.textAlign; ctx.textAlign = 'center';
+  for (const ch of s) { const cw = /\d/.test(ch) ? cell : ctx.measureText(ch).width; ctx.fillText(ch, cx + cw / 2, y); cx += cw; }
+  ctx.textAlign = a;
+  return w;
+}
+
+/** The same lines, evened out: the narrowest width that still gives the same number of lines (no lonely "you."
+ *  on the second line). The font (set by fitWrap) stays. */
+function balanced(ctx: CanvasRenderingContext2D, f: { px: number; lines: string[] }, s: string, w: number): { px: number; lines: string[] } {
+  if (f.lines.length < 2) return f;
+  let lo = w * 0.5, hi = w, best = f.lines;
+  for (let k = 0; k < 10; k++) {
+    const mid = (lo + hi) / 2, ls = wrap(ctx, s, mid, 99);
+    if (ls.length <= f.lines.length && ls.every((l) => ctx.measureText(l).width <= mid + 0.5)) { best = ls; hi = mid; } else lo = mid;
+  }
+  return { px: f.px, lines: best };
+}
+
+/** The hook in at most two lines; when it needs two, "— inside your body" gets the second one to itself. */
+function hookLines(ctx: CanvasRenderingContext2D, hook: string, w: number, max: number, min: number) {
+  const font = (px: number) => `400 ${px}px ${SERIF}`;
+  const one = fitWrap(ctx, hook, w, 1, max, max, font);
+  if (one.lines.length === 1 && ctx.measureText(one.lines[0]).width <= w) return one;
+  const at = hook.lastIndexOf(' — ');
+  if (at > 0) {
+    const a = hook.slice(0, at), b = hook.slice(at + 1);
+    for (let px = max; px >= min; px -= 2) { ctx.font = font(px); if (ctx.measureText(a).width <= w && ctx.measureText(b).width <= w) return { px, lines: [a, b] }; }
+  }
+  return balanced(ctx, fitWrap(ctx, hook, w, 2, max, min, font), hook, w);
+}
+
+/** Positions of everything on the body-first frame (shared by drawing and tests). `settle` 0 → 1: the hook shrinks
+ *  from its first-frame size to the headline size during the intro. */
+export function layoutBody(ctx: CanvasRenderingContext2D, o: { hook: string }, format: Format, settle = 1) {
+  const reel = format === 'reel', S = SAFE[format];
+  const L = S.left, R = S.right, RL = S.rightLow;
+  const kickY = S.top + (reel ? 30 : 26);
+  const big = reel ? 84 : 66, small = reel ? 58 : 48;
+  const head = hookLines(ctx, o.hook, R - L, Math.round(lerp(big, small, settle)), reel ? 40 : 34);
+  const headLH = head.px * 1.04, head0 = kickY + 14 + head.px * 0.88;
+  const headBot = head0 + (head.lines.length - 1) * headLH + head.px * 0.24;
+  const clockH = reel ? 72 : 60, clockTop = headBot + (reel ? 14 : 10);
+  const topBot = clockTop + clockH;
+  const capFs = reel ? 52 : 42, capLH = Math.round(capFs * 1.2), kickFs = reel ? 28 : 24;
+  const capTop = S.bottom - (kickFs + 16 + 2 * capLH); // room for a kicker + two lines, so it never jumps
+  return { reel, S, L, R, RL, kickY, head, headLH, head0, headBot, clockH, clockTop, topBot, capFs, capLH, kickFs, capTop };
+}
+
+/** The running clock: a ring for the day so far, "+0:45" in fixed-width digits, and fast-forward marks while the
+ *  day runs fast (quiet stretches). */
+function drawClock(ctx: CanvasRenderingContext2D, x: number, y: number, h: number, m: number, u: number, rate: number, solid: boolean, reel: boolean) {
+  const fs = Math.round(h * 0.62), label = solid ? 'since the first bite' : 'since the first sip';
+  ctx.save();
+  ctx.font = `700 ${fs}px ${SANS}`;
+  const tW = monoText(ctx, '+24:00', 0, 0, true);
+  ctx.font = `500 ${reel ? 24 : 21}px ${SANS}`;
+  const lW = ctx.measureText(label).width;
+  const r = h * 0.3, ffW = h * 0.5;
+  const w = h * 0.22 + 2 * r + h * 0.22 + tW + h * 0.22 + ffW + h * 0.14 + lW + h * 0.3;
+  ctx.fillStyle = GLASS; roundRect(ctx, x, y, w, h, h / 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(92,211,255,.55)'; ctx.lineWidth = 2; ctx.stroke();
+  // ring: the day so far
+  const cx = x + h * 0.22 + r, cy = y + h / 2;
+  ctx.lineWidth = h * 0.09; ctx.strokeStyle = 'rgba(140,170,210,.25)'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = ACCENT; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.002, Math.min(1, u))); ctx.stroke(); ctx.lineCap = 'butt';
+  let tx = cx + r + h * 0.22;
+  ctx.font = `700 ${fs}px ${SANS}`; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
+  monoText(ctx, elapsedText(m), tx, y + h * 0.7);
+  tx += tW + h * 0.22;
+  // fast-forward: two chevrons, brighter the faster the day runs
+  const ff = Math.max(0, Math.min(1, (rate - 6) / 40));
+  ctx.save(); ctx.globalAlpha *= 0.18 + 0.82 * ff; ctx.fillStyle = ACCENT;
+  for (let k = 0; k < 2; k++) { const bx = tx + k * ffW * 0.48; ctx.beginPath(); ctx.moveTo(bx, cy - h * 0.16); ctx.lineTo(bx + ffW * 0.42, cy); ctx.lineTo(bx, cy + h * 0.16); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  tx += ffW + h * 0.14;
+  ctx.font = `500 ${reel ? 24 : 21}px ${SANS}`; ctx.fillStyle = '#b8c7d8';
+  text(ctx, label, tx, y + h * 0.62);
+  ctx.restore();
+}
+
+/** One small gauge: big number, short label, optional curve of the day with a dot at "now". Returns its height. */
+const gaugeSmall = (ctx: CanvasRenderingContext2D, g: Gauge, w: number, reel: boolean) => { ctx.font = `600 ${reel ? 23 : 20}px ${SANS}`; return wrap(ctx, g.small, w - 2 * (reel ? 18 : 14), 2); };
+function gaugeHeight(ctx: CanvasRenderingContext2D, g: Gauge, reel: boolean, w: number) {
+  const n = gaugeSmall(ctx, g, w, reel).length, lh = reel ? 27 : 24;
+  return (reel ? 14 + 46 + 4 : 12 + 40 + 4) + n * lh + (g.curve ? (reel ? 52 : 44) : 0) + (reel ? 12 : 10);
+}
+function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, w: number, reel: boolean) {
+  const h = gaugeHeight(ctx, g, reel, w), col = g.level === 0 && !g.curve ? '#ffffff' : LIGHT[g.level];
+  const small = gaugeSmall(ctx, g, w, reel), lh = reel ? 27 : 24;
+  ctx.save();
+  ctx.fillStyle = GLASS; roundRect(ctx, x, y, w, h, 20); ctx.fill();
+  ctx.strokeStyle = g.curve ? LIGHT[g.level] : 'rgba(220,235,250,.35)'; ctx.lineWidth = 3; ctx.stroke();
+  const pad = reel ? 18 : 14, bigFs = reel ? 46 : 40, smFs = reel ? 23 : 20;
+  let fs = bigFs; ctx.font = `700 ${fs}px ${SANS}`;
+  while (fs > 28 && ctx.measureText(g.big).width > w - 2 * pad) { fs -= 2; ctx.font = `700 ${fs}px ${SANS}`; }
+  ctx.fillStyle = col; ctx.textAlign = 'left'; text(ctx, g.big, x + pad, y + (reel ? 14 : 12) + bigFs * 0.82);
+  ctx.font = `600 ${smFs}px ${SANS}`; ctx.fillStyle = '#d5e0ec';
+  const sy = y + (reel ? 14 + 46 + 4 : 12 + 40 + 4);
+  small.forEach((ln, i) => text(ctx, ln, x + pad, sy + i * lh + smFs * 0.86));
+  if (g.curve && g.curve.length > 1) {
+    const cy0 = sy + small.length * lh + 10, ch = reel ? 34 : 28, cx0 = x + pad, cw = w - 2 * pad;
+    const lo = Math.min(0, ...g.curve), hi = Math.max(1e-6, ...g.curve);
+    const P = (i: number) => [cx0 + (i / (g.curve!.length - 1)) * cw, cy0 + ch - ((g.curve![i] - lo) / (hi - lo || 1)) * ch] as const;
+    ctx.beginPath(); g.curve.forEach((_v, i) => { const [px, py] = P(i); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
+    ctx.strokeStyle = 'rgba(220,235,250,.35)'; ctx.lineWidth = 3; ctx.stroke();
+    // the part of the day already lived, in colour, and a dot at "now"
+    const f = Math.max(0, Math.min(1, g.u ?? 0)) * (g.curve.length - 1), i0 = Math.floor(f), i1 = Math.min(g.curve.length - 1, i0 + 1);
+    ctx.beginPath(); for (let i = 0; i <= i0; i++) { const [px, py] = P(i); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+    const [ax, ay] = P(i0), [bx, by] = P(i1), t = f - i0, nx = lerp(ax, bx, t), ny = lerp(ay, by, t);
+    ctx.lineTo(nx, ny); ctx.strokeStyle = LIGHT[g.level]; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(nx, ny, 6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  return h;
+}
+/** The pin: a thin line from the gauge to its organ, a dot and a soft pulsing ring on the organ. */
+function drawPin(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, col: string, t: number) {
+  ctx.save();
+  ctx.strokeStyle = col; ctx.globalAlpha *= 0.85; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(to.x, to.y, 8, 0, Math.PI * 2); ctx.fill();
+  const pulse = (t * 0.9) % 1;
+  ctx.globalAlpha *= 0.6 * (1 - pulse); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(to.x, to.y, 10 + 22 * pulse, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+const onFrame = (p: { x: number; y: number } | null | undefined, W: number, top: number, bot: number) => !!p && p.x > 20 && p.x < W - 20 && p.y > top && p.y < bot;
+
+/** Soft dark bands behind the words at the top and the bottom; the body in between stays untouched. */
+function scrims(ctx: CanvasRenderingContext2D, W: number, H: number, topBot: number, capTop: number) {
+  const g1 = ctx.createLinearGradient(0, 0, 0, topBot + 90);
+  g1.addColorStop(0, 'rgba(4,7,12,.8)'); g1.addColorStop(0.7, 'rgba(4,7,12,.45)'); g1.addColorStop(1, 'rgba(4,7,12,0)');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, topBot + 90);
+  const y0 = capTop - 110;
+  const g2 = ctx.createLinearGradient(0, y0, 0, H);
+  g2.addColorStop(0, 'rgba(4,7,12,0)'); g2.addColorStop(0.3, 'rgba(4,7,12,.6)'); g2.addColorStop(1, 'rgba(4,7,12,.9)');
+  ctx.fillStyle = g2; ctx.fillRect(0, y0, W, H - y0);
+}
+
+/** Small print and the day bar under the safe zone (fine if a platform covers them; the end card repeats the credit). */
+function footer(ctx: CanvasRenderingContext2D, W: number, H: number, format: Format, u: number, stopsU?: number[]) {
+  const S = SAFE[format], L = S.left, R = S.right, reel = format === 'reel';
+  ctx.textAlign = 'left'; ctx.fillStyle = '#7a899d'; ctx.font = `500 ${reel ? 22 : 19}px ${SANS}`;
+  text(ctx, fit(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', R - L), L, S.bottom + (reel ? 44 : 34), true);
+  if (reel) {
+    const y = S.bottom + 104;
+    ctx.fillStyle = 'rgba(140,170,210,.22)'; roundRect(ctx, L, y, R - L, 10, 5); ctx.fill();
+    ctx.fillStyle = ACCENT; roundRect(ctx, L, y, Math.max(10, (R - L) * Math.min(1, u)), 10, 5); ctx.fill();
+    for (const s of stopsU ?? []) { ctx.fillStyle = s <= u + 1e-3 ? ACCENT : 'rgba(140,170,210,.55)'; ctx.beginPath(); ctx.arc(L + (R - L) * s, y + 5, 9, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#8292a7'; ctx.font = `500 24px ${SANS}`;
+    text(ctx, '0 h', L, y + 48, true); ctx.textAlign = 'right'; text(ctx, '24 h', R, y + 48, true); ctx.textAlign = 'left';
+  } else {
+    ctx.fillStyle = 'rgba(140,170,210,.22)'; ctx.fillRect(0, H - 8, W, 8);
+    ctx.fillStyle = ACCENT; ctx.fillRect(0, H - 8, W * Math.min(1, u), 8);
+  }
+}
+
+/** Brand line, hook and clock at the top (single and split screen). */
+function topBand(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody>, kicker: string, handle: string, m: number, u: number, rate: number, solid: boolean) {
+  const { reel, L, R } = Lo;
+  ctx.font = `700 ${reel ? 26 : 22}px ${SANS}`; ctx.fillStyle = ACCENT; shade(ctx, true); ctx.textAlign = 'left';
+  text(ctx, kicker, L, Lo.kickY);
+  const kw = ctx.measureText(kicker).width;
+  if (handle) { ctx.textAlign = 'right'; ctx.fillStyle = '#c9d6e4'; ctx.font = `600 ${reel ? 26 : 22}px ${SANS}`; const room = R - L - kw - 40; if (room > 120) text(ctx, fit(ctx, handle, room), R, Lo.kickY); ctx.textAlign = 'left'; }
+  ctx.fillStyle = '#ffffff'; ctx.font = `400 ${Lo.head.px}px ${SERIF}`;
+  Lo.head.lines.forEach((ln, i) => text(ctx, ln, L, Lo.head0 + i * Lo.headLH));
+  shade(ctx, false);
+  drawClock(ctx, L, Lo.clockTop, Lo.clockH, m, u, rate, solid, reel);
+}
+
+/** Body-first frame of the single video. */
+export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
+  o: Overlay, format: Format, fr: VFrame, plan: Pick<Plan, 'stopsU' | 'introS' | 'outroS'> | null, first: HTMLCanvasElement | null) {
+  const introS = plan?.introS ?? INTRO_S.long, ti = fr.k * introS;
+  const settle = fr.phase === 'intro' ? smooth((ti - (introS - 1.0)) / 0.9) : 1;
+  const Lo = layoutBody(ctx, o, format, settle), { reel, S, L, R, RL } = Lo;
+  const u = fr.u ?? o.progress, t = fr.t;
+  // 1) the body fills the frame
+  stageBg(ctx, W, H, H * 0.45);
+  drawCover(ctx, src, 0, 0, W, H);
+  scrims(ctx, W, H, Lo.topBot, Lo.capTop);
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  const outro = fr.phase === 'outro' ? smooth((fr.k * (plan?.outroS ?? OUTRO_S.long)) / 0.45) : 0;
+  // 2) gauges pinned to the organs: where the drink is (left), the number that matters (right)
+  if (outro < 1) {
+    ctx.save(); ctx.globalAlpha = (1 - outro) * (fr.phase === 'intro' ? smooth((ti - 0.8) / 0.5) : 1);
+    const top = Lo.topBot + 14, bot = Lo.capTop - 14, gw = reel ? 300 : 280;
+    const gs = (o.gauges ?? []).slice(0, 2);
+    gs.forEach((g, i) => {
+      const h = gaugeHeight(ctx, g, reel, gw), right = gs.length === 1 ? !!g.curve : i === 1;
+      const pin = onFrame(g.at, W, top, bot) ? g.at! : null;
+      let y = pin ? pin.y - h / 2 : right ? top + (bot - top) * 0.15 : top + (bot - top) * 0.55;
+      y = Math.max(top, Math.min(bot - h, y));
+      const x = right ? (y + h > S.lowFrom ? RL : R) - gw : L;
+      if (pin && ctx.globalAlpha > 0.01) drawPin(ctx, { x: right ? x : x + gw, y: Math.max(y + 18, Math.min(y + h - 18, pin.y)) }, pin, g.curve ? LIGHT[g.level] : '#e6edf5', t + i * 0.45);
+      drawGauge(ctx, g, x, y, gw, reel);
+    });
+    ctx.restore();
+  }
+  // 3) top: brand, hook, clock
+  topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · WATCH THE NEXT 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid);
+  // 4) bottom: the moment's title and its short caption
+  if (outro < 1) {
+    ctx.save(); ctx.globalAlpha = (1 - outro) * (fr.plateA ?? 1);
+    const title = (fr.title ?? o.step ?? '').trim(), cap = (fr.phase === 'intro' ? '' : fr.cap ?? '').trim();
+    const titleOnly = !!cap && cap.replace(/\.$/, '').toLowerCase() === title.toLowerCase();
+    const capFit = balanced(ctx, fitWrap(ctx, cap, RL - L, 2, Lo.capFs, 42, (px) => `${titleOnly ? 700 : 600} ${px}px ${SANS}`), cap, RL - L);
+    const capBot = S.bottom - 4, capY0 = capBot - (capFit.lines.length - 1) * Lo.capLH - capFit.px * 0.22;
+    shade(ctx, true);
+    if (title && !titleOnly) {
+      ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = ACCENT;
+      text(ctx, fit(ctx, title.toUpperCase(), RL - L), L, cap ? capY0 - capFit.px * 0.86 - 16 : capBot - 6);
+    }
+    if (cap) {
+      ctx.save(); ctx.globalAlpha *= fr.capA; ctx.fillStyle = '#ffffff'; ctx.font = `${titleOnly ? 700 : 600} ${capFit.px}px ${SANS}`;
+      capFit.lines.forEach((ln, i) => text(ctx, ln, L, capY0 + i * Lo.capLH));
+      ctx.restore();
+    }
+    shade(ctx, false);
+    ctx.restore();
+  }
+  footer(ctx, W, H, format, u, plan?.stopsU);
+  if (fr.phase === 'outro') {
+    drawBodyOutro(ctx, W, H, o, outro, format, Lo.topBot);
+    const outS = plan?.outroS ?? OUTRO_S.long, tt = fr.k * outS;
+    if (first && tt > outS - 0.5) { ctx.save(); ctx.globalAlpha = smooth((tt - (outS - 0.5)) / 0.5); ctx.drawImage(first, 0, 0); ctx.restore(); }
+  }
+}
+
+/** End card over the body: what the day did and one question to comment on. The hook and the clock (+24:00) stay
+ *  at the top; the body stays visible behind the glass. */
+function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overlay, alpha: number, format: Format, topBot: number) {
+  if (alpha <= 0.001) return;
+  const reel = format === 'reel', S = SAFE[format], L = S.left, RL = S.rightLow;
+  ctx.save(); ctx.globalAlpha = alpha;
+  const y0 = topBot + (reel ? 40 : 24);
+  const g = ctx.createLinearGradient(0, y0 - 60, 0, y0 + 40);
+  g.addColorStop(0, 'rgba(4,7,12,0)'); g.addColorStop(1, 'rgba(4,7,12,.86)');
+  ctx.fillStyle = g; ctx.fillRect(0, y0 - 60, W, 100); ctx.fillStyle = 'rgba(4,7,12,.86)'; ctx.fillRect(0, y0 + 40, W, H - y0 - 40);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  let y = y0 + (reel ? 40 : 30);
+  ctx.fillStyle = ACCENT; ctx.font = `700 ${reel ? 30 : 26}px ${SANS}`; text(ctx, 'AFTER 24 HOURS', L, y);
+  const t = fitWrap(ctx, o.title, S.right - L, 2, reel ? 64 : 52, 40, (px) => `400 ${px}px ${SERIF}`);
+  ctx.fillStyle = '#ffffff'; ctx.font = `400 ${t.px}px ${SERIF}`;
+  t.lines.forEach((ln, i) => text(ctx, ln, L, y + 12 + t.px * 0.9 + i * t.px * 1.02));
+  y += 12 + t.px * 0.9 + (t.lines.length - 1) * t.px * 1.02 + (reel ? 24 : 16);
+  const rows = Math.max(1, o.summary.length);
+  const room = S.bottom - y - (reel ? 150 : 120);
+  const rh = Math.max(reel ? 70 : 58, Math.min(reel ? 92 : 78, room / rows));
+  o.summary.forEach((l, i) => {
+    const ry = y + i * rh, hh = rh - 10;
+    ctx.fillStyle = 'rgba(16,28,44,.92)'; roundRect(ctx, L, ry, RL - L, hh, 18); ctx.fill();
+    const r = Math.min(24, hh * 0.32);
+    ctx.fillStyle = LIGHT[l.level]; ctx.beginPath(); ctx.arc(L + 18 + r, ry + hh / 2, r, 0, Math.PI * 2); ctx.fill();
+    ctx.textAlign = 'center'; ctx.font = `${Math.round(r * 1.05)}px ${EMOJI}`; ctx.fillStyle = '#04070c'; ctx.fillText(l.icon, L + 18 + r, ry + hh / 2 + r * 0.38); ctx.textAlign = 'left';
+    const tx = L + 18 + 2 * r + 18, tw = RL - tx - 16;
+    ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${reel ? 28 : 24}px ${SANS}`; text(ctx, fit(ctx, l.label, tw), tx, ry + hh * 0.44);
+    ctx.fillStyle = LIGHT[l.level]; ctx.font = `600 ${reel ? 24 : 21}px ${SANS}`; text(ctx, fit(ctx, l.note, tw), tx, ry + hh * 0.82);
+  });
+  y += rows * rh + (reel ? 18 : 12);
+  const cta = fitWrap(ctx, 'Which food should we test next? Comment 👇', RL - L, 2, reel ? 46 : 38, 32, (px) => `700 ${px}px ${SANS}`);
+  ctx.fillStyle = '#ffffff'; ctx.font = `700 ${cta.px}px ${SANS}`;
+  cta.lines.forEach((ln, i) => text(ctx, ln, L, y + cta.px * 0.9 + i * cta.px * 1.16));
+  y += cta.px * 0.9 + (cta.lines.length - 1) * cta.px * 1.16 + (reel ? 44 : 36);
+  ctx.fillStyle = ACCENT; ctx.font = `600 ${reel ? 30 : 26}px ${SANS}`;
+  text(ctx, fit(ctx, o.handle ? `Follow ${o.handle} · a new food every day` : 'A new food every day', RL - L), L, Math.min(y, S.bottom - 8));
+  ctx.restore(); ctx.textAlign = 'left';
+}
+
+// ---------- the comparison: split screen ----------
+/** Positions of the split-screen frame (shared by drawing and tests). */
+export function layoutSplit(ctx: CanvasRenderingContext2D, o: { hook: string }, settle = 1) {
+  const top = layoutBody(ctx, o, 'reel', settle);
+  const nameY = top.topBot + 66; // baseline of the two names
+  // each side's words sit under its own body: left column, and a right column that clears the platform buttons
+  const colW = 340, cols: [number, number][] = [[top.L + 6, top.L + 6 + colW], [top.RL - colW, top.RL]];
+  const capFs = 34, capLH = 42, kickFs = 26;
+  const capTop = top.S.bottom - (kickFs + 12 + 3 * capLH);
+  return { ...top, nameY, cols, capFs, capLH, kickFs, capTop };
+}
+
+/** Split-screen frame of the comparison video: two bodies, each with its colour, name, gauge and words. */
+export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
+  o: CmpOverlay, fr: VFrame, plan: Pick<Plan, 'stopsU' | 'introS' | 'outroS'> | null, first: HTMLCanvasElement | null) {
+  const introS = plan?.introS ?? INTRO_S.long, ti = fr.k * introS;
+  const settle = fr.phase === 'intro' ? smooth((ti - (introS - 1.0)) / 0.9) : 1;
+  const Lo = layoutSplit(ctx, o, settle), { S, L, R } = Lo;
+  const u = fr.u ?? o.progress, t = fr.t;
+  stageBg(ctx, W, H, H * 0.45);
+  drawCover(ctx, src, 0, 0, W, H);
+  scrims(ctx, W, H, Lo.nameY + 10, Lo.capTop);
+  // the seam between the two bodies
+  const sg = ctx.createLinearGradient(0, Lo.nameY, 0, Lo.capTop);
+  sg.addColorStop(0, 'rgba(92,211,255,0)'); sg.addColorStop(0.2, 'rgba(92,211,255,.4)'); sg.addColorStop(0.8, 'rgba(92,211,255,.4)'); sg.addColorStop(1, 'rgba(92,211,255,0)');
+  ctx.fillStyle = sg; ctx.fillRect(W / 2 - 1.5, Lo.nameY, 3, Lo.capTop - Lo.nameY);
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  const outro = fr.phase === 'outro' ? smooth((fr.k * (plan?.outroS ?? OUTRO_S.long)) / 0.45) : 0;
+  const sides = [o.a, o.b];
+  ctx.save(); ctx.globalAlpha = 1 - outro;
+  // names over the two bodies, each in its colour; a VS badge on the seam
+  sides.forEach((s, k) => {
+    const cx = k ? (W / 2 + R) / 2 + 10 : (L + W / 2) / 2 - 10, w = W / 2 - 150;
+    const nm = fitWrap(ctx, s.name, w, 1, 54, 32, (px) => `400 ${px}px ${SERIF}`);
+    ctx.font = `400 ${nm.px}px ${SERIF}`; ctx.textAlign = 'center'; shade(ctx, true);
+    const line = fit(ctx, nm.lines[0] ?? s.name, w), nw = ctx.measureText(line).width;
+    ctx.fillStyle = '#ffffff'; text(ctx, line, cx, Lo.nameY);
+    shade(ctx, false);
+    ctx.fillStyle = s.color; roundRect(ctx, cx - nw / 2, Lo.nameY + 14, nw, 6, 3); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.textAlign = 'left';
+  });
+  ctx.fillStyle = '#04070c'; ctx.beginPath(); ctx.arc(W / 2, Lo.nameY - 16, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = ACCENT; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = ACCENT; ctx.font = `700 28px ${SANS}`; ctx.textAlign = 'center'; text(ctx, 'VS', W / 2, Lo.nameY - 6); ctx.textAlign = 'left';
+  // one gauge per body under its name, pinned to its organ in its own half
+  const gTop = Lo.nameY + 40, bot = Lo.capTop - 14, gw = 300;
+  ctx.save(); ctx.globalAlpha *= fr.phase === 'intro' ? smooth((ti - 0.8) / 0.5) : 1;
+  sides.forEach((s, k) => {
+    const g = s.gauge;
+    if (!g) return;
+    const h = gaugeHeight(ctx, g, true, gw), x = k ? Lo.RL - gw : L, y = gTop;
+    const pin = onFrame(g.at, W, y + h + 10, bot) && (k ? g.at!.x > W / 2 + 10 : g.at!.x < W / 2 - 10) ? g.at! : null;
+    if (pin && ctx.globalAlpha > 0.01) drawPin(ctx, { x: Math.max(x + 20, Math.min(x + gw - 20, pin.x)), y: y + h }, pin, g.curve ? LIGHT[g.level] : '#e6edf5', t + k * 0.45);
+    drawGauge(ctx, g, x, y, gw, true);
+  });
+  ctx.restore();
+  // each side's moment: its title, its short caption
+  ctx.save(); ctx.globalAlpha *= fr.plateA ?? 1;
+  const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' ? '' : fr.capB ?? '']];
+  sides.forEach((s, k) => {
+    const [x0, x1] = Lo.cols[k], w = x1 - x0;
+    const title = (caps[k][0] ?? '').trim(), cap = (caps[k][1] ?? '').trim();
+    shade(ctx, true);
+    const c = balanced(ctx, fitWrap(ctx, cap, w, 3, Lo.capFs, 28, (px) => `600 ${px}px ${SANS}`), cap, w);
+    const capBot = S.bottom - 4, y0 = capBot - (c.lines.length - 1) * Lo.capLH - c.px * 0.22;
+    if (title) {
+      ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = lighten(s.color);
+      const tl = cap ? wrap(ctx, title.toUpperCase(), w, 2) : [title.toUpperCase()], ty = cap ? y0 - c.px * 0.86 - 14 : capBot - 6;
+      tl.forEach((ln, i) => text(ctx, fit(ctx, ln, w), x0, ty - (tl.length - 1 - i) * (Lo.kickFs + 6)));
+    }
+    if (cap) {
+      ctx.save(); ctx.globalAlpha *= fr.phase === 'main' ? fr.capA : 1; ctx.fillStyle = '#ffffff'; ctx.font = `600 ${c.px}px ${SANS}`;
+      c.lines.forEach((ln, i) => text(ctx, ln, x0, y0 + i * Lo.capLH));
+      ctx.restore();
+    }
+    shade(ctx, false);
+  });
+  ctx.restore();
+  ctx.restore(); // names, gauges, captions
+  topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · SIDE BY SIDE, 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid);
+  footer(ctx, W, H, 'reel', u, plan?.stopsU);
+  if (fr.phase === 'outro') {
+    drawSplitOutro(ctx, W, H, o, outro, Lo.topBot);
+    const outS = plan?.outroS ?? OUTRO_S.long, tt = fr.k * outS;
+    if (first && tt > outS - 0.5) { ctx.save(); ctx.globalAlpha = smooth((tt - (outS - 0.5)) / 0.5); ctx.drawImage(first, 0, 0); ctx.restore(); }
+  }
+}
+/** A drink colour light enough to read as text on the dark frame (cola is near black, water near white). */
+export function lighten(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return ACCENT;
+  const n = parseInt(m[1], 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const lum = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+  if (lum >= 0.55) return `#${m[1]}`;
+  const k = (0.62 - lum) / (1 - lum);
+  return `rgb(${c.map((v) => Math.round(v + (255 - v) * k)).join(',')})`;
+}
+
+/** Comparison end card: both days in two columns, the verdict (analyze.ts verdictOf: alcohol never "wins"), and a
+ *  question to comment on. The hook and the clock stay at the top. */
+function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: CmpOverlay, alpha: number, topBot: number) {
+  if (alpha <= 0.001) return;
+  const S = SAFE.reel, L = S.left, RL = S.rightLow;
+  ctx.save(); ctx.globalAlpha = alpha;
+  const y0 = topBot + 24;
+  const g = ctx.createLinearGradient(0, y0 - 60, 0, y0 + 40);
+  g.addColorStop(0, 'rgba(4,7,12,0)'); g.addColorStop(1, 'rgba(4,7,12,.88)');
+  ctx.fillStyle = g; ctx.fillRect(0, y0 - 60, W, 100); ctx.fillStyle = 'rgba(4,7,12,.88)'; ctx.fillRect(0, y0 + 40, W, H - y0 - 40);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  let y = y0 + 40;
+  ctx.fillStyle = ACCENT; ctx.font = `700 30px ${SANS}`; text(ctx, 'AFTER 24 HOURS', L, y);
+  y += 20;
+  const gap = 16, cw = (RL - L - gap) / 2, ch = 364;
+  [o.a, o.b].forEach((s, k) => {
+    const x = L + k * (cw + gap);
+    ctx.fillStyle = 'rgba(16,28,44,.94)'; roundRect(ctx, x, y, cw, ch, 22); ctx.fill();
+    ctx.strokeStyle = lighten(s.color); ctx.lineWidth = 3; ctx.stroke();
+    const nm = fitWrap(ctx, s.name, cw - 40, 1, 44, 26, (px) => `400 ${px}px ${SERIF}`);
+    ctx.fillStyle = '#ffffff'; ctx.font = `400 ${nm.px}px ${SERIF}`; text(ctx, fit(ctx, nm.lines[0] ?? s.name, cw - 40), x + 20, y + 54);
+    ctx.fillStyle = '#e6edf5'; ctx.font = `700 24px ${SANS}`;
+    text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 94);
+    ctx.font = `600 22px ${SANS}`; ctx.fillStyle = '#b8c7d8';
+    text(ctx, fit(ctx, `Blood sugar ${s.summary.sugarPeak}`, cw - 40), x + 20, y + 124);
+    s.summary.worst.slice(0, 4).forEach((l, j) => {
+      const ry = y + 148 + j * 53;
+      ctx.fillStyle = LIGHT[l.level]; ctx.beginPath(); ctx.arc(x + 34, ry + 17, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e6edf5'; ctx.font = `700 22px ${SANS}`; text(ctx, fit(ctx, l.label, cw - 80), x + 58, ry + 14);
+      ctx.fillStyle = LIGHT[l.level]; ctx.font = `600 20px ${SANS}`; text(ctx, fit(ctx, l.note, cw - 80), x + 58, ry + 40);
+    });
+  });
+  y += ch + 16;
+  if (o.verdict) {
+    const v = fitWrap(ctx, o.verdict, RL - L - 44, 3, 34, 24, (px) => `700 ${px}px ${SANS}`);
+    const bh = 24 + v.lines.length * v.px * 1.22;
+    ctx.fillStyle = 'rgba(92,211,255,.12)'; roundRect(ctx, L, y, RL - L, bh, 20); ctx.fill();
+    ctx.strokeStyle = 'rgba(92,211,255,.6)'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.font = `700 ${v.px}px ${SANS}`;
+    v.lines.forEach((ln, i) => text(ctx, ln, L + 22, y + 12 + v.px * 0.92 + i * v.px * 1.22));
+    y += bh + 16;
+  }
+  const cta = fitWrap(ctx, 'Which one would you pick? 👇', RL - L, 1, 42, 30, (px) => `700 ${px}px ${SANS}`);
+  ctx.fillStyle = '#ffffff'; ctx.font = `700 ${cta.px}px ${SANS}`;
+  const cy = Math.min(y + cta.px * 0.9, S.bottom - 46);
+  text(ctx, cta.lines[0] ?? '', L, cy);
+  ctx.fillStyle = ACCENT; ctx.font = `600 26px ${SANS}`;
+  text(ctx, fit(ctx, o.handle ? `Follow ${o.handle} · a new comparison every day` : 'A new comparison every day', RL - L), L, Math.min(cy + 42, S.bottom - 4));
+  ctx.restore(); ctx.textAlign = 'left';
 }

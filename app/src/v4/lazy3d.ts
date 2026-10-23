@@ -34,6 +34,7 @@ export const FlowPaths = lazyPart('FlowPaths');
 export const LiquidRoute = lazyPart('LiquidRoute');
 export const CameraRig = lazyPart('CameraRig');
 export const CompareScene = lazyPart('CompareScene');
+export const VideoCam = lazyPart('VideoCam');
 export const OrbitControls = lazyPart('OrbitControls');
 export const ExposeState = lazyPart('ExposeState');
 

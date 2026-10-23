@@ -3,7 +3,7 @@
 // as the app wrote them on 2026-10-22 (cola, water, espresso, 3 beers over 2 h, a whole pizza, kebab, a 3-item meal).
 import { describe, expect, it } from 'vitest';
 import { minutesFromU, uFromMinutes } from '../time';
-import { FPS, LENGTH, planVideo, READ, readSeconds, sentences, splitPages, wordCount, type StopIn } from './video-plan';
+import { FPS, LENGTH, planVideo, READ, readSeconds, sentences, splitPages, videoText, wordCount, type StopIn } from './video-plan';
 import fixtures from './video-plan.fixtures.json';
 
 const FIX = fixtures as Record<string, StopIn[]>;
@@ -62,8 +62,9 @@ describe('video plan', () => {
         for (const [min, texts] of byStop) {
           const src = chapters.filter((c) => c.min === min).slice(-1)[0];
           expect(src).toBeTruthy();
-          const all = sentences(src.text), joined = norm(texts.join(' '));
-          expect(all.some((_s, k) => norm(all.slice(0, k + 1).join(' ')) === joined)).toBe(true);
+          const all = sentences(videoText(src.text)), joined = norm(texts.join(' '));
+          // whole sentences, or (short cut, 2026-10-23) just the chapter title of a moment whose sentence is long
+          expect(all.some((_s, k) => norm(all.slice(0, k + 1).join(' ')) === joined) || (cut === 'short' && joined === norm(src.title))).toBe(true);
         }
         // time only moves forward (no camera jumping back), and the day ends at 24 h
         const mains = p.frames.filter((f) => f.phase !== 'outro');

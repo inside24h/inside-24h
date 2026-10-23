@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { drawCmpFrame, drawFrame, isInAppBrowser, logText, SAFE, SIZE, videoSupport, type CmpOverlay, type Format, type Light, type Overlay, type TextBox } from './share';
+import { drawCmpFrame, drawFrame, elapsedText, isInAppBrowser, layoutBody, layoutSplit, logText, SAFE, SIZE, videoSupport, type CmpOverlay, type Format, type Light, type Overlay, type TextBox } from './share';
 
 const IG = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0';
 const TT = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36 musical_ly_2023 BytedanceWebview/d8a21c6';
@@ -113,5 +113,53 @@ describe('video safe zones', () => {
     for (const b of cap) expect(b.y1 - b.y0, b.text).toBeGreaterThanOrEqual(42); // ≥ 42 px text on a 1920 px tall frame
     const words = boxes.filter((b) => !b.deco);
     for (const b of words) expect(b.y1 - b.y0, b.text).toBeGreaterThanOrEqual(20); // nothing below 20 px except small print
+  });
+});
+
+// ---- 2026-10-23 body-first frames: the body window stays free, gauges sit at the sides, split screen halves ----
+describe('body-first video frames', () => {
+  const G = (big: string, small: string, organ: string, at: { x: number; y: number } | null, curve = false) =>
+    ({ big, small, level: 1 as const, organ, at, ...(curve ? { curve: [0, 0.4, 1, 0.6, 0.2, 0], u: 0.4 } : {}) });
+  const pins = [null, { x: 540, y: 300 }, { x: 540, y: 900 }, { x: 900, y: 1300 }, { x: -50, y: 900 }];
+  for (const w of [0.56, 0.42]) for (const pin of pins) for (const format of ['reel', 'feed'] as Format[]) {
+    it(`${format} · gauges pinned at ${JSON.stringify(pin)} · font ${w}: words in the safe zone, the middle of the body free`, () => {
+      const [W, H] = SIZE[format];
+      const o: Overlay = { ...OVERLAYS[0], hook: 'A whole pizza — inside your body', gauges: [G('1154 g', 'Stomach', 'stomach', pin), G('+1.3–3.0', 'mmol/L blood sugar rise', 'pancreas', pin, true)] };
+      for (const phase of ['intro', 'main', 'outro'] as const) {
+        const fr = { phase, m: 20, t: 5, u: 0.4, rate: 30, cap: 'Your blood sugar climbs from 5.0 mmol/L', title: 'Blood sugar peak', capA: 1, k: phase === 'intro' ? 0.1 : 0.5 };
+        const boxes = logText(() => drawFrame(fakeCtx(w), W, H, SRC, o, format, fr, { stopsU: [0, 0.3, 1], introS: 3, outroS: 6.5 }, null));
+        checkBoxes(boxes, format, `bodyfirst/${format}/${phase}`);
+        if (phase !== 'main') continue;
+        const Lo = layoutBody(fakeCtx(w), o, format), S = SAFE[format];
+        // between the top band and the caption, words only in the two gauge columns at the edges
+        for (const b of boxes.filter((b) => !b.deco && b.y1 > Lo.topBot + 8 && b.y0 < Lo.capTop - 8)) {
+          const inLeft = b.x1 <= S.left + 300 + 1, inRight = b.x0 >= Math.min(S.right, S.rightLow) - 300 - 1 - (S.right - S.rightLow);
+          expect(inLeft || inRight, `"${b.text}" [${Math.round(b.x0)}–${Math.round(b.x1)}, ${Math.round(b.y0)}]`).toBe(true);
+        }
+        // the body window is most of the frame: the open middle is at least a third of the height
+        expect((Lo.capTop - Lo.topBot) / H).toBeGreaterThan(format === 'reel' ? 0.3 : 0.25);
+      }
+    });
+  }
+  for (const w of [0.56, 0.42]) {
+    it(`split screen · font ${w}: each side's words stay on its own half, all in the safe zone`, () => {
+      const o: CmpOverlay = { ...CMP, hook: 'Espresso vs Beer — inside your body',
+        a: { ...CMP.a, name: 'Espresso', gauge: G('63 mg', 'caffeine in you', 'brain', { x: 270, y: 700 }, true) },
+        b: { ...CMP.b, name: 'Beer', gauge: G('0.21–0.53', '‰ blood alcohol', 'brain', { x: 810, y: 700 }, true) } };
+      for (const phase of ['intro', 'main', 'outro'] as const) {
+        const fr = { phase, m: 45, t: 9, u: 0.5, rate: 2, cap: 'Caffeine slips into your brain', capB: 'Blood alcohol is at its highest now', title: 'Reaching your brain', titleB: 'Alcohol peak', capA: 1, k: 0.5 };
+        const boxes = logText(() => drawCmpFrame(fakeCtx(w), 1080, 1920, SRC, o, fr, { stopsU: [0, 0.5, 1], introS: 3, outroS: 6.5 }, null));
+        checkBoxes(boxes, 'reel', `split/${phase}`);
+        if (phase !== 'main') continue;
+        const Lo = layoutSplit(fakeCtx(w), o);
+        for (const b of boxes.filter((b) => !b.deco && b.y0 > Lo.nameY - 70 && b.text !== 'VS')) {
+          expect(b.x1 <= 540 || b.x0 >= 540, `"${b.text}" crosses the seam [${Math.round(b.x0)}–${Math.round(b.x1)}]`).toBe(true);
+        }
+        for (const t of ['Espresso', 'Beer']) expect(boxes.some((b) => b.text === t)).toBe(true);
+      }
+    });
+  }
+  it('the clock reads time since the first sip, hours:minutes', () => {
+    expect(elapsedText(0)).toBe('+0:00'); expect(elapsedText(45)).toBe('+0:45'); expect(elapsedText(725)).toBe('+12:05'); expect(elapsedText(1440)).toBe('+24:00');
   });
 });

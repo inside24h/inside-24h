@@ -70,6 +70,10 @@ i.caf { background: var(--caf); } i.met { background: var(--met); } i.gone { bac
 .stage { grid-area: stage; position: relative; min-height: 0; background: radial-gradient(ellipse 60% 55% at 50% 45%, #0c1b2c 0%, #04070c 75%); }
 .stage > div:first-child { position: absolute !important; inset: 0; }
 .stage canvas { touch-action: pan-y; }
+/* 2026-10-23 body-first video: while a video is made, the 3D canvas takes the video's own shape (540 × 960 CSS px at
+   2× = 1080 × 1920; feed 4:5 = 540 × 675), shown as a preview in the top-left corner until it is done */
+.stage.recbox > div:first-child { position: fixed !important; inset: auto !important; left: 0 !important; top: 0 !important; width: 540px !important; height: 960px !important; z-index: 60; /* the wrapper has an inline 100% size */ background: #04070c; box-shadow: 0 0 0 1px rgba(92,211,255,.35); }
+.stage.recbox.feed > div:first-child { height: 675px !important; }
 .hint { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font: 11.5px var(--mono); color: var(--mute); background: rgba(8, 16, 26, .7); border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
 .legend { position: absolute; left: 16px; bottom: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; font: 11px var(--mono); color: #b9c5d3; pointer-events: none; text-shadow: 0 0 6px #04070c, 0 0 2px #04070c; }
 .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }

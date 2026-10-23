@@ -17,6 +17,18 @@ export const READ = {
   pageChars: 86,    // longest caption page (3 lines at the video size); longer chapter text is split into pages
   maxWps: 3,        // hard limit the tests check: no caption is ever faster than 3 words/s
 } as const;
+/** 2026-10-23 body-first redesign: the body is the star, words support it. A video caption is a short phrase
+ *  (≤ 46 characters ≈ 6-8 words, two lines), paged through the chapter's sentence; the reading rule above is
+ *  unchanged (every page still gets its full time, so short pages are calmer, never faster). */
+export const CAP_PAGE = 46;
+
+/** The chapter's words as the video says them: asides in brackets that are longer than four words are left out
+ *  (e.g. "(a typical response, not personalized: most people land between 6.4 and 8.2 mmol/L)" — the range itself
+ *  is on the gauge next to the body); short ones stay ("(about 9 teaspoons)"). Nothing is added or reworded. */
+export function videoText(text: string): string {
+  return text.replace(/\s*\(([^()]*)\)/g, (all, inner: string) => (inner.trim().split(/\s+/).length > 4 ? '' : all))
+    .replace(/\s+([,.;:!?])/g, '$1').replace(/\s+/g, ' ').trim();
+}
 
 /** Seconds a caption needs on screen, by the reading rule. */
 export function readSeconds(text: string, firstOfStop = false): number { return readChars(text.trim().length, firstOfStop); }
@@ -51,9 +63,15 @@ export function splitPages(text: string, max: number = READ.pageChars): string[]
       const prev = /(\S+)$/.exec(left)?.[1] ?? '';
       let score = Math.abs(i - mid) / s.length;
       if (/[,;:–—]$/.test(prev)) score -= 0.25;
-      if (/^[(“"]/.test(right)) score -= 0.2;
+      if (/^[(“"]/.test(right)) score -= /^\([^()]{0,30}\)/.test(right) && max < 60 ? -0.45 : 0.2; // short pages: a short aside stays with its words
       if (WEAK.has(prev.toLowerCase())) score += 0.4;
       if (/^\d/.test(right) && /^\d/.test(prev)) score += 0.4; // keep "5.0 mmol/L" and "3 × 500 ml" together
+      // 2026-10-23 (short video pages): a number stays with its unit ("1.5 hours", "5.0 mmol/L"), a bracket stays
+      // whole, and a break before "and / to / in …" reads naturally
+      if (/\d$/.test(prev) && /^(?:h|ml|l|g|mg|kg|min|minutes?|hours?|mmol\/L|mg\/dL|‰|%|kcal|×|teaspoons?|cups?)/i.test(right)) score += 0.8;
+      else if (/\d[.,]?\d*$/.test(prev)) score += 0.15;
+      if ((left.match(/\(/g) ?? []).length > (left.match(/\)/g) ?? []).length) score += 0.5;
+      if (/^(?:and|to|in|into|as|while|but|within|after|before|because|so|then|until|with|from|for)/i.test(right)) score -= 0.1;
       if (left.length > soft || right.length > soft) score += 0.2;
       if (score < bestScore) { bestScore = score; best = i; }
     }
@@ -86,6 +104,13 @@ export interface VFrame {
   plateA?: number;    // caption panel opacity (1 by default; fades out on the way to the 24 h beat)
   capA: number;       // caption opacity (fades in at a page change)
   k: number;          // 0..1 progress through the phase (intro / outro animation)
+  // 2026-10-23 body-first: what the camera and the clock need
+  stop?: number;      // the moment (minute) whose words are on screen; during a glide, the moment it glides to
+  beat?: 'hook' | 'hold' | 'glide' | 'end'; // hook = intro, hold = at a moment, glide = to the next one, end = 24 h beat + end card
+  from?: number;      // glide: the minute it started from (a long glide = a quiet stretch: the camera pulls back)
+  u?: number;         // day position 0..1 (the app's clock axis)
+  rate?: number;      // how fast the day runs here, minutes per second of video (the clock speeds up in quiet stretches)
+  hk?: number;        // 0..1 through the current moment (the hook counts as part of the first one): the camera keeps moving
 }
 export interface Cue { t: number; kind: 'start' | 'move' | 'stop' | 'page' | 'outro' | 'end' }
 export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number }
@@ -93,6 +118,11 @@ export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pag
 /** Length targets. Long: TikTok/Facebook reward 60 s+ (we aim 62-75 s so encoders never round it under 61 s).
  *  Short: 15-30 s for Shorts / Reels experiments. */
 export const LENGTH = { long: { min: 62, max: 75 }, short: { min: 15, max: 30 } } as const;
+/** Long cut: more words are added to moments only up to this length (the rest of the minute is the body, not text). */
+export const FILL_S = 68;
+/** While a moment's caption is read, the day keeps running slowly towards the next moment (this share of the way on
+ *  the day axis), so the drink keeps moving and the clock keeps ticking. The first sip runs further: the swallow. */
+export const DRIFT = 0.12, DRIFT_FIRST = 0.6;
 export const MOVE_S = 1.0;        // glide between two moments (eased)
 export const INTRO_S = { long: 3.0, short: 2.4 } as const; // big hook card (it then stays at the top as the headline)
 export const END_HOLD_S = 1.4;    // the "24 HOURS LATER" beat before the end card (body, stamp and lights only)
@@ -122,23 +152,30 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const lim = LENGTH[cut];
   const fixed = INTRO_S[cut] + OUTRO_S[cut] + MOVE_S + END_HOLD_S; // intro, glide to 24 h, the 24 h beat, end card
   let chosen: StopIn[];
+  // short cut (2026-10-23): after the opening sentence, a moment whose first sentence needs more than one page says
+  // just its chapter title ("Reaching your brain", "Blood sugar peak"); the gauge next to the body carries the
+  // number. More of the journey fits in 30 s, with fewer words.
+  const shortPages = (s: StopIn, first: boolean): string[] => {
+    const p = splitPages(sentences(videoText(s.text))[0] ?? '', CAP_PAGE);
+    return first || p.length <= 1 || !s.title.trim() ? p : [s.title.trim()];
+  };
   if (cut === 'short') {
-    // the start + the most telling moments that fit in 30 s (first sentence each), in time order
+    // the start + the most telling moments that fit in 30 s, in time order
     chosen = [story[0]];
-    const firstS = (s: StopIn) => splitPages(sentences(s.text)[0] ?? '').reduce((a, p, j) => a + readSeconds(p, j === 0), 0);
-    const len = (list: StopIn[]) => fixed + list.reduce((a, s, i) => a + (i ? MOVE_S : 0) + firstS(s), 0);
+    const firstS = (s: StopIn, i: number) => shortPages(s, i === 0).reduce((a, p, j) => a + readSeconds(p, j === 0), 0);
+    const len = (list: StopIn[]) => fixed + list.reduce((a, s, i) => a + (i ? MOVE_S : 0) + firstS(s, i), 0);
     const rank = (s: StopIn) => stopValue(s) + (s.min >= 10 ? 1.5 : 0); // a short cut should travel, not wait at the stomach
     const ranked = story.slice(1).sort((a, b) => rank(b) - rank(a) || a.min - b.min);
     for (const c of ranked) {
-      if (chosen.length >= 4) break;
+      if (chosen.length >= 5) break;
       const next = [...chosen, c].sort((a, b) => a.min - b.min);
       if (len(next) <= lim.max) chosen = next;
     }
   } else chosen = story.slice();
   // whole sentences only: a caption is never cut off mid-sentence; a long sentence is split over two pages
-  let sents = chosen.map((s) => sentences(s.text));
+  let sents = chosen.map((s) => sentences(videoText(s.text)));
   let used = sents.map((x) => Math.min(1, x.length)); // every moment starts with its first sentence
-  const pagesFor = () => chosen.map((_s, i) => splitPages(sents[i].slice(0, Math.max(1, used[i])).join(' ')));
+  const pagesFor = () => chosen.map((s, i) => (cut === 'short' ? shortPages(s, i === 0) : splitPages(sents[i].slice(0, Math.max(1, used[i])).join(' '), CAP_PAGE)));
   const stopS = (pp: string[]) => pp.reduce((a, p, j) => a + readSeconds(p, j === 0), 0);
   const total = (pp: string[][]) => fixed + pp.reduce((acc, p, i) => acc + (i ? MOVE_S : 0) + stopS(p), 0);
 
@@ -161,7 +198,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   if (cut === 'long') {
     for (const d of dropped.sort((a, b) => stopValue(b) - stopValue(a))) {
       const at = chosen.findIndex((c) => c.min > d.min), k = at < 0 ? chosen.length : at;
-      const c2 = [...chosen.slice(0, k), d, ...chosen.slice(k)], s2 = [...sents.slice(0, k), sentences(d.text), ...sents.slice(k)], u2 = [...used.slice(0, k), 1, ...used.slice(k)];
+      const c2 = [...chosen.slice(0, k), d, ...chosen.slice(k)], s2 = [...sents.slice(0, k), sentences(videoText(d.text)), ...sents.slice(k)], u2 = [...used.slice(0, k), 1, ...used.slice(k)];
       const keep = [chosen, sents, used] as const;
       chosen = c2; sents = s2; used = u2;
       const next = pagesFor();
@@ -178,7 +215,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     let grew = false;
     for (const i of order) {
       used[i]++; const next = pagesFor();
-      if (total(next) > lim.max) { used[i]--; continue; }
+      if (total(next) > Math.min(lim.max, FILL_S)) { used[i]--; continue; }
       pages = next; grew = true; break;
     }
     if (!grew) break;
@@ -197,7 +234,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
  *  minute (split into pages when long). A page's time counts only the words that are new on screen: a side whose
  *  chapter did not change since the last moment is not read again. Same length rules as the single video. */
 export interface CmpStopIn { min: number; a: string; b: string; titleA?: string; titleB?: string }
-export const CMP_PAGE = 110; // characters per side and page (3 lines in a comparison caption block)
+export const CMP_PAGE = 40; // characters per side and page (2026-10-23 split screen: three short lines under each body)
 export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => number, fromU: (u: number) => number): Plan {
   const lim = LENGTH[cut];
   const fixed = INTRO_S[cut] + OUTRO_S[cut] + MOVE_S + END_HOLD_S;
@@ -208,8 +245,11 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
   if (chosen[0].min !== 0) chosen.unshift({ ...chosen[0], min: 0 });
   const pagesOf = (list: CmpStopIn[]) => {
     let pa = '', pb = '';
-    return list.map((s) => {
-      const A = splitPages(sentences(s.a)[0] ?? '', CMP_PAGE), B = splitPages(sentences(s.b)[0] ?? '', CMP_PAGE);
+    return list.map((s, i) => {
+      // 2026-10-23: after the start, a side whose sentence needs more than one page (short cut) or two (long cut)
+      // shows its chapter title only, so the same moments fit side by side (alcohol peak, caffeine in the brain…)
+      const side = (t: string, title?: string) => { const p = splitPages(sentences(videoText(t))[0] ?? '', CMP_PAGE); return i > 0 && p.length > (cut === 'short' ? 1 : 2) && title?.trim() ? [title.trim()] : p; };
+      const A = side(s.a, s.titleA), B = side(s.b, s.titleB);
       const n = Math.max(A.length, B.length, 1), out: { cap: string; capB: string; s: number }[] = [];
       for (let k = 0; k < n; k++) {
         const ca = A[Math.min(k, A.length - 1)] ?? '', cb = B[Math.min(k, B.length - 1)] ?? '';
@@ -246,47 +286,66 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
   const frames: VFrame[] = [], cues: Cue[] = [], pageList: Page[] = [];
   const F = (s: number) => Math.max(1, Math.round(s * FPS));
   const tNow = () => frames.length / FPS;
-  // intro: the hook over the first minute of the day
-  cues.push({ t: 0, kind: 'start' });
+  // while a moment is on screen the day drifts on towards the next moment (DRIFT of the way on the day axis), so
+  // the drink keeps moving and the clock ticks; the hook and the first moment play the swallow together
   const nIntro = F(INTRO_S[cut]);
-  for (let i = 0; i < nIntro; i++) frames.push({ phase: 'intro', m: 0, t: tNow(), capA: 0, k: i / nIntro });
+  const holdN = (i: number) => stops[i].pages.reduce((a, p) => a + F(p.s), 0) + (i === 0 ? nIntro : 0);
+  const driftTo = (i: number) => {
+    const s = stops[i], next = stops[i + 1]?.min ?? 1440;
+    if (s.min >= 1440) return s.min;
+    // the first sip runs on to the stomach (up to 3 minutes, never more than DRIFT_FIRST of the way to the next moment)
+    if (i === 0) return fromU(Math.min(toU(Math.min(next, 3)), toU(s.min) + DRIFT_FIRST * (toU(next) - toU(s.min))));
+    return fromU(toU(s.min) + DRIFT * (toU(next) - toU(s.min)));
+  };
+  const at = (i: number, k: number) => { const n = Math.max(1, holdN(i)); return fromU(toU(stops[i].min) + (toU(driftTo(i)) - toU(stops[i].min)) * Math.min(1, k / n)); };
+  // intro: the hook over the first sip
+  cues.push({ t: 0, kind: 'start' });
+  for (let i = 0; i < nIntro; i++) frames.push({ phase: 'intro', m: stops.length ? at(0, i) : 0, t: tNow(), capA: 0, k: i / nIntro, stop: stops[0]?.min ?? 0, beat: 'hook', hk: stops.length ? i / Math.max(1, holdN(0)) : 0 });
   let prevMin = 0;
-  const glide = (from: number, to: number, st: { title?: string; titleB?: string } | null, pg: { cap: string; capB?: string } | undefined, fadeIn: boolean) => {
+  const glide = (from: number, to: number, st: { min?: number; title?: string; titleB?: string } | null, pg: { cap: string; capB?: string } | undefined, fadeIn: boolean) => {
     const n = F(MOVE_S);
     cues.push({ t: tNow(), kind: 'move' });
     for (let i = 1; i <= n; i++) {
       const m = fromU(toU(from) + (toU(to) - toU(from)) * ease(i / n));
       // no next caption = the way to the 24 h beat: the caption panel fades out (its words belong to an earlier moment)
       frames.push({ phase: 'main', m, t: tNow(), cap: pg?.cap, capB: pg?.capB, title: st?.title, titleB: st?.titleB, capA: !pg ? 0 : fadeIn ? Math.min(1, i / F(READ.fade)) : 1,
-        plateA: pg ? 1 : 0, k: 0 });
+        plateA: pg ? 1 : 0, k: 0, stop: pg ? st?.min : to, beat: 'glide', from });
     }
   };
   stops.forEach((s, i) => {
     if (i > 0) glide(prevMin, s.min, s, s.pages[0], true); // the new caption fades in as the glide starts
+    let k = i === 0 ? nIntro : 0;
     s.pages.forEach((p, j) => {
       const n = F(p.s);
       const already = i > 0 && j === 0 ? F(MOVE_S) : 0; // the first page was already up during the glide
       cues.push({ t: tNow(), kind: j === 0 ? 'stop' : 'page' });
       pageList.push({ stop: s.min, text: p.cap, textB: p.capB, s: (n + already) / FPS });
-      for (let k = 0; k < n; k++) frames.push({ phase: 'main', m: s.min, t: tNow(), cap: p.cap, capB: p.capB, title: s.title, titleB: s.titleB, capA: already ? 1 : Math.min(1, (k + 1) / F(READ.fade)), k: 0 });
+      for (let f = 0; f < n; f++, k++) frames.push({ phase: 'main', m: at(i, k), t: tNow(), cap: p.cap, capB: p.capB, title: s.title, titleB: s.titleB, capA: already ? 1 : Math.min(1, (f + 1) / F(READ.fade)), k: 0, stop: s.min, beat: 'hold', hk: k / Math.max(1, holdN(i)) });
     });
-    prevMin = s.min;
+    prevMin = driftTo(i);
   });
-  // the 24 h beat: glide to the end of the day with the caption panel fading out, then a short look at the body,
-  // the stamp and the lights at 24 h (no words to read). A story that already ends at 24 h keeps its last caption.
+  // the 24 h beat: glide to the end of the day with the caption panel fading out, then a short look at the body
+  // at 24 h (no words to read). A story that already ends at 24 h keeps its last caption.
   const lastStop = stops[stops.length - 1], last = lastStop?.pages.slice(-1)[0];
-  if (prevMin < 1440) {
+  const endsAtDay = (lastStop?.min ?? 0) >= 1440;
+  if (!endsAtDay) {
     const g0 = frames.length;
     glide(prevMin, 1440, lastStop, last, false); cues.push({ t: tNow(), kind: 'stop' });
     const n = frames.length - g0;
-    for (let i = 0; i < n; i++) frames[g0 + i].plateA = 1 - ease((i + 1) / n);
+    for (let i = 0; i < n; i++) { frames[g0 + i].plateA = 1 - ease((i + 1) / n); frames[g0 + i].stop = 1440; }
   }
-  for (let k = 0, n = F(END_HOLD_S); k < n; k++) frames.push({ phase: 'main', m: 1440, t: tNow(), cap: last?.cap, capB: last?.capB, title: lastStop?.title, titleB: lastStop?.titleB, capA: 1, plateA: prevMin < 1440 ? 0 : 1, k: 0 });
+  for (let k = 0, n = F(END_HOLD_S); k < n; k++) frames.push({ phase: 'main', m: 1440, t: tNow(), cap: last?.cap, capB: last?.capB, title: lastStop?.title, titleB: lastStop?.titleB, capA: 1, plateA: endsAtDay ? 1 : 0, k: 0, stop: endsAtDay ? lastStop.min : 1440, beat: 'end' });
   // end card
   cues.push({ t: tNow(), kind: 'outro' });
   const nOut = F(OUTRO_S[cut]);
-  for (let i = 0; i < nOut; i++) frames.push({ phase: 'outro', m: 1440, t: tNow(), capA: 0, k: i / nOut });
+  for (let i = 0; i < nOut; i++) frames.push({ phase: 'outro', m: 1440, t: tNow(), capA: 0, k: i / nOut, stop: 1440, beat: 'end' });
   cues.push({ t: tNow(), kind: 'end' });
-  const stopMins = [...stops.map((s) => s.min), ...(prevMin < 1440 ? [1440] : [])];
+  // the clock: day position and speed of every frame
+  frames.forEach((f, i) => {
+    f.u = toU(f.m);
+    const a = frames[Math.max(0, i - 1)].m, b = frames[Math.min(frames.length - 1, i + 1)].m;
+    f.rate = ((b - a) / Math.max(1, Math.min(frames.length - 1, i + 1) - Math.max(0, i - 1))) * FPS;
+  });
+  const stopMins = [...stops.map((s) => s.min), ...(!endsAtDay ? [1440] : [])];
   return { frames, stops: stopMins, stopsU: stopMins.map(toU), pages: pageList, cues, seconds: frames.length / FPS, introS: nIntro / FPS, outroS: nOut / FPS };
 }
