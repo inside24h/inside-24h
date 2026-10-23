@@ -24,7 +24,7 @@ export const PAIRS: [string, string][] = [
 function Column({ a, k, unit }: { a: Analysis; k: number; unit: Profile['glucoseUnit'] }) {
   return (
     <div className="cmpcol">
-      <div className="cmph"><i aria-hidden="true" style={{ background: a.color }} /><b>{a.name}</b><span className="cmpline" aria-hidden="true" style={{ background: LINE[k] }} /></div>
+      <div className="cmph"><i aria-hidden="true" style={{ background: a.color }} /><b>{a.label}</b><span className="cmpline" aria-hidden="true" style={{ background: LINE[k] }} /></div>
       <div className="cmpkcal">{Math.round(a.kcal)} kcal · blood sugar {sugarPeakText(a.sugarPeak, unit)}</div>
       <div className="cmpdots">
         {a.systems.map((s) => { const l = s.levels[worstMoment(s)] as 0 | 1 | 2; return <span key={s.key}><i aria-hidden="true" style={{ background: s.unknown ? '#8292a7' : DOT[l] }} />{SHORT[s.key]} <em>{s.unknown ? 'not measured' : WORD[l]}</em></span>; })}
@@ -49,10 +49,11 @@ function SugarChart({ a, b, unit }: { a: Analysis; b: Analysis; unit: Profile['g
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img"
         aria-label={'Blood sugar in the first 4 hours. ' + [a, b].map((x) => `${x.name}: ${x.sugarPeak !== null && x.sugarPeak >= 0.3 ? 'peak ' : ''}${sugarPeakText(x.sugarPeak, unit)}`).join('; ')}>
         <line x1={0} x2={W} y1={Y(0)} y2={Y(0)} className="zero" />
-        {[60, 120, 180].map((m) => <text key={m} x={(m / T) * W} y={H - 3} className="tick">{m / 60} h</text>)}
         {lines.map((l, i) => l && <path key={i} d={path(l)} className="ln" style={{ stroke: LINE[i] }} />)}
       </svg>
-      {lines.some((l) => !l) && <div className="note">Foods without a measured glycemic index get no curve.</div>}
+      {/* hour marks as HTML: SVG text inside preserveAspectRatio="none" was squashed on phones (QA 2026-10-23) */}
+      <div className="cmpticks" aria-hidden="true">{[60, 120, 180].map((m) => <span key={m} style={{ left: `${(m / T) * 100}%` }}>{m / 60} h</span>)}</div>
+      {lines.some((l) => !l) && <div className="note">Foods and drinks without a measured glycemic index get no curve.</div>}
     </div>
   );
 }
@@ -85,9 +86,9 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
       <div className="cmpbody">
         {b ? (<>
           <div className="cmpactions">{onVideo && <>
-            {setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1 min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30 s</button></span>}
+            {setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1&nbsp;min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30&nbsp;s</button></span>}
             <button className="primary" onClick={() => onVideo(a, b)}><span aria-hidden="true">🎬 </span>Make this a Reel (9:16)</button></>}</div>
-          <div className="cmpverdict">{verdictOf(a, b)}</div>
+          <div className="cmpverdict">{verdictOf(a, b, profile.glucoseUnit)}</div>
           <SugarChart a={a} b={b} unit={profile.glucoseUnit} />
           <div className="cmpcols"><Column a={a} k={0} unit={profile.glucoseUnit} /><Column a={b} k={1} unit={profile.glucoseUnit} /></div>
         </>) : <p className="note big">Choose something for the right side, or tap one of the popular pairs above.</p>}

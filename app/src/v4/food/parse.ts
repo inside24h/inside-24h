@@ -165,7 +165,8 @@ function aliasScore(text: string, aliases: string[]): number {
       for (const x of aw) h = Math.max(h, stemMatch(w, x), x.startsWith(w) && w.length >= 3 && w.length / x.length >= 0.5 ? 0.7 : 0);
       hit += h;
     }
-    const cover = hit / Math.max(words.length, aw.length); // reward matching ALL words of a short alias
+    // reward matching ALL words of a short alias; its "s"/"with" don't count ("kave s mlijekom" ~ "kava s mlijekom")
+    const cover = hit / Math.max(words.length, aw.filter((x) => !FILLER.has(x)).length);
     if (hit >= words.length * 0.7) best = Math.max(best, 2 + 4 * cover);
   }
   return best;
@@ -277,7 +278,7 @@ export function parseMeal(input: string): Part[] {
   if (top && top.score >= 8) return [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)];
   const parts: Part[] = [];
   const pieces = text.split(SPLIT_KEEP);
-  let chain = false;
+  let chain = false, prevRaw = '', headRaw = '';
   for (let i = 0; i < pieces.length; i += 2) {
     const seg = (pieces[i] ?? '').trim();
     if (!seg) continue;
@@ -285,10 +286,23 @@ export function parseMeal(input: string): Part[] {
     const { rest, q } = readQty(seg);
     const prev = parts[parts.length - 1];
     if (prev && (WITH.test(sep) || (chain && AND.test(sep)))) {
+      // "kava s mlijekom sa šećerom", "2 kave s mlijekom": the words before and after "s" may name ONE food together
+      // (coffee with milk), which then takes the rest as add-ins; before, it became espresso + milk + sugar (QA 2026-10-23)
+      // "kava sa šećerom i mlijekom": the first words + this one ("kava s mlijekom"), keeping the add-ins found so far
+      const own = [prev.food, bestFoods(rest, 1)[0]?.food].filter(Boolean).map((x) => baseOf(x!).id);
+      let joinedHit = false;
+      for (const [joined, keep] of [[`${prevRaw}${sep}${seg}`, false], [`${headRaw} s ${seg}`, true]] as const) {
+        if (!WITH.test(sep) && !keep) continue;
+        const jq = readQty(joined), top = bestFoods(jq.rest, 1)[0];
+        if (!top || top.score < 5.5 || own.includes(baseOf(top.food).id)) continue;
+        const food = keep && prev.food.add ? withChoice(top.food, { add: { ...(top.food.add ?? {}), ...prev.food.add } }) : top.food;
+        parts[parts.length - 1] = withAsk(toPart(food, jq.q, jq.rest), jq.rest); prevRaw = `${prevRaw}${sep}${seg}`; chain = true; joinedHit = true; break;
+      }
+      if (joinedHit) continue;
       const merged = applyWords(prev, rest, q);
-      if (merged) { parts[parts.length - 1] = merged; chain = true; continue; }
+      if (merged) { parts[parts.length - 1] = merged; prevRaw = `${prevRaw}${sep}${seg}`; chain = true; continue; }
     }
-    chain = false;
+    chain = false; prevRaw = seg; headRaw = seg;
     const f = bestFoods(rest, 1)[0];
     if (f && f.score >= MIN_LOG) parts.push(withAsk(toPart(f.food, q, rest), rest));
   }
@@ -489,7 +503,8 @@ export function deriveFood(food: Food, ch: Choice): Food {
   if (add) {
     for (const a of base.addins!) if (hasOwn(add, a.k)) { parts.push({ p: a.p, gi: a.gi, grams: a.grams * add[a.k] }); src.push(...a.src); }
     const ws = base.addins!.filter((a) => hasOwn(add, a.k));
-    name = `${name.replace(/\s*\(.*\)$/, '')} with ${listWords(ws.map((a) => addWord(a, add[a.k])))}`;
+    const plain = name.replace(/\s*\(.*\)$/, ''); // "Coffee with milk and sugar", not "… with milk with sugar" (QA 2026-10-23)
+    name = `${plain}${/ with /.test(plain) ? ' and ' : ' with '}${listWords(ws.map((a) => addWord(a, add[a.k])))}`;
     label = `${label} with ${listWords(ws.map((a) => addUnit(a, add[a.k])))}`;
   }
   const m = parts.length === 1 ? { p: parts[0].p, grams: parts[0].grams, gi: parts[0].gi } : mixParts(parts);
@@ -524,10 +539,13 @@ function altList(): Alt[] {
     for (const v of base.variants ?? []) out.push({ food: deriveFood(base, { v: v.v }), aliases: v.aliases.map(fold), words: v.words });
     const b = base.builder;
     if (!b) continue;
-    for (const g of b.groups) for (const o of g.opts) if (o.aliases.length) {
-      out.push({ food: deriveFood(base, { on: [...defaultSel(b), o.k] }), aliases: o.aliases.map(fold), words: [] });
+    // the name on a chip is also a search alias when it names a whole dish ("tuna sub", "cold-cut sub", "potato burek"),
+    // not one ingredient ("chicken", "ham": those stay the plain foods) (QA 2026-10-23: "tuna sub" found nothing)
+    const own = (name: string) => (name.trim().includes(' ') ? [fold(name)] : []);
+    for (const g of b.groups) for (const o of g.opts) if (o.aliases.length || (g.one && own(o.name).length)) {
+      out.push({ food: deriveFood(base, { on: [...defaultSel(b), o.k] }), aliases: [...o.aliases.map(fold), ...(g.one ? own(o.name) : [])], words: [] });
     }
-    for (const p of b.presets) if (p.aliases.length || p.words.length) out.push({ food: deriveFood(base, { on: p.on }), aliases: p.aliases.map(fold), words: p.words });
+    for (const p of b.presets) out.push({ food: deriveFood(base, { on: p.on }), aliases: [...p.aliases.map(fold), ...own(p.name)], words: p.words });
   }
   return (ALTS = out);
 }

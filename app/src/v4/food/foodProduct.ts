@@ -9,6 +9,7 @@ import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/pr
 import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
 import { FOOD_CLAIMS, foodSourceClaims } from '../../content/food';
 import { ESPRESSO } from '../../content/espresso';
+import { partsPhrase } from './naming';
 import type { OrganKey, Product, Stage } from '../../content/types';
 import { BLOOD_SITES, GUT_SITES, ROUTE_GUT_TO_BODY } from '../../scene/Flow';
 import type { Built, ProductDef, WhereRow } from '../products';
@@ -197,20 +198,11 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const gl = m.gl;
   let dipMin = -1; { let lo = 0; for (let t = 0; t < 400; t++) { if (s.glucoseDeltaMgDl[t] < lo) { lo = s.glucoseDeltaMgDl[t]; dipMin = t; } } if (lo > -5) dipMin = -1; }
 
-  // "10 fries" + "french fries" → "10 french fries"; "1 sandwich" + "hamburger" → "1 hamburger" (no doubled words)
-  const amountWith = (amount: string, name: string) => {
-    const m = /^(\S+) (\S+)$/.exec(amount);
-    if (m && (name.split(' ').pop() === m[2] || /^(sandwich|piece|item|serving|portion|fruit)s?$/.test(m[2]))) return `${m[1]} ${name}`;
-    // the amount already names the food ("1 pancake" + "pancakes", "1 croissant, medium" + "croissant"): don't say it
-    // twice ("1 pancake pancakes"); name first, amount in brackets (sense audit 2026-10-18)
-    const stem = (w: string) => w.toLowerCase().replace(/[^a-z]/g, '').replace(/(es|s)$/, '');
-    const nameStems = new Set(name.split(/[\s/,]+/).map(stem).filter((w) => w.length >= 3));
-    if (amount.split(/[\s,()]+/).some((w) => nameStems.has(stem(w)))) return `${name} (${amount.replace(/\s*\(([^)]*)\)/g, ', $1')})`;
-    return `${amount} ${name}`;
-  };
+  // the amount in words: "1 hamburger", "a whole pizza Capricciosa (1104 g)", "2 large eggs" (food/naming.ts; it replaced
+  // the local amountWith of the sense audit 2026-10-18, which gave "Whole · 1104 g pizza capricciosa" — QA 2026-10-23)
   // plain spirits (≥ 13 g alcohol per 100 g, the spirits class) with no sugar: say so, people ask [AL15, USDA 174815]
   const spiritsNoSugar = !isMeal && meal.alcoholG > 1 && (parts[0].food.p.alcoholG ?? 0) >= 13 && m.sugars < 0.5 && m.carbs < 1;
-  const what = parts.map((x) => amountWith(x.amountLabel, x.food.name.replace(/\s*\(.*\)$/, '').toLowerCase())).join(' + ');
+  const what = partsPhrase(parts); // "1 hamburger, a small portion of french fries and 330 ml of cola"
   const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fiber` : ''}.`;
   const giLine = m.gi !== null && m.availCarbs >= 5 ? ` Glycemic index ${m.gi} (${m.gi >= 70 ? 'high' : m.gi >= 56 ? 'medium' : 'low'}).`
     : m.missingGi.length && gl !== null ? ` The glycemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`

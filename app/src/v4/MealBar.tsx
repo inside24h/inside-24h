@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SmartSearch } from './SmartSearch';
 import './meals.css';
 import { baseOf, choiceRow, kindsOf, type Food, type Part } from './food/parse';
@@ -50,6 +50,27 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
 }) {
   const [adding, setAdding] = useState(false);
   const [sheet, setSheet] = useState<number | null>(null);
+  // the meal row scrolls sideways when it is too long: fade the edge that has more (prelaunch QA 2026-10-23; before,
+  // at 1440 px the row just ended at the edge of the bar). Only the side that really has more chips fades.
+  const chipsRef = useRef<HTMLUListElement>(null);
+  const [more, setMore] = useState('');
+  useEffect(() => {
+    const el = chipsRef.current;
+    if (!el) { setMore(''); return; }
+    const upd = () => setMore(`${el.scrollLeft > 2 ? ' morel' : ''}${el.scrollLeft + el.clientWidth < el.scrollWidth - 2 ? ' morer' : ''}`);
+    upd();
+    el.addEventListener('scroll', upd, { passive: true });
+    // a mouse wheel scrolls the row sideways while it overflows (no horizontal wheel on most mice)
+    const wheel = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth + 2 || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const before = el.scrollLeft; el.scrollLeft += e.deltaY;
+      if (el.scrollLeft !== before) e.preventDefault(); // at either end the page scrolls as usual
+    };
+    el.addEventListener('wheel', wheel, { passive: false });
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(upd);
+    ro?.observe(el);
+    return () => { el.removeEventListener('scroll', upd); el.removeEventListener('wheel', wheel); ro?.disconnect(); };
+  }, [parts, pace?.over, pace?.hot]);
   // UX calm 2026-10-19: ONE secondary row under the search. "Which …?" shows until it is answered (a pick, or the
   // sheet opened and closed), then it folds into a pill ("Pizza · Capricciosa · over 2 h ▾") that also holds the pace.
   // A new food from the search asks again. A meal keeps its chips row; the pace is a chip at its start.
@@ -79,7 +100,7 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
         <button type="button" className="madd" onClick={() => setAdding(true)} title="Add more food or drink and see one combined story">+ Add<span className="maddmore"> something</span></button>
       )}
       {parts.length > 1 && (
-        <ul className="mealchips" aria-label="Your meal">
+        <ul className={`mealchips${more}`} aria-label="Your meal" ref={chipsRef}>
           {parts.length > 1 && pace && (
             <li><button type="button" className={`mpace ${pace.hot ? 'hot' : ''}`} aria-haspopup="dialog" onClick={() => setPaceSheet(true)}
               aria-label={`Over how long: ${pace.hot ? 'not picked yet' : paceLabel(pace.over).toLowerCase()}. Change`}>

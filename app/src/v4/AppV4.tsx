@@ -56,6 +56,7 @@ import { MomentShare, type Moment } from './MomentShare';
 
 import { SmartSearch } from './SmartSearch';
 import { isPlain, macros, parseMeal, readPace, servingPart, sizesOf, suggest, type Food, type Part } from './food/parse';
+import { amountPhrase, capFirst, partsPhrase } from './food/naming';
 import { canPace, paceLabel, paceMatters, setFood } from './food/meal';
 import { makeFoodProduct } from './food/foodProduct';
 
@@ -441,15 +442,15 @@ export default function AppV4() {
 
   // ---- Share: hook → the whole day following the liquid → summary card, recorded into a Reel or a feed video ----
   const HOOK_OF: Record<string, string> = { cola: 'one can of cola', espresso: 'one espresso', water: 'one glass of water' };
-  const hookWhat = productId === 'food' ? `${foodParts.map((p) => `${p.amountLabel} ${p.food.name.replace(/\s*\(.*\)$/, '').toLowerCase()}`).join(' + ')}${overEff ? ` over ${paceLabel(overEff)}` : ''}` : HOOK_OF[productId] ?? lower;
-  // the video's name for what was eaten: "One can of cola", "Kebab / doner (1 kebab)", "Beer (3 × 500 ml over 2 h)",
+  // in words (food/naming.ts, QA 2026-10-23): "1 hamburger, a small portion of french fries and 330 ml of cola"
+  const hookWhat = productId === 'food' ? `${partsPhrase(foodParts)}${overEff ? ` over ${paceLabel(overEff)}` : ''}` : HOOK_OF[productId] ?? lower;
+  // the video's name for what was eaten: "One can of cola", "1 kebab", "A whole pizza Capricciosa (1104 g)", "3 × 500 ml of beer over 2 h",
   // a meal by its title "Hamburger + French fries + Cola" (amount labels in a row read like a receipt)
   const videoName = (() => {
     const pace = overEff ? ` over ${paceLabel(overEff)}` : '';
     if (productId !== 'food') { const s = HOOK_OF[productId] ?? lower; return s.charAt(0).toUpperCase() + s.slice(1); }
     if (foodParts.length !== 1) return `${PRODUCT.name}${pace}`;
-    const p = foodParts[0], amt = p.amountLabel.replace(/\s*\(≈[^)]*\)/, '');
-    return `${p.food.name.replace(/\s*\(.*\)$/, '')} (${amt.charAt(0).toLowerCase()}${amt.slice(1)}${pace})`;
+    return capFirst(`${amountPhrase(foodParts[0])}${pace}`);
   })();
   const overlayRef = useRef<Overlay | null>(null);
   const reelStops = useRef<number[] | null>(null);
@@ -553,7 +554,7 @@ export default function AppV4() {
       const dg = x.glucose ? x.glucose[mi] / 18.016 : 0;
       const en = x.systems.find((s) => s.key === 'energy')!;
       return {
-        name: x.name, color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
+        name: x.label, color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
         where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
         sugar: x.sugarPeak === null ? 'Blood sugar ?' : Math.abs(dg) < 0.15 ? 'Blood sugar steady' : `Blood sugar ${sugarDeltaText(dg, profile.glucoseUnit)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
@@ -561,7 +562,7 @@ export default function AppV4() {
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'high stress'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
       };
     };
-    cmpOverlayRef.current = { hook: `${cmpRec.a.name} or ${cmpRec.b.name}: which is better for your body?`, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b), a: side(cmpRec.a), b: side(cmpRec.b) };
+    cmpOverlayRef.current = { hook: `${cmpRec.a.label} or ${cmpRec.b.label}: which is better for your body?`, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
   }
   const makeCompareVideo = (a: Analysis, b: Analysis) => {
     setCompare(null); setCmpRec({ a, b, u: 0 }); setShare({ state: 'rec', format: 'reel' }); setRecPct(0);
@@ -576,7 +577,7 @@ export default function AppV4() {
           shortVid ? 'short' : 'long', uFromMinutes, minutesFromU);
         cmpStops.current = plan.stops;
         const { blob, ext, audio } = await recordCompare(ca, () => cmpOverlayRef.current!, (m) => { flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r))); const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st); }, plan, { sound: vidSound, onTick: (f) => setRecPct(f) });
-        setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.name} vs ${b.name}: what really happens inside you in 24 hours 👀 ${verdictOf(a, b)} Which one would you pick? 👇 #Inside24h #health #nutrition`,
+        setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what really happens inside you in 24 hours 👀 ${verdictOf(a, b, profile.glucoseUnit)} Which one would you pick? 👇 #Inside24h #health #nutrition`,
           msg: vidSound && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
       cmpStops.current = null; setCmpRec(null); setCmpNever(false);
@@ -844,7 +845,7 @@ export default function AppV4() {
               </button>
             ))}
           </div>
-          <p className="then">Simulated for: {profile.sex === 'female' ? 'woman' : 'man'}, {profile.ageY} ·{profile.heightCm} cm · {profile.weightKg} kg. <button className="link" onClick={() => setPanel('you')}>Personalize</button></p>
+          <p className="then">Simulated for: {profile.sex === 'female' ? 'woman' : 'man'}, age {profile.ageY} · {profile.heightCm} cm · {profile.weightKg} kg. <button className="link" onClick={() => setPanel('you')}>Personalize</button></p>
           <p className="fine">Free · Not medical advice · Nothing leaves your device</p>
         </section>
       )}
@@ -934,8 +935,8 @@ export default function AppV4() {
               <p className="note">The whole 24 hours: an opening question, a pause at each key moment, captions for silent viewing, the food or drink moving through the body, and a summary at the end.</p>
               <label className="handle">Name in the corner <small>(optional: @inside24h or your own handle)</small><input value={handle} placeholder="@yourname" onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
               <div className="lenpick" role="group" aria-label="Length">Length:
-                <button aria-pressed={!shortVid} onClick={() => setShortVid(false)}>Full · over 1 min</button>
-                <button aria-pressed={shortVid} onClick={() => setShortVid(true)}>Short · under 30 s</button>
+                <button aria-pressed={!shortVid} onClick={() => setShortVid(false)}>Full · over 1&nbsp;min</button>
+                <button aria-pressed={shortVid} onClick={() => setShortVid(true)}>Short · under 30&nbsp;s</button>
               </div>
               <div className="lenpick soundpick" role="group" aria-label="Sound">Sound:
                 <button aria-pressed={vidSound} onClick={() => setVidSound(true)}>Our music</button>

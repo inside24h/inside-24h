@@ -4,11 +4,12 @@ import { buildVitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { simulateHydration } from '../science/hydration';
 import { MG_DL_PER_MMOL_L, type Profile } from '../science/profile';
-import { bodyStatus } from './status';
+import { bodyStatus, type System } from './status';
 import { quickAnswers } from './Answers';
 import { climateNow, findCity, cityLabel } from './climate/cities';
 import { isPlain, macros, type Part } from './food/parse';
 import { makeFoodProduct } from './food/foodProduct';
+import { amountPhrase, capFirst } from './food/naming';
 import { canPace, cleanPace } from './food/meal';
 import { PRODUCTS } from './products';
 
@@ -39,7 +40,11 @@ export function analyze(parts: Part[], p: Profile, overMin = 0) {
   });
   const g = built.effects.glucoseMgDl;
   const sugarPeak = unknownSugar ? null : g ? Math.max(0, ...Array.from(g.subarray(0, 600))) / 18.016 : 0;
-  return { name: def.content.name, color: built.story.color, built, systems, answers, sugarPeak, glucose: unknownSugar ? undefined : g, kcal: built.energy.total, macros: m };
+  return { name: def.content.name, color: built.story.color, built, systems, answers, sugarPeak, glucose: unknownSugar ? undefined : g, kcal: built.energy.total, macros: m,
+    sleepDelayMin: v.extraLatencyMin, // minutes caffeine adds to falling asleep (verdictOf)
+    // the name for Compare, its video and verdict: with the amount when it is not one usual serving ("2 espressos",
+    // "3 × 500 ml of beer"), so "Beer vs Beer" or "Espresso … 127 mg" never hides how much (QA 2026-10-23)
+    label: one && Math.abs(one.grams - one.food.serving.grams) > 1 ? capFirst(amountPhrase(one).replace(/ \([^)]*\)/g, '')) : def.content.name };
 }
 export type Analysis = ReturnType<typeof analyze>;
 
@@ -55,27 +60,84 @@ export const sugarPeakText = (peakMmol: number | null, unit: Unit = 'mmol/L') =>
   peakMmol === null ? 'not measured' : peakMmol < 0.3 ? 'steady' : sugarDeltaText(peakMmol, unit);
 
 /**
- * Which one is easier on the body over the day, in one plain sentence. Score = minutes any system is under stress
- * (yellow 1, red 3; systems without data are skipped) + energy (1 point per 50 kcal). Close scores = a draw.
+ * Which one is easier on the body over the day, in one plain sentence (Compare, the comparison video and its caption).
+ * Score = minutes any system is under stress (yellow 1, red 3; systems without data are skipped) + energy (1 point per
+ * 50 kcal). Close scores = a draw.
+ *
+ * Alcohol is a different kind of harm from a sugar peak or a late coffee (a toxin, WHO/IARC Group 1; impaired attention,
+ * lighter sleep), and the minute score does not weigh that, so (prelaunch QA 2026-10-23):
+ * - only one side has alcohol: the alcohol-free side wins ("no alcohol"), unless its own score is clearly worse (a big
+ *   sugar peak, caffeine at bedtime) — then it is a trade-off that names both costs. Alcohol never "wins".
+ * - both have alcohol: the one with less alcohol is "the lighter choice" (no trophy); same alcohol → a lower peak, else close.
+ * - a winner is only named when we can say why in words; otherwise it is close.
  */
-export function verdictOf(a: Analysis, b: Analysis): string {
-  const stress = (x: Analysis, skipSugar: boolean) => x.systems.reduce((sum, s) => {
-    if (s.unknown || (skipSugar && s.key === 'energy')) return sum;
-    let t = 0; for (let m = 0; m < s.levels.length; m++) t += s.levels[m] === 2 ? 3 : s.levels[m];
-    return sum + t;
-  }, 0);
+export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): string {
   const skip = a.sugarPeak === null || b.sugarPeak === null; // compare like with like
-  const score = (x: Analysis) => stress(x, skip) + x.kcal / 50;
+  const stressOf = (x: Analysis, key: System['key']) => {
+    const s = x.systems.find((y) => y.key === key);
+    if (!s || s.unknown || (skip && key === 'energy')) return 0;
+    let t = 0; for (let m = 0; m < s.levels.length; m++) t += s.levels[m] === 2 ? 3 : s.levels[m];
+    return t;
+  };
+  const score = (x: Analysis) => stressOf(x, 'energy') + stressOf(x, 'heart') + stressOf(x, 'water') + stressOf(x, 'brain') + x.kcal / 50;
+  const near = (x: number, y: number) => Math.abs(x - y) < Math.max(3, 0.1 * Math.max(x, y));
+  const alc = (x: Analysis) => ((x.built.alcoholG ?? 0) > 1 ? x.built.alcoholG! : 0);
+  const bacPeak = (x: Analysis) => (x.built.bac ? Math.max(0, ...Array.from(x.built.bac)) : 0);
+  const caf = (x: Analysis) => x.built.caffeine.doseMg;
+  const cafStress = (x: Analysis) => stressOf(x, 'brain') + stressOf(x, 'heart'); // only used when the other side has no alcohol
+  const sugarOk = (x: Analysis, y: Analysis) => !skip && x.sugarPeak !== null && y.sugarPeak !== null;
+  const close = `It’s close: ${a.label} and ${b.label} affect your body about the same.`;
+
+  /** why w is easier on the body than l, in words (alcohol aside) */
+  const reasons = (w: Analysis, l: Analysis) => {
+    const why: string[] = [];
+    if (sugarOk(w, l) && l.sugarPeak! - w.sugarPeak! >= 0.4)
+      why.push(w.sugarPeak! < 0.3 ? 'no blood sugar peak' : `a smaller blood sugar peak (${sugarDeltaText(w.sugarPeak!, unit, false)} vs ${sugarDeltaText(l.sugarPeak!, unit)})`);
+    else if (sugarOk(w, l) && stressOf(l, 'energy') - stressOf(w, 'energy') >= 30 && stressOf(l, 'energy') >= 1.5 * stressOf(w, 'energy'))
+      why.push('less time with raised blood sugar');
+    if (!alc(w) && !alc(l) && caf(l) - caf(w) >= 20 && cafStress(l) - cafStress(w) >= 10) {
+      if (l.sleepDelayMin >= 5 && w.sleepDelayMin <= l.sleepDelayMin - 3) why.push(caf(w) < 1 ? 'no caffeine to keep you awake' : 'less caffeine at bedtime');
+      else why.push(caf(w) < 1 ? 'no caffeine' : `less caffeine (${Math.round(caf(w))} vs ${Math.round(caf(l))} mg)`);
+    }
+    if (l.kcal - w.kcal >= 30) why.push(`${Math.round(l.kcal - w.kcal)} fewer kcal`);
+    return why;
+  };
+  /** what n costs the body that d does not (for a trade-off against an alcoholic d) */
+  const costs = (n: Analysis, d: Analysis) => {
+    const out: string[] = [];
+    if (!skip && n.sugarPeak !== null && n.sugarPeak >= 0.3 && (d.sugarPeak === null || n.sugarPeak - d.sugarPeak >= 0.4) && stressOf(n, 'energy') > 0)
+      out.push(d.sugarPeak !== null && d.sugarPeak >= 0.3 ? 'a bigger blood sugar peak' : 'a blood sugar peak');
+    // a delay we can count; a lot by day (heart or ≥ 200 mg, EFSA); else the "maybe lighter sleep" tier at bedtime
+    if (caf(n) >= 20 && cafStress(n) >= 10)
+      out.push(n.sleepDelayMin >= 5 ? 'caffeine that delays your sleep' : stressOf(n, 'heart') >= 10 || caf(n) >= 200 ? 'a lot of caffeine' : 'caffeine at bedtime');
+    if (n.kcal - d.kcal >= 100) out.push(`${Math.round(n.kcal - d.kcal)} more kcal`);
+    return out;
+  };
+
+  const alcA = alc(a), alcB = alc(b);
+  if (!!alcA !== !!alcB) { // one side has alcohol
+    const [n, d] = alcA ? [b, a] : [a, b];
+    const sn = score(n), sd = score(d), cost = costs(n, d);
+    if (sn > sd && !near(sn, sd) && cost.length) return `No clear winner: ${d.label} brings alcohol; ${n.label} brings ${cost.slice(0, 2).join(' and ')}.`;
+    return `🏆 ${n.label} wins: ${['no alcohol', ...reasons(n, d)].slice(0, 2).join(', ')}.`;
+  }
+  if (alcA && alcB) { // both have alcohol: the amount of alcohol decides first, never a trophy
+    const lo = Math.min(alcA, alcB), hi = Math.max(alcA, alcB);
+    const lighter = (w: Analysis, l: Analysis, first: string) => `${w.label} is the lighter choice: ${[first, ...reasons(w, l)].slice(0, 2).join(', ')}.`;
+    if (hi - lo >= 3 && hi >= 1.2 * lo) {
+      const [w, l] = alcA < alcB ? [a, b] : [b, a];
+      const k = Math.round(hi / lo), hiG = Math.abs(hi / lo - k) < 0.03 ? k * Math.round(lo) : Math.round(hi); // 1 vs 2 beers: "20 g vs 40 g", not "vs 39 g"
+      return lighter(w, l, `less alcohol (${Math.round(lo)} g vs ${hiG} g)`);
+    }
+    const pa = bacPeak(a), pb = bacPeak(b);
+    if (Math.abs(pa - pb) >= 0.05) { const [w, l] = pa < pb ? [a, b] : [b, a]; return lighter(w, l, 'a lower blood alcohol peak'); }
+    return `It’s close: ${a.label} and ${b.label} bring about the same alcohol (about ${Math.round((alcA + alcB) / 2)} g).`;
+  }
   const sa = score(a), sb = score(b);
-  if (Math.abs(sa - sb) < Math.max(3, 0.1 * Math.max(sa, sb))) return `It’s close: ${a.name} and ${b.name} affect your body about the same.`;
+  if (near(sa, sb)) return close;
   const [w, l] = sa < sb ? [a, b] : [b, a];
-  const why: string[] = [];
-  if (!skip && w.sugarPeak !== null && l.sugarPeak !== null && l.sugarPeak - w.sugarPeak >= 0.4)
-    why.push(w.sugarPeak < 0.3 ? 'no blood sugar peak' : `a smaller blood sugar peak (+${w.sugarPeak.toFixed(1)} vs +${l.sugarPeak.toFixed(1)})`);
-  if (l.kcal - w.kcal >= 30) why.push(`${Math.round(l.kcal - w.kcal)} fewer kcal`);
-  const lBac = l.built.bac ? Math.max(...Array.from(l.built.bac)) : 0, wBac = w.built.bac ? Math.max(...Array.from(w.built.bac)) : 0;
-  if (lBac - wBac >= 0.05) why.push(wBac < 0.01 ? 'no alcohol' : 'a lower blood alcohol peak');
-  return `🏆 ${w.name} wins${why.length ? `: ${why.slice(0, 2).join(', ')}` : ''}.`;
+  const why = reasons(w, l);
+  return why.length ? `🏆 ${w.label} wins: ${why.slice(0, 2).join(', ')}.` : close; // never a winner we can't explain
 }
 
 // Slower or lighter everyday swaps, by database id. Each is checked with the model before it is shown,

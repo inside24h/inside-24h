@@ -333,6 +333,13 @@
 .mealbar.meal > .mealchips > li { flex: none; }
 .mealbar.meal > .mealchips > li:first-child { margin-left: auto; }
 .mealbar.meal > .mealchips > li:last-child { margin-right: auto; }
+/* wider screens: the meal row fades only on the side that has more chips (MealBar sets morel / morer while the row
+   overflows; prelaunch QA 2026-10-23: at 1440 px it used to end abruptly at the edge). Phones keep their fixed fade. */
+@media (min-width: 721px) {
+  .mealbar.meal > .mealchips.morer { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent); }
+  .mealbar.meal > .mealchips.morel { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 64px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 64px), transparent); }
+  .mealbar.meal > .mealchips.morel.morer { -webkit-mask-image: linear-gradient(to right, transparent, #000 64px, #000 calc(100% - 64px), transparent); mask-image: linear-gradient(to right, transparent, #000 64px, #000 calc(100% - 64px), transparent); }
+}
 
 /* the one secondary row: "Which …?" in a single line (scrolls sideways), or the collapsed pill */
 .choices.compact { max-width: none; justify-items: stretch; gap: 0; }
