@@ -429,3 +429,19 @@
 .startbox.body.inline .summary, .startbox.body.inline .fine { text-align: center; }
 .skipq { position: absolute; left: 12px; top: 8px; z-index: 80; padding: 10px 16px; border-radius: 999px; border: 0; background: var(--accent); color: #03141c; font: 600 14px var(--body); cursor: pointer; transform: translateY(-200%); }
 .skipq:focus, .skipq:focus-visible { transform: none; outline: 2px solid #fff; outline-offset: 2px; }
+
+/* ==== Polish 2026-10-20 (research/improvements/polish-2026-10-20.md) ==== */
+/* "Which …?": only the question and its chips scroll (.cscroll); "More ▾" is pinned at the end of the row */
+.choices.compact .crow.split { overflow: visible; gap: 6px; }
+.choices.compact .crow.split > .cscroll { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.choices.compact .crow.split > .cscroll::-webkit-scrollbar { display: none; }
+.choices.compact .crow.split > .cscroll > * { flex: none; }
+.choices.compact .crow.split > .cmore { flex: none; }
+@media (max-width: 720px) {
+  /* the fade that says "this row scrolls" moves from the whole row to the scrolling part, so it never dims "More ▾" */
+  .choices.compact .crow.split { -webkit-mask-image: none; mask-image: none; padding-right: 2px; }
+  .choices.compact .crow.split > .cscroll { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent); padding-right: 18px; }
+}
+/* "+ Add" is a direct child of the header's meal bar now (row 1, next to the search), also for a meal */
+.mealbar > .madd { justify-self: end; }
+.mealbar:has(.results) > .madd { display: none; } /* while the search list is open it gets the whole width */

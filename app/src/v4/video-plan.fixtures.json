@@ -1,0 +1,366 @@
+{
+ "water": [
+  {
+   "min": 0,
+   "title": "First sip",
+   "text": "One glass: 250 ml of water. No sugar, no calories."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "Water barely stops here: half of it moves on within about 13 minutes."
+  },
+  {
+   "min": 5,
+   "title": "Into your blood",
+   "text": "The first water reaches your blood within 5 minutes. In the gut it travels in small pockets, about a teaspoon each."
+  },
+  {
+   "min": 20,
+   "title": "Everywhere in you",
+   "text": "It spreads through all the water in your body. Your blood barely notices one glass; blood pressure goes up by a tiny amount."
+  },
+  {
+   "min": 60,
+   "title": "Kidneys",
+   "text": "Your kidneys start filtering out the extra water."
+  },
+  {
+   "min": 120,
+   "title": "Bladder",
+   "text": "Most of the glass is now collecting in your bladder."
+  },
+  {
+   "min": 240,
+   "title": "Balanced again",
+   "text": "About 4 hours later the glass has passed through you and your body water is back in balance."
+  }
+ ],
+ "espresso": [
+  {
+   "min": 0,
+   "title": "First sip",
+   "text": "One shot: about 30 ml with 63 mg of caffeine. Real espressos vary a lot: the strongest one measured had 322 mg."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "A small drink leaves fast: half of it moves on within about 13 minutes. Coffee also makes your stomach produce more acid."
+  },
+  {
+   "min": 4,
+   "title": "Your colon reacts",
+   "text": "In about 1 in 3 people coffee makes the lower bowel start moving within minutes, even before any caffeine is absorbed."
+  },
+  {
+   "min": 10,
+   "title": "Into the blood",
+   "text": "Your stomach wall and small intestine absorb the caffeine and pass all of it into your blood."
+  },
+  {
+   "min": 30,
+   "title": "Reaching your brain",
+   "text": "Caffeine slips into your brain and blocks adenosine, the signal that builds up tiredness. You feel more alert."
+  },
+  {
+   "min": 30,
+   "title": "Going to bed",
+   "text": "About 57 mg of caffeine is still in you as you go to bed. Most people sleep normally with this much, but if caffeine affects you easily, you may sleep a little less or more lightly."
+  },
+  {
+   "min": 43,
+   "title": "Peak",
+   "text": "Caffeine in your blood is at its highest now. Your pulse doesn’t change; blood pressure rises only a little."
+  },
+  {
+   "min": 180,
+   "title": "The liver breaks it down",
+   "text": "Your liver takes the caffeine apart: half of it is gone about every 6.0 hours (our estimate; in healthy adults it ranges from 2.5 to 10 hours)."
+  },
+  {
+   "min": 720,
+   "title": "Out through the kidneys",
+   "text": "Your kidneys flush out the breakdown products."
+  }
+ ],
+ "beer-3-over-2h": [
+  {
+   "min": 0,
+   "title": "First sip",
+   "text": "3 × 500 ml beer. Spread over 2 h: 3 drinks, one about every 40 minutes. 648 kcal: 53 g carbohydrate, 0 g fat, 7 g protein. Its glycemic index has not been measured, so we don’t draw a sugar curve."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "Each drink: half of it leaves your stomach within about 40 minutes: the alcohol and the rest of the drink slow the stomach down (water would be gone in about 13)."
+  },
+  {
+   "min": 6,
+   "title": "Into the small intestine",
+   "text": "In the small intestine it is taken apart: starch and sugar become glucose, protein becomes amino acids. These pass into your blood. Some of the alcohol was already absorbed through your stomach wall."
+  },
+  {
+   "min": 30,
+   "title": "Going to bed",
+   "text": "There is still alcohol in your blood (about 0.11–0.28 ‰). You may fall asleep faster, but the second half of the night will be clearly broken. You’ll get less dream (REM) sleep, and your heart rests much less in the first hours."
+  },
+  {
+   "min": 80,
+   "title": "Last drink",
+   "text": "00:35: the last of the 3 drinks, 80 minutes after the first. Blood alcohol keeps rising for a while after the last drink, until the last one is absorbed."
+  },
+  {
+   "min": 120,
+   "title": "Kidneys",
+   "text": "The extra water (1386 ml) is filtered by your kidneys into your bladder over the next few hours."
+  },
+  {
+   "min": 129,
+   "title": "Alcohol peak",
+   "text": "Blood alcohol is at its highest now: about 0.46–1.16 ‰. Reaction time and balance are worse. Don’t drive. (Spread over 2 h. All at once it would have been about 0.55–1.36 ‰.)"
+  },
+  {
+   "min": 465,
+   "title": "Next morning",
+   "text": "07:00, waking up. A typical body like yours still has about 0.05–0.13 ‰ of alcohol in the blood: a breath test can be positive. Don’t drive. If you use insulin or diabetes tablets, watch for low blood sugar this morning: after an evening of drinking it can drop after breakfast."
+  },
+  {
+   "min": 508,
+   "title": "Alcohol gone",
+   "text": "In a typical body like yours the alcohol is gone by now, about 8.5 h after the first sip. Livers differ (0.10–0.20 ‰ an hour), so for most people somewhere between 04:51 tomorrow and 09:18 tomorrow. Sleep, coffee, water or fresh air don’t speed it up. Spreading the drinks lowered the peak, not the end: your liver clears a fixed amount an hour from the first sip, so it is gone at about the same time as all at once. This app can’t tell you when you’re safe to drive."
+  }
+ ],
+ "pizza-whole": [
+  {
+   "min": 0,
+   "title": "First bite",
+   "text": "Whole · 1104 g pizza capricciosa. 2572 kcal: 294 g carbohydrate (34 g sugar, about 8 teaspoons), 98 g fat, 128 g protein, 23 g fiber. Glycemic index 43 (low)."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "Your stomach churns it into a paste and lets it out slowly: half has moved on after about 226 minutes, almost all of it by 4 hours. The fat leaves last."
+  },
+  {
+   "min": 25,
+   "title": "Into the small intestine",
+   "text": "In the small intestine it is taken apart: starch and sugar become glucose, protein becomes amino acids, fat is split with bile from your gallbladder. Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later. Fiber goes on undigested."
+  },
+  {
+   "min": 90,
+   "title": "Sleepy after eating",
+   "text": "A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was."
+  },
+  {
+   "min": 110,
+   "title": "Blood sugar peak",
+   "text": "Your blood sugar goes from 5.0 mmol/L to about 6.5–8.5 mmol/L (a typical response, not personalized). Your pancreas releases insulin to bring it back down."
+  },
+  {
+   "min": 120,
+   "title": "Kidneys",
+   "text": "The extra water (556 ml) is filtered by your kidneys into your bladder over the next few hours."
+  },
+  {
+   "min": 150,
+   "title": "Building blocks",
+   "text": "The 128 g of protein arrive in your blood as amino acids, peaking about now. Processing protein (absorbing it, building with it and breaking down the rest) uses up about a quarter of its calories."
+  },
+  {
+   "min": 210,
+   "title": "Fat in your blood",
+   "text": "The fat travels through your lymph into the blood. Blood fat (triglycerides) is highest around now, roughly +1.2 mmol/L, and falls again over the next few hours."
+  },
+  {
+   "min": 720,
+   "title": "Through the colon",
+   "text": "The leftovers creep along your large intestine while water is taken back. This is the slowest part of the journey."
+  },
+  {
+   "min": 732,
+   "title": "Into the large intestine",
+   "text": "What you can’t digest, 22.7 g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it."
+  },
+  {
+   "min": 1440,
+   "title": "24 hours later",
+   "text": "2% has left your body so far. Food typically takes about 29 hours from mouth to toilet (the middle value); anywhere from 14 to 58 hours is normal."
+  }
+ ],
+ "kebab": [
+  {
+   "min": 0,
+   "title": "First bite",
+   "text": "Kebab / doner (1 kebab). 762 kcal: 62 g carbohydrate (6 g sugar, about 1 teaspoon), 35 g fat, 46 g protein, 3 g fiber. Glycemic index 68 (medium)."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "Your stomach churns it into a paste and lets it out slowly: half has moved on after about 164 minutes, almost all of it by 4 hours. The fat leaves last."
+  },
+  {
+   "min": 25,
+   "title": "Into the small intestine",
+   "text": "In the small intestine it is taken apart: starch and sugar become glucose, protein becomes amino acids, fat is split with bile from your gallbladder. Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later. Fiber goes on undigested."
+  },
+  {
+   "min": 90,
+   "title": "Sleepy after eating",
+   "text": "A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was."
+  },
+  {
+   "min": 93,
+   "title": "Blood sugar peak",
+   "text": "Your blood sugar goes from 5.0 mmol/L to about 6.4–8.2 mmol/L (a typical response, not personalized). Your pancreas releases insulin to bring it back down."
+  },
+  {
+   "min": 120,
+   "title": "Kidneys",
+   "text": "The extra water (250 ml) is filtered by your kidneys into your bladder over the next few hours."
+  },
+  {
+   "min": 150,
+   "title": "Building blocks",
+   "text": "The 46 g of protein arrive in your blood as amino acids, peaking about now. Processing protein (absorbing it, building with it and breaking down the rest) uses up about a quarter of its calories."
+  },
+  {
+   "min": 210,
+   "title": "Fat in your blood",
+   "text": "The fat travels through your lymph into the blood. Blood fat (triglycerides) is highest around now, roughly +0.5 mmol/L, and falls again over the next few hours."
+  },
+  {
+   "min": 654,
+   "title": "Into the large intestine",
+   "text": "What you can’t digest, 3.5 g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it."
+  },
+  {
+   "min": 720,
+   "title": "Through the colon",
+   "text": "The leftovers creep along your large intestine while water is taken back. This is the slowest part of the journey."
+  },
+  {
+   "min": 1440,
+   "title": "24 hours later",
+   "text": "3% has left your body so far. Food typically takes about 29 hours from mouth to toilet (the middle value); anywhere from 14 to 58 hours is normal."
+  }
+ ],
+ "meal-burger-fries-cola": [
+  {
+   "min": 0,
+   "title": "First bite and sip",
+   "text": "1 hamburger + 2 small portion french fries + 330 ml cola. 833 kcal: 123 g carbohydrate (41 g sugar, about 10 teaspoons), 31 g fat, 17 g protein, 7 g fiber. Glycemic index 63 (medium)."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "Two speeds: the cola runs ahead along the stomach wall, half gone in about 57 minutes (on an empty stomach 28). The burger and the fries are churned into a paste and let out slowly: half after about 181 minutes."
+  },
+  {
+   "min": 25,
+   "title": "Into the small intestine",
+   "text": "In the small intestine it is taken apart: starch and sugar become glucose, protein becomes amino acids, fat is split with bile from your gallbladder. Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later. Fiber goes on undigested."
+  },
+  {
+   "min": 57,
+   "title": "The drink is ahead",
+   "text": "Half of the cola has already left your stomach; most of the burger and the fries is still waiting there."
+  },
+  {
+   "min": 74,
+   "title": "Blood sugar peak",
+   "text": "The cola’s sugar hits first, then the burger and the fries; the burger’s fat and protein slow it down. Your peak is about 21% lower than after the cola alone, although the meal has more carbohydrate. Your blood sugar goes from 5.0 mmol/L to about 6.1–7.5 mmol/L (a typical response, not personalized). Your pancreas releases insulin to bring it back down."
+  },
+  {
+   "min": 90,
+   "title": "Sleepy after eating",
+   "text": "A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was."
+  },
+  {
+   "min": 109,
+   "title": "Caffeine peak",
+   "text": "About 32 mg of caffeine reaches your brain and blocks the tiredness signal a little. With food the caffeine arrives later: about 41 minutes later than on an empty stomach, but just as much in total."
+  },
+  {
+   "min": 120,
+   "title": "Kidneys",
+   "text": "The extra water (403 ml) is filtered by your kidneys into your bladder over the next few hours."
+  },
+  {
+   "min": 150,
+   "title": "Building blocks",
+   "text": "The 17 g of protein arrive in your blood as amino acids, peaking about now. Processing protein (absorbing it, building with it and breaking down the rest) uses up about a quarter of its calories."
+  },
+  {
+   "min": 210,
+   "title": "Fat in your blood",
+   "text": "The fat travels through your lymph into the blood. Blood fat (triglycerides) is highest around now, roughly +0.5 mmol/L, and falls again over the next few hours."
+  },
+  {
+   "min": 675,
+   "title": "Into the large intestine",
+   "text": "What you can’t digest, 6.6 g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it."
+  },
+  {
+   "min": 720,
+   "title": "Through the colon",
+   "text": "The leftovers creep along your large intestine while water is taken back. This is the slowest part of the journey."
+  },
+  {
+   "min": 1440,
+   "title": "24 hours later",
+   "text": "3% has left your body so far. Food typically takes about 29 hours from mouth to toilet (the middle value); anywhere from 14 to 58 hours is normal."
+  }
+ ],
+ "cola": [
+  {
+   "min": 0,
+   "title": "First sip",
+   "text": "One can: 35 g of sugar (about 9 teaspoons) and 32 mg of caffeine. Cola is acidic (pH 2.4): your saliva needs about half an hour to bring your mouth back to normal."
+  },
+  {
+   "min": 1,
+   "title": "In your stomach",
+   "text": "Your stomach fills up. Because of the sugar, it lets the cola out slowly: half is still here after about 30 minutes. Water would leave twice as fast."
+  },
+  {
+   "min": 6,
+   "title": "Into the small intestine",
+   "text": "In the first part of your small intestine the sugar is split into glucose and fructose and pulled into your blood within minutes."
+  },
+  {
+   "min": 12,
+   "title": "Straight to the liver",
+   "text": "Blood from your gut goes to the liver first. Your gut wall and liver together hold back about 85% of the fructose; most of the glucose passes on to the rest of your body."
+  },
+  {
+   "min": 20,
+   "title": "Blood sugar peak",
+   "text": "Your blood sugar climbs from 5.0 mmol/L to about 7.3 mmol/L (a typical response, not personalized: most people land between 6.4 and 8.2 mmol/L). Your pancreas releases insulin to bring it back down."
+  },
+  {
+   "min": 30,
+   "title": "Going to bed",
+   "text": "About 22 mg of caffeine is left in you as you go to bed. Too little to affect your sleep."
+  },
+  {
+   "min": 45,
+   "title": "A little caffeine",
+   "text": "The caffeine (32 mg, about half an espresso) reaches your brain and blocks the “I’m tired” signal a little."
+  },
+  {
+   "min": 75,
+   "title": "The sugar dip",
+   "text": "Your blood sugar drops just below where you started. Many people feel hungry again around now."
+  },
+  {
+   "min": 180,
+   "title": "The liver finishes",
+   "text": "Over the next hours your body burns about half of the fructose for energy and, mainly in the liver, turns about 40% into glucose. Less than 1% becomes fat right away."
+  },
+  {
+   "min": 720,
+   "title": "Kidneys",
+   "text": "No extra urine: a can of cola hydrates you about as well as the same amount of water."
+  }
+ ]
+}

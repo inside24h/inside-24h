@@ -161,9 +161,13 @@ export function ChoiceBar({ part, asking, onPick, mode, paceNode, paceText, onSe
       const cur = a.opts.find((o) => o.on)?.chip;
       return (
         <div className={`choices compact ${asking ? 'asking' : ''}`}>
-          <div className="crow">
-            <span className="cask" id="cask">{a.ask}{asking && cur ? <em> We started with {cur.toLowerCase()}: pick yours.</em> : null}</span>
-            <Chips row={a} cur={f} onPick={(x) => { onSeen?.(); onPick(x); }} />
+          {/* Polish 2026-10-20: only the question and its chips scroll; "More ▾" stays put at the end of the row (it was
+              the last item of the scrolling row and sat half off-screen at 360 px, and hidden on desktop) */}
+          <div className="crow split">
+            <div className="cscroll">
+              <span className="cask" id="cask">{a.ask}{asking && cur ? <em> We started with {cur.toLowerCase()}: pick yours.</em> : null}</span>
+              <Chips row={a} cur={f} onPick={(x) => { onSeen?.(); onPick(x); }} />
+            </div>
             {more && <button type="button" className="cmore" aria-haspopup="dialog" onClick={() => setSheet(true)}>More<span aria-hidden="true"> ▾</span></button>}
           </div>
           {sheetEl}

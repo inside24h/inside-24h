@@ -68,8 +68,14 @@ describe('meal model', () => {
   it('coffee with a croissant: caffeine peaks later, same total [ML3: +36–40 min with 500–1000 kcal]', () => {
     const alone = sim('cappuccino'), meal = sim('cappuccino croissant');
     const shift = meal.caffeine.tmaxMin - alone.caffeine.tmaxMin;
-    expect(shift).toBeGreaterThan(25);
+    // model review 2026-10-20: caffeine is partly absorbed through the stomach wall now (espressoSim), so every time
+    // runs earlier and the shift is smaller than before (≈ 24 min; Wildgrube +36–40 with SD 35–46 min)
+    expect(shift).toBeGreaterThan(15);
     expect(shift).toBeLessThan(60);
+    // absolute times against Wildgrube 2026: espresso fasted ≈ 29 ± 12 min (model ≈ 43), with a ≈ 700 kcal meal 65–69
+    const shot = sim('espresso'), shotMeal = sim('espresso hamburger fries*2');
+    expect(shot.caffeine.tmaxMin).toBeLessThan(50);
+    expect(shotMeal.caffeine.tmaxMin).toBeGreaterThan(55); expect(shotMeal.caffeine.tmaxMin).toBeLessThan(85);
     // same total caffeine absorbed by 12 h
     const absorbed = (s: typeof alone) => s.caffeine.body[720] + s.caffeine.metabolites[720];
     expect(absorbed(meal) / absorbed(alone)).toBeGreaterThan(0.95);

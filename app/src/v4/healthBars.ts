@@ -6,6 +6,7 @@ import { simulateEspresso } from '../science/espressoSim';
 import { buildVitals, minutesToBed } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { COLA } from '../science/colaSim';
+import { widmarkR } from '../science/foodSim';
 import type { Profile } from '../science/profile';
 import { FOOD_BY_ID, type Per100 } from './food/parse';
 
@@ -148,11 +149,13 @@ export function healthBars(p: Profile, counts: Counts, habits: Habits = {}): Bar
   const cig = counts.cigarettes ?? 0, cigH = habitual(counts, habits, 'cigarettes');
   if (cig) { sleep = clamp(sleep - (cigH > 0 ? 5 : 2)); notes.sleep.push('nicotine: lighter sleep, slower to fall asleep'); }
 
-  // alcohol today → blood alcohol left at bedtime (Widmark: r 0.7 men / 0.6 women, elimination 0.15 g/L per hour,
-  // all drunk at the drink time, absorbed within the first hour) [alcohol.md]; −4 Sleep per 0.2 g/L, max −12
+  // alcohol today → blood alcohol left at bedtime (Widmark with the same body factor r as the main screen, Forrest
+  // 1986 from BMI: was a flat 0.7 men / 0.6 women here, model review 2026-10-22; elimination 0.15 g/L per hour, the
+  // middle of 0.10–0.20 [AL2]; all drunk at the drink time, absorbed within the first hour) [alcohol.md]; −4 Sleep per
+  // 0.2 g/L, max −12
   const alcToday = (counts.beer ?? 0) * ETHANOL_G.beer + (counts.wine ?? 0) * ETHANOL_G.wine;
   if (alcToday > 0) {
-    const r = p.sex === 'male' ? 0.7 : 0.6;
+    const r = widmarkR(p);
     const hoursToBed = minutesToBed(p) / 60; // a drink after the usual bedtime = bed right after it (wave 6)
     const bacBed = Math.max(0, alcToday / (r * p.weightKg) - 0.15 * Math.max(0, hoursToBed - 1));
     if (bacBed > 0) { sleep = clamp(sleep - Math.min(12, 4 * (bacBed / 0.2))); notes.sleep.push(`≈ ${bacBed.toFixed(2)} ‰ alcohol in your blood at bedtime: worse sleep in the second half of the night`); }

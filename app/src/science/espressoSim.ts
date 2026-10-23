@@ -10,9 +10,18 @@ export const ESPRESSO_ML = 30;
 export const GASTRIC_HALF_MIN = 13; // [G1] Mudie 2014: water T50 13 ± 1 min; [G2] Grimm 2023: 20 mL empties at a similar relative rate
 const CAFFEINE_HALF_H = 6.0; // [M6, M7] non-smoking controls
 // Absorption from the small intestine. Caffeine is highly permeable, so absorption is assumed fast
-// (half-time 5 min, level C). With gastric emptying at t½ 13 min this puts the blood peak near 65–70 min,
-// inside the published 30–120 min [D2]. Faster peaks would require absorption from the stomach itself [D6, open].
+// (half-time 5 min, level C). With the stomach as the only route the peak came at ≈ 74 min; part of the caffeine is
+// also absorbed through the stomach wall (CAFFEINE_GASTRIC_SHARE below), which puts a shot's peak at ≈ 42 min [D2, G3].
 const INTESTINE_HALF_MIN = 5;
+// MODEL REVIEW 2026-10-20 (research/improvements/model-review-2026-10-20.md): with the stomach as the only gate the
+// model peaked at 74 min for a shot, but measured peaks for water-like vehicles are earlier: coffee 42 ± 5 min (saliva,
+// n = 13; Liguori 1997, PMID 9329065), capsules ≈ 30 min (plasma, n = 7; Mumford 1996, PMID 9010706), 29 ± 12 min
+// fasted (n = 12; Wildgrube 2026, ML3). Caffeine is absorbed mainly in the small intestine "but also in the stomach"
+// (ISSN position stand 2021, PMC7777221). So part of the caffeine goes straight from the stomach into the blood, at a
+// rate tied to the drink's own emptying: GASTRIC_SHARE is FITTED (C), not measured, so that a water-like drink peaks at
+// ≈ 42 min and sugary cola later (1 can ≈ 74 min; ≈ 2 cans ≈ 90 min vs 1.5–2 h measured by Mumford 1996). The liquid
+// itself still empties at the drink's half-time (stomachMl).
+export const CAFFEINE_GASTRIC_SHARE = 0.55;
 const VD_PER_TBW = 45.5 / totalBodyWaterL(DEFAULT_PROFILE); // [D5] 0.65 L/kg at 70 kg, scaled by body water [D4]
 // Breakdown products and their plasma half-lives [M2] Socias 2026; [X1] Lelo 1986
 const METABOLITES = [
@@ -28,8 +37,11 @@ const DBP_PER_SBP = 5.7 / 8.1;
 export function caffeineHalfLifeH(p: Profile): number {
   let h = CAFFEINE_HALF_H;
   if (p.smoker) h *= 3.5 / 6.0; // [M6]
-  if (p.oralContraceptives) h *= 10.7 / 6.2; // [M7]
-  if (p.latePregnancy) h *= 1 / 0.39; // [M8, M9]
+  // pill and pregnancy only for women (as personal.ts activeFactors; an old link could carry the flags for a man), and
+  // never both: nobody is on the pill in late pregnancy, and stacking them gave a 27 h half-life (model review 2026-10-20)
+  const woman = p.sex === 'female';
+  if (woman && p.latePregnancy) h *= 1 / 0.39; // [M8, M9]
+  else if (woman && p.oralContraceptives) h *= 10.7 / 6.2; // [M7]
   return h;
 }
 
@@ -45,7 +57,8 @@ export interface Timeline {
   vdL: number; halfLifeH: number; tmaxMin: number; peakConc: number;
 }
 
-interface Rates { kg: number; ki: number; ke: number; km: number[] }
+/** kg: stomach → intestine; ks: stomach → blood directly (gastric absorption) */
+interface Rates { kg: number; ks: number; ki: number; ke: number; km: number[] }
 
 function integrate(doseMg: number, r: Rates, minutes: number) {
   const n = minutes + 1;
@@ -66,7 +79,7 @@ function integrate(doseMg: number, r: Rates, minutes: number) {
     let dc = 0;
     for (let k = 0; k < K; k++) { dm[k] = r.ke * b * share[k] - r.km[k] * m[k]; }
     for (let k = 0; k < K; k++) dc = dc + r.km[k] * m[k];
-    ds[q] = -r.kg * s; di[q] = r.kg * s - r.ki * i; db[q] = r.ki * i - r.ke * b; dcs[q] = dc;
+    ds[q] = -(r.kg + r.ks) * s; di[q] = r.kg * s - r.ki * i; db[q] = r.ks * s + r.ki * i - r.ke * b; dcs[q] = dc;
   };
   const shift = (q: number, f: number) => { for (let j = 0; j < K; j++) mt[j] = M[j] + f * d[q][j]; return mt; };
   for (let t = 0; t < n; t++) {
@@ -91,13 +104,17 @@ function integrate(doseMg: number, r: Rates, minutes: number) {
 const argmax = (a: Float64Array) => a.reduce((best, v, i) => (v > a[best] ? i : best), 0);
 
 /** Caffeine in any drink. `gastricHalfMin` = how fast that drink leaves the stomach (water-like 13 min [G1]; cola ≈ 32 min, cola.md G7). */
-export function simulateEspresso(doseMg: number, p: Profile, minutes = 1440, gastricHalfMin = GASTRIC_HALF_MIN): Timeline {
+export function simulateEspresso(doseMg: number, p: Profile, minutes = 1440, gastricHalfMin = GASTRIC_HALF_MIN,
+  /** for building blocks only (foodSim pacedCaffeine): share absorbed through the stomach wall, intestinal half-time */
+  opts: { gastricShare?: number; intestineHalfMin?: number } = {}): Timeline {
   const halfLifeH = caffeineHalfLifeH(p);
   const kg = LN2 / gastricHalfMin;
+  const share = opts.gastricShare ?? CAFFEINE_GASTRIC_SHARE;
+  const ks = (kg * share) / (1 - share); // so that `share` of what leaves the stomach goes straight into the blood
   const ke = LN2 / (halfLifeH * 60);
-  const ki = LN2 / INTESTINE_HALF_MIN;
+  const ki = LN2 / (opts.intestineHalfMin ?? INTESTINE_HALF_MIN);
   const km = METABOLITES.map((m) => LN2 / (m.halfH * 60));
-  const a = integrate(doseMg, { kg, ki, ke, km }, minutes);
+  const a = integrate(doseMg, { kg, ks, ki, ke, km }, minutes);
   const vdL = volumeOfDistributionL(p);
   const n = minutes + 1;
   const conc = a.body.map((b) => b / vdL);
@@ -107,7 +124,9 @@ export function simulateEspresso(doseMg: number, p: Profile, minutes = 1440, gas
   const sbpRise = conc.map((c) => SBP_AT_3MGKG * caffeineBpFactor(p) * c / conc3mgkg);
   return {
     doseMg, minutes, ...a,
-    stomachMl: a.stomach.map((s) => ESPRESSO_ML * s / doseMg),
+    // the LIQUID in the stomach empties at the drink's own half-time [G1]; the caffeine in it leaves faster, because
+    // part of it is absorbed through the stomach wall (stomach[] = caffeine still in the stomach)
+    stomachMl: a.stomach.map((_, t) => ESPRESSO_ML * Math.pow(2, -t / gastricHalfMin)),
     conc,
     hr: new Float64Array(n).fill(p.restingHr), // [V1] no change at rest at 1.5–3 mg/kg
     sbp: sbpRise.map((d) => p.sbp + d),

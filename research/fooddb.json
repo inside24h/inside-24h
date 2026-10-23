@@ -1370,8 +1370,8 @@
      "waterG": 92.876
     },
     "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (espresso, milk)",
-    "gi": 39,
-    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Milk (whole) GI 39 on 1.5 g carbs (Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, mean of multiple studies)",
+    "gi": null,
+    "giSource": null,
     "color": "#9a6b44",
     "usdaFdcId": null,
     "usdaDescription": null,
@@ -1441,8 +1441,8 @@
      "waterG": 96.272
     },
     "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Beverages, coffee, instant, regular, prepared with water, milk)",
-    "gi": 39,
-    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Milk (whole) GI 39 on 2.5 g carbs (Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, mean of multiple studies)",
+    "gi": null,
+    "giSource": null,
     "color": "#9a6b44",
     "usdaFdcId": null,
     "usdaDescription": null,
@@ -6808,7 +6808,8 @@
          "url": "https://cak-mlinovi.hr/en/kategorija_proizvoda/baked-goods/",
          "claim": "DBO-burek-0"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "meat",
@@ -6877,7 +6878,8 @@
          "url": "https://www.konzum.hr/web/products/latica-burek-sa-svjezim-sirom-800-g",
          "claim": "DBB-burek-meat"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "spinach",
@@ -6953,7 +6955,8 @@
          "url": "https://world.openfoodfacts.org/product/3871832005535",
          "claim": "DBB-burek-spinach"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "potato",
@@ -7029,7 +7032,8 @@
          "url": "https://world.openfoodfacts.org/product/7350039279179",
          "claim": "DBB-burek-potato"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }
@@ -7143,7 +7147,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/173292/nutrients",
          "claim": "DBB-pizza-base"
         }
-       ]
+       ],
+       "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"
       }
      ]
     },
@@ -7199,7 +7204,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/2708622/nutrients",
          "claim": "DBB-pizza-cheese"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "pepperoni",
@@ -7246,7 +7252,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-pepperoni"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "salami",
@@ -7294,7 +7301,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-salami"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "ham",
@@ -7342,7 +7350,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-ham"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "sausage",
@@ -7389,7 +7398,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-sausage"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "bacon",
@@ -7437,7 +7447,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-bacon"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "mushrooms",
@@ -7488,7 +7499,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-mushrooms"
         }
-       ]
+       ],
+       "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"
       },
       {
        "k": "peppers",
@@ -7536,7 +7548,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-peppers"
         }
-       ]
+       ],
+       "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"
       },
       {
        "k": "onion",
@@ -7584,7 +7597,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-onion"
         }
-       ]
+       ],
+       "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"
       },
       {
        "k": "olives",
@@ -7641,7 +7655,8 @@
          "url": "https://world.openfoodfacts.org/product/8410344320016",
          "claim": "DBO-olives-0"
         }
-       ]
+       ],
+       "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"
       },
       {
        "k": "corn",
@@ -7688,7 +7703,8 @@
          "url": "https://www.burkecorp.com/wp-content/uploads/2019/05/Portion-Guide.pdf",
          "claim": "DBB-pizza-corn"
         }
-       ]
+       ],
+       "giSource": "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"
       },
       {
        "k": "tuna",
@@ -7735,7 +7751,8 @@
          "url": "https://world.openfoodfacts.org/product/4001724015727",
          "claim": "DBB-pizza-tuna"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "egg",
@@ -7783,7 +7800,8 @@
          "url": "https://www.greatbritishchefs.com/recipes/pizza-fiorentina-recipe",
          "claim": "DBB-pizza-egg"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }
@@ -10636,7 +10654,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/169247/nutrients",
          "claim": "DBB-salad-lettuce-base"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     },
@@ -10691,7 +10710,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-salad-lettuce-olive-oil"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "sunflower-oil",
@@ -10737,7 +10757,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-salad-lettuce-sunflower-oil"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "vinegar",
@@ -10784,7 +10805,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-salad-lettuce-vinegar"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "salt",
@@ -10830,7 +10852,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-salad-lettuce-salt"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }
@@ -10945,7 +10968,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/169975/nutrients",
          "claim": "DBB-cabbage-base"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     },
@@ -11000,7 +11024,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-cabbage-olive-oil"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "sunflower-oil",
@@ -11046,7 +11071,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-cabbage-sunflower-oil"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "vinegar",
@@ -11093,7 +11119,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-cabbage-vinegar"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "salt",
@@ -11139,7 +11166,8 @@
          "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
          "claim": "DBB-cabbage-salt"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }
@@ -15003,7 +15031,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170717/nutrients",
          "claim": "DBB-hamburger-hamburger"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1176: Hamburger (beef patty, ketchup, pickle, onion, mustard on a bun), McDonald's Australia, 66 ± 8, 10 subjects, 95 g serve"
       },
       {
        "k": "cheeseburger",
@@ -15047,7 +15076,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170320/nutrients",
          "claim": "DBB-hamburger-cheeseburger"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "double",
@@ -15091,7 +15121,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170720/nutrients",
          "claim": "DBB-hamburger-double"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "large",
@@ -15135,7 +15166,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170728/nutrients",
          "claim": "DBB-hamburger-large"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "pljeskavica",
@@ -15199,7 +15231,8 @@
          "url": "https://glovoapp.com/sr/rs/kragujevac/stores/kod-cika-gurmana-krg",
          "claim": "DBB-hamburger-pljeskavica"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       }
      ]
     },
@@ -15252,7 +15285,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-cheese"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "bacon",
@@ -15298,7 +15332,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-bacon"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "patty",
@@ -15344,7 +15379,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-patty"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "onion",
@@ -15390,7 +15426,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-onion"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "lettuce",
@@ -15436,7 +15473,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-lettuce"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "tomato",
@@ -15482,7 +15520,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-tomato"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "pickles",
@@ -15528,7 +15567,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-pickles"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "ketchup",
@@ -15574,7 +15614,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-ketchup"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"
       },
       {
        "k": "mayo",
@@ -15620,7 +15661,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-hamburger-mayo"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }
@@ -15677,8 +15719,8 @@
    "waterG": 63.0
   },
   "freeSugarsBasis": "not determined: a part has no free-sugar value",
-  "gi": null,
-  "giSource": null,
+  "gi": 68,
+  "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: pita GI 68 on 53.5 g carbs (Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 295: Pita bread, white, mini (UK), 68 ± 5, 10 subjects; listed again in Atkinson 2021 Suppl. Table 1 row 347 (ISO method))",
   "color": "#c9854a",
   "usdaFdcId": null,
   "usdaDescription": null,
@@ -15784,7 +15826,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-pita"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 295: Pita bread, white, mini (UK), 68 ± 5, 10 subjects; listed again in Atkinson 2021 Suppl. Table 1 row 347 (ISO method)"
       },
       {
        "k": "wrap",
@@ -15837,7 +15880,8 @@
          "url": "https://www.mallorca-revue.eu/doener-rtl-test-enthuellt-preis-leistungs-sieger",
          "claim": "DBB-kebab-wrap"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1845: Wheat tortilla (Mexico), 30 on the glucose scale (43 ± 7 on the bread scale), 8 subjects, single test; the 2021 edition lists it in Suppl. Table 2 because of the small number; no white flour wrap was tested"
       }
      ]
     },
@@ -15896,7 +15940,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-chicken"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "beef",
@@ -15952,7 +15997,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-beef"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     },
@@ -16005,7 +16051,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-tomato"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "onion",
@@ -16051,7 +16098,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-onion"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "lettuce",
@@ -16097,7 +16145,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-lettuce"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "yogurt",
@@ -16145,7 +16194,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-yogurt"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1046: No Added Sugar Natural yoghurt (Tamar Valley Dairy, Australia), 17 ± 2, 10 subjects (fat level not stated); Atkinson 2008 A1 row 892, fat-free natural yoghurt, 19 ± 5"
       },
       {
        "k": "mayo",
@@ -16191,7 +16241,8 @@
          "url": "https://pagepressjournals.org/ijfs/article/download/ijfs.2015.4535/4726/19187",
          "claim": "DBB-kebab-mayo"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }
@@ -16216,7 +16267,7 @@
       "grams": 397.0,
       "kcal": 762.8,
       "fat": 35.13,
-      "gi": null
+      "gi": 68
      }
     },
     {
@@ -16238,7 +16289,7 @@
       "grams": 397.0,
       "kcal": 819.8,
       "fat": 39.73,
-      "gi": null
+      "gi": 68
      }
     },
     {
@@ -16260,7 +16311,7 @@
       "grams": 369.0,
       "kcal": 708.1,
       "fat": 39.68,
-      "gi": null
+      "gi": 30
      }
     }
    ],
@@ -16374,7 +16425,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170707/nutrients",
          "claim": "DBB-sandwich-ham-sub"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, 75 ± 2, mean of multiple studies. Nearly all the carbohydrate in a sub is the white roll, so the white-bread GI is used (our calculation, level C). Whole sandwiches tested on white bread vary with the filling: chicken tandoori on a white French roll 78 ± 7, a white roll with cheese 50 ± 5, white toast with cheddar 35 ± 2 (Suppl. Table A1 rows 1259, 1264, 1270)"
       },
       {
        "k": "coldcut",
@@ -16418,7 +16470,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170696/nutrients",
          "claim": "DBB-sandwich-ham-coldcut"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, 75 ± 2, mean of multiple studies. Nearly all the carbohydrate in a sub is the white roll, so the white-bread GI is used (our calculation, level C). Whole sandwiches tested on white bread vary with the filling: chicken tandoori on a white French roll 78 ± 7, a white roll with cheese 50 ± 5, white toast with cheddar 35 ± 2 (Suppl. Table A1 rows 1259, 1264, 1270)"
       },
       {
        "k": "tuna",
@@ -16464,7 +16517,8 @@
          "url": "https://fdc.nal.usda.gov/food-details/170299/nutrients",
          "claim": "DBB-sandwich-ham-tuna"
         }
-       ]
+       ],
+       "giSource": "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, 75 ± 2, mean of multiple studies. Nearly all the carbohydrate in a sub is the white roll, so the white-bread GI is used (our calculation, level C). Whole sandwiches tested on white bread vary with the filling: chicken tandoori on a white French roll 78 ± 7, a white roll with cheese 50 ± 5, white toast with cheddar 35 ± 2 (Suppl. Table A1 rows 1259, 1264, 1270)"
       },
       {
        "k": "baguette",
@@ -16537,7 +16591,8 @@
          "url": "https://www.rohlik.cz/1343399-simply-fresh-sendvic-sunka-a-syr",
          "claim": "DBB-sandwich-ham-baguette"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "toast",
@@ -16606,7 +16661,8 @@
          "url": "https://psinfoodservice.com/en/product/18227-tosti-superieur-kaas-ham-30x1-stuk",
          "claim": "DBB-sandwich-ham-toast"
         }
-       ]
+       ],
+       "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: White bread GI 75 on 28.0 g carbs (Atkinson 2008 (PMC2584181) Table 1: White wheat bread, mean of multiple studies; Table 1 notes that low-GI varieties were also identified, so the type matters)"
       }
      ]
     },
@@ -16662,7 +16718,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-sandwich-ham-cheese"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "butter",
@@ -16709,7 +16766,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-sandwich-ham-butter"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "mayo",
@@ -16757,7 +16815,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-sandwich-ham-mayo"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "ketchup",
@@ -16804,7 +16863,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-sandwich-ham-ketchup"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "lettuce",
@@ -16851,7 +16911,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-sandwich-ham-lettuce"
         }
-       ]
+       ],
+       "giSource": null
       },
       {
        "k": "tomato",
@@ -16898,7 +16959,8 @@
          "url": "https://fdc.nal.usda.gov/download-datasets",
          "claim": "DBB-sandwich-ham-tomato"
         }
-       ]
+       ],
+       "giSource": null
       }
      ]
     }

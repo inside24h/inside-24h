@@ -198,6 +198,13 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     // pregnancy: WHO — alcohol in pregnancy raises the risk of FASD (alcohol.md L12)
     if (pn?.pregnant) out.push({ icon: '🤰', q: 'And in pregnancy?', a: 'Best to have none: alcohol reaches the baby and raises the risk of lasting harm (WHO).', tone: 2, tag: 'you' });
   }
+  // pregnancy and caffeine (model review 2026-10-22): the toggle already slows the clock (M8, M9); the safe amount is
+  // also lower: EFSA 2015 finds no concern for the unborn child up to 200 mg a day from all sources
+  else if (pn?.pregnant && (x.caffeineDoseMg ?? 0) >= 1) {
+    const mg = Math.round(x.caffeineDoseMg ?? 0);
+    out.push({ icon: '🤰', q: 'And in pregnancy?', a: `${mg > 200 ? `This is ${mg} mg, more than` : `This is ${mg} mg. Keep the whole day under`} the 200 mg of caffeine a day that EFSA considers safe in pregnancy${mg > 200 ? '.' : ' (all coffee, tea, cola and chocolate together).'} Late in pregnancy caffeine also stays in you about 2.6–3.5 times longer.`,
+      tone: mg > 200 ? 2 : 1, tag: 'you', note: 'Evidence A: EFSA 2015 (safety of caffeine); Parsons 1982, Knutti 1982 (half-life)' });
+  }
   // Energy as walking: ACSM walking equation, net of rest, at 5 km/h (science/walking.ts; activity.md E1–E2).
   // One formula everywhere; it falls as body weight rises and ignores age and height (they are not in the equation).
   if (x.kcal >= 5) {
@@ -210,11 +217,18 @@ export function quickAnswers(x: AnswerInput): Answer[] {
   // 4 h; more than that was never tested, so no plain "Yes" [AL7, AL13: Maughan 2016, Polhuis 2017]
   const aG = x.bac ? x.alcoholG ?? 0 : 0;
   const beerLike = aG > 0 && aG / Math.max(1, x.waterMl) < 0.06;
+  // caffeine (model review 2026-10-20, claim WK2): normal coffee, tea and cola hydrate like water (Killer 2014, Maughan
+  // 2016); only big doses make you pee more for a few hours: 6 mg/kg did, 3 mg/kg did not, even in daily drinkers (Seal
+  // 2017); ≥ 250–300 mg in people off caffeine (Maughan & Griffin 2003)
+  const cafMg = x.caffeineDoseMg ?? 0, daily = !!pn?.factors.includes('caffeineDaily');
+  const bigCaf = cafMg >= 6 * Math.max(30, x.weightKg) || (!daily && cafMg >= 300);
   if (x.waterMl >= 100) out.push({ icon: '💧', q: 'Does it count as water?', tone: 0, tag: pn ? 'typical' : undefined,
     a: aG > 40 ? `Not reliably: it has about ${Math.round(x.waterMl)} ml of water, but studies only tested drinks with up to about 30–40 g of alcohol, so we don’t know how much of it you keep with this much.`
       : aG > 1 && !beerLike ? `Mostly: it gives about ${Math.round(x.waterMl)} ml of water, but wine and spirits make you pee a little more for a few hours (no difference after 24 hours).`
-      : `Yes: it gives your body about ${Math.round(x.waterMl)} ml of water.`,
-    ...(aG > 1 ? { note: 'Evidence B: urine after beer, wine and spirits with 30 g of alcohol (Polhuis 2017); 1 liter of lager (Maughan 2016)' } : {}) });
+      : bigCaf ? `Mostly: it gives about ${Math.round(x.waterMl)} ml of water, but ${Math.round(cafMg)} mg of caffeine at once can make you pee a little more for a few hours${daily ? '' : ', especially if you rarely have caffeine'}. Normal amounts of coffee, tea or cola count like water.`
+      : `Yes: it gives your body about ${Math.round(x.waterMl)} ml of water.${cafMg >= 10 ? ' The caffeine doesn’t change that at this amount.' : ''}`,
+    ...(aG > 1 ? { note: 'Evidence B: urine after beer, wine and spirits with 30 g of alcohol (Polhuis 2017); 1 liter of lager (Maughan 2016)' }
+      : cafMg >= 10 ? { note: 'Evidence B: coffee vs water in 50 daily coffee drinkers (Killer 2014); 3 vs 6 mg/kg caffeine (Seal 2017)' } : {}) });
   const tip = nextStep(x.systems, !!x.bac);
   if (tip) out.push({ icon: '👣', q: 'What can I do?', a: tip.text, tone: 0, note: `Evidence ${tip.level}: ${LEVEL_LABEL[tip.level].toLowerCase()}`, title: tip.why });
   return out;

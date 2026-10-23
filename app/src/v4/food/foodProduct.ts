@@ -4,7 +4,7 @@
 import { at } from '../../science/espressoSim';
 import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesToBed, sleepRiskAt, sleepSentence } from '../../science/daily';
 import { sleepAnchors } from '../../science/anchors';
-import { simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
+import { alcoholGE, simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
 import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
 import { FOOD_CLAIMS, foodSourceClaims } from '../../content/food';
@@ -156,10 +156,11 @@ export function makeFoodProduct(parts: Part[], id: string, overMin = 0): Product
           : { name: 'Stomach', claims: ['GE1', 'GE12'], text: s.pace ? `Spread over ${paceLabel(s.pace.overMin)}: each ${s.pace.doses > 1 && parts.length === 1 ? 'serving' : 'round'} is half gone from your stomach after about ${s.pace.doseT50} minutes.` : `Half of this ${noun} has left your stomach after about ${s.t50} minutes.`, lines: [{ label: 'Still here', value: grams(at(s.stomachG, t)) }] };
         case 'duodenum': case 'jejunum': case 'ileum': return { name: 'Small intestine', claims: ['SI10', 'TE1'], text: 'Here sugars, protein and fat are taken apart and absorbed into your blood and lymph. Fiber passes through untouched.', lines: [{ label: 'Being digested here', value: grams(at(s.intestineG, t)) }, { label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
         case 'cecum': case 'colon_asc': case 'colon_trans': case 'colon_desc': case 'rectum': return { name: 'Large intestine', claims: ['SI10', 'CO1', 'CO3'], text: 'Fiber and leftovers arrive here. Bacteria ferment part of it while water is taken back. The trip through takes about 1–2 days.', lines: [{ label: 'Fiber here now', value: grams(s.colonG.reduce((a, c) => a + at(c, t), 0)) }, { label: 'Already out', value: grams(at(s.exitedG, t)) }] };
-        case 'pancreas': return { name: 'Pancreas', claims: ['GL1', 'GL4'], text: 'It answers sugar in your blood with insulin.', lines: [{ label: 'Insulin above baseline', value: `+${r0(at(s.insulin, t))} mU/L` }] };
+        // insulin is our estimate from the sugar curve (cola anchor); protein adds insulin we don't draw [ML5 / Mishra 2026]
+        case 'pancreas': return { name: 'Pancreas', claims: ['GL1', 'GL4', ...(meal.protein >= 10 ? ['ML5'] : [])], text: `It answers sugar in your blood with insulin. The insulin shown is our estimate from the sugar curve${meal.protein >= 10 ? '; protein in the food raises insulin further, which we don’t draw' : ''}.`, lines:[{ label: 'Insulin above baseline', value: `+${r0(at(s.insulin, t))} mU/L` }] };
         case 'liver': case 'portal_vein': return meal.alcoholG > 1
-          ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a fixed speed. Nothing speeds it up.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
-          : { name: 'Liver', claims: ['TE1'], text: 'Blood from the gut passes the liver first: it stores sugar and sorts what you absorbed.', lines: [{ label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
+          ? { name: 'Liver', claims: ['AL2'], text: 'Your liver removes alcohol at a nearly fixed speed (a little faster after a meal). Coffee, water or sleep don’t speed it up.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
+          : { name: 'Liver', claims: ['TE1', 'SI11'], text: 'Blood from the gut passes the liver first: it stores some of the sugar and sorts the amino acids. Fat takes another way, through the lymph, and reaches the liver later.', lines:[{ label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
         case 'heart': case 'aorta': case 'vena_cava': return { name: 'Heart and blood', claims: meal.alcoholG > 1 ? ['AL5'] : ['GL4', 'TG1'], text: 'Everything you absorb travels in your blood.', lines: [{ label: 'Blood sugar change', value: (() => { const u = unitOf.get(b) ?? 'mmol/L', d = at(s.glucoseDeltaMgDl, t); return u === 'mg/dL' ? `${d >= 0.5 ? '+' : ''}${Math.round(d)} mg/dL` : `${d >= 0.05 ? '+' : ''}${(d / 18.016).toFixed(1)} mmol/L`; })() }, ...(meal.fat >= 5 ? [{ label: 'Blood fat change', value: `+${at(s.tgDelta, t).toFixed(2)} mmol/L` }] : [])] };
         case 'brain': return meal.alcoholG > 1
           ? { name: 'Brain', claims: ['AL3', 'AL4'], text: 'Alcohol reaches your brain with the blood: from 0.2 ‰ your attention is already worse.', lines: [{ label: 'Blood alcohol now', value: bacRangeText(at(s.bac, t)) }] }
@@ -217,26 +218,31 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const ch: Chapter[] = [
     { min: 0, title: mixed ? 'First bite and sip' : isDrink || parts.every((x) => isDrinkFood(x.food)) ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', ...labelClaims(parts), 'DB2', 'DB3', ...(spiritsNoSugar ? ['AL15'] : [])], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}.${paceLine} ${macroLine}${giLine}${spiritsNoSugar ? ' No sugar: plain distilled spirits like this have none, so all the calories come from the alcohol (sweet liqueurs and honey brandy such as medica do have sugar).' : ''}` },
     { min: 0.3, title: 'Down the food pipe', focus: 'esophagus', claims: [], text: isDrink ? 'It runs down your food pipe into your stomach.' : 'You chew and swallow, and it slides down your food pipe into your stomach.' },
-    { min: 1, title: 'In your stomach', focus: 'stomach', claims: mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])],
+    { min: 1, title: 'In your stomach', focus: 'stomach', claims: [...(mixed ? ['ML1', 'ML2', 'ML3', 'GE5', ...(m.fat >= 15 ? ['GE15'] : [])] : isDrink ? ['GE12'] : ['GE1', 'GE4', 'GE5', ...(m.fiber >= 3 ? ['GE13'] : []), ...(m.fat >= 15 ? ['GE15'] : [])]), ...(meal.alcoholG > 1 ? ['GE19'] : [])],
       // paced meal: "Each round has two speeds: …" (was "Each round: Two speeds: …", QA 2026-10-19)
       text: mixed ? (pc ? mealStomachText(s, parts).replace(/^Two speeds: /, 'Each round has two speeds: ').replace(/^Everything/, 'Each round: everything') : mealStomachText(s, parts)) : isDrink
         // only nutrient calories slow the stomach (alcohol's don't: GE12 counts kcal minus 7 × alcohol g); never "slowed
         // down … water would be gone in about 13" when it IS 13 (rakija, sense audit 2026-10-18)
-        ? `${pc ? `Each ${roundWord}: half of it` : 'Half of it'} leaves your stomach within about ${st50} minutes${(meal.kcal - 7 * meal.alcoholG) / (pc?.doses ?? 1) > 30 && st50 >= 16 ?': calories slow the stomach down (water would be gone in about 13)' : ', about as fast as water'}.`
+        // alcohol slows the stomach too [GE19, model review 2026-10-20]: beer and wine more than their alcohol alone
+        ? `${pc ? `Each ${roundWord}: half of it` : 'Half of it'} leaves your stomach within about ${st50} minutes${meal.alcoholG / (pc?.doses ?? 1) > 1 && st50 >= 16
+          ? (alcoholGE(meal.alcoholG, meal.alcoholKa).cls === 'spirits' ? ': alcohol slows the stomach a little (water would be gone in about 13)' : ': the alcohol and the rest of the drink slow the stomach down (water would be gone in about 13)')
+          : (meal.kcal - 7 * meal.alcoholG) / (pc?.doses ?? 1) > 30 && st50 >= 16 ? ': calories slow the stomach down (water would be gone in about 13)' : ', about as fast as water'}.`
         : `${pc ? `Each ${roundWord}: your` : 'Your'} stomach churns it into a paste and lets it out slowly: half has moved on after about ${st50} minutes, almost all of it by 4 hours.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
-    { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1'],
+    { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1', ...(meal.alcoholG > 1 ? ['AL17'] : []), ...(m.fat >= 3 ? ['SI11'] : [])],
       text: (() => {
+        // fat goes by lymph, not straight to the liver (model review 2026-10-20: "these pass into your blood" said all of it did)
         const steps = [m.availCarbs >= 2 && 'starch and sugar become glucose', m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
+        const alcNote = meal.alcoholG > 1 ? ' Some of the alcohol was already absorbed through your stomach wall.' : '';
         return steps.length
-          ? `In the small intestine it is taken apart: ${steps.join(', ')}. These pass into your blood.${hasFibre ? ' Fiber goes on undigested.' : ''}`
-          : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.`;
+          ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : 'These pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${alcNote}`
+          : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.${alcNote}`;
       })() },
   ];
   if (gl !== null && s.glucosePeakMmol >= 0.2) {
     const big = s.glucosePeakMmol >= 1.5;
     const who = isMeal ? mealSugarNote(s, meal) : '';
-    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: [...(isMeal ? ['GL1', 'GL4', 'ML5', 'ML7'] : ['GL1', 'GL4']), ...(pc ? ['GL11'] : [])], text: `${who ?`${who} ` : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD), p.glucoseUnit)} ${p.glucoseUnit} (a typical response, not personalized). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}${pc ? (pc.sugarAsOnce ? ` Over ${paceLabel(pc.overMin)} this is about the same as all at once: your stomach lets sugar out at its own pace either way.` : ` Spread over ${paceLabel(pc.overMin)}, the sugar comes in smaller waves instead of one big one.`) : ''}` });
+    ch.push({ min: r0(s.glucosePeakMin), title: big ? 'Blood sugar peak' : 'Sugar rises', focus: 'pancreas', claims: [...(isMeal ? ['GL1', 'GL4', 'ML5', 'ML7', 'ML8'] : ['GL1', 'GL4']), ...(pc ? ['GL11'] : [])], text: `${who ?`${who} ` : ''}${p.glucoseMgDl >= 126 ? 'Your fasting value is in the diabetes range; this curve is for people without diabetes, in whom the rise is usually smaller and shorter. ' : ''}Your blood sugar goes from ${g(p.glucoseMgDl)} to about ${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 - GLUCOSE_SPREAD), p.glucoseUnit)}–${formatGlucoseRise(p.glucoseMgDl, s.glucosePeakMmol * 18.016 * (1 + GLUCOSE_SPREAD), p.glucoseUnit)} ${p.glucoseUnit} (a typical response, not personalized). Your pancreas releases insulin to bring it back down.${big ? '' : ' A gentle rise.'}${pc ? (pc.sugarAsOnce ? ` Over ${paceLabel(pc.overMin)} this is about the same as all at once: your stomach lets sugar out at its own pace either way.` : ` Spread over ${paceLabel(pc.overMin)}, the sugar comes in smaller waves instead of one big one.`) : ''}` });
   }
   // PACED: the last round has a moment of its own; alcohol keeps rising after it while it is still absorbed [AL16]
   if (pc) {
@@ -294,7 +300,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: [...(s.meal?.caffeineInDrink ? ['DB1', 'D2', 'ML3'] : nutrientKcal > 30 ? ['DB1', 'D2', 'GE12'] : ['DB1', 'D2']), ...labelClaims(parts, 'caffeineMg')], text: `${pc ? `${r0(meal.caffeineMg)} mg of caffeine in total, spread over ${paceLabel(pc.overMin)}: it builds up with each ${roundWord} and is highest now. It reaches your brain` : `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain`} and blocks the tiredness signal a little.${mealCaffeineNote(s)}` });
   // FC1 is about meals (Wells 1998): not for drinks alone, and alcohol calories don't count (10 beers are not "a big meal")
   if (!isDrink && meal.kcal - 7 * meal.alcoholG >= 500) ch.push({ min: 90, title: 'Sleepy after eating', focus: 'brain', claims: ['FC1'], text: 'A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was.' });
-  if (m.protein >= 10) ch.push({ min: 150, title: 'Building blocks', focus: 'heart', claims: ['AA1', 'TE1'], text: `The ${r0(m.protein)} g of protein arrive in your blood as amino acids, peaking about now. Your body spends about a quarter of protein’s calories just digesting it.` });
+  if (m.protein >= 10) ch.push({ min: 150, title: 'Building blocks', focus: 'heart', claims: ['AA1', 'TE1'], text: `The ${r0(m.protein)} g of protein arrive in your blood as amino acids, peaking about now. Processing protein (absorbing it, building with it and breaking down the rest) uses up about a quarter of its calories.` });
   if (m.fat >= 10) ch.push({ min: 210, title: 'Fat in your blood', focus: 'heart', claims: ['TG1'], text: `The fat travels through your lymph into the blood. Blood fat (triglycerides) is highest around now, roughly +${(s.tgDelta[210]).toFixed(1)} mmol/L, and falls again over the next few hours.` });
   // [AL7] was measured with lager only (Maughan 2016): wine and spirits don't get the beer sentence (audit 2026-10-16)
   // … and only up to about 1 liter of beer (≈ 40 g alcohol), the amount tested [AL7, AL13] (sense audit 2026-10-18)

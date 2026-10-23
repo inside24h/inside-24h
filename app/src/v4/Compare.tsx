@@ -85,7 +85,7 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
       <div className="cmpbody">
         {b ? (<>
           <div className="cmpactions">{onVideo && <>
-            {setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>about 1 min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>about 20 s</button></span>}
+            {setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1 min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30 s</button></span>}
             <button className="primary" onClick={() => onVideo(a, b)}><span aria-hidden="true">🎬 </span>Make this a Reel (9:16)</button></>}</div>
           <div className="cmpverdict">{verdictOf(a, b)}</div>
           <SugarChart a={a} b={b} unit={profile.glucoseUnit} />

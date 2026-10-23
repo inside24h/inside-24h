@@ -73,7 +73,12 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
       {adding
         ? <SmartSearch key="add" mode="add" autoFocus onPick={pick} onAdd={(p) => add(p)} onDone={() => setAdding(false)} />
         : <SmartSearch key="find" onPick={pick} current={current} onAdd={full || !parts.length ? undefined : (p) => add(p)} />}
-      {(parts.length > 1 || !adding) && (
+      {/* Polish 2026-10-20: "+ Add" sits next to the search (row 1) for one food AND for a meal. It used to be the last
+          chip of the meal row, which scrolls sideways, so with 3+ items it was off-screen on phones and desktop. */}
+      {!adding && parts.length > 0 && !full && (
+        <button type="button" className="madd" onClick={() => setAdding(true)} title="Add more food or drink and see one combined story">+ Add<span className="maddmore"> something</span></button>
+      )}
+      {parts.length > 1 && (
         <ul className="mealchips" aria-label="Your meal">
           {parts.length > 1 && pace && (
             <li><button type="button" className={`mpace ${pace.hot ? 'hot' : ''}`} aria-haspopup="dialog" onClick={() => setPaceSheet(true)}
@@ -98,9 +103,6 @@ export function MealBar({ parts, current, onPick, onChange, asking = false, onSw
               </li>
             );
           })}
-          {!adding && parts.length > 0 && !full && (
-            <li><button type="button" className="madd" onClick={() => setAdding(true)} title="Add more food or drink and see one combined story">+ Add<span className="maddmore"> something</span></button></li>
-          )}
           {full && <li className="mfull">Up to {MAX_ITEMS} items</li>}
         </ul>
       )}

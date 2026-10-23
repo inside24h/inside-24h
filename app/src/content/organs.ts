@@ -21,11 +21,11 @@ export function organInfo(key: string, sim: Timeline, m: number): OrganInfo | nu
       return { name: 'Stomach', claims: ['G1', 'G2', 'F4'], text: 'Liquid leaves the stomach fast: half of it within about 13 minutes.',
         lines: [{ label: 'Espresso still here', value: `${at(sim.stomachMl, m).toFixed(1)} ml` }, { label: 'Caffeine here', value: mg(at(sim.stomach, m)) }] };
     case 'duodenum': case 'jejunum': case 'ileum':
-      return { name: { duodenum: 'Duodenum', jejunum: 'Jejunum', ileum: 'Ileum' }[key]!, claims: ['D1', 'G3'],
-        text: 'The small intestine absorbs the caffeine into the blood. It is gone from here within about an hour.',
+      return { name: { duodenum: 'Duodenum', jejunum: 'Jejunum', ileum: 'Ileum' }[key]!, claims: ['D1', 'D6', 'G3'],
+        text: 'The small intestine absorbs most of the caffeine into the blood (some was already absorbed through the stomach wall). It is gone from here within about an hour.',
         lines: [{ label: 'Caffeine in the whole small intestine', value: mg(gut) }] };
     case 'portal_vein':
-      return { name: 'Hepatic portal vein', claims: ['D1'], text: 'Blood from the intestine passes through this vein to the liver before reaching the rest of the body. For caffeine the liver removes almost nothing on this first pass.',
+      return { name: 'Hepatic portal vein', claims: ['D1'], text: 'Blood from the stomach and intestine passes through this vein to the liver before reaching the rest of the body. For caffeine the liver removes almost nothing on this first pass.',
         lines: [{ label: 'Caffeine still to absorb', value: mg(gut + at(sim.stomach, m)) }] };
     case 'liver': case 'gallbladder':
       return { name: 'Liver', claims: ['M1', 'M2', 'M4', 'X1'], text: 'The liver breaks caffeine down, mostly into paraxanthine. This is what sets how long the caffeine lasts.',

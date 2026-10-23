@@ -1,7 +1,7 @@
 // Variants, builders, add-ins, sizes and "Which …?" choosers (2026-10-18, research/audit/VARIANTS-DONE.md).
 import { describe, expect, it } from 'vitest';
 import {
-  FOODS, FOOD_BY_ID, baseOf, choiceRow, defaultSel, deriveFood, foodFromKey, foodKey, isPlain, macros, mixParts, parseMeal, servingPart, sizesOf,
+  CARB_MIN, FOODS, FOOD_BY_ID, baseOf, choiceRow, defaultSel, deriveFood, foodFromKey, foodKey, isPlain, macros, mixParts, parseMeal, servingPart, sizesOf,
   suggest, variantRow, type Builder, type Food, type Part,
 } from './food/parse';
 import { addParts, isDrink, mealCode, mealFromCode, setFood } from './food/meal';
@@ -370,7 +370,8 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     'bean-soup': 'no bean soup tested', 'bean-soup.sausage': 'no bean soup tested',
     'ice-cream.chocolate': 'only one low-fat chocolate ice cream brand was tested (A1 row 770)',
     'cake-sponge.cheesecake': 'no cheesecake tested', 'cake-sponge.strudel': 'no strudel tested', 'cake-sponge.cream': 'no cream cake tested',
-    'kebab*': 'pita (68), wrap (30) and yogurt (17) have tested GIs, but tomato and onion (1–2 g carbohydrate each) have none, and the mixing rule (parse.ts CARB_MIN = 1 g) needs every part with carbohydrate',
+    // 'kebab*' was here until 2026-10-20: tomato and onion (1–2 g carbohydrate, no tested GI) voided its GI under
+    // CARB_MIN = 1 g. With CARB_MIN = 3 g every kebab has a GI (see "CARB_MIN = 3 g" below).
     'sandwich-ham_baguette': 'the baguette has no GI (see bread-french)',
     'sandwich-ham_sub_ketchup': 'ketchup (4–5 g carbohydrate) has no tested GI and no whole sub was tested; on a burger it counts at the measured whole-burger GI, which included ketchup',
   };
@@ -414,12 +415,38 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
       expect(deriveFood(h, { on }).gi, o.k).toBe(66);
     }
   });
-  it('subs count at the white-bread GI (75); a kebab without tomato and onion gets its computed GI', () => {
+  it('subs count at the white-bread GI (75); a kebab gets its computed GI (CARB_MIN = 3 g: only the bread counts)', () => {
     expect(FOOD_BY_ID['sandwich-ham'].gi).toBe(75);
     for (const k of ['coldcut', 'tuna', 'toast']) expect(deriveFood(FOOD_BY_ID['sandwich-ham'], { on: [k] }).gi, k).toBe(75);
     expect(opt('kebab', 'pita').gi).toBe(68);
     expect(opt('kebab', 'wrap').gi).toBe(30);
-    expect(deriveFood(FOOD_BY_ID.kebab, { on: ['pita', 'chicken', 'lettuce', 'yogurt', 'mayo'] }).gi).toBe(66);
+    // was 66 with CARB_MIN = 1 g (pita 68 + yogurt 17); the 38 g of yogurt has 1.8 g carbohydrate, now under the cut
+    expect(deriveFood(FOOD_BY_ID.kebab, { on: ['pita', 'chicken', 'lettuce', 'yogurt', 'mayo'] }).gi).toBe(68);
+  });
+  // Polish 2026-10-20 (research/improvements/polish-2026-10-20.md): CARB_MIN 1 → 3 g in parse.ts and build_variants.py,
+  // the same 3 g as macros() for a meal. Every one of the 11,494 combinations was compared before/after.
+  it('CARB_MIN = 3 g: every kebab has a GI (pita 68, wrap 30), the database default included', () => {
+    expect(CARB_MIN).toBe(3);
+    expect(FOOD_BY_ID.kebab.gi).toBe(68);
+    const k = FOOD_BY_ID.kebab, b = k.builder!;
+    const one = b.groups.filter((g) => g.one), any = b.groups.filter((g) => !g.one).flatMap((g) => g.opts.map((o) => o.k));
+    const bread = one.find((g) => g.opts.some((o) => o.k === 'pita'))!;
+    for (const br of bread.opts) for (let m = 0; m < 1 << any.length; m++) {
+      const on = [br.k, ...one.filter((g) => g !== bread).map((g) => g.opts.find((o) => o.on)!.k), ...any.filter((_, i) => m & (1 << i))];
+      expect(deriveFood(k, { on }).gi, on.join('+')).toBe(br.k === 'wrap' ? 30 : 68);
+    }
+  });
+  it('CARB_MIN = 3 g: a splash of milk (< 3 g carbohydrate) no longer sets a GI; sugar in coffee counts at its own 65', () => {
+    // these had GI 39 (milk) on 1.5–3 g of carbohydrate; macros() already skipped them (< 3 g), so nothing visible changes
+    for (const key of ['filter-coffee~milk1', 'coffee-with-milk.macchiato', 'coffee-with-milk.instant', 'black-tea~milk1']) {
+      const f = foodFromKey(key)!;
+      expect(f.gi, key).toBeNull();
+      expect(avail(f), key).toBeLessThan(3);
+      expect(macros([servingPart(f, 1)]).gi, key).toBeNull();
+    }
+    // coffee with milk + 1 tsp sugar: the milk's 2–3 g lactose no longer pulls the mix down (was 54–60, now the sugar's 65)
+    expect(foodFromKey('coffee-with-milk~sugar1')!.gi).toBe(65);
+    expect(foodFromKey('cappuccino.almond~sugar1')!.gi).toBe(65); // was null: almond milk has no tested GI
   });
   it('new GIs from the 2008/2021 tables are in (row in giSource of research/fooddb.json)', () => {
     const want: Record<string, number> = {

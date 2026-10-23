@@ -23,11 +23,13 @@ export function SafeCanvas({ children, gl, frameloop, onCreated, ...rest }: Canv
   const [lost, setLost] = useState(false);
   const recording = useRef(false);
   recording.current = frameloop === 'never'; // the recorder draws each frame itself: keep the size steady
+  // while a video is recorded the body fills a 1080 × 1200 band: render at least 2× (max 3×) so it stays sharp
+  const recDpr = Math.min(3, Math.max(dpr, 2));
 
   if (!ok) return <div className="stage-error nogl" role="alert"><b>{NO_3D}</b><p>Everything else still works.</p></div>;
   return (
     <>
-      <Canvas {...rest} frameloop={frameloop} dpr={dpr}
+      <Canvas {...rest} frameloop={frameloop} dpr={recording.current ? recDpr : dpr}
         gl={{ antialias: tier !== 'low', alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: !canEncode(), ...(gl as object) }}
         onCreated={(state) => {
           const el = state.gl.domElement;

@@ -64,6 +64,19 @@ function siteHints(): Plugin {
   };
 }
 
+// With json.stringify a JSON module is `export default JSON.parse("…")`, a call Rollup must keep even when nothing
+// uses it. Marking the call pure lets an unused import drop out again (as an object literal would).
+export function pureJson(): Plugin {
+  return {
+    name: 'inside24h-pure-json',
+    enforce: 'post',
+    transform(code, id) {
+      if (!/\.json(?:$|\?)/.test(id) || !code.startsWith('export default JSON.parse(')) return null;
+      return { code: code.replace('export default JSON.parse(', 'export default /* @__PURE__ */ JSON.parse('), map: null };
+    },
+  };
+}
+
 // `SITE_REPORT=1 npx vite build --config vite.site.config.ts`: the biggest modules in each chunk (minified bytes).
 function sizeReport(): Plugin {
   return {
@@ -81,8 +94,12 @@ function sizeReport(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), siteHints(), sizeReport()],
+  plugins: [react(), pureJson(), siteHints(), sizeReport()],
   assetsInclude: ['**/*.glb'],
+  // Polish 2026-10-20: JSON imports (the food database, climate, organ points) become JSON.parse("…") instead of JS
+  // object literals: same data, smaller, and V8 parses a JSON string much faster than the same literal. pureJson()
+  // keeps them tree-shakeable (without it organ-points.json, which the UI never reads, moved into the first download).
+  json: { stringify: true },
   build: {
     outDir: 'dist-site',
     emptyOutDir: true,

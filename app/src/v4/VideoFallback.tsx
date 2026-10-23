@@ -24,7 +24,7 @@ export function VideoFallback({ reason, makeImage, onSave }: {
   return (
     <div className="fallback">
       <h2>Open this in your browser</h2>
-      <p>Making a video needs Chrome or Safari. Please open this page in your browser.</p>
+      <p>Making a video needs Chrome, Edge or Safari. Please open this page in your browser.</p>
       {reason && <p className="note">{reason}</p>}
       <p className="note">In Instagram or TikTok: tap ⋯ (top right) and choose “Open in browser”, or copy the link.</p>
       <div className="linkrow">

@@ -362,7 +362,9 @@ export const gramsPart = (food: Food, grams: number): Part => toPart(food, { cou
 // Data: research/tools/fooddb_spec.py (section VARIANTS …) → build_variants.py → fooddb.json. A derived food keeps the
 // base id (so isDrink, Browse groups, HABIT_OF and SWAPS keep working) and carries v / on / add; FOODS stays base-only.
 // mixParts() is the same rule as build_variants.mix() (a test compares them): gram-weighted, null if any part is null,
-// GI carbohydrate-weighted over parts with ≥ 1 g available carbohydrate and only if all of those have a measured GI.
+// GI carbohydrate-weighted over parts with ≥ 3 g available carbohydrate and only if all of those have a measured GI.
+// CARB_MIN was 1 g until 2026-10-20; 3 g is the same threshold macros() uses for a meal (no meaningful sugar response),
+// so a kebab's tomato and onion (1–2 g each, never tested) no longer void its GI (VARIANTS-DONE.md, data round 3).
 
 const hasOwn = <T,>(o: Record<string, T> | undefined | null, k: string): o is Record<string, T> => !!o && Object.prototype.hasOwnProperty.call(o, k);
 export const baseOf = (f: Food): Food => f.base ?? f;
@@ -370,7 +372,7 @@ export const baseOf = (f: Food): Food => f.base ?? f;
 export const isPlain = (f: Food) => !f.base;
 export interface Choice { v?: string; on?: string[]; add?: Record<string, number> }
 const NUM_KEYS: (keyof Per100)[] = ['kcal', 'carbs', 'sugars', 'freeSugars', 'fiber', 'fat', 'satFat', 'protein', 'sodiumMg', 'caffeineMg', 'alcoholG', 'waterG'];
-export const CARB_MIN = 1;
+export const CARB_MIN = 3;
 export interface MixPart { p: Per100; gi: number | null; grams: number }
 export function mixParts(parts: MixPart[]): { p: Per100; grams: number; gi: number | null } {
   const ps = parts.filter((x) => x.grams > 0);

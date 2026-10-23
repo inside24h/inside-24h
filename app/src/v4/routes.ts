@@ -38,7 +38,7 @@ export function espressoRoute(sim: Timeline, dose: number, ml = 30): Route {
     unit: 'ml',
     segs: (m) => ({
       swallow: swallow(m, ml, 'ml'),
-      stomach: st(at(sim.stomach, m) * toMl, ml, e(m)),
+      stomach: st(at(sim.stomachMl, m) * (ml / 30), ml, e(m)), // the liquid (model review 2026-10-20: caffeine also leaves through the stomach wall)
       duodenum: st(0.3 * at(sim.intestine, m) * toMl, ml, a(m)),
       small: st(0.7 * at(sim.intestine, m) * toMl, ml, a(m)),
       portal: st(a(m) * dose * 0.2, dose, a(m), 'mg caffeine'),

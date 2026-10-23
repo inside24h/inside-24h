@@ -127,7 +127,7 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
         if (poisonRisk(a)) return `Blood alcohol about ${bacRangeText(a)}: dangerous. People have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).`;
         if (a >= 0.5) return `Blood alcohol about ${bacRangeText(a)}: reaction time and balance are worse. Don’t drive.`;
         if (a >= 0.2) return `Blood alcohol about ${bacRangeText(a)}: your attention is already worse. Don’t drive.`;
-        if (night(m) && a > 0.02) return 'Alcohol is still in your blood: you may fall asleep faster, but the second half of the night will be lighter and more broken.';
+        if (night(m) && a > 0.02) return 'Alcohol is still in your blood: you may fall asleep faster, but the second half of the night is often lighter and more broken.';
         if (a > 0.02) return `A little alcohol (about ${bacRangeText(a)}). Not zero: don’t drive.`;
         if (night(m) && (l > 0 || asleep(m))) return l === 0 ? 'Sleeping normally.' : v.extraLatencyMin >= 1 ? `Caffeine is delaying your sleep by about ${Math.max(1, Math.round(v.extraLatencyMin))} minutes.`
           : 'Most people sleep normally with this much caffeine, but sensitive people may sleep a little less or more lightly.';

@@ -21,13 +21,15 @@ describe('espresso simulation', () => {
       expect(total).toBeCloseTo(63, 6);
     }
   });
-  it('empties half the stomach in 13 minutes [G1]', () => {
-    expect(at(sim.stomach, 13) / 63).toBeCloseTo(0.5, 2);
+  it('the liquid empties half the stomach in 13 minutes [G1]; the caffeine in it leaves faster (stomach wall)', () => {
+    expect(at(sim.stomachMl, 13) / 30).toBeCloseTo(0.5, 2);
+    expect(at(sim.stomach, 13) / 63).toBeLessThan(0.3);
   });
-  it('peaks in blood inside the published 30–120 min window [D2]', () => {
-    // Gastric emptying (t½ 13 min) limits how early the peak can be: ≈ 65–75 min here.
-    expect(sim.tmaxMin).toBeGreaterThanOrEqual(60);
-    expect(sim.tmaxMin).toBeLessThanOrEqual(80);
+  it('peaks where coffee and capsules were measured (model review 2026-10-20) [D2, G3]', () => {
+    // Liguori 1997: coffee 42 ± 5 min; Mumford 1996: capsules ≈ 30 min; Wildgrube 2026: 29 ± 12 min fasted.
+    // The old model (stomach as the only gate) peaked at 74 min.
+    expect(sim.tmaxMin).toBeGreaterThanOrEqual(30);
+    expect(sim.tmaxMin).toBeLessThanOrEqual(50);
   });
   it('uses Vd = 45.5 L for the default 70 kg man [D5]', () => {
     expect(sim.vdL).toBeCloseTo(45.5, 6);

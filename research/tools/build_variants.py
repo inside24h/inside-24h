@@ -18,7 +18,7 @@ A ref is a database food id ("ham": its final values, label overrides included),
 Mixing rule (the app does exactly the same in parse.ts mixFood, a test compares them):
   per 100 g = gram-weighted sum; a nutrient is null if ANY part has it null (never a silent 0)
   free sugars = sum of each part's own free sugars (each part keeps its own WHO rule), null if any part is null
-  GI = carbohydrate-weighted over the parts with >= 1 g available carbohydrate in the amount used, null unless every
+  GI = carbohydrate-weighted over the parts with >= 3 g available carbohydrate in the amount used, null unless every
        such part has a measured GI (evidence level C: a mixed-meal GI is a calculation, not a test)
 """
 import re, json, os, itertools
@@ -26,7 +26,8 @@ import usda_sr as U
 import fooddb_spec as S
 
 NUM = ["kcal", "carbs", "sugars", "freeSugars", "fiber", "fat", "satFat", "protein", "sodiumMg", "caffeineMg", "alcoholG", "waterG"]
-CARB_MIN = 1.0      # g available carbohydrate: below this a part does not count for the mix GI (a cheese slice, coffee)
+CARB_MIN = 3.0      # g available carbohydrate: below this a part does not count for the mix GI (a cheese slice, coffee,
+                    # a kebab's tomato). 1 g until 2026-10-20; 3 g = parse.ts macros() for a meal (no meaningful sugar response)
 HR = re.compile(r"[čćšžđČĆŠŽĐ]")  # chips are American English: Croatian letters only in search words
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 BASELINE = os.path.join(ROOT, "research", "audit", "baseline-20261018", "fooddb.json")
@@ -243,7 +244,7 @@ def build_option(ctx, bid, o):
             parts.append((c, ctx.grams(c, item[1], where)))
         p, tot, gi, carb, nulls = mix(parts)
         if nulls: warn("%s: %s null because a part has no value" % (where, nulls))
-        comp = dict(p=p, gi=gi, fdc=None, desc="our recipe", food=None)
+        comp = dict(p=p, gi=gi, giSource=gi_text(gi, carb), fdc=None, desc="our recipe", food=None)
         grams, rows, recipe = tot, part_claim_rows(parts), recipe_rows(parts)
     else:
         comp = ctx.comp(o["ref"], where)
@@ -267,11 +268,14 @@ def build_option(ctx, bid, o):
     return {"k": o["k"], "chip": o["chip"], "name": o["name"], "grams": round(grams, 1), "rng": list(rng) if rng else None,
             "on": bool(o.get("on")), "p": rp(comp["p"]), "gi": comp["gi"], "fdc": comp["fdc"], "food": comp.get("food"),
             "words": fold_words(ctx.B, o.get("words", [])), "aliases": alias_keys(ctx.B, o.get("aliases", [])),
-            "recipe": recipe, "src": src}
+            "recipe": recipe, "src": src,
+            # 2026-10-20: research JSON only (sync_app_fooddb.slim picks its own keys); gi_text() needs it now that a
+            # builder default (the kebab) gets a computed GI with CARB_MIN = 3 g
+            "giSource": comp.get("giSource")}
 
 
 def selection_parts(bld, sel, skip=()):
-    return [(dict(p=o["p"], gi=o["gi"], name=o["name"]), o["grams"]) for g in bld["groups"] for o in g["opts"] if o["k"] in sel and o["fdc"] not in skip]
+    return [(dict(p=o["p"], gi=o["gi"], giSource=o.get("giSource"), name=o["name"]), o["grams"]) for g in bld["groups"] for o in g["opts"] if o["k"] in sel and o["fdc"] not in skip]
 
 
 # Parts whose energy is not 4/4/9/7 by design: vinegar (acetic acid, about 3.6 kcal/g, USDA 18 kcal with no macros),

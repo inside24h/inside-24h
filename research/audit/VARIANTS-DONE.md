@@ -291,5 +291,5 @@ Panozzo et al. 2015, Ital J Food Saf 4:4535 (PDF re-read; Table 1 with `pdftotex
 
 1. **Run the build** (`python -I research/tools/build_fooddb.py build`). It was refused by the permission system for me; the dry run is clean.
 2. Beer GI 104 (two tests, 89 and 119): adopt or keep it null?
-3. Builder `CARB_MIN` 1 → 3 g (`parse.ts` + `build_variants.py`), so that the kebab gets its GI.
+3. Builder `CARB_MIN` 1 → 3 g (`parse.ts` + `build_variants.py`), so that the kebab gets its GI. **Done 2026-10-20** (`research/improvements/polish-2026-10-20.md`): the kebab gets 68 (pita) / 30 (wrap), not the 66 predicted above (the 38 g of yogurt has 1.8 g carbohydrate, also under 3 g).
 4. Kebab chicken skin: no döner-skewer label could be read (REWE pages 403; Open Food Facts search down). A label would make the meat record firmer than "thigh with skin".

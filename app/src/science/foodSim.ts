@@ -1,7 +1,7 @@
 // Generic model for ANY food or drink from its macros, GI and kind. Claim IDs: research/digestion-generic.md
 // (GE gastric emptying, GL glucose, CO colon, TG fat), research/alcohol.md (W, K, A, S), research/water.md.
 // Every parameter below is a published number or a level-C fit to one; the screen shows level C for this model.
-import { simulateEspresso, type Timeline } from './espressoSim';
+import { CAFFEINE_GASTRIC_SHARE, simulateEspresso, type Timeline } from './espressoSim';
 import { glucoseDeltaMmol, insulinDelta } from './colaSim';
 import type { Profile } from './profile';
 import { fedForAlcohol } from './personal';
@@ -81,6 +81,17 @@ export const FOOD_MODEL = {
   // A slower delivery gives a lower sugar peak: exponent 0.3 from our convolution model (digestion-generic §4 table:
   // T50 28 → 68 min at the same GL lowers the peak 2.45 → 1.9, i.e. (28/68)^0.28) (C).
   glucoseSpeedExp: 0.3,
+  // ALCOHOL SLOWS THE STOMACH (model review 2026-10-20, claim GE19). Before, only non-alcohol calories counted, so beer
+  // and rakija left "about as fast as water". Measured (Franke 2004, PMID 15370684; 10 fasted, ultrasound, 500 ml):
+  // water 14.6 min; pure ethanol 4% / 10% / 40% 22.6 / 22.7 / 27.8 min (slower, but NOT dose-dependent); beer 39.3,
+  // red wine 72.6, whisky 26.4 min (fermented drinks slow it more than their ethanol alone; distilled ones do not).
+  // Okabe 2022 (PMID 35734752): whisky with water (≈ 10 g ethanol) slower than water, faster than glucose of the same
+  // kcal. Stevens 2022 (PMID 35246999, scintigraphy, 600 ml): beer T50 75–89 min. Fit (C): liquid T50 =
+  // (line(nutrient kcal) + 10 min) × class factor (beer 1.25 → 500 ml beer 39.6 min; wine 2.5 → 500 ml red wine 72 min,
+  // measured for RED wine only; spirits 1). The ethanol part ramps in up to 10 g. Solid meals with alcohol (Franke 2005,
+  // PMID 15699055; 16 men): food T50 131 → 159–166 min with 4–10% ethanol or beer (×1.2–1.26), 186 with red wine
+  // (×1.42); Kasicka-Jonderko 2013 (PMID 23420574) agrees; Moore 1981 found no effect of wine with a meal (C, mid-range).
+  alcoholGE: { addMin: 10, fullAtG: 10, liquid: { beer: 1.25, wine: 2.5, spirits: 1 }, solid: { beer: 1.22, wine: 1.4, spirits: 1.22 } },
   // Protein and fat eaten with carbohydrate lower its sugar response, linearly over 0–30 g [GL5, Moghaddam 2006];
   // per gram added to 50 g carbohydrate: tuna protein −0.57% iAUC, whey −1.4% [ML5, Wolever 2017]; fat ≈ 1/2–1/3 of
   // protein [GL5] → 0.23%/g (C). Only the OTHER items count: each food's own GI already includes its own fat and
@@ -153,6 +164,18 @@ export interface FoodSim {
 }
 
 const nutrientKcal = (x: { kcal: number; alcoholG: number }) => Math.max(0, x.kcal - 7 * x.alcoholG);
+/** How alcohol slows the stomach [GE19]: extra minutes and factors on the liquid and solid half-times (1 / 0 without
+ *  alcohol). The class comes from the drink's absorption rate (ALCOHOL_DRINKS; no class given = spirits). */
+export function alcoholGE(alcoholG: number, alcoholKa?: number) {
+  const A = FOOD_MODEL.alcoholGE, w = Math.min(1, Math.max(0, alcoholG) / A.fullAtG);
+  const cls: AlcoholClass = alcoholKa === ALCOHOL_DRINKS.beer.ka ? 'beer' : alcoholKa === ALCOHOL_DRINKS.wine.ka ? 'wine' : 'spirits';
+  return { addMin: A.addMin * w, liquid: 1 + (A.liquid[cls] - 1) * w, solid: 1 + (A.solid[cls] - 1) * w, cls };
+}
+/** Liquid half-time from nutrient kcal, with the alcohol term [GE12, GE19]. */
+export const liquidT50Alc = (nKcal: number, alcoholG: number, alcoholKa?: number) => {
+  const a = alcoholGE(alcoholG, alcoholKa);
+  return (FOOD_MODEL.liquidT50(nKcal) + a.addMin) * a.liquid;
+};
 const isMixed = (meal: Meal) => !!meal.items && meal.items.length > 1 && meal.items.some((i) => i.drink) && meal.items.some((i) => !i.drink);
 
 /** Drinks vs food in a meal; null phases when the meal is a single food or all drinks / all food. */
@@ -163,10 +186,12 @@ export function mealPhases(meal: Meal): MealPhases {
   const di = idx(true), fi = idx(false);
   const sum = (ix: number[], f: (x: MealItem) => number) => ix.reduce((s, i) => s + f(items[i]), 0);
   const drinkKcal = sum(di, nutrientKcal), foodKcal = sum(fi, nutrientKcal);
-  const plainWater = drinkKcal < 5 && sum(di, (x) => x.caffeineMg) < 1; // [ML4] water still leaves fast after a meal
+  const drinkAlc = sum(di, (x) => x.alcoholG);
+  // [ML4] water still leaves fast after a meal (an alcoholic drink is not plain water: GE19, model review 2026-10-20)
+  const plainWater = drinkKcal < 5 && sum(di, (x) => x.caffeineMg) < 1 && drinkAlc < 1;
   // the drinks on their own (semi-solid drinks such as cappuccino keep their single-food half-time, never faster)
   const semiDrink = di.some((i) => items[i].kind !== 'liquid');
-  const aloneT50 = semiDrink ? halfOf((t) => singleRetention({ ...meal, kcal: sum(di, (x) => x.kcal), alcoholG: sum(di, (x) => x.alcoholG), fiber: sum(di, (x) => x.fiber), kind: 'semi' }, t)) : FOOD_MODEL.liquidT50(drinkKcal);
+  const aloneT50 = semiDrink ? halfOf((t) => singleRetention({ ...meal, kcal: sum(di, (x) => x.kcal), alcoholG: drinkAlc, fiber: sum(di, (x) => x.fiber), kind: 'semi' }, t)) : liquidT50Alc(drinkKcal, drinkAlc, meal.alcoholKa);
   return {
     drink: { grams: sum(di, (x) => x.grams), kcal: drinkKcal, aloneT50, t50: aloneT50 * (plainWater ? 1 : FOOD_MODEL.drinkWithFood(foodKcal)), items: di },
     food: { grams: sum(fi, (x) => x.grams), kcal: foodKcal, kind: fi.some((i) => items[i].kind === 'solid') ? 'solid' : 'semi', items: fi },
@@ -189,8 +214,9 @@ function singleRetention(meal: Meal, t: number): number {
   const kcal = nutrientKcal(meal); // nutrient energy sets the pace (Camps 2016 used nutrient drinks)
   const fibre1000 = kcal > 0 ? (1000 * meal.fiber) / kcal : 0;
   const f = FOOD_MODEL.fibreFactor(fibre1000);
-  const liquid = FOOD_MODEL.liquidT50(kcal) * (meal.kind === 'liquid' ? 1 : f);
-  const solid = FOOD_MODEL.solidT50(kcal) * f;
+  const alc = alcoholGE(meal.alcoholG, meal.alcoholKa); // [GE19] alcohol slows the stomach (no-op without alcohol)
+  const liquid = liquidT50Alc(kcal, meal.alcoholG, meal.alcoholKa) * (meal.kind === 'liquid' ? 1 : f);
+  const solid = FOOD_MODEL.solidT50(kcal) * f * alc.solid;
   const exp = (T: number) => Math.pow(2, -t / T);
   const pexp = (T: number, b: number) => Math.exp(-Math.pow(t / (T / Math.pow(Math.LN2, 1 / b)), b));
   if (meal.kind === 'liquid') return exp(liquid);
@@ -322,9 +348,7 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   // 35–200 kg and 130–220 cm (BMI ≈ 7–118), where it would give r ≤ 0 and a negative or infinite blood alcohol.
   // BMI is held inside 16–45 (C, audit 2026-10-16); at BMI 45 r = 0.47 (men) / 0.38 (women), a little below Watson
   // body water ÷ (0.8 × weight) for a 150 kg, 182 cm body (0.58 / 0.45, alcohol.md W4–W5): the cautious side.
-  const bmi = Math.min(45, Math.max(16, p.weightKg / Math.pow(p.heightCm / 100, 2)));
-  const r = p.sex === 'female' ? 0.9367 - 0.0124 * bmi : 1.0181 - 0.01213 * bmi;
-  const vd = r * p.weightKg; // L
+  const vd = widmarkR(p) * p.weightKg; // L
   const vc = a.central * vd, vp = vd - vc, q = a.exchangePerMin * vd; // central / peripheral litres, exchange L/min
 
   const out = { stomachG: mk(), intestineG: mk(), c0: mk(), c1: mk(), c2: mk(), exitedG: mk(), bodyWater: mk(), bladder: mk(), kcalAbsorbed: mk(), bac: mk(), carbsInBlood: mk() };
@@ -431,8 +455,26 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
   const cafHalf = ph.drink && ph.food ? (caffeineInDrink ? ph.drink.t50 : foodT50) : doseT50;
   const cafOne = simulateEspresso(Math.max(1e-4, dm.caffeineMg), p, minutes, Math.max(13, cafHalf));
   const cafPhase = ph.drink && ph.food && !caffeineInDrink ? 1 : 0;
-  const caffeine = N === 1 ? cafOne : dm.caffeineMg < 0.01 ? { ...cafOne, doseMg: cafOne.doseMg * N }
-    : pacedCaffeine(cafOne, simulateEspresso(1, p, minutes, 0.1), (t) => dm.caffeineMg * leaving(cafPhase, t), (t) => dm.caffeineMg * (started(t) - left[cafPhase][t]), N, p);
+  // PACED caffeine (model review 2026-10-20): caffeine leaves the stomach faster than the liquid, because part of it is
+  // absorbed through the stomach wall (espressoSim CAFFEINE_GASTRIC_SHARE). So the rounds use caffeine's own stomach
+  // curve, exactly as one dose does in simulateEspresso, with the same cap as the stomach (never faster than having it
+  // all at once), and the impulse response is the mix of the two routes (gut, and straight into the blood).
+  const caffeine = N === 1 ? cafOne : dm.caffeineMg < 0.01 ? { ...cafOne, doseMg: cafOne.doseMg * N } : (() => {
+    const ph0 = mealPhases(meal);
+    const once50 = ph0.drink && ph0.food ? (caffeineInDrink ? ph0.drink.t50 : halfOf((t) => foodRetention(meal, ph0.food!.kind, t))) : halfOf((t) => stomachRetention(meal, t));
+    const kOne = Math.LN2 / Math.max(13, cafHalf) / (1 - CAFFEINE_GASTRIC_SHARE), kOnce = Math.LN2 / Math.max(13, once50) / (1 - CAFFEINE_GASTRIC_SHARE);
+    const leftC = new Float64Array(n);
+    for (let t = 0; t < n; t++) {
+      let own = 0; for (const s0 of starts) if (t >= s0) own += 1 - Math.exp(-kOne * (t - s0));
+      leftC[t] = Math.max(t ? leftC[t - 1] : 0, Math.min(own, N * (1 - Math.exp(-kOnce * t))));
+    }
+    const gut = simulateEspresso(1, p, minutes, 0.1, { gastricShare: 0 });
+    const direct = simulateEspresso(1, p, minutes, 0.1, { gastricShare: 0, intestineHalfMin: 0.1 });
+    const sh = CAFFEINE_GASTRIC_SHARE, mix = (a: Float64Array, b: Float64Array) => a.map((v, i) => (1 - sh) * v + sh * b[i]);
+    const imp = { ...gut, intestine: mix(gut.intestine, direct.intestine), body: mix(gut.body, direct.body), metabolites: mix(gut.metabolites, direct.metabolites), cleared: mix(gut.cleared, direct.cleared), conc: mix(gut.conc, direct.conc) };
+    return pacedCaffeine(cafOne, imp, (t) => dm.caffeineMg * (leftC[Math.min(n - 1, t + 1)] - leftC[t]), (t) => dm.caffeineMg * (started(t) - leftC[t]), N, p);
+  })();
+  void cafPhase;
   const caffeineTmaxAloneMin = ph.drink && caffeineInDrink && dm.caffeineMg >= 1 ? simulateEspresso(dm.caffeineMg, p, Math.min(minutes, 600), Math.max(13, ph.drink.aloneT50)).tmaxMin : null;
   return {
     minutes, t50, stomachG: out.stomachG, intestineG: out.intestineG, colonG: [out.c0, out.c1, out.c2], exitedG: out.exitedG, residueG: residue,
@@ -441,6 +483,13 @@ export function simulateFood(meal: Meal, p: Profile, minutes = 1440): FoodSim {
     meal: multi ? { phases: ph, drinkStomachG, foodStomachG, drinkIntestineG, foodT50, items: one.items ?? [], caffeineTmaxAloneMin, caffeineInDrink } : null,
     pace: N > 1 ? { doses: N, overMin: meal.pace!.overMin, everyMin: meal.pace!.overMin / N, startsMin: starts, doseT50, sugarAsOnce: g.capped } : null,
   };
+}
+
+/** Widmark factor r from BMI (Forrest 1986, alcohol.md W3), BMI held inside 16–45 (see simulateFood). One function
+ *  for the whole app, so the health bars and the main screen use the same body (model review 2026-10-22). */
+export function widmarkR(p: Pick<Profile, 'sex' | 'weightKg' | 'heightCm'>): number {
+  const bmi = Math.min(45, Math.max(16, p.weightKg / Math.pow(p.heightCm / 100, 2)));
+  return p.sex === 'female' ? 0.9367 - 0.0124 * bmi : 1.0181 - 0.01213 * bmi;
 }
 
 /** Caffeine had in rounds. `imp` = 1 mg that reaches the gut at once (gastric half-time 0.1 min); `inflow(t)` = mg leaving
