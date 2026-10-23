@@ -53,3 +53,15 @@ Video: 2 renderirana kroz pravi UI (`prelaunch/vids/`): dugi "A whole pizza" 73,
 - `npx vitest run`: 31 datoteka, 510 testova, svi prolaze (+13 novih).
 - `npx vite build --config vite.v4.config.ts`: OK (dist-v4/index-v4.html 2,82 MB).
 - `npx vite build --config vite.site.config.ts && node scripts/make-site-split.mjs` (zadnje): OK, index.html + 19 assets, 2,64 MB.
+
+## 6. Dodatak (nakon 139439a): parser nikad ne mijenja tiho ono što je upisano
+`app/src/v4/food/parse.ts` (+ `SmartSearch.tsx`, `AppV4.tsx`, `meals.css`). Backup u istoj mapi `backups/20261023-174214-prelaunch/`.
+- Novi `readMeal(text)` → `{ parts, extras, left, kept }` i `leftOutNote(text)`; `parseMeal` vraća samo `parts` kao prije.
+- **Sitnice** (limun/limunom, kriška limuna, led/ledom, ice, cimet, sol, papar, menta, zaslađivač): ne pretvaraju se u hranu ("tea with honey and lemon" prije je dodavao 250 ml limunade, "beer with lemon" isto, "water with a slice of lemon" isto). Bilježe se kao "Not counted: “lemon” (too little to matter)." "tea with lemon and honey" i dalje stavlja med u čaj. Samo "lemon" više ne logira limunadu (lista je i dalje nudi, osoba bira).
+- **Nepoznate riječi** (šlag, whipped cream, vrhnje, "something") više se ne gube: "Not in our database yet: “šlagom” — left out." (riječ kako je upisana, s dijakriticima).
+- **"bez / without"** (prije: ništa nije pronađeno): uklanja dodatak ili prilog ako je unutra ("kava sa šećerom bez šećera" → espresso, "kebab bez luka" → without onion); "cola / energy drink / ledeni čaj bez šećera" → Diet cola / Sugar-free / Diet iced tea; ako se ne može ukloniti a dio je hrane → "We can’t take out “cheese” yet, so it’s counted." ("pizza without cheese"); ako hrana to ionako nema (espresso bez mlijeka) — ništa za reći.
+- **Blizu riječ ≠ drugi prilog**: "pizza with peppers" davala je Pepperoni pizzu (stem "peppers"~"pepperoni") → sad se prvo traži točna riječ.
+- Gdje se vidi: žuta napomena na vrhu liste prijedloga (glavna tražilica, "+ Add", Compare) i nakon odabira / otvaranja linka kao zatvoriva traka (ista kao link-napomena), do sljedećeg odabira. Kod dodavanja u obrok ("+ Add") vidi se samo u listi prije odabira.
+- Sweep: milk chocolate / chocolate milk / orange juice / orange / iced tea / ice cream / apple juice / almond milk / peanut butter ostaju točni; na 1162 starih upita 0 promjena rezultata u odnosu na 139439a.
+- Testovi: `naming.test.ts` +5 (ukupno 515, svi prolaze). tsc čist, oba builda OK (split zadnji), Chrome 360/1440 na `site/`: napomena u listi i nakon odabira, link `#q=tea with honey and lemon`, 0 grešaka, bez horizontalnog scrolla.
+- Ostaje: "lemon tea", "coconut milk", "iced coffee", "gin and tonic" → "We don’t know … yet" (nema hrane; nove namirnice nisu dodavane). Napomena na mobitelu privremeno prekriva red ispod tražilice dok se ne zatvori (isti obrazac kao postojeća link-napomena).

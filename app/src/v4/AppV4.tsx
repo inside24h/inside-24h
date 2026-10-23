@@ -55,7 +55,7 @@ import { MomentShare, type Moment } from './MomentShare';
 
 
 import { SmartSearch } from './SmartSearch';
-import { isPlain, macros, parseMeal, readPace, servingPart, sizesOf, suggest, type Food, type Part } from './food/parse';
+import { isPlain, leftOutNote, macros, parseMeal, readPace, servingPart, sizesOf, suggest, type Food, type Part } from './food/parse';
 import { amountPhrase, capFirst, partsPhrase } from './food/naming';
 import { canPace, paceLabel, paceMatters, setFood } from './food/meal';
 import { makeFoodProduct } from './food/foodProduct';
@@ -179,6 +179,8 @@ export default function AppV4() {
   const [linkNote, setLinkNote] = useState<string | null>(RESOLVED.vsMiss ? `We don’t have “${RESOLVED.vsMiss.slice(0, 40)}” yet, so there’s nothing to compare it with. Showing the first food on its own.` : null);
   useEffect(() => { if (!linkNote) return; const id = setTimeout(() => setLinkNote(null), 9000); return () => clearTimeout(id); }, [linkNote]);
   const [notice, setNotice] = useState<CatalogItem | null>(null);
+  // typed words we left out or did not count ("with lemon", "šlag"): said out loud until the next pick (QA 2026-10-23)
+  const [leftNote, setLeftNote] = useState<string | null>(() => (LINK.q && LINK_BASE.length ? leftOutNote(LINK.q) : null));
   const [dose, setDose] = useState(HASH_DOSE);
   const [profile, setProfile] = useState<Profile>(() => {
     // daily use: your body and city are remembered in this browser; the meal time defaults to right now
@@ -418,7 +420,7 @@ export default function AppV4() {
   };
   /** `keepPace`: the meal itself changed (an amount, an item added or removed), so "Over how long?" stays */
   // typed "… kroz 2 sata" / "… over 2 hours" sets "Over how long?" too (QA 2026-10-19)
-  const chooseFood = (parts: Part[], text?: string) => pickFood(parts, false, text ? readPace(text) : 0);
+  const chooseFood = (parts: Part[], text?: string) => { if (parts.length) setLeftNote(text ? leftOutNote(text) : null); pickFood(parts, false, text ? readPace(text) : 0); };
   const changeMeal = (parts: Part[]) => pickFood(parts, true);
   const pickFood = (parts: Part[], keepPace: boolean, said = 0) => {
     if (!parts.length) return;
@@ -918,6 +920,7 @@ export default function AppV4() {
         </div>
       )}
 
+      {leftNote && !linkNote && <div className="linknote leftout" role="status">{leftNote}<button className="x" aria-label="Close" onClick={() => setLeftNote(null)}>×</button></div>}
       {linkNote && <div className="linknote" role="status">{linkNote}<button className="x" aria-label="Close" onClick={() => setLinkNote(null)}>×</button></div>}
       {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />

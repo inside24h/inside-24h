@@ -1,7 +1,7 @@
 // The amount in words (prelaunch QA 2026-10-23): first caption, video hook and share text. Before:
 // "Whole · 1104 g pizza capricciosa.", "Kebab / doner (1 kebab)", "2 large egg", "1 cup, 70 ml turkish coffee".
 import { describe, expect, it } from 'vitest';
-import { FOODS, FOOD_BY_ID, choiceRow, deriveFood, parseMeal, servingPart, sizesOf, variantRow, type Food, type Part } from './parse';
+import { FOODS, FOOD_BY_ID, choiceRow, deriveFood, leftOutNote, parseMeal, readMeal, servingPart, sizesOf, variantRow, type Food, type Part } from './parse';
 import { amountPhrase, capFirst, nameInSentence, partsPhrase, pluralOf } from './naming';
 import { makeFoodProduct } from './foodProduct';
 import { DEFAULT_PROFILE } from '../../science/profile';
@@ -106,5 +106,52 @@ describe('search fixes found in the prelaunch QA', () => {
     expect(read('cold-cut sub')).toBe('Cold-cut sub [1 sandwich]');
     expect(read('chicken')).toMatch(/^Chicken breast/); // one ingredient stays the plain food
     expect(read('pecivo')).toBe(''); // ambiguous (roll or any pastry): stays not found, as decided in the 2026-10-17 audit
+  });
+});
+
+describe('the parser never silently changes what was typed (prelaunch QA 2026-10-23)', () => {
+  const read = (t: string) => parseMeal(t).map((p) => `${p.food.name} [${p.amountLabel}]`).join(' + ');
+  it('lemon, ice, cinnamon: noted as not counted, never lemonade or ice cream', () => {
+    expect(read('tea with honey and lemon')).toBe('Black tea with honey [250 ml with 1 tsp honey]');
+    expect(leftOutNote('tea with honey and lemon')).toBe('Not counted: “lemon” (too little to matter).');
+    expect(read('tea with lemon and honey')).toBe('Black tea with honey [250 ml with 1 tsp honey]');
+    expect(read('water with a slice of lemon')).toBe('Water (tap) [250 ml]');
+    expect(leftOutNote('water with a slice of lemon')).toBe('Not counted: “a slice of lemon” (too little to matter).');
+    expect(read('beer with lemon')).toBe('Beer (regular) [500 ml]');
+    expect(read('cola with ice')).toBe('Cola (regular) [330 ml]');
+    expect(readMeal('voda s ledom i limunom').extras).toEqual(['ledom', 'limunom']);
+    expect(read('kava s cimetom')).toBe('Espresso [30 ml]');
+    expect(read('lemon')).toBe(''); // not lemonade: the list still offers it, the person picks
+  });
+  it('words we have no food for are shown, as typed', () => {
+    expect(read('kava sa šlagom')).toBe('Espresso [30 ml]');
+    expect(leftOutNote('kava sa šlagom')).toBe('Not in our database yet: “šlagom” — left out.');
+    expect(leftOutNote('coffee with whipped cream')).toBe('Not in our database yet: “whipped cream” — left out.');
+    expect(leftOutNote('pizza and something')).toBe('Not in our database yet: “something” — left out.');
+    expect(leftOutNote('cola')).toBeNull();
+    expect(leftOutNote('ćevapi s lukom')).toBeNull(); // onion is a food: it is counted
+  });
+  it('"without": taken out, the sugar-free kind, or said that it is counted', () => {
+    expect(read('cola without sugar')).toBe('Diet cola [330 ml]');
+    expect(read('kola bez šećera')).toBe('Diet cola [330 ml]');
+    expect(read('energy drink bez šećera')).toBe('Sugar-free energy drink [1 can (250 ml)]');
+    expect(read('kava bez šećera')).toBe('Espresso [30 ml]');
+    expect(read('kava sa šećerom bez šećera')).toBe('Espresso [30 ml]');
+    expect(read('kebab bez luka')).toMatch(/without onion/);
+    expect(read('pizza without cheese')).toBe('Pizza (cheese) [1 slice]');
+    expect(leftOutNote('pizza without cheese')).toBe('We can’t take out “cheese” yet, so it’s counted.');
+    expect(read('čaj bez šećera i s limunom')).toBe('Black tea [250 ml]');
+  });
+  it('a near word is not a different topping: peppers are not pepperoni', () => {
+    expect(read('pizza with peppers')).toBe('Pizza with peppers [1 slice]');
+    expect(read('pizza with pepperoni')).toBe('Pepperoni pizza [1 slice]');
+  });
+  it('compound names stay themselves', () => {
+    expect(read('milk chocolate')).toBe('Milk chocolate [1 bar (44 g)]');
+    expect(read('chocolate milk')).toBe('Chocolate milk [250 ml]');
+    expect(read('orange juice')).toBe('Orange juice [250 ml]');
+    expect(read('orange')).toBe('Orange [1 fruit]');
+    expect(read('iced tea')).toBe('Iced tea (sweetened) [250 ml]');
+    expect(read('ice cream')).toMatch(/^Ice cream/);
   });
 });

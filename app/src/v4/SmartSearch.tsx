@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Browse } from './lazyUi'; // loaded on first use
 import './browse.css';
 import './meals.css';
-import { FOODS, foodKey, kindsOf, macros, readPace, suggest, type Part, type Suggestion } from './food/parse';
+import { FOODS, foodKey, kindsOf, leftOutNote, macros, readPace, suggest, type Part, type Suggestion } from './food/parse';
 import { canPace, PRESETS, presetParts } from './food/meal';
 
 // Type like you talk: "1 jabuka", "2 slices of bread", "kava s mlijekom", "pizza and a beer".
@@ -22,6 +22,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
   const [browse, setBrowse] = useState(false);
   const [active, setActive] = useState(0);
   const results = useMemo(() => suggest(q, 30), [q]);
+  const leftNote = useMemo(() => (q.trim() ? leftOutNote(q) : null), [q]); // "Not counted: lemon", never silent (QA 2026-10-23)
   const paceSaid = useMemo(() => readPace(q), [q]); // "… kroz 2 sata": the pick also sets "Over how long?"
   const listId = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -70,6 +71,7 @@ export function SmartSearch({ onPick, big = false, current, onAdd, mode = 'repla
             </li>
           )}
           {!q && <li className="hintrow" aria-hidden="true">Popular picks, or type anything, with an amount if you like</li>}
+          {leftNote && results.length > 0 && <li className="leftnote" role="status">{leftNote}</li>}
           {results.length === 0 && <li className="empty" role="status">We don’t know “{q}” yet. Try a simpler word, like “bread” or “juice”.</li>}
           {results.map((s, i) => {
             const m = macros(s.parts);

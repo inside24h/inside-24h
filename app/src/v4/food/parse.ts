@@ -261,9 +261,11 @@ function toPart(food: Food, q: Qty, rest = ''): Part {
   return { food, grams: n * food.serving.grams, amountLabel: countLabel(n, servingText(food)), assumed: !!food.assumedServing };
 }
 
-const SPLIT = / (?:s|sa|i|and|with|uz|plus|\+) |,|\+|;/;
-const SPLIT_KEEP = /( (?:s|sa|i|and|with|uz|plus|\+) |,|\+|;)/;
+const SPLIT = / (?:s|sa|i|and|with|uz|plus|bez|without|\+) |,|\+|;/;
+const SPLIT_KEEP = /( (?:s|sa|i|and|with|uz|plus|bez|without|\+) |,|\+|;)/;
 const WITH = /^ (?:s|sa|with|uz) $/;
+/** "kava bez šećera", "burger without onion" (QA 2026-10-23: before, these found nothing) */
+const WITHOUT = /^ (?:bez|without) $/;
 const AND = /^(?: (?:i|and) |,)$/;
 
 /** Best reading of the whole text. Tries the full phrase first (so "kava s mlijekom" stays one drink). After the
@@ -271,13 +273,29 @@ const AND = /^(?: (?:i|and) |,)$/;
  *  thing: "kava sa šećerom" = espresso with sugar, "pizza sa šunkom i gljivama" = one pizza, "burek sa sirom i jogurt"
  *  = burek with cheese + a yogurt. A plain "and" starts a new thing ("pizza i pivo"). */
 export function parseMeal(input: string): Part[] {
+  return readMeal(input).parts;
+}
+
+/** Words that are too small to count but must not turn into another food: "with lemon" is not 250 ml of lemonade,
+ *  "with ice" is not ice cream (prelaunch QA 2026-10-23). Read after any amount and filler words are taken off. */
+const NEGLIGIBLE = /^(lemon|lemons|lemon slice|lemon juice|lime|limun|limuna|limunom|limunu|kriska limuna|ice|ice cube|ice cubes|led|leda|ledom|kocka leda|kockom leda|kockama leda|kockice leda|kockicama leda|cinnamon|cimet|cimeta|cimetom|salt|sol|soli|pepper|papar|paprom|stevia|sweetener|zasladivac|zasladivacem|mint|menta|mentom|metvica|metvicom)$/;
+const isNegligible = (rest: string) => NEGLIGIBLE.test(rest.split(' ').filter((w) => !FILLER.has(w)).join(' '));
+/** The words as the person typed them (with their accents), for the note: "šlagom", not "slagom". */
+function typedWords(input: string, folded: string): string {
+  const orig = input.trim().split(/\s+/);
+  return folded.split(' ').map((w) => orig.find((o) => fold(o).replace(/[^a-z0-9%-]/g, '') === w) ?? w).join(' ');
+}
+/** What the text says, what we count, and what we leave out — never silently (prelaunch QA 2026-10-23):
+ *  `extras` are too small to count ("lemon", "ice"), `left` are words we have no food for ("šlag", "whipped cream"). */
+export function readMeal(input: string): { parts: Part[]; extras: string[]; left: string[]; kept: string[] } {
   const text = stripPace(fold(input));
-  if (!text) return [];
+  const extras: string[] = [], left: string[] = [], kept: string[] = [];
+  if (!text) return { parts: [], extras, left, kept };
   const whole = readQty(text);
   const top = bestFoods(whole.rest, 1)[0];
-  if (top && top.score >= 8) return [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)];
+  if (top && top.score >= 8) return { parts: [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)], extras, left, kept };
   const parts: Part[] = [];
-  const pieces = text.split(SPLIT_KEEP);
+  const pieces = text.replace(/ (i|and) (s|sa|with|uz|bez|without) /g, ' $2 ').split(SPLIT_KEEP); // "bez šećera i s limunom"
   let chain = false, prevRaw = '', headRaw = '';
   for (let i = 0; i < pieces.length; i += 2) {
     const seg = (pieces[i] ?? '').trim();
@@ -285,6 +303,20 @@ export function parseMeal(input: string): Part[] {
     const sep = i > 0 ? pieces[i - 1] ?? '' : '';
     const { rest, q } = readQty(seg);
     const prev = parts[parts.length - 1];
+    // "without X": take X out if it is in (a topping, an add-in); if it never was, the food is already right
+    if (WITHOUT.test(sep)) {
+      const r = prev ? sugarFree(prev, rest) ?? removeWords(prev, rest) : null;
+      if (r) {
+        // nothing to take out, but the name says it is in ("Pizza (cheese)" without cheese): it is counted, say so
+        if (r === prev && rest.split(' ').some((w) => fold(prev.food.name).split(/[^a-z0-9]+/).some((o) => stemMatch(w, o) >= 0.85 || (w.length >= 4 && o.includes(w))))) kept.push(typedWords(input, rest));
+        parts[parts.length - 1] = r; chain = true; continue;
+      }
+      // X is part of this food and can't be taken out ("pizza without cheese"): say we counted it; X has nothing to do
+      // with this food ("espresso without milk"): what we show already has none, nothing to say
+      const own = prev ? [prev.food.name, ...(baseOf(prev.food).builder?.groups.flatMap((g) => g.opts.map((o) => o.name)) ?? [])].map(fold).join(' ').split(/[\s(),/]+/) : [];
+      if (!prev || rest.split(' ').some((w) => own.some((o) => stemMatch(w, o) >= 0.85))) kept.push(typedWords(input, rest));
+      continue;
+    }
     if (prev && (WITH.test(sep) || (chain && AND.test(sep)))) {
       // "kava s mlijekom sa šećerom", "2 kave s mlijekom": the words before and after "s" may name ONE food together
       // (coffee with milk), which then takes the rest as add-ins; before, it became espresso + milk + sugar (QA 2026-10-23)
@@ -302,12 +334,26 @@ export function parseMeal(input: string): Part[] {
       const merged = applyWords(prev, rest, q);
       if (merged) { parts[parts.length - 1] = merged; prevRaw = `${prevRaw}${sep}${seg}`; chain = true; continue; }
     }
+    // a slice of lemon, ice, cinnamon: noted as not counted, the drink stays as it is (and can still take add-ins)
+    if (isNegligible(rest)) { extras.push(typedWords(input, seg)); if (prev && WITH.test(sep)) chain = true; continue; } // "tea with lemon and honey": honey still goes in
     chain = false; prevRaw = seg; headRaw = seg;
     const f = bestFoods(rest, 1)[0];
     if (f && f.score >= MIN_LOG) parts.push(withAsk(toPart(f.food, q, rest), rest));
+    else if (rest.split(' ').some((w) => !FILLER.has(w))) left.push(typedWords(input, seg));
   }
-  if (!parts.length && top && top.score >= MIN_LOG) return [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)];
-  return parts;
+  // the whole text names one food that the split broke apart (only when nothing was set aside on the way)
+  if (!parts.length && !extras.length && top && top.score >= MIN_LOG) return { parts: [withAsk(toPart(top.food, whole.q, whole.rest), whole.rest)], extras, left: [], kept: [] };
+  return { parts, extras, left, kept };
+}
+
+/** One plain sentence about what was left out of the typed text, or null: "Not counted: lemon (too little to
+ *  matter). Not in our database yet: whipped cream — left out." */
+export function leftOutNote(input: string): string | null {
+  const { extras, left, kept, parts } = readMeal(input);
+  if (!parts.length || (!extras.length && !left.length && !kept.length)) return null;
+  const q = (xs: string[]) => xs.map((x) => `“${x}”`).join(', ');
+  return [extras.length ? `Not counted: ${q(extras)} (too little to matter).` : '', left.length ? `Not in our database yet: ${q(left)} — left out.` : '',
+    kept.length ? `We can’t take out ${q(kept)} yet, so it’s counted.` : ''].filter(Boolean).join(' ');
 }
 
 export interface Suggestion { parts: Part[]; text: string }
@@ -566,21 +612,61 @@ const wordHit = (rest: string, words: string[]) => !!rest && (words.includes(res
 function applyWords(prev: Part, rest: string, q: Qty): Part | null {
   const f = prev.food, base = baseOf(f);
   let ch: Choice | null = null;
-  const a = base.addins?.find((x) => wordHit(rest, x.words));
-  if (a) { const n = q.count && Number.isInteger(q.count) && q.count >= 1 ? q.count : 1; ch = { add: { ...(f.add ?? {}), [a.k]: n } }; }
-  if (!ch && base.builder) {
-    for (const g of base.builder.groups) {
-      const o = g.opts.find((x) => wordHit(rest, x.words));
-      if (o) { const sel = selOf(f); ch = { on: g.one ? [...sel, o.k] : [...sel.filter((k) => k !== o.k), o.k] }; break; }
+  // exact words first, near words (Croatian endings) second: "pizza with peppers" is peppers, not pepperoni (QA 2026-10-23)
+  for (const exact of [true, false]) {
+    const hit = (ws: string[]) => (exact ? !!rest && ws.includes(rest) : wordHit(rest, ws));
+    const a = base.addins?.find((x) => hit(x.words));
+    if (a) { const n = q.count && Number.isInteger(q.count) && q.count >= 1 ? q.count : 1; ch = { add: { ...(f.add ?? {}), [a.k]: n } }; }
+    if (!ch && base.builder) {
+      for (const g of base.builder.groups) {
+        const o = g.opts.find((x) => hit(x.words));
+        if (o) { const sel = selOf(f); ch = { on: g.one ? [...sel, o.k] : [...sel.filter((k) => k !== o.k), o.k] }; break; }
+      }
     }
+    if (!ch && base.variants) { const v = base.variants.find((x) => hit(x.words)); if (v) ch = { v: v.v }; }
+    if (ch) break;
   }
-  if (!ch && base.variants) { const v = base.variants.find((x) => wordHit(rest, x.words)); if (v) ch = { v: v.v }; }
   if (!ch) return null;
   const nf = withChoice(f, ch);
   const n = prev.grams / Math.max(1e-9, f.serving.grams);
   const q4 = Math.round(n * 4) / 4;
   const p = Math.abs(n - q4) * f.serving.grams < 1 && q4 > 0 ? servingPart(nf, q4) : gramsPart(nf, prev.grams);
   return { ...p, ask: prev.ask };
+}
+/** "cola without sugar" is diet cola, "energy drink bez šećera" the sugar-free one (never the sugary drink). */
+const SUGAR_WORD = /^(sugar|secer|secera|seceru|sugars)$/;
+function sugarFree(prev: Part, rest: string): Part | null {
+  if (!SUGAR_WORD.test(rest.split(' ').filter((w) => !FILLER.has(w)).join(' '))) return null;
+  const f = prev.food, base = baseOf(f);
+  if (f.add && Object.keys(f.add).some((k) => /sugar|honey/.test(k))) return null; // an added spoon: removeWords takes it out
+  const v = base.variants?.find((x) => /sugar-free|diet|zero/i.test(x.name));
+  if (v && f.v !== v.v) return { ...servingPart(deriveFood(base, { v: v.v }), prev.grams / Math.max(1e-9, f.serving.grams)), ask: prev.ask };
+  const alt = base.id === 'cola' ? FOOD_BY_ID['diet-cola'] : undefined;
+  return alt ? servingPart(alt, prev.grams / Math.max(1e-9, f.serving.grams)) : null;
+}
+/** "without X": the same food with X taken out, the same food when X was not in it anyway, or null (X unknown here). */
+function removeWords(prev: Part, rest: string): Part | null {
+  const f = prev.food, base = baseOf(f);
+  for (const exact of [true, false]) {
+    const hit = (ws: string[]) => (exact ? !!rest && ws.includes(rest) : wordHit(rest, ws));
+    const a = base.addins?.find((x) => hit(x.words));
+    if (a) {
+      if (!f.add || !hasOwn(f.add, a.k)) return prev;
+      const add = { ...f.add }; delete add[a.k];
+      return { ...gramsPart(withChoice(f, { add: Object.keys(add).length ? add : undefined }), prev.grams - a.grams * f.add[a.k] * (prev.grams / Math.max(1e-9, f.serving.grams))), amountLabel: prev.amountLabel.replace(/ with .*$/, ''), ask: prev.ask };
+    }
+    if (base.builder) for (const g of base.builder.groups) {
+      if (g.one) continue;
+      const o = g.opts.find((x) => hit(x.words));
+      if (!o) continue;
+      const sel = selOf(f);
+      if (!sel.includes(o.k)) return prev;
+      const nf = withChoice(f, { on: sel.filter((k) => k !== o.k) });
+      const n = prev.grams / Math.max(1e-9, f.serving.grams), q4 = Math.round(n * 4) / 4;
+      return { ...(Math.abs(n - q4) * f.serving.grams < 1 && q4 > 0 ? servingPart(nf, q4) : gramsPart(nf, prev.grams)), ask: prev.ask };
+    }
+  }
+  return null;
 }
 function withAsk(p: Part, rest: string): Part {
   const c = baseOf(p.food).choose;

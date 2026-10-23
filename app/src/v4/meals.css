@@ -39,3 +39,5 @@
 .mealpresets.inbrowse b { font-weight: 500; }
 .mealpresets.inbrowse small { font: 11px var(--mono); color: var(--mute); }
 @media (max-width: 700px) { .mchip .mname { max-width: 9ch; } .mealbar { max-width: none; } }
+/* typed words we did not count or do not have (SmartSearch, AppV4 note; prelaunch QA 2026-10-23) */
+.results .leftnote { list-style: none; margin: 2px 4px 6px; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.4; color: #ffd98a; background: rgba(255, 200, 61, .08); border: 1px solid rgba(255, 200, 61, .35); }
