@@ -66,15 +66,17 @@ const curveOf = (series: Float64Array, scale = 1) => Array.from({ length: SAMPLE
 export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarKnown: boolean): Gauge | null {
   const mi = Math.max(0, Math.min(1440, m));
   const bac = b.bac ? at(b.bac, mi) : 0;
-  if (bac >= 0.1) return { big: bacRangeText(bac).replace(' ‰', ''), small: '‰ blood alcohol', level: bac >= 0.5 ? 2 : 1, organ: 'brain', curve: curveOf(b.bac!), u };
+  // plain words first, the number second (owner, 2026-10-24); the words are the app's own levels [AL4]:
+  // from 0.2 ‰ attention is worse, from 0.5 ‰ reaction time and balance (typical value, the range is underneath)
+  if (bac >= 0.1) return { big: bac >= 0.5 ? 'Balance worse' : bac >= 0.2 ? 'Attention worse' : 'Low, not zero', small: `Blood alcohol ${bacRangeText(bac)}`, level: bac >= 0.5 ? 2 : 1, organ: 'brain', curve: curveOf(b.bac!), u };
   const gs = sugarKnown ? b.effects.glucoseMgDl : undefined;
   const g = gs ? at(gs, mi) / 18.016 : 0;
   if (gs && Math.abs(g) >= 0.5) {
-    const big = g > 0 ? glucoseRangeTextIn(g, unit).replace(/ .*$/, '') : unit === 'mg/dL' ? `${Math.round(g * 18.016)}` : g.toFixed(1);
-    return { big, small: `${unit} blood sugar ${g > 0 ? 'rise' : 'dip'}`, level: g >= 3 || g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
+    const n = g > 0 ? glucoseRangeTextIn(g, unit).replace(/ .*$/, '') : unit === 'mg/dL' ? `${Math.round(g * 18.016)}` : g.toFixed(1);
+    return { big: g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: `${n} ${unit} vs. before`, level: g >= 3 || g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
   }
   const caf = b.caffeine.doseMg >= 10 ? at(b.caffeine.body, mi) : 0;
-  if (caf >= 20) return { big: `${Math.round(caf)} mg`, small: 'caffeine in you', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
+  if (caf >= 20) return { big: `${Math.round(caf)} mg caffeine`, small: 'still in your body', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
   return null;
 }
 
@@ -84,7 +86,9 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
   const top = presentAt(b, m).filter(([id]) => id !== 'swallow')[0];
   if (!top || !b.route) return null;
   const v = top[1].amount;
-  return { big: top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? b.route.unit}`, small: SEG_LABEL[top[0]], level: 0, organ: SEG_FOCUS_V[top[0]] };
+  // everyday words: fructose and glucose are "sugar" on the video (one word anyone knows)
+  const big = (top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? b.route.unit}`).replace(/\b(?:fructose|glucose)\b/g, 'sugar');
+  return { big, small: SEG_LABEL[top[0]], level: 0, organ: SEG_FOCUS_V[top[0]] };
 }
 
 /** Video colours (2026-10-24, owner review: the brain glowed white-blue): a calm violet tint for the brain, whose
@@ -96,4 +100,16 @@ export function isLightDrink(hex: string): boolean {
   if (!m) return false;
   const n = parseInt(m[1], 16);
   return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.4;
+}
+
+/** The brain's colour on the video (creative spec V9, never white): calm violet, warming to green with caffeine or to
+ *  amber with alcohol, in proportion to the model's level now against its peak of the day. */
+export function paletteAt(b: BuiltLike, m: number): Record<string, string> {
+  const mi = Math.max(0, Math.min(1440, m));
+  const rel = (sr?: Float64Array) => { if (!sr) return 0; let mx = 0; for (let i = 0; i < sr.length; i += 5) mx = Math.max(mx, sr[i]); return mx > 0 ? at(sr, mi) / mx : 0; };
+  const alc = b.bac ? rel(b.bac) : 0, caf = b.caffeine.doseMg >= 10 ? rel(b.caffeine.body) : 0;
+  const k = Math.round(Math.max(alc, caf) * 10) / 10; // steps of 10 %: the colour changes calmly
+  const to = alc >= caf ? [0xff, 0xb0, 0x2e] : [0x3d, 0xdc, 0x84], from = [0x6f, 0x5f, 0xd8];
+  const c = from.map((v, i) => Math.round(v + (to[i] - v) * k * 0.85));
+  return { brain: `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}` };
 }

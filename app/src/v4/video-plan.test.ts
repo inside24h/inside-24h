@@ -3,9 +3,9 @@
 // as the app wrote them on 2026-10-22 (cola, water, espresso, 3 beers over 2 h, a whole pizza, kebab, a 3-item meal).
 import { describe, expect, it } from 'vitest';
 import { minutesFromU, uFromMinutes } from '../time';
-import { FPS, LENGTH, planVideo, READ, readSeconds, sentences, splitPages, wordCount, type StopIn } from './video-plan';
+import { FPS, LENGTH, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
 import fixtures from './video-plan.fixtures.json';
-import { beatLines, BEAT_WORDS, DYNAMIC, isCard } from './video-beats';
+import { beatLines, BEAT_WORDS, DYNAMIC, isCard, numberConflict } from './video-beats';
 
 const FIX = fixtures as Record<string, StopIn[]>;
 const plan = (s: StopIn[], cut: 'long' | 'short') => planVideo(s, cut, uFromMinutes, minutesFromU);
@@ -63,12 +63,14 @@ describe('video plan', () => {
         for (const [min, texts] of byStop) {
           const src = chapters.filter((c) => c.min === min).slice(-1)[0];
           expect(src).toBeTruthy();
-          const beats = beatLines(src);
-          expect(beats.slice(0, texts.length)).toEqual(texts);
+          const beats = beatLines(src), own = texts.filter((t) => !t.startsWith(TEASE_PREFIX)); // + the mid-video "Coming up: …"
+          expect(texts.length - own.length).toBeLessThanOrEqual(1);
+          expect(beats.slice(0, own.length)).toEqual(own);
           for (const t of texts) expect(isCard(t) || t === src.title.trim(), `"${t}"`).toBe(true);
         }
         // time only moves forward (no camera jumping back), and the day ends at 24 h
-        const mains = p.frames.filter((f) => f.phase !== 'outro');
+        // (after the cold open and its rewind to +0:00, 2026-10-24)
+        const mains = p.frames.filter((f) => f.phase !== 'outro' && f.beat !== 'teaser' && f.beat !== 'rewind');
         for (let i = 1; i < mains.length; i++) expect(mains[i].m).toBeGreaterThanOrEqual(mains[i - 1].m - 1e-9);
         expect(p.stops[p.stops.length - 1]).toBe(1440);
         // the start (first sip / bite) is always in
@@ -97,7 +99,7 @@ describe('caption cards', () => {
       expect(t, `${c.title}: "${t}"`).toMatch(/[.!?]$/);
       expect(t).not.toMatch(/[:;,]\.?$/); // never ends on ":" / "," ("… within about 40 minutes:")
       expect(wordCount(t), t).toBeLessThanOrEqual(BEAT_WORDS);
-      expect(t, t).not.toMatch(/^(?:and|but|or|of|to|in|is|the|a|mainly|about)/); // not the tail of a sentence
+      expect(t, t).not.toMatch(/^(?:and|but|or|of|to|in|is|the|a|mainly|about)\b/); // not the tail of a sentence
     }
   });
   it('numbers that follow the clock (‰, mmol/L, caffeine left) are never on a card, only on the gauge', () => {
@@ -119,5 +121,68 @@ describe('caption cards', () => {
     expect(t('The liver breaks it down', 'Your liver takes the caffeine apart: half of it is gone about every 6.0 hours (our estimate; in healthy adults it ranges from 2.5 to 10 hours).'))
       .toEqual(['Your liver takes the caffeine apart.', 'Half is gone every 6.0 hours.']);
     expect(t('Bedtime', 'About 12 mg of caffeine is still in you at 23:00. Too little to affect your sleep.')).toEqual(['Some caffeine is still in you.', 'Too little to affect your sleep.']);
+  });
+});
+
+// 2026-10-24 creative spec: one cue timeline for picture and sound
+describe('effects timeline', () => {
+  for (const [name, chapters] of Object.entries(FIX)) for (const cut of ['long', 'short'] as const) {
+    it(`${name} · ${cut}: cold open, rewind, sip, one peak with its riser, a new event at least every 3.2 s`, () => {
+      const peak = chapters.find((c) => /peak/i.test(c.title))?.min;
+      const p = planVideo(chapters, cut, uFromMinutes, minutesFromU, { peakMin: peak, drinkAtMin: 18 * 60, lights: [0, 1, 2, 0] });
+      const at = (k: string) => p.cues.filter((c) => c.kind === k);
+      expect(p.frames[0].beat).toBe('teaser'); // frame 0 = the thumbnail = the cold open
+      expect(at('teaser')[0].t).toBe(0); expect(at('rewind').length).toBe(1); expect(at('sip').length).toBe(1);
+      expect(p.frames[Math.round(at('sip')[0].t * FPS)].m).toBeLessThan(0.5); // rewound to +0:00 before the sip
+      const impacts = at('peak').length + at('verdict').length;
+      expect(impacts).toBeLessThanOrEqual(cut === 'short' ? 1 : 2);
+      if (peak !== undefined) {
+        expect(at('peak').length).toBe(1);
+        const r = at('riser')[0], k = at('peak')[0];
+        expect(k.t - r.t).toBeLessThanOrEqual(RISER_S + 1e-9);
+        expect(k.t - r.t).toBeGreaterThan(0.5);
+        expect(p.frames[Math.round(k.t * FPS)].beat).toBe('hold'); // the impact lands as the peak moment arrives
+      }
+      // never 3.2 s without a new visual event before the end card
+      const outro = at('outro')[0].t;
+      const ev = [0, ...p.cues.filter((c) => !['start', 'end', 'night'].includes(c.kind) && c.t <= outro).map((c) => c.t)].sort((a, b) => a - b);
+      for (let i = 1; i < ev.length; i++) expect(ev[i] - ev[i - 1], `gap at ${ev[i - 1].toFixed(2)} s`).toBeLessThanOrEqual(3.2);
+      // the end card lights come on one by one
+      expect(at('lights').map((c) => c.data?.level)).toEqual([0, 1, 2, 0]);
+      // NEXT chips name a moment that really comes next
+      for (const c of at('next')) if (c.data?.label !== 'tease') expect(p.stops).toContain(c.data?.v);
+    });
+  }
+  it('comparison: a guess at the start, one verdict impact, the race finish of each side', () => {
+    const ch = FIX.cola;
+    const stops = [0, 20, 90, 720, 1440].map((m) => { const c = ch.filter((x) => x.min <= m).slice(-1)[0]; return { min: m, a: c.text, b: c.text, titleA: c.title, titleB: c.title }; });
+    const done = (at: number) => Float32Array.from({ length: 1441 }, (_, m) => (m >= at ? 1 : m / at));
+    const p = planCompare(stops, 'long', uFromMinutes, minutesFromU, { peakMin: 20, verdict: true, lights: [0, 0, 1, 2], race: { a: done(60), b: done(120) } });
+    expect(p.cues.filter((c) => c.kind === 'guess').length).toBe(1);
+    expect(p.cues.filter((c) => c.kind === 'verdict').length).toBe(1);
+    expect(p.cues.filter((c) => c.kind === 'race').map((c) => c.data?.side)).toEqual([0, 1]);
+    expect(p.cues.filter((c) => c.kind === 'peak').length + p.cues.filter((c) => c.kind === 'verdict').length).toBeLessThanOrEqual(2);
+  });
+  it('night: the tone comes in after 22:00 and leaves at 07:00, never as a flicker', () => {
+    const p = planVideo(FIX['beer-3-over-2h'], 'long', uFromMinutes, minutesFromU, { drinkAtMin: 19 * 60, wakeMin: 7 * 60 });
+    const n = p.cues.filter((c) => c.kind === 'night');
+    expect(n.length).toBeGreaterThanOrEqual(1);
+    expect(n[0].data?.v).toBe(1);
+    for (let i = 1; i < p.frames.length; i++) expect(Math.abs((p.frames[i].night ?? 0) - (p.frames[i - 1].night ?? 0))).toBeLessThan(0.1); // eased, ≤ 3 changes/s
+  });
+});
+
+describe('card vs gauge numbers (owner review 2026-10-24)', () => {
+  it('spots a card and a gauge that name the same thing with different numbers', () => {
+    expect(numberConflict('22.7 g of fiber reach your large intestine.', ['20 g fiber'])).toBe(true);
+    expect(numberConflict('22.7 g of fiber reach your large intestine.', ['22.7 g fiber'])).toBe(false);
+    expect(numberConflict('35 g of sugar: about 9 teaspoons.', ['4.8 g sugar', '330 ml'])).toBe(true); // same thing, different number
+    expect(numberConflict('63 mg of caffeine.', ['45 mg caffeine'])).toBe(true);
+    expect(numberConflict('Half has moved on after 226 minutes.', ['1154 g'])).toBe(false);
+  });
+  it('the pizza fiber card has no number any more (the gauge counts it)', () => {
+    const c = beatLines({ min: 732, title: 'Into the large intestine', text: 'What you can’t digest, 22.7 g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it.' });
+    for (const x of c) expect(numberConflict(x, ['20 g fiber'])).toBe(false);
+    expect(beatLines({ min: 1440, title: '24 hours later', text: '2% has left your body so far.' })).toEqual(['Almost all of it is still inside you.']);
   });
 });

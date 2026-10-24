@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Body } from '../scene/Body';
 import { LiquidRoute } from '../scene/LiquidRoute';
 import type { Analysis } from './analyze';
-import { bodyGlowAt, isLightDrink, VIDEO_PALETTE } from './video-body';
+import { bodyGlowAt, isLightDrink, paletteAt } from './video-body';
 import { cameraOf, poseOf, rigAt, SIDE_X, stepRig, type Rig } from './video-cam';
 import type { ShotCue } from './VideoCam';
 
@@ -33,7 +33,7 @@ function Side({ a, minute, x, focus, group }: { a: Analysis; minute: number; x: 
   const { glow, keep } = bodyGlowAt(a.built, minute, focus, a.glucose !== undefined);
   return (
     <group position={[x, 0, 0]} ref={group}>
-      <Body glow={glow} selected={null} onSelect={NOOP} onError={NOOP} liquid={soft} liquidColor={story.color} dim={0.42} keep={keep} palette={VIDEO_PALETTE} />
+      <Body glow={glow} selected={null} onSelect={NOOP} onError={NOOP} liquid={soft} liquidColor={story.color} dim={0.42} keep={keep} palette={paletteAt(a.built, minute)} />
       {a.built.route && <LiquidRoute route={a.built.route} color={story.color} minute={minute} labels={false} subtle={isLightDrink(story.color)} />}
     </group>
   );

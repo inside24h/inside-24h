@@ -89,3 +89,53 @@ Testovi (novo): `video-plan.test.ts` → kartice (cijele misli, bez ":" na kraju
 
 Provjera runde 2: svih 16 videa ponovno renderirano kroz pravi UI → `C:\claudework\video-samples\2026-10-24\` (stara mapa 2026-10-23 netaknuta). Sve H.264 1080×1920 30 fps + AAC, 0 crnih frameova; long 63,9–74,4 s, short 27,4–29,4 s. Gusti kontakt listovi prvih 3 s (10 fps) i zadnjih 6 s (5 fps): `scratchpad/video2/r4/*-ends.png`, cijeli videi `r4/*-sheet.png` — bez treperenja mozga, bez teksta preko teksta, petlja ide redom (end card nestane → prvi frame). Usporedba se sad renderira ~2× brže (nema više ponovnog učitavanja modela svaki frame).
 tsc čisto, vitest 551/551, oba builda (split zadnji) prolaze. Privremene QA skripte: `app/scripts/_v2_plans.ts`, `_v2_beats.ts`, `_v3_dbg.ts` (mogu se obrisati uz potvrdu).
+
+---
+
+# Runda 3 (2026-10-24): kreativni upgrade po `video-creative-spec-2026-10-24.md` + "normie" + popravci a–e
+
+Backup: `backups/20261024-113448-video4/`. Ništa nije commitano (runda 2 = 7bd0fd4).
+
+## Što je napravljeno (po rangiranom planu speca)
+| # | Spec | Implementacija |
+|---|---|---|
+| 1 | Cue v2 (jedan izvor istine) | `video-plan.ts`: `CueKind` + `data`; planer emitira teaser, rewind, sip, riser (= peak − 1,6 s), peak (≤ 1), next (NEXT čipovi + najava), night (ulaz/izlaz), lights, verdict, guess, race, micro. Testovi: frame-točnost, ≤ 2 udarca (short ≤ 1), razmak vizualnih događaja ≤ 3,2 s u svim fixtureima, noć bez treperenja. |
+| 2 | Zvuk v2 | `video-audio.ts` `renderSoundtrack2`: 2 busa (glazba / efekti, 4-kanalni render), 120 BPM, groove od gutljaja, half-time noću, 1 takt "dropa" na vrhuncu, ducking (−6 dB na udarcima, −3 dB na gutljaju), noćni lowpass 900 Hz + sunrise, lookahead limiter (5 ms), A1 hit, A2 rewind, A3 otvaranje limenke, A4 gutljaj/zalogaj, A5 pour, A6 fizz, A7 whoosh, A8 tick, A9 blip (lampice po razini), A11 riser, A12 impact + reverb, A14 ratchet, A16 sunrise, A17 stinger, A18 race ding, A19 shimmer. Izmjereno (ffmpeg ebur128): **−14,0 do −14,4 LUFS, true peak −1,5/−1,6 dBTP** na svih 16. SFX na svojim frameovima (onset analiza: udarac 0 ms, gutljaj −5 ms, blipovi ±10 ms; rewind/riser namjerno rastu postupno). Opcija **"Sound effects only"** (treći gumb), glasnoća efekata ista kao u punom miksu. |
+| 3 | Teaser + rewind hook | Frame 0 = vrhunac priče (mjerač s PEAK, organ vrha u kadru), 0,45–0,95 s premotavanje (sat unatrag ◀◀, VHS linije, zvuk), gutljaj na 0,95 s; petlja se vraća na teaser. `video-hook.ts` `hookFor` računa 2 reda iz poglavlja ovog izvoza (cola: "9 teaspoons of sugar. / Watch where it goes."; pivo: "Still in your blood at 07:00." kad model to kaže; hrana: "A whole pizza: 2723 kcal."), test: svaki broj postoji u poglavljima, za alkohol zabranjene riječi best/wins/better/healthy/cure/hangover. |
+| 4 | Peak paket | `video-fx.ts`: zoom punch (×1,085, 0,5 s), shake 0,22 s ≤ 0,6 % visine, prsten na organu, vinjeta rizera, mjerač ×1,15 + žig PEAK 1,4 s. Count-up NIJE napravljen: vrhovi su rasponi (‰, mmol/L) → spec §9.11 "sigurnija opcija". |
+| 5 | Mikro-beatovi | dah kamere 3 %, puls sjaja organa, bljesak ruba mjerača; ≥ 2 s razmaka, ≤ 3 efekta/s (WCAG test). |
+| 6 | Open loops | NEXT čip u svakom glideu ≥ 1,2 s ("NEXT · +0:20 · Blood sugar peak"); na ~47 % karta "Coming up: the sugar dip." (žuto, kicker "STILL TO COME"); u usporedbi čip "Answer at 24 h.". Riječi novog trenutka sad dolaze tek kad sat stigne (prije su se pojavljivale na početku glidea: zato je "Protein … peak now" stajalo na +2:04). |
+| 7 | Usporedba = igra | hook "Guess: which leaves your stomach first?" + čip "Comment A or B before the end.", utrka "Out of the stomach" (iz modela: želudac < 3 % maksimuma) + scoreboard 4 lampice po strani u donjem dijelu kadra (noge, popravak d), neutralni "✓ OUT" bez trofeja i zelene, uz alkohol čip "Faster out ≠ better for you.", presuda (samo `verdictOf`) slijeće prva na end cardu s udarcem, prstenom i iskrama samo uz 🏆; end card usporedbe +1,5 s da se presuda stigne pročitati. Vrh dobiva svoj trenutak u usporedbi. |
+| 8 | Prvi gutljaj | pljusak 24 kapi boje pića iz usta (seeded), u usporedbi oba usta. |
+| 9 | Noć | 22:00–07:00 po satu: plavi veo + mjesec, half-time, lowpass, ratchet tickovi, sunrise na izlazu. |
+| 10 | 24 h lampice | redovi end carda pale se jedan po jedan (0,35 s, pop), blip po razini; u usporedbi L/R naizmjence. |
+| 11 | SFX only | gotovo (vidi 2). |
+| 12 | Mozak heat | boja mozga iz modela: ljubičasta → zelena (kofein) / jantar (alkohol) po razini prema dnevnom maksimumu, nikad bijelo; primjenjuje se u frame petlji (prije je effect kasnio par frameova pa je boja skakala). Mjehurići/pjena (V10) i čestice krvotoka (V8) NISU napravljeni (otvoreno). |
+| 13 | Share dialog | prijedlog opisa s hookom i CTA + "Pinned comment idea" (iskrena pitanja iz §7). |
+| 14 | P2 | sunrise (V19) da; V12/V17/A20 ne. Heartbeat (A13) ne, jer nijedan od 8 slučajeva ga ne traži bez rizika da sugerira ubrzan puls. |
+
+## Normie-friendly (vlasnik)
+- Mjerači: najprije riječi, onda broj. Alkohol: "Low, not zero" / "Attention worse" / "Balance worse" (pragovi 0,2 i 0,5 ‰ iz AL4), ispod "Blood alcohol 0.46–1.16 ‰". Šećer: "Blood sugar up/dip", ispod "+1.3–3.0 mmol/L vs. before". Kofein: "45 mg caffeine / still in your body". "fructose/glucose" na mjeraču → "sugar".
+- Kartice: bez žargona ("Your gut splits the sugar in two.", "Gut and liver catch 85% of the fruit sugar.", "Your liver turns 40% into blood sugar.", "It blocks your “I’m tired” signal.", "Coffee sends 1 in 3 people to the toilet.", "Bile helps break down the fat.", "Fat takes a slower route, via the lymph."), jedna misao po kartici.
+- Hook: iznenađenje prvo ("9 teaspoons of sugar."), obećanje drugo.
+
+## Popravci a–e
+- (a) Kartica nikad nema količinu koja se mijenja sa satom (vlakna su na mjeraču: "The fiber reaches your large intestine."); plus sigurnosna mreža `numberConflict` (ista jedinica + ista riječ, drugi broj → taj mjerač se ne crta u tom frameu) + testovi.
+- (b) "2% has left your body so far" → "Almost all of it is still inside you." (ispod 10 %), inače "N% of the leftovers have left you.".
+- (c) Protein: "Protein pieces in your blood peak now." + "They keep arriving for hours." (model: vrh aminokiselina ~150 min, dolaze satima), i kartica se pojavi tek kad sat stigne na taj trenutak.
+- (d) Usporedba: utrka + scoreboard u donjem dijelu kadra.
+- (e) Sav tekst end carda/CTA u jednoj konstanti `VIDEO_COPY` (share.ts): "Which food/drink should we test next? 👇", "Did you guess right? 👇", "Follow @… for the next one" (bez obećanja novih namirnica).
+
+Također pronađeno i popravljeno: tri regexa iz runde 1/2 imala su znak backspace umjesto `\b` (Python heredoc) — prijelomi stranica i jedan test nisu radili kako je zamišljeno.
+
+## Provjera runde 3
+- 16 videa kroz pravi UI → `C:\claudework\video-samples\2026-10-24-v3\` (stare mape netaknute). Sve H.264 1080×1920 30 fps + AAC 48 kHz; long 64,4–73,7 s, short 28,2–29,8 s; 0 crnih frameova; 0 grešaka u konzoli; feed 4:5 (1080×1350) provjeren.
+- Zvuk: −14,0 do −14,4 LUFS, true peak −1,5 do −1,6 dBTP (ffmpeg ebur128 peak=true), bez klipanja (limiter). Onset analiza (`scratchpad/video2/onsets.cjs`, cue log iz `[vqa] plan`): udarac na vrhu 0 ms, gutljaj −5 ms, blipovi/lampice ±10 ms od svog cuea.
+- Kontakt listovi: `scratchpad/video2/r6/*-sheet.png` (svake 2,5 s), `*-ends.png` (prvih 3 s @10 fps + zadnjih 6 s @5 fps), `*-peak.png` (±1,6 s oko vrha @8 fps), `r6/firsts.png`.
+- tsc čisto, vitest 586/586 (novo: `video-hook.test.ts`, efekti/cue testovi u `video-plan.test.ts`, kartice vs mjerači), oba builda (split zadnji) prolaze.
+
+## Otvoreno (runda 3)
+- Spec V10 mjehurići/pjena, V8 čestice krvotoka, V12 kinetički hook, V17 brzinske linije, A13 heartbeat, A20 tape stop, count-up brojeva (rasponi) — nisu napravljeni.
+- "Sound effects only" i dalje ima tihi efekt "pour/fizz"; za pravi test trebaju slušalice/mobitel (ja sam mjerio samo brojevima).
+- Glazba je proceduralna i ugodna, ali nije "trending"; vlasnik može izabrati "Sound effects only" i dodati pjesmu u aplikaciji.
+- Usporedba: čip "Comment A or B before the end." prelazi preko linija mjerača 2 s; utrka i scoreboard su u donjem dijelu koji TikTok djelomično pokriva (informacija je i u karticama).

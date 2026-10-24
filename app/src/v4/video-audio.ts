@@ -163,3 +163,196 @@ export function playSoundtrack(buf: AudioBuffer): { track: MediaStreamTrack; sta
     return { track: dest.stream.getAudioTracks()[0], start: () => { void ctx.resume(); src.start(); }, stop: () => { try { src.stop(); } catch { /* not started */ } void ctx.close(); } };
   } catch { return null; }
 }
+
+// =====================================================================================================================
+// SOUND v2 (2026-10-24 creative spec §5): music on one bus, sound effects on another, both placed from the same cue
+// list as the pictures (video-plan.ts), so every sound lands on its frame. 120 BPM, the groove starts with the first
+// sip, half time at night (and the music goes "under water"), a one-bar drop at the peak. The music ducks under the
+// impacts. Loudness about −14 LUFS, true peak under −1 dBTP (lookahead limiter). All sounds are made here (oscillators
+// and seeded noise): no samples, no licences. `music: false` = "Sound effects only" (the owner adds a trending song).
+// =====================================================================================================================
+export type SoundMode = 'music' | 'sfx';
+export interface SoundOpts { music: boolean; fizzy?: boolean; solid?: boolean }
+const BPM2 = 120, BEAT2 = 60 / BPM2, BAR2 = 4 * BEAT2, CHORD2_S = 2 * BAR2;
+/** RMS of the full mix that measures about −14 LUFS for this material (calibrated with ffmpeg ebur128, QA 2026-10-24). */
+export const TARGET_RMS2 = 0.17;
+/** Sample ceiling of the limiter: ≈ −1.6 dBFS, so the AAC true peak stays under −1 dBTP. */
+export const CEIL2 = 0.83;
+
+/** Lookahead limiter (5 ms): the gain is lowered just BEFORE a loud hit instead of clipping it, then recovers. */
+export function limit(chs: Float32Array[], ceil: number, sr: number) {
+  const n = chs[0].length, blk = Math.max(1, Math.round(sr * 0.0025)), nb = Math.ceil(n / blk);
+  const peak = new Float32Array(nb);
+  for (let b = 0; b < nb; b++) { let m = 0; for (const d of chs) for (let i = b * blk, e = Math.min(n, i + blk); i < e; i++) { const a = Math.abs(d[i]); if (a > m) m = a; } peak[b] = m; }
+  const want = new Float32Array(nb);
+  for (let b = 0; b < nb; b++) { const m = Math.max(peak[b], peak[Math.min(nb - 1, b + 1)], peak[Math.min(nb - 1, b + 2)]); want[b] = m > ceil ? ceil / m : 1; }
+  // release: the gain may rise again only slowly (≈ 120 ms), falls at once (the lookahead already gave it time)
+  const g = new Float32Array(nb); let cur = 1; const rel = 1 - Math.exp(-blk / (sr * 0.12));
+  for (let b = 0; b < nb; b++) { cur = want[b] < cur ? want[b] : cur + (want[b] - cur) * rel; g[b] = cur; }
+  for (const d of chs) for (let i = 0; i < n; i++) {
+    const b = Math.floor(i / blk), f = (i % blk) / blk, gi = g[b] + (g[Math.min(nb - 1, b + 1)] - g[b]) * f;
+    d[i] = Math.max(-ceil, Math.min(ceil, d[i] * gi));
+  }
+}
+
+/** Renders the v2 soundtrack: picture and sound from one cue list. */
+export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOpts): Promise<AudioBuffer> {
+  const sr = SAMPLE_RATE, len = Math.ceil(seconds * sr);
+  // 4 channels: music L/R and effects L/R, mixed after rendering (so "effects only" keeps the same levels)
+  const ctx = new OfflineAudioContext(4, len, sr);
+  const merger = ctx.createChannelMerger(4); merger.connect(ctx.destination);
+  const toBus = (ch0: number) => { const sp = ctx.createChannelSplitter(2), g = ctx.createGain(); g.connect(sp); sp.connect(merger, 0, ch0); sp.connect(merger, 1, ch0 + 1); g.channelCount = 2; g.channelCountMode = 'explicit'; return g; };
+  const musicOut = toBus(0), sfx = toBus(2);
+  const duck = ctx.createGain(); duck.gain.value = 1;
+  const under = ctx.createBiquadFilter(); under.type = 'lowpass'; under.frequency.value = 18000; under.Q.value = 0.7;
+  duck.connect(under); under.connect(musicOut);
+  const noise = noiseBuffer(ctx, 3, 7);
+  const at = (k: Cue['kind']) => cues.filter((c) => c.kind === k);
+  const outro = at('outro')[0]?.t ?? seconds - 6;
+  const sip = at('sip')[0]?.t ?? 1;
+  const peaks = at('peak').map((c) => c.t), verdicts = at('verdict').map((c) => c.t);
+  const nights: [number, number][] = [];
+  at('night').forEach((c) => { if (c.data?.v === 1) nights.push([c.t, outro]); else if (nights.length) nights[nights.length - 1][1] = c.t; });
+  const inNight = (t: number) => nights.some(([a, b]) => t >= a && t < b);
+  // ---- helpers
+  const env = (g: GainNode, t: number, a: number, peak: number, d: number) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); };
+  const osc = (type: OscillatorType, f0: number, f1: number | null, t: number, dur: number, peak: number, out: AudioNode, pan = 0, a = 0.004) => {
+    const o2 = ctx.createOscillator(); o2.type = type; o2.frequency.setValueAtTime(f0, t); if (f1) o2.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ctx.createGain(); env(g, t, a, peak, dur); const p = ctx.createStereoPanner(); p.pan.value = pan;
+    o2.connect(g); g.connect(p); p.connect(out); o2.start(t); o2.stop(t + a + dur + 0.02);
+  };
+  const nz = (t: number, dur: number, peak: number, out: AudioNode, filt: { type: BiquadFilterType; f: number; f1?: number; q?: number }, pan = 0, a = 0.004, offset = 0) => {
+    const s = ctx.createBufferSource(); s.buffer = noise;
+    const f = ctx.createBiquadFilter(); f.type = filt.type; f.frequency.setValueAtTime(filt.f, t); if (filt.f1) f.frequency.exponentialRampToValueAtTime(filt.f1, t + dur); f.Q.value = filt.q ?? 0.7;
+    const g = ctx.createGain(); env(g, t, a, peak, dur); const p = ctx.createStereoPanner(); p.pan.value = pan;
+    s.connect(f); f.connect(g); g.connect(p); p.connect(out); s.start(t, (offset + t * 7.3) % 2.5, a + dur + 0.05);
+  };
+  // reverb tail for the impacts: a generated, seeded impulse response
+  const ir = ctx.createBuffer(2, Math.round(sr * 1.2), sr);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let s = 99 + c >>> 0; for (let i = 0; i < d.length; i++) { s = (s * 1664525 + 1013904223) >>> 0; d[i] = ((s / 4294967296) * 2 - 1) * Math.exp(-i / (sr * 0.32)); } }
+  const verb = ctx.createConvolver(); verb.buffer = ir; const verbG = ctx.createGain(); verbG.gain.value = 0.5; verb.connect(verbG); verbG.connect(sfx);
+
+  // ---- MUSIC (always rendered: the loudness is measured on the full mix, also for "effects only")
+  {
+    const padBus = ctx.createBiquadFilter(); padBus.type = 'lowpass'; padBus.frequency.value = 1300; padBus.Q.value = 0.5;
+    const padGain = ctx.createGain(); padGain.gain.value = 0.045; padBus.connect(padGain); padGain.connect(duck);
+    const chordAt = (t: number) => (t >= outro ? 0 : Math.floor(t / CHORD2_S) % CHORDS.length);
+    for (let t = 0; t < seconds;) {
+      const c = chordAt(t), next = t >= outro ? seconds : Math.min(outro, (Math.floor(t / CHORD2_S) + 1) * CHORD2_S);
+      CHORDS[c].forEach((n, i) => {
+        for (const det of [-7, 6]) {
+          const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = midi(n); o2.detune.value = det;
+          const g = ctx.createGain(); const a = t === 0 ? 0.03 : 0.4, top = i === 0 ? 1.2 : 0.8, end2 = Math.min(seconds, next + 0.8);
+          g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(top, t + a); g.gain.setValueAtTime(top, Math.max(t + a, next - 0.05)); g.gain.linearRampToValueAtTime(0, end2);
+          const p = ctx.createStereoPanner(); p.pan.value = det < 0 ? -0.35 : 0.35;
+          o2.connect(g); g.connect(p); p.connect(padBus); o2.start(t); o2.stop(end2);
+        }
+      });
+      t = next;
+    }
+    // groove from the first sip: kick, off-beat hats, plucked bass, light arpeggio; half time at night; a drop at the peak
+    const kick = (t: number, v: number) => { osc('sine', 140, 46, t, 0.3, v, duck, 0, 0.005); };
+    const hat = (t: number, v: number) => nz(t, 0.045, v, duck, { type: 'highpass', f: 7500 });
+    const pluck = (t: number, f: number, v: number, type: OscillatorType, d: number, pan = 0) => osc(type, f, null, t, d, v, duck, pan, 0.008);
+    const drops = peaks.map((p) => [p, p + BAR2] as [number, number]);
+    const first = Math.ceil(sip / BEAT2) * BEAT2;
+    for (let t = first, k = Math.round(first / BEAT2); t < outro - 0.05; t += BEAT2, k++) {
+      const inBar = k % 4, ch = CHORDS[chordAt(t)], night = inNight(t), drop = drops.some(([a, b]) => t >= a - 1e-6 && t < b);
+      if (drop) { kick(t, 0.5); pluck(t, midi(ch[0] - 12), 0.2, 'triangle', 0.35); continue; }
+      if (night) { if (inBar === 0) { kick(t, 0.3); pluck(t, midi(ch[0]), 0.12, 'triangle', 0.6); } continue; }
+      if (inBar === 0 || inBar === 2) { kick(t, inBar === 0 ? 0.42 : 0.3); pluck(t, midi(ch[0]), 0.15, 'triangle', 0.4); }
+      hat(t + BEAT2 / 2, 0.045);
+      for (let e = 0; e < 2; e++) { const tt = t + (e * BEAT2) / 2; pluck(tt, midi(ch[1 + ((k * 2 + e) % (ch.length - 1))] + 24), 0.025, 'triangle', 0.22, e ? 0.4 : -0.4); }
+    }
+    // the resolving chord under the end card
+    const tO = outro; [69, 72, 76, 81].forEach((n, i) => pluck(tO + i * 0.12, midi(n), 0.05, 'sine', 1.6, (i - 1.5) * 0.25));
+    // ducking (a sidechain written from the cue list): −6 dB under each impact, −3 dB under the sip
+    for (const t of [...peaks, ...verdicts]) { duck.gain.setValueAtTime(1, Math.max(0, t - 0.4)); duck.gain.linearRampToValueAtTime(0.5, t - 0.32); duck.gain.setValueAtTime(0.5, t); duck.gain.linearRampToValueAtTime(1, t + 0.45); }
+    duck.gain.setValueAtTime(1, Math.max(0, sip - 0.05)); duck.gain.linearRampToValueAtTime(0.7, sip + 0.03); duck.gain.linearRampToValueAtTime(1, sip + 0.7);
+    // night: the music goes under water and comes back up at sunrise
+    for (const [a, b] of nights) {
+      under.frequency.setValueAtTime(18000, a); under.frequency.exponentialRampToValueAtTime(900, a + 0.8);
+      under.frequency.setValueAtTime(900, Math.max(a + 0.8, b)); under.frequency.exponentialRampToValueAtTime(18000, Math.max(a + 0.8, b) + 0.8);
+    }
+  }
+
+  // ---- SOUND EFFECTS (A1–A19, without the heartbeat, which the model never asks for here)
+  // A1 hit on the very first frame (the cold open)
+  osc('sine', 55, 40, 0, 0.5, 0.45, sfx, 0, 0.004); nz(0, 0.06, 0.25, sfx, { type: 'lowpass', f: 1200 });
+  for (const c of cues) {
+    const t = c.t;
+    switch (c.kind) {
+      case 'rewind': { // A2 tape rewind: a rising saw through a sweeping band, hiss, and a catch at the end
+        const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.setValueAtTime(200, t); o2.frequency.exponentialRampToValueAtTime(1600, t + 0.45);
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.45);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.04); g.gain.linearRampToValueAtTime(0.0001, t + 0.47);
+        o2.connect(f); f.connect(g); g.connect(sfx); o2.start(t); o2.stop(t + 0.5);
+        nz(t, 0.45, 0.05, sfx, { type: 'highpass', f: 3000 }); nz(t + 0.47, 0.01, 0.2, sfx, { type: 'highpass', f: 2000 }, 0, 0.001);
+        break;
+      }
+      case 'sip': {
+        if (o.fizzy && !o.solid) { nz(t - 0.25, 0.002, 0.3, sfx, { type: 'highpass', f: 2000 }, 0, 0.001); nz(t - 0.24, 0.35, 0.14, sfx, { type: 'bandpass', f: 4500, f1: 3000, q: 0.8 }, 0, 0.005); } // A3 can opening
+        if (o.solid) { for (let i = 0; i < 3; i++) nz(t + i * 0.05, 0.025, 0.12, sfx, { type: 'bandpass', f: 2200, q: 2 }); osc('sine', 140, 90, t, 0.12, 0.2, sfx); } // bite
+        else for (let i = 0; i < 2; i++) { const tt = t + i * 0.32, k = i ? 0.9 : 1; osc('sine', 320 * k, 110 * k, tt, 0.12, 0.22, sfx, 0, 0.005); nz(tt, 0.04, 0.1, sfx, { type: 'bandpass', f: 700, q: 3 }); } // A4 gulps
+        if (!o.solid) { // A5 pour: a lowpassed "glug" for about 2 s
+          const s = ctx.createBufferSource(); s.buffer = noise; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1400;
+          const am = ctx.createGain(); am.gain.value = 0.4; const lfo = ctx.createOscillator(); lfo.frequency.value = 9; const lg = ctx.createGain(); lg.gain.value = 0.6; lfo.connect(lg); lg.connect(am.gain);
+          const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t + 0.6); g.gain.exponentialRampToValueAtTime(0.05, t + 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+          s.connect(f); f.connect(am); am.connect(g); g.connect(sfx); s.start(t + 0.6, 0.3, 2.2); lfo.start(t + 0.6); lfo.stop(t + 2.8);
+        }
+        if (o.fizzy) { // A6 fizz: seeded grains, fading over ~4 s
+          let sd = 4242;
+          const rnd = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
+          for (let tt = t + 0.3; tt < t + 7; ) { const dens = 120 * Math.exp(-(tt - t) / 4); if (dens < 8) break; tt += -Math.log(1 - rnd()) / dens; nz(tt, 0.003 + rnd() * 0.005, 0.03, sfx, { type: 'highpass', f: 5000 }, (rnd() - 0.5) * 1.2, 0.001); }
+        }
+        break;
+      }
+      case 'move': nz(t, 0.95, 0.16, sfx, { type: 'bandpass', f: 350, f1: 2800, q: 1.4 }, 0, 0.55); break; // A7 whoosh
+      case 'stop': if (t > 1.2) { osc('sine', 1318.5, null, t, 0.22, 0.07, sfx); osc('sine', 1975.5, null, t + 0.004, 0.16, 0.035, sfx); } break; // A8 tick
+      case 'page': osc('sine', 987.8, null, t, 0.16, 0.035, sfx); break;
+      case 'micro': osc('sine', 1567.98, null, t, 0.09, 0.022, sfx, c.data?.v === 1 ? -0.3 : 0.3); break; // a soft beat with each small picture event
+      case 'next': if (c.data?.label === 'tease') { osc('triangle', 659.25, null, t, 0.3, 0.1, sfx); osc('triangle', 987.77, null, t + 0.12, 0.4, 0.1, sfx); } // A17 stinger
+        else { osc('sine', 880, 1320, t, 0.12, 0.11, sfx); osc('sine', 1760, 2640, t, 0.1, 0.03, sfx); } break; // A9 blip (audible over the music on a phone)
+      case 'guess': osc('sine', 880, 1320, t + 0.2, 0.09, 0.05, sfx, -0.4); osc('sine', 1047, 1568, t + 0.35, 0.09, 0.05, sfx, 0.4); break;
+      case 'riser': { // A11: a filtered noise sweep + two detuned saws + a snare roll that speeds up, all ending on the impact
+        const dur = Math.max(0.3, (peaks.find((p) => p >= t) ?? t + 1.6) - t);
+        nz(t, dur, 0.1, sfx, { type: 'bandpass', f: 300, f1: 6000, q: 2 }, 0, dur * 0.9);
+        for (const det of [-12, 12]) { const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.detune.value = det; o2.frequency.setValueAtTime(220, t); o2.frequency.exponentialRampToValueAtTime(880, t + dur);
+          const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2400; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.04, t + dur - 0.01); g.gain.linearRampToValueAtTime(0, t + dur);
+          o2.connect(f); f.connect(g); g.connect(sfx); o2.start(t); o2.stop(t + dur + 0.01); }
+        for (let tt = t, step = BEAT2 / 2; tt < t + dur - 0.02; tt += step, step = Math.max(BEAT2 / 8, step * 0.82)) nz(tt, 0.02, 0.04 + 0.06 * ((tt - t) / dur), sfx, { type: 'bandpass', f: 1800, q: 1 }, 0, 0.002);
+        break;
+      }
+      case 'peak': case 'verdict': { // A12 impact: sub drop, a body of noise, a reverb tail; the verdict also shimmers (A19)
+        osc('sine', 60, 35, t, 0.6, 0.55, sfx, 0, 0.003);
+        const s = ctx.createBufferSource(); s.buffer = noise; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 800; const g = ctx.createGain(); env(g, t, 0.003, 0.25, 0.15);
+        s.connect(f); f.connect(g); g.connect(sfx); g.connect(verb); s.start(t, 1.1, 0.25);
+        osc('sine', 110, 55, t, 0.25, 0.12, verb);
+        if (c.kind === 'verdict') { [69, 73, 76, 80, 81, 85].forEach((n, i) => osc('sine', midi(n + 12), null, t + 0.12 + i * 0.04, 1.2, 0.05, sfx, (i - 2.5) * 0.2)); nz(t + 0.1, 0.6, 0.03, sfx, { type: 'highpass', f: 8000 }); }
+        break;
+      }
+      case 'lights': { const f = [1318.5, 1046.5, 784][c.data?.level ?? 0]; osc('sine', f * 0.66, f, t, 0.12, 0.11, sfx, c.data?.side === 1 ? 0.4 : c.data?.side === 0 ? -0.4 : 0); osc('sine', f * 2, null, t, 0.1, 0.03, sfx); break; } // A9 by level
+      case 'race': osc('sine', 1568, null, t, 0.8, 0.07, sfx, c.data?.side ? 0.5 : -0.5); osc('sine', 2349, null, t, 0.8, 0.04, sfx, c.data?.side ? 0.5 : -0.5); break; // A18
+      case 'night': if (c.data?.v === 0) { nz(t, 0.5, 0.06, sfx, { type: 'highpass', f: 200, f1: 8000 }, 0, 0.2); [69, 73, 76, 83].forEach((n, i) => osc('sine', midi(n), null, t + 0.05 * i, 1.0, 0.03, sfx)); } break; // A16 sunrise
+      default: break;
+    }
+  }
+  // A14 ratchet: the clock's soft ticks through the night time-lapse
+  for (const [a, b] of nights) for (let t = a + 0.2; t < b - 0.1; t += 1 / 8) { nz(t, 0.004, 0.025, sfx, { type: 'highpass', f: 3000 }, 0, 0.001); osc('sine', 2200, null, t, 0.008, 0.012, sfx, 0, 0.001); }
+
+  const buf = await ctx.startRendering();
+  // mix: music + effects (or effects only), loudness from the full mix, lookahead limiter, a short fade for the loop
+  const m0 = buf.getChannelData(0), m1 = buf.getChannelData(1), s0 = buf.getChannelData(2), s1 = buf.getChannelData(3);
+  const out = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
+  const L = out.getChannelData(0), R = out.getChannelData(1);
+  let sum = 0;
+  for (let i = 0; i < len; i++) { const l = m0[i] + s0[i], r = m1[i] + s1[i]; sum += l * l + r * r; }
+  const rms = Math.sqrt(sum / Math.max(1, 2 * len)) || 1e-6;
+  // "effects only": the same gain as the full mix (the effects stay at their level, they are not pushed to −14 LUFS)
+  const gain = o.music ? TARGET_RMS2 / rms : Math.min(TARGET_RMS2 / rms, 6);
+  for (let i = 0; i < len; i++) { L[i] = ((o.music ? m0[i] : 0) + s0[i]) * gain; R[i] = ((o.music ? m1[i] : 0) + s1[i]) * gain; }
+  limit([L, R], CEIL2, sr);
+  const fade = Math.round(0.3 * sr);
+  for (let i = len - fade; i < len; i++) { const k = (len - i) / fade; L[i] *= k; R[i] *= k; }
+  return out;
+}

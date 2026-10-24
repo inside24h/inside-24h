@@ -13,7 +13,7 @@
 export const BEAT_WORDS = 8;
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 /** Values that follow the clock: only on the gauges. */
-export const DYNAMIC = /‰|mmol\/L|mg\/dL|\bmg of caffeine is (?:left|still)\b/;
+export const DYNAMIC = /‰|mmol\/L|mg\/dL|\bmg of caffeine is (?:left|still)\b|\bg of fiber reach/;
 
 /** A card is a complete thought: capital (or number / quote) first, sentence end last, short. */
 export function isCard(s: string): boolean {
@@ -42,28 +42,28 @@ const RULES: Rule[] = [
   [/^A small drink leaves fast: half of it moves on within about (\d+) minutes/, (m) => ['A small drink leaves fast.', `Half moves on within ${m[1]} minutes.`]],
   [/^Coffee also makes your stomach produce more acid/, () => ['Coffee also makes more stomach acid.']],
   // gut, blood, liver
-  [/^In about 1 in 3 people coffee makes the lower bowel start moving within minutes/, () => ['1 in 3 people: the bowel starts moving.', 'It happens before any caffeine is absorbed.']],
+  [/^In about 1 in 3 people coffee makes the lower bowel start moving within minutes/, () => ['Coffee sends 1 in 3 people to the toilet.', 'Even before the caffeine kicks in.']],
   [/^Your stomach wall and small intestine absorb the caffeine/, () => ['Your gut absorbs all of the caffeine.', 'It all passes into your blood.']],
-  [/^In the first part of your small intestine the sugar is split into glucose and fructose/, () => ['The sugar splits into glucose and fructose.', 'Both reach your blood within minutes.']],
+  [/^In the first part of your small intestine the sugar is split into glucose and fructose/, () => ['Your gut splits the sugar in two.', 'Both parts reach your blood in minutes.']],
   [/^In the small intestine it is taken apart: (.+)$/, (m) => ['In the small intestine it is taken apart.',
-    ...m[1].replace(/\.$/, '').split(/, /).map((x) => end(cap(x.replace(/ from your gallbladder$/, '')))).filter((x) => words(x) <= BEAT_WORDS)]],
-  [/^Sugars and amino acids pass into your blood; the fat goes into the lymph first/, () => ['Sugars and amino acids pass into your blood.', 'The fat goes into the lymph first.']],
+    ...m[1].replace(/\.$/, '').split(/, /).map((x) => end(cap(plain(x.replace(/ from your gallbladder$/, ''))))).filter((x) => words(x) <= BEAT_WORDS)]],
+  [/^Sugars and amino acids pass into your blood; the fat goes into the lymph first/, () => ['Sugar and protein pieces enter your blood.', 'Fat takes a slower route, via the lymph.']],
   [/^Some of the alcohol was already absorbed through your stomach wall/, () => ['Some alcohol was absorbed through your stomach wall.']],
   [/^Your small intestine absorbs the .+ into your blood within minutes/, () => ['Your small intestine absorbs it within minutes.']],
   [/^Blood from your gut goes to the liver first/, () => ['Blood from your gut reaches the liver first.']],
-  [/^Your gut wall and liver together hold back about (\d+)% of the fructose/, (m) => [`Gut and liver hold back ${m[1]}% of fructose.`, 'Most of the glucose passes on.']],
-  [/^Over the next hours your body burns about half of the fructose for energy and, mainly in the liver, turns about (\d+)% into glucose/, (m) => ['Your body burns about half the fructose.', `Your liver turns about ${m[1]}% into glucose.`]],
+  [/^Your gut wall and liver together hold back about (\d+)% of the fructose/, (m) => [`Gut and liver catch ${m[1]}% of the fruit sugar.`, 'Most of the rest goes into your blood.']],
+  [/^Over the next hours your body burns about half of the fructose for energy and, mainly in the liver, turns about (\d+)% into glucose/, (m) => ['Your body burns half the fruit sugar.', `Your liver turns ${m[1]}% into blood sugar.`]],
   [/^Your liver takes the caffeine apart: half of it is gone about every ([\d.]+) hours/, (m) => ['Your liver takes the caffeine apart.', `Half is gone every ${m[1]} hours.`]],
   // blood sugar
   [/^Your blood sugar (?:climbs|goes) from /, () => ['Your blood sugar climbs to its peak.']],
-  [/^Your pancreas releases insulin to bring it back down/, () => ['Your pancreas releases insulin to lower it.']],
+  [/^Your pancreas releases insulin to bring it back down/, () => ['Insulin brings your blood sugar back down.']],
   [/^Your blood sugar drops (?:just|a little) below where you started/, () => ['Your blood sugar dips below where it started.']],
   // caffeine
   [/^(?:About )?(\d+) mg of caffeine reaches your brain and blocks the tiredness signal a little/, (m) => [`About ${m[1]} mg of caffeine reaches your brain.`, 'It blocks the tiredness signal a little.']],
   [/^The caffeine reaches your brain and blocks the “I’m tired” signal a little/, () => ['The caffeine reaches your brain.', 'It blocks the “I’m tired” signal a little.']],
   [/^(\d+) mg of caffeine in total, spread over (.+?): it builds up with each \w+ and is highest now/, (m) => [`${m[1]} mg of caffeine, spread over ${m[2]}.`, 'It builds up and is highest now.']],
   [/^It reaches your brain and blocks the tiredness signal a little/, () => ['It reaches your brain.', 'It blocks the tiredness signal a little.']],
-  [/^Caffeine slips into your brain and blocks adenosine/, () => ['Caffeine slips into your brain.', 'It blocks adenosine, the tiredness signal.']],
+  [/^Caffeine slips into your brain and blocks adenosine/, () => ['Caffeine slips into your brain.', 'It blocks your “I’m tired” signal.']],
   [/^Caffeine in your blood is at its highest now/, () => ['Caffeine in your blood peaks now.']],
   [/^With food the caffeine arrives later/, () => ['With food the caffeine arrives later.']],
   [/^About \d+ mg of caffeine is (?:left|still) in you/, () => ['Some caffeine is still in you.']],
@@ -100,17 +100,30 @@ const RULES: Rule[] = [
   [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['No extra urine.', 'Cola hydrates about as well as water.']],
   // meals
   [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, (m) => ['Many people feel sleepy after a big meal.', `It comes about ${m[1]} hours later.`]],
-  [/^The (\d+) g of protein arrive in your blood as amino acids/, (m) => [`${m[1]} g of protein reach your blood.`, 'Amino acids peak about now.']],
+  // the protein arrives over hours; this moment is its peak (model review 2026-10-24: not "139 g reach your blood")
+  [/^The (\d+) g of protein arrive in your blood as amino acids/, () => ['Protein pieces in your blood peak now.', 'They keep arriving for hours.']],
   [/^Processing protein/, () => ['Processing it uses a quarter of its calories.']],
-  [/^The fat travels through your lymph into the blood/, () => ['The fat travels through your lymph.', 'Then it joins your blood.']],
+  [/^The fat travels through your lymph into the blood/, () => ['Fat takes a slower route, via the lymph.', 'Then it joins your blood.']],
   [/^Blood fat \(triglycerides\) is highest around now|^Blood fat is highest around now/, () => ['Blood fat is highest around now.']],
-  [/^What you can’t digest, ([\d.]+) g of fiber, reaches the start of your large intestine/, (m) => [`${m[1]} g of fiber reach your large intestine.`]],
+  // no amount: the gauge shows how much has arrived at this minute (the chapter's total would disagree with it)
+  [/^What you can’t digest, ([\d.]+) g of fiber, reaches the start of your large intestine/, () => ['The fiber reaches your large intestine.']],
   [/^The leftovers creep along your large intestine while water is taken back/, () => ['The leftovers creep along your large intestine.', 'Water is taken back on the way.']],
   [/^Food typically takes about (\d+) hours from mouth to toilet/, (m) => [`Food takes about ${m[1]} hours, mouth to toilet.`]],
+  // "2% has left your body so far": 2 % of what? Said plainly (owner review 2026-10-24)
+  [/^(\d+)% has left your body so far/, (m) => [Number(m[1]) < 10 ? 'Almost all of it is still inside you.' : `${m[1]}% of the leftovers have left you.`]],
+  [/^Your kidneys flush out the breakdown products/, () => ['Your kidneys flush out what is left.']],
+  [/^Your gut bacteria start fermenting it/, () => ['Your gut bacteria start feeding on it.']],
   // first sip
   [/^Real espressos vary a lot: the strongest one measured had (\d+) mg/, (m) => ['Real espressos vary a lot.', `The strongest one measured had ${m[1]} mg.`]],
-  [/^Cola is acidic \(pH ([\d.]+)\)/, (m) => [`Cola is acidic: pH ${m[1]}.`]],
+  [/^Cola is acidic \(pH ([\d.]+)\)/, () => ['Cola is very acidic.']],
 ];
+
+/** Everyday words for the gut's chemistry (one idea per card). */
+function plain(x: string): string {
+  return x.replace(/^starch and sugar become glucose$/i, 'starch and sugar turn into blood sugar')
+    .replace(/^protein becomes amino acids$/i, 'protein is broken into building blocks')
+    .replace(/^fat is split with bile$/i, 'bile helps break down the fat');
+}
 
 /** Generic: whole short sentences, else the sentence's own clauses (":" ";") when each is a whole thought. */
 function generic(sentence: string): string[] {
@@ -167,4 +180,12 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
 function rule(sentence: string): string[] {
   for (const [re, f] of RULES) { const m = re.exec(sentence); if (m) return f(m); }
   return generic(sentence);
+}
+
+/** Safety net (2026-10-24, owner review: "20 g fiber" on the gauge, "22.7 g of fiber" on the card): true when a card
+ *  and a gauge on screen name the same thing (same unit and the same word after it) with different numbers. */
+export function numberConflict(card: string, gauges: readonly string[]): boolean {
+  const facts = (s: string) => [...s.matchAll(/(\d+(?:[.,]\d+)?)\s*(mg|ml|g|kcal|%|‰)\s+(?:of\s+)?([a-z]+)/gi)].map((m) => ({ n: m[1].replace(',', '.'), key: `${m[2].toLowerCase()} ${m[3].toLowerCase()}` }));
+  const a = facts(card);
+  return gauges.some((g) => facts(g).some((f) => a.some((x) => x.key === f.key && x.n !== f.n)));
 }

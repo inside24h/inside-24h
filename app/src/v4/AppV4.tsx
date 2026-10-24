@@ -30,12 +30,14 @@ import { StatusLights, StatusStrips } from './StatusBar';
 import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planCompare, planVideo, type Plan, type VFrame } from './video-plan';
 import { beatLines, type BeatCtx } from './video-beats';
+import { hookFor, hookForCompare } from './video-hook';
+import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
 import { ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
-import { bodyGlowAt, isLightDrink, mainGauge, SEG_FOCUS_V, VIDEO_PALETTE, whereGauge, type BuiltLike } from './video-body';
+import { bodyGlowAt, isLightDrink, mainGauge, paletteAt, SEG_FOCUS_V, whereGauge, type BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
-import { SIZE, type PinnedGauge } from './share';
+import { SIZE, VIDEO_COPY, type PinnedGauge } from './share';
 import { verdict, worstMoment } from './status';
 
 const ICON_OF = { energy: '⚡', heart: '❤', water: '💧', brain: '🧠' } as const;
@@ -189,6 +191,8 @@ function beatCtx(name: string, built: { pace?: { doses: number; overMin: number;
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end. */
 function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefined)[], union = false): Shot {
   if (!fr || fr.beat === 'end' || fr.phase === 'outro') return { focus: [], zoom: 'wide' };
+  // the cold open: on the organ of the peak (the chapter's focus at that minute)
+  if (fr.beat === 'teaser') return { focus: organs.filter((x): x is string => !!x && !!ORGAN_AT[x]).slice(0, 1), zoom: 'mid' };
   // the first sip / bite: follow it down, mouth → food pipe → stomach (the hook is the first part of it)
   if ((fr.stop ?? 0) === 0 && (fr.beat === 'hook' || fr.beat === 'hold')) {
     const h = fr.hk ?? 0;
@@ -230,6 +234,31 @@ const pinTo = (organ: string, cam: CamLike, w: number, h: number, dx = 0) => {
   const q: V3 = [p[0] + dx, p[1], p[2]];
   return project(q, cam.matrixWorldInverse.elements, cam.projectionMatrix.elements, w, h);
 };
+/** The minute of the main gauge's peak (alcohol, else a clear blood sugar rise, else caffeine), as mainGauge chooses:
+ *  the video's cold open and its impact (2026-10-24 creative spec §2.2, §2.5). */
+type PeakIn = { bac?: Float64Array; alcoholG?: number; effects: { glucoseMgDl?: Float64Array }; caffeine: { doseMg: number; body: Float64Array } };
+function peakOf(b: PeakIn, sugarKnown: boolean): number | undefined {
+  const arg = (sr: Float64Array) => { let bi = 0; for (let i = 1; i <= Math.min(1440, sr.length - 1); i++) if (sr[i] > sr[bi]) bi = i; return bi; };
+  if ((b.alcoholG ?? 0) > 1 && b.bac) return arg(b.bac);
+  const g = sugarKnown ? b.effects.glucoseMgDl : undefined;
+  if (g && arg(g) > 0 && g[arg(g)] / 18.016 >= 0.5) return arg(g);
+  if (b.caffeine.doseMg >= 20) return arg(b.caffeine.body);
+  return undefined;
+}
+/** Fizzy drinks get the can opening and the fizz in the sound (cosmetic only). */
+const isFizzy = (name: string) => /\b(cola|beer|lager|soda|sparkling|tonic|energy drink|cider|prosecco|champagne|radler)\b/i.test(name);
+/** Comparison race (spec §4.1): progress out of the stomach per minute, 1 = out (under 3 % of the most it held). */
+function stomachRace(route: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null | undefined): Float32Array | null {
+  if (!route) return null;
+  const amt = Float32Array.from({ length: 1441 }, (_, m) => route.segs(m).stomach?.amount ?? 0);
+  let mx = 0; amt.forEach((v) => { mx = Math.max(mx, v); });
+  if (mx <= 0) return null;
+  // 0 until the stomach is at its fullest, then how much has left; 1 (out) once under 3 %, for good
+  let full = 0; amt.forEach((v, m) => { if (v > amt[full]) full = m; });
+  let done = false;
+  return amt.map((v, m) => { if (m <= full) return 0; if (done || v / mx < 0.03) { done = true; return 1; } return Math.max(0, Math.min(0.99, 1 - v / mx)); });
+}
+
 /** Resolves once the 3D canvas has the video's size (or after 3 s: the frame is then cover-cropped as before). */
 const canvasSized = (W: number, H: number) => new Promise<void>((res) => {
   const t0 = performance.now();
@@ -327,7 +356,7 @@ export default function AppV4() {
     return () => clearTimeout(id);
   }, [started, personalized, nudge]);
   useEffect(() => { if (panel === 'body') markPersonal(); }, [panel, markPersonal]); // found "Your body" on their own
-  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string } | null>(null);
+  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string; pin?: string } | null>(null);
   const [handle, setHandle] = useState(() => { try { return localStorage.getItem('i24-handle') || '@inside24h'; } catch { return '@inside24h'; } });
   const recRef = useRef(false);
   const r3f = useRef<RootState | null>(null);
@@ -528,13 +557,15 @@ export default function AppV4() {
   const overlayRef = useRef<Overlay | null>(null);
   const reelStops = useRef<number[] | null>(null);
   const [shortVid, setShortVid] = useState(false); // ≤ 30 s cut for Shorts / Reels (the full cut is 62-75 s)
-  const [vidSound, setVidSound] = useState(true); // our own soundtrack in the video (video-audio.ts)
+  // our own soundtrack (video-audio.ts): music + effects, effects only (2026-10-24: add a trending song in the app), or none
+  const [vidSound, setVidSound] = useState<'music' | 'sfx' | 'none'>('music');
   // 2026-10-23 body-first video: the camera's cue, the video frame being made, the comparison's cameras, and the
   // 3D canvas sized to the video (1080×1920) while recording (.stage.recbox in v4.css)
   const vcue = useRef<ShotCue | null>(null);
   const recFr = useRef<VFrame | null>(null);
   const cmpCams = useRef<CmpCams | null>(null);
   const cmpOn = useRef(false); // the comparison video is being made
+  const cmpRace = useRef<{ a: Float32Array; b: Float32Array } | null>(null); // the race out of the stomach (per minute)
   const [recBox, setRecBox] = useState<Format | null>(null);
   // a still of this moment (fallback when the browser cannot make video)
   const stillImage = async () => {
@@ -559,10 +590,15 @@ export default function AppV4() {
   const recChapter = story.chapters.reduce((acc, c) => (recStop + 1e-6 >= c.min ? c : acc), story.chapters[0]);
   // while the video is made: the organs at work light up, the rest dims (video-body.ts)
   const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null) : null;
+  const hookNow = hookFor({ name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
+    alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
+    pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined });
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
-    hook: `${shortName(videoName)} — inside your body`,
+    // 2026-10-24: two lines, the surprise first and the promise second, from the model of this export (video-hook.ts)
+    hook: `${hookNow.line1}\n${hookNow.line2}`,
+    alcohol: (built.alcoholG ?? 0) > 1, focus: recChapter.focus,
     title: PRODUCT.name,
     sub: `${profile.sex === 'female' ? 'Woman' : 'Man'}, ${profile.ageY} · ${profile.heightCm} cm · ${profile.weightKg} kg${city ? ` · ${city.name}` : ''}`,
     clock: hhmm(profile.drinkAtMin + recStop), step: recChapter.title, caption: captionOf(chapterText(recChapter, recStop)), color: story.color, progress: u, handle, stamp: stampFor(recStop, /bite/i.test(story.chapters[0]?.title ?? '')),
@@ -602,8 +638,10 @@ export default function AppV4() {
     const [FW, FH] = SIZE[format];
     // frame-exact encoder where available (smooth on any computer), screen recording as a fallback; both follow the
     // same plan (video-plan.ts: reading-speed captions, 62-75 s or ≤ 30 s)
-    const plan = reelPlan(), opts = { sound: vidSound, onTick: (f: number) => setRecPct(f),
-      prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = OPENING; } };
+    const plan = reelPlan(), opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
+      soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? '') }, onTick: (f: number) => setRecPct(f),
+      // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
+      prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; } };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);
@@ -612,9 +650,11 @@ export default function AppV4() {
     // the gauges' organs, in pixels of the video frame (after the 3D frame is drawn)
     const pinned = (): Overlay => {
       const o = overlayRef.current!, cam = r3f.current?.camera as unknown as CamLike | undefined, cv = r3f.current?.gl.domElement;
-      if (!cam || !cv || !o.gauges?.length) return o;
+      if (!cam || !cv) return o;
       cam.updateMatrixWorld();
-      return { ...o, gauges: o.gauges.map((g) => ({ ...g, at: coverMap(pinTo(g.organ, cam, cv.width, cv.height), cv.width, cv.height, FW, FH) })) };
+      const pins: Record<string, { x: number; y: number } | null> = {};
+      for (const k of Object.keys(ORGAN_AT)) pins[k] = coverMap(pinTo(k, cam, cv.width, cv.height), cv.width, cv.height, FW, FH);
+      return { ...o, pins, gauges: (o.gauges ?? []).map((g) => ({ ...g, at: pins[g.organ] ?? null })) };
     };
     const job = canEncode()
       ? recordFrames(canvas, format, pinned, (m, fr) => {
@@ -628,7 +668,9 @@ export default function AppV4() {
       : record(canvas, format, pinned, (m, fr) => { recFr.current = fr ?? null; setU(uFromMinutes(m)); cue(fr); }, plan, opts);
     job
       .then(({ blob, ext, audio }) => setShare({ state: 'ready', format, blob, ext, url: URL.createObjectURL(blob),
-        msg: vidSound && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined }))
+        caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`,
+        pin: pinnedIdea(),
+        msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined }))
       .catch((e: Error) => setShare({ state: 'error', msg: e.message }))
       .finally(() => { recRef.current = false; reelStops.current = null; recFr.current = null; vcue.current = null; setRecBox(null); });
   };  // QA only: #frame=<reel|feed>-<intro|main|outro> paints one composed video frame over the page after 6 s
@@ -666,11 +708,13 @@ export default function AppV4() {
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
         // split screen (2026-10-23): this body's number (else where its drink is), pinned to the organ
         gauge: (() => { const g = gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined); return g.find((y) => y.curve) ?? g[0] ?? null; })(),
+        alcohol: (x.built.alcoholG ?? 0) > 1,
         summary: { kcal: x.kcal, sugarPeak: sugarPeakText(x.sugarPeak, profile.glucoseUnit),
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'high stress'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
       };
     };
-    cmpOverlayRef.current = { hook: `${cmpRec.a.label} vs ${cmpRec.b.label} — inside your body`, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
+    const race = cmpRace.current;
+    cmpOverlayRef.current = { hook: hookForCompare(cmpRec.a.label, cmpRec.b.label, !!race).line1, guess: !!race, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
   }
   // the organ each body's current moment is about (the split-screen cameras frame both, the organs light up)
   const cmpFocus: [string | null, string | null] | undefined = cmpRec ? (() => {
@@ -689,8 +733,18 @@ export default function AppV4() {
         // each side's words at each moment (as on screen); planCompare sets the reading times and the length
         const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
         const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built), factsFirst: true }); };
-        const plan = planCompare((shortVid ? CMP_SHORT : CMP_STOPS).map((at) => ({ min: at, a: chapterText(chap(a, at), at), b: chapterText(chap(b, at), at), titleA: chap(a, at).title, titleB: chap(b, at).title, linesA: cards(a, at), linesB: cards(b, at) })),
-          shortVid ? 'short' : 'long', uFromMinutes, minutesFromU);
+        // the game's facts from the model (spec §3.3): the race out of the stomach, the peak, the lights, the verdict
+        const ra = stomachRace(a.built.route), rb = stomachRace(b.built.route);
+        cmpRace.current = ra && rb ? { a: ra, b: rb } : null;
+        const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
+        const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit);
+        const nonAlc = [a, b].filter((x) => (x.built.alcoholG ?? 0) <= 1), pk = [...nonAlc, a, b].map((x) => peakOf(x.built, x.glucose !== undefined)).find((x) => x !== undefined);
+        const fx: PlanFx = { peakMin: pk, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
+          lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: cmpRace.current ?? undefined };
+        // the peak gets a moment of its own (its impact lands when both bodies are there)
+        const cmpMins = [...new Set([...(shortVid ? CMP_SHORT : CMP_STOPS), ...(pk !== undefined && pk > 0 ? [pk] : [])])].sort((x, y) => x - y);
+        const plan = planCompare(cmpMins.map((at) => ({ min: at, a: chapterText(chap(a, at), at), b: chapterText(chap(b, at), at), titleA: chap(a, at).title, titleB: chap(b, at).title, linesA: cards(a, at), linesB: cards(b, at) })),
+          shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
         cmpStops.current = plan.stops;
         const [FW, FH] = SIZE.reel;
         const chapAt = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
@@ -699,9 +753,8 @@ export default function AppV4() {
           const o = cmpOverlayRef.current!, cc = cmpCams.current;
           if (!cc) return o;
           const pin = (sd: CmpOverlay['a'], k: number) => {
-            if (!sd.gauge) return sd;
-            const p = pinTo(sd.gauge.organ, cc.cams[k] as unknown as CamLike, FW / 2, FH, SIDE_X[k]);
-            return { ...sd, gauge: { ...sd.gauge, at: p && { x: p.x + k * FW / 2, y: p.y } } };
+            const at = (organ: string) => { const p = pinTo(organ, cc.cams[k] as unknown as CamLike, FW / 2, FH, SIDE_X[k]); return p && { x: p.x + k * FW / 2, y: p.y }; };
+            return { ...sd, pins: { tongue: at('tongue') }, gauge: sd.gauge ? { ...sd.gauge, at: at(sd.gauge.organ) } : sd.gauge };
           };
           return { ...o, a: pin(o.a, 0), b: pin(o.b, 1) };
         };
@@ -710,11 +763,13 @@ export default function AppV4() {
           flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r)));
           if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = splitShot(fr); void chapAt(a, st0); }
           const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
-        }, plan, { sound: vidSound, onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; } });
-        setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what really happens inside you in 24 hours 👀 ${verdictOf(a, b, profile.glucoseUnit)} Which one would you pick? 👇 #Inside24h #health #nutrition`,
-          msg: vidSound && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
+        }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label) },
+          onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; } });
+        setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
+          pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',
+          msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
-      cmpStops.current = null; setCmpRec(null); setCmpNever(false); recFr.current = null; vcue.current = null; setRecBox(null); cmpOn.current = false;
+      cmpStops.current = null; setCmpRec(null); setCmpNever(false); recFr.current = null; vcue.current = null; setRecBox(null); cmpOn.current = false; cmpRace.current = null;
     }, 1500); // let both bodies load (runs once, before the tab can be left)
   };
   // QA only: #cmpframe=<food>&phase=… mounts the two bodies at minute t and paints one comparison frame
@@ -741,10 +796,21 @@ export default function AppV4() {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
     const ctx = beatCtx(shortName(videoName), built);
     const stops = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => { const text = chapterText(c, c.min); return { min: c.min, title: c.title, text, lines: beatLines({ min: c.min, title: c.title, text }, ctx) }; });
-    const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU);
+    const fx: PlanFx = { peakMin: peakOf(built, peakNow !== null), drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
+      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2) };
+    const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;
-    if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]) }));
+    if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
     return plan;
+  };
+  /** A pinned-comment idea for the post (spec §7): an honest question, from what the video says. */
+  const pinnedIdea = () => {
+    const txt = story.chapters.map((c) => c.text).join(' ');
+    if ((built.alcoholG ?? 0) > 1) return 'Myth check: does coffee, water or fresh air sober you up? No, only time does. Simulation for a typical body, not medical advice.';
+    if (/teaspoons/.test(story.chapters[0]?.text ?? '')) return 'How many teaspoons did you guess before the video? 🥄 Try it with your own body in the app.';
+    if (built.caffeine.doseMg >= 10) return 'What time is your last coffee? ☕ Try your own time in the app.';
+    if (/29 hours from mouth to toilet/.test(txt)) return 'Guess how long food takes from mouth to toilet? Typically about 29 hours (14 to 58 is normal).';
+    return 'What should we put inside next? 👇 Simulation for a typical body, not medical advice.';
   };
   const fileName = `inside24h-${PRODUCT.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
 
@@ -894,7 +960,7 @@ export default function AppV4() {
                   {cmpRec ? <CompareScene a={cmpRec.a} b={cmpRec.b} minute={minutesFromU(cmpRec.u)} cue={vcue} cams={cmpCams} focus={cmpFocus} /> : <>
                   <Body glow={vGlow ? vGlow.glow as Glow : mode === 'simple' || !started ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
                     liquid={mode === 'simple' && started ? softenTubes(story.liquid(minute), !!built.route) : {}} liquidColor={story.color} onBounds={setBounds}
-                    dim={vGlow ? 0.42 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])] : keepOrgans} palette={vGlow ? VIDEO_PALETTE : undefined} />
+                    dim={vGlow ? 0.42 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])] : keepOrgans} palette={vGlow ? paletteAt(built, Math.min(1440, minute)) : undefined} />
                   {/* first screen (nothing chosen yet): the body on its own, no liquid */}
                   {started && mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}
                   {started && mode === 'simple' && (built.route
@@ -1077,8 +1143,9 @@ export default function AppV4() {
                 <button aria-pressed={shortVid} onClick={() => setShortVid(true)}>Short · under 30&nbsp;s</button>
               </div>
               <div className="lenpick soundpick" role="group" aria-label="Sound">Sound:
-                <button aria-pressed={vidSound} onClick={() => setVidSound(true)}>Our music</button>
-                <button aria-pressed={!vidSound} onClick={() => setVidSound(false)}>None (add your own)</button>
+                <button aria-pressed={vidSound === 'music'} onClick={() => setVidSound('music')}>Our music</button>
+                <button aria-pressed={vidSound === 'sfx'} onClick={() => setVidSound('sfx')}>Sound effects only</button>
+                <button aria-pressed={vidSound === 'none'} onClick={() => setVidSound('none')}>None (add your own)</button>
               </div>
               <div className="fmtpick">
                 <button className="fmt" onClick={() => startShare('reel')}><i className="r916" /><b>Reel / Story / TikTok</b><span>9:16 · 1080×1920</span></button>
@@ -1092,6 +1159,7 @@ export default function AppV4() {
               <h2>Your 24-hour video</h2>
               <video src={share.url} autoPlay loop muted playsInline controls className={share.format === 'reel' ? 'v916' : 'v45'} />
               <p className="note">Suggested caption: “{share.caption ?? `${videoName}: what happens inside your body in 24 hours 👀 Which food should we test next? 👇 #Inside24h #health #nutrition`}”</p>
+              {share.pin && <p className="note">Pinned comment idea: “{share.pin}”</p>}
               {share.msg && <p className="note">{share.msg}</p>}
             </>)}
             <div className="nbtns">

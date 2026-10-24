@@ -185,20 +185,25 @@ export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidCol
   }, [scene]);
 
   useEffect(() => () => { materials.forEach((m) => m.dispose()); liquids.forEach((m) => m.dispose()); }, [materials, liquids]);
-  // the palette (video): its colours while it is given, the usual ones again afterwards
+  // the palette (video): its colours while it is given, the usual ones again afterwards. Applied in the frame loop
+  // (2026-10-24): an effect ran a few frames late while the video recorder held the main thread, so the colour jumped
   const paletteKey = palette ? JSON.stringify(palette) : '';
-  useEffect(() => {
+  const applied = useRef<string | null>(null);
+  const applyPalette = () => {
+    if (applied.current === paletteKey + '|' + materials.size) return;
+    applied.current = paletteKey + '|' + materials.size;
     materials.forEach((m, key) => {
       (m.uniforms.color.value as THREE.Color).set(palette?.[key] ?? STYLE[key as OrganKey]?.color ?? '#ffffff');
       // a re-coloured structure also glows more softly (its overlapping parts must not add up to white)
       m.uniforms.rim.value = (STYLE[key as OrganKey]?.rim ?? 0.5) * (palette?.[key] ? 0.4 : 1);
       m.uniforms.scanK.value = palette?.[key] ? 0 : 1; // the scanner line would add up to white there too
     });
-  }, [materials, paletteKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  };
   useEffect(() => { if (scene && onBounds) onBounds({ ...bounds.current }); }, [scene, materials, onBounds]);
   const liquidCol = useMemo(() => new THREE.Color(liquidColor), [liquidColor]);
 
   useFrame((state, dt) => {
+    applyPalette();
     const k = 1 - Math.exp(-dt * 4); // smooth toward target, frame-rate independent
     materials.forEach((m, key) => {
       const target = Math.max(glow[key as OrganKey] ?? 0, key === selected ? 0.8 : 0);
