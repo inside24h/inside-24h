@@ -6,6 +6,11 @@ import { hookFor, hookForCompare, numbersIn } from './video-hook';
 import { planVideo, type StopIn } from './video-plan';
 import { drawCmpFrame, logText, VIDEO_COPY, type CmpOverlay } from './share';
 import fixtures from './video-plan.fixtures.json';
+import { parseMeal } from './food/parse';
+import { DEFAULT_PROFILE } from '../science/profile';
+import { analyze } from './analyze';
+import { worstMoment } from './status';
+import { plainNote, plainSugar } from './video-body';
 
 const FIX = fixtures as Record<string, StopIn[]>;
 const words = (s: string) => s.trim().split(/\s+/).length;
@@ -65,5 +70,20 @@ describe('no flashing (WCAG 2.3.1)', () => {
     // per second: never more than 3 effect cues that light something up
     const lit = p.cues.filter((c) => ['peak', 'micro', 'sip', 'next', 'lights', 'verdict'].includes(c.kind)).map((c) => c.t);
     for (const t of lit) expect(lit.filter((x) => x >= t && x < t + 1).length, `at ${t.toFixed(2)} s`).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('end card lights in plain words (round 4)', () => {
+  const cases = ['cola', 'espresso', 'glass of water', '3 beers', 'whole pizza', 'kebab', 'hamburger, fries and cola', 'beer'];
+  for (const c of cases) for (const h of [8, 19]) it(`${c} at ${h}:00: every light says what and when, no jargon`, () => {
+    const x = analyze(parseMeal(c), { ...DEFAULT_PROFILE, drinkAtMin: h * 60 });
+    for (const s of x.systems) {
+      const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2;
+      const n = plainNote(s.key, l, w, x.built, '13:13', !!s.unknown);
+      expect(n, `${c} ${s.key}`).toMatch(/^[A-Z]/);
+      expect(n.length, n).toBeLessThanOrEqual(32);
+      expect(n, n).not.toMatch(/stress|measured|glyc|mmol|‰/i);
+    }
+    expect(plainSugar(x.sugarPeak, 'x')).not.toMatch(/measured/);
   });
 });

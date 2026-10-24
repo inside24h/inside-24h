@@ -113,3 +113,26 @@ export function paletteAt(b: BuiltLike, m: number): Record<string, string> {
   const c = from.map((v, i) => Math.round(v + (to[i] - v) * k * 0.85));
   return { brain: `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}` };
 }
+
+/** The end card's line for one light, in plain words (round 4, owner: "Mild stress at 13:13" was cryptic): what
+ *  happened and when, from the same model numbers that set the light. `t` is the clock time of that minute. */
+export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 | 1 | 2, m: number, b: BuiltLike, t: string, sugarUnknown = false): string {
+  const mi = Math.max(0, Math.min(1440, m));
+  if (key === 'energy') {
+    if (sugarUnknown) return 'Not tracked for this one';
+    if (level === 0) return 'Steady all day';
+    const g = b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
+    return g < 0 ? `Dips below normal at ${t}` : level === 2 ? `Big sugar spike at ${t}` : `Sugar up for a while at ${t}`;
+  }
+  if (key === 'heart') return level === 0 ? 'Normal all day' : level === 2 ? `Pulse clearly up at ${t}` : `Pulse a little up at ${t}`;
+  if (key === 'water') return level === 0 ? 'Fine all day' : level === 2 ? `Short of water at ${t}` : `A bit short of water at ${t}`;
+  if (level === 0) return 'Fine all day';
+  const bac = b.bac ? at(b.bac, mi) : 0, caf = b.caffeine.doseMg >= 1 ? at(b.caffeine.body, mi) : 0;
+  if (bac >= 0.5) return `Balance worse at ${t}`;
+  if (bac >= 0.2) return `Attention worse at ${t}`;
+  if (bac > 0.02) return 'Lighter sleep that night';
+  if (caf >= 200) return level === 2 ? `Too much caffeine at ${t}` : `A lot of caffeine at ${t}`;
+  return 'Sleep may be a little lighter';
+}
+/** The end card's blood sugar line in plain words ("not measured" read like an error). */
+export const plainSugar = (peak: number | null, text: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `up to ${text}`);

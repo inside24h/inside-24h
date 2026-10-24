@@ -139,3 +139,26 @@ Također pronađeno i popravljeno: tri regexa iz runde 1/2 imala su znak backspa
 - "Sound effects only" i dalje ima tihi efekt "pour/fizz"; za pravi test trebaju slušalice/mobitel (ja sam mjerio samo brojevima).
 - Glazba je proceduralna i ugodna, ali nije "trending"; vlasnik može izabrati "Sound effects only" i dodati pjesmu u aplikaciji.
 - Usporedba: čip "Comment A or B before the end." prelazi preko linija mjerača 2 s; utrka i scoreboard su u donjem dijelu koji TikTok djelomično pokriva (informacija je i u karticama).
+
+---
+
+# Runda 4 (2026-10-24): odgovor na pogađanje, otvorene stavke, jasniji kraj
+
+Backup: `backups/20261024-171312-video5/`. Ništa nije commitano (runda 3 = 94348ab).
+
+1. **Usporedba: pitanje sad ima odgovor.** Novi `app/src/v4/video-guess.ts` za svaki par bira pitanje koje model JASNO razdvaja: (1) "which leaves your stomach first?" (izlaz iz želuca, < 3 % maksimuma), inače (2) "which is out of your blood first?" (alkohol < 0,005 g/L, kofein < 10 mg), inače (3) "which raises your blood sugar more?". Jasno = razlika ≥ 15 min i ≥ 25 % (šećer: ≥ 0,5 mmol/L i ≥ 30 %); bez jasnog pitanja nema pogađanja (CTA tada "Which one would you pick?"). U trenutku kad je utrka odlučena (ta minuta je uvijek svoj trenutak plana, i u short cutu) dolazi **odgovor** s udarcem, prstenom i rizerom: "First out: Espresso. / Out of the stomach in about 1 h."; uz alkohol odmah nakon toga kartica "Faster out ≠ better for you.". End card: "✓ Answer: Espresso left the stomach first." pa ispod, kao zaseban red, presuda iz `verdictOf`, pa "Did you guess right? 👇". Trake utrke prate istu metriku (oznaka "Out of the stomach / Out of the blood / Blood sugar rise"). Test: svih 12 parova iz Compare + espresso/pivo + cola/voda u 8, 17 i 21 h — odgovor odgovara modelu, nikad blizu izjednačenog, bez "wins/better".
+   - Parovi (17:00): cola/voda → želudac (voda), cola/diet cola → želudac, sok/naranča → želudac, pivo/vino → želudac, krafna/jabuka → šećer, espresso/energetsko → želudac, cornflakes/zob → želudac, čips/bademi → šećer, riža/leća → želudac, kava s mlijekom/cappuccino → želudac, espresso/pivo → želudac (espresso); bijeli/raženi kruh i mliječna/tamna čokolada → bez pogađanja (model ih ne razdvaja jasno).
+2. **Otvorene stavke runde 3:** mjehurići u želucu gaziranih pića (+ pjena za pivo prve minute), krvotok (točkice crijevo → jetra → srce → mozak, gustoća i sjaj prema razini tvari u krvi iz modela), count-up (broj na mjeraču u boji razine dok dan ide prema vrhu; brojevi se mijenjaju frame po frame jer sat teče), otkucaj srca (zvuk ~55/min + blagi sjaj srca) SAMO dok je svjetlo "Heart" žuto/crveno u modelu (npr. 3 piva: 27,9–41,8 s), kinetički hook (drugi red ulazi riječ po riječ u prvoj sekundi; prvi red je na frameu 0 = thumbnail; "Save cover" ima cijeli hook), tape-stop zvuk na početku premotavanja.
+3. **Kraj videa običnim riječima:** "Blood sugar not measured" → "Blood sugar: not tracked here" / "Not tracked for this one" (iskreno: za taj proizvod nema izmjerene krivulje; "no big change" bi bila tvrdnja koju model nema). "Mild stress at 13:13" → što i kada: "Sugar up for a while at 13:13", "Big sugar spike at …", "Pulse a little up at …", "A bit short of water at …", "Attention worse at …", "Balance worse at …", "Lighter sleep that night", "A lot of caffeine at …". Test za svih 8 slučajeva (u 8 i 19 h): bez "stress/measured/mmol/‰", ≤ 32 znaka.
+4. **Short cutovi:** hook, teaser i jedan udarac (vrh, a u usporedbi odgovor) u svim; usporedba short sad smije izbaciti i zadnji trenutak da odgovor stane (24 h beat ostaje); test.
+
+## Provjera runde 4
+- 16 videa kroz pravi UI → `C:\claudework\video-samples\2026-10-24-v4\` (stare mape netaknute). Sve H.264 1080×1920 30 fps + AAC; 0 crnih frameova; −14,2 do −14,4 LUFS, true peak −1,5/−1,6 dBTP.
+- Onset analiza (cue log iz `[vqa] plan`): najgori pomak 10–60 ms (premotavanje i rizer namjerno ulaze postupno); udarac odgovora poklapa se s cueom (espresso/pivo long 23,9 s, short 8,7 s; cola/voda long 30,0 s, short 10,4 s).
+- Pregledani gusti kontakt listovi (`scratchpad/video2/r7/`): mjehurići u želucu (cola), pjena (pivo prva minuta), točkice krvotoka, sjaj srca kod 3 piva, kinetički hook, odgovor "First out: Water." u short usporedbi s ✓ OUT na traci.
+- tsc čisto, vitest 648/648 (novo: `video-guess.test.ts`, short usporedba, svjetla običnim riječima), v4 build i site split build (zadnji) prolaze. Line endings: sve datoteke ostale u svom formatu, 0 backspace znakova u izvoru.
+
+## Otvoreno (runda 4)
+- Bijeli/raženi kruh i mliječna/tamna čokolada nemaju pogađanje (model ih ne razdvaja jasno) — CTA "Which one would you pick?".
+- Spec V17 brzinske linije nisu napravljene. Zvuk otkucaja/tape-stopa provjeren brojevima, ne slušalicama.
+- Vite dev server povremeno vrati 403 na stari dep-cache izvan roota (samo QA skripta; rješenje: nova cacheDir mapa).

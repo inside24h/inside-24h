@@ -129,3 +129,51 @@ export function drawSparks(ctx: CanvasRenderingContext2D, cx: number, cy: number
 /** Number of light changes per second anywhere in these effects (for the WCAG test): the pulses, rings and flashes
  *  each last ≥ 0.45 s and come from cues at least 0.9 s apart, except the impacts (≤ 2 per video). */
 export const MAX_FLASHES_PER_S = 3;
+
+// ---- round 4 (2026-10-24): bubbles, the bloodstream, the kinetic hook ----
+
+/** Bubbles rising in the stomach of a fizzy drink (and a foam rim for beer in its first minutes). `fill` 0..1 = how
+ *  much is still in the stomach; r = the stomach's size on screen. Seeded: the same bubbles every time. */
+export function drawBubbles(ctx: CanvasRenderingContext2D, at: { x: number; y: number } | null | undefined, r: number, t: number, fill: number, foam = false) {
+  if (!at || fill <= 0.02 || r < 8) return;
+  const rnd = rng(31);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const n = Math.round(10 + 14 * fill);
+  for (let i = 0; i < n; i++) {
+    const x0 = (rnd() * 2 - 1) * r * 0.7, period = 1.3 + rnd() * 1.1, ph = rnd(), size = 2 + rnd() * 4;
+    const k = ((t / period + ph) % 1); // 0 → 1 as the bubble rises
+    const y = at.y + r * 0.6 - k * r * 1.2, x = at.x + x0 + Math.sin((k + ph) * 6.28) * 4;
+    ctx.globalAlpha = 0.55 * fill * Math.sin(Math.PI * k);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (foam) {
+    ctx.globalAlpha = 0.45 * Math.min(1, fill * 1.5); ctx.fillStyle = '#fff6e0';
+    for (let i = 0; i < 16; i++) { const a = Math.PI * (1.15 + 0.7 * (i / 15)); ctx.beginPath(); ctx.arc(at.x + Math.cos(a) * r * 0.75, at.y - r * 0.45 + Math.sin(a) * r * 0.12, 4 + (i % 3) * 2, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.restore();
+}
+
+/** The bloodstream: soft dots travelling gut → liver → heart → brain along the organs' projected positions, as many
+ *  and as bright as the level of the drink's main substance in the blood (`level` 0..1). */
+export function drawBloodFlow(ctx: CanvasRenderingContext2D, path: ({ x: number; y: number } | null | undefined)[], t: number, level: number, color: string) {
+  const pts = path.filter((p): p is { x: number; y: number } => !!p);
+  if (pts.length < 2 || level <= 0.03) return;
+  const seg = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y)), total = seg.reduce((a, b) => a + b, 0);
+  if (total < 20) return;
+  const pos = (d: number) => { let x = d % total; for (let i = 0; i < seg.length; i++) { if (x <= seg[i]) { const k = x / (seg[i] || 1); return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * k, y: pts[i].y + (pts[i + 1].y - pts[i].y) * k }; } x -= seg[i]; } return pts[pts.length - 1]; };
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = color;
+  const n = Math.round(4 + 10 * level);
+  for (let i = 0; i < n; i++) {
+    const p = pos(t * 160 + (i / n) * total);
+    ctx.globalAlpha = 0.5 * level; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.18 * level; ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Kinetic words (the hook's second line): each word punches in (scale 1.4 → 1, 0.12 s), one after the other from
+ *  `from` seconds. Returns the alpha and scale of word i at time t. */
+export function punchIn(t: number, i: number, from = 0.15, step = 0.12): { a: number; s: number } {
+  const k = Math.max(0, Math.min(1, (t - from - i * step) / 0.12));
+  return { a: k, s: 1 + 0.4 * (1 - k) };
+}

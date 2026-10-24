@@ -31,10 +31,11 @@ import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, sta
 import { planCompare, planVideo, type Plan, type VFrame } from './video-plan';
 import { beatLines, type BeatCtx } from './video-beats';
 import { hookFor, hookForCompare } from './video-hook';
+import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
 import { ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
-import { bodyGlowAt, isLightDrink, mainGauge, paletteAt, SEG_FOCUS_V, whereGauge, type BuiltLike } from './video-body';
+import { bodyGlowAt, isLightDrink, mainGauge, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereGauge, type BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
 import { SIZE, VIDEO_COPY, type PinnedGauge } from './share';
@@ -247,16 +248,16 @@ function peakOf(b: PeakIn, sugarKnown: boolean): number | undefined {
 }
 /** Fizzy drinks get the can opening and the fizz in the sound (cosmetic only). */
 const isFizzy = (name: string) => /\b(cola|beer|lager|soda|sparkling|tonic|energy drink|cider|prosecco|champagne|radler)\b/i.test(name);
-/** Comparison race (spec §4.1): progress out of the stomach per minute, 1 = out (under 3 % of the most it held). */
-function stomachRace(route: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null | undefined): Float32Array | null {
-  if (!route) return null;
-  const amt = Float32Array.from({ length: 1441 }, (_, m) => route.segs(m).stomach?.amount ?? 0);
-  let mx = 0; amt.forEach((v) => { mx = Math.max(mx, v); });
-  if (mx <= 0) return null;
-  // 0 until the stomach is at its fullest, then how much has left; 1 (out) once under 3 %, for good
-  let full = 0; amt.forEach((v, m) => { if (v > amt[full]) full = m; });
-  let done = false;
-  return amt.map((v, m) => { if (m <= full) return 0; if (done || v / mx < 0.03) { done = true; return 1; } return Math.max(0, Math.min(0.99, 1 - v / mx)); });
+// (the comparison race moved to video-guess.ts, round 4)
+/** Round 4 body life: a fizzy drink still in the stomach (0..1), beer foam in the first minutes, and the level of the
+ *  main substance in the blood now against its peak of the day (0..1, from the main gauge's own curve). */
+function lifeOf(name: string, b: BuiltLike, m: number, gauges: PinnedGauge[]) {
+  const mi = Math.max(0, Math.min(1440, m)), fizzy = isFizzy(name);
+  const st = b.route?.segs(mi).stomach?.frac ?? 0;
+  const main = gauges.find((g) => g.curve);
+  let flow = 0;
+  if (main?.curve) { const mx = Math.max(...main.curve), k = Math.round((main.u ?? 0) * (main.curve.length - 1)); flow = mx > 0 ? Math.max(0, main.curve[k] / mx) : 0; }
+  return { fizz: fizzy ? Math.min(1, st * 1.4) : 0, foam: /\b(beer|lager|radler)\b/i.test(name) && mi < 4, flow };
 }
 
 /** Resolves once the 3D canvas has the video's size (or after 3 s: the frame is then cover-cropped as before). */
@@ -566,6 +567,7 @@ export default function AppV4() {
   const cmpCams = useRef<CmpCams | null>(null);
   const cmpOn = useRef(false); // the comparison video is being made
   const cmpRace = useRef<{ a: Float32Array; b: Float32Array } | null>(null); // the race out of the stomach (per minute)
+  const cmpGuess = useRef<Guess | null>(null); // round 4: the guess this pair can answer clearly, and its answer
   const [recBox, setRecBox] = useState<Format | null>(null);
   // a still of this moment (fallback when the browser cannot make video)
   const stillImage = async () => {
@@ -621,10 +623,11 @@ export default function AppV4() {
     })(),
     lights: systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2 })),
     gauges: gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null),
+    ...lifeOf(PRODUCT.name, built, minute, gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null)),
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
-      return { icon: ICON_OF[s.key], label: s.label, level: lvl, note: lvl === 0 ? 'Fine all day' : `${lvl === 1 ? 'Mild stress' : 'High stress'} at ${hhmm(profile.drinkAtMin + at0)}` };
+      return { icon: ICON_OF[s.key], label: s.label, level: lvl, note: plainNote(s.key, lvl, at0, built, hhmm(profile.drinkAtMin + at0), !!s.unknown) }; // plain words (round 4)
     }),
   };
   const startShare = (format: Format) => {
@@ -709,12 +712,15 @@ export default function AppV4() {
         // split screen (2026-10-23): this body's number (else where its drink is), pinned to the organ
         gauge: (() => { const g = gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined); return g.find((y) => y.curve) ?? g[0] ?? null; })(),
         alcohol: (x.built.alcoholG ?? 0) > 1,
-        summary: { kcal: x.kcal, sugarPeak: sugarPeakText(x.sugarPeak, profile.glucoseUnit),
-          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: l === 0 ? 'fine all day' : `${l === 1 ? 'mild stress' : 'high stress'} at ${hhmm(profile.drinkAtMin + w)}` }; }) },
+        ...lifeOf(x.label, x.built, m, gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined)),
+        summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)),
+          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: plainNote(s.key, l, w, x.built, hhmm(profile.drinkAtMin + w), !!s.unknown) }; }) },
       };
     };
     const race = cmpRace.current;
-    cmpOverlayRef.current = { hook: hookForCompare(cmpRec.a.label, cmpRec.b.label, !!race).line1, guess: !!race, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
+    const gq = cmpGuess.current;
+    cmpOverlayRef.current = { hook: gq ? gq.question : hookForCompare(cmpRec.a.label, cmpRec.b.label, false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
+      answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
   }
   // the organ each body's current moment is about (the split-screen cameras frame both, the organs light up)
   const cmpFocus: [string | null, string | null] | undefined = cmpRec ? (() => {
@@ -734,18 +740,25 @@ export default function AppV4() {
         const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
         const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built), factsFirst: true }); };
         // the game's facts from the model (spec §3.3): the race out of the stomach, the peak, the lights, the verdict
-        const ra = stomachRace(a.built.route), rb = stomachRace(b.built.route);
-        cmpRace.current = ra && rb ? { a: ra, b: rb } : null;
+        // round 4: the question this pair answers clearly (out of the stomach / out of the blood / bigger sugar rise),
+        // or none; its race bars and its answer come from the same model
+        const gq = chooseGuess(guessSideOf(a), guessSideOf(b));
+        cmpGuess.current = gq;
+        cmpRace.current = gq ? { a: gq.progress[0], b: gq.progress[1] } : null;
         const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
         const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit);
         const nonAlc = [a, b].filter((x) => (x.built.alcoholG ?? 0) <= 1), pk = [...nonAlc, a, b].map((x) => peakOf(x.built, x.glucose !== undefined)).find((x) => x !== undefined);
-        const fx: PlanFx = { peakMin: pk, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
-          lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: cmpRace.current ?? undefined };
+        // the impact lands on the answer when there is a guess (the moment the race is decided), else on the peak
+        const hit = gq ? Math.round(gq.decidedMin) : pk;
+        const fx: PlanFx = { peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
+          lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' ? cmpRace.current ?? undefined : undefined,
+          heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
         // the peak gets a moment of its own (its impact lands when both bodies are there)
-        const cmpMins = [...new Set([...(shortVid ? CMP_SHORT : CMP_STOPS), ...(pk !== undefined && pk > 0 ? [pk] : [])])].sort((x, y) => x - y);
+        const cmpMins = [...new Set([...(shortVid ? CMP_SHORT : CMP_STOPS), ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
         const plan = planCompare(cmpMins.map((at) => ({ min: at, a: chapterText(chap(a, at), at), b: chapterText(chap(b, at), at), titleA: chap(a, at).title, titleB: chap(b, at).title, linesA: cards(a, at), linesB: cards(b, at) })),
           shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
         cmpStops.current = plan.stops;
+        if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ seconds: plan.seconds, stops: plan.stops, guess: gq && { kind: gq.kind, q: gq.question, a: `${gq.answer1} ${gq.answer2}`, at: gq.decidedMin }, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, `${p.text} | ${p.textB ?? ''}`]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
         const [FW, FH] = SIZE.reel;
         const chapAt = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
         // each body's gauge, pinned to its organ in its own half (the cameras of CompareScene)
@@ -754,7 +767,9 @@ export default function AppV4() {
           if (!cc) return o;
           const pin = (sd: CmpOverlay['a'], k: number) => {
             const at = (organ: string) => { const p = pinTo(organ, cc.cams[k] as unknown as CamLike, FW / 2, FH, SIDE_X[k]); return p && { x: p.x + k * FW / 2, y: p.y }; };
-            return { ...sd, pins: { tongue: at('tongue') }, gauge: sd.gauge ? { ...sd.gauge, at: at(sd.gauge.organ) } : sd.gauge };
+            const pins: Record<string, { x: number; y: number } | null> = {};
+            for (const o2 of ['tongue', 'stomach', 'pancreas', 'jejunum', 'portal_vein', 'liver', 'heart', 'brain']) pins[o2] = at(o2);
+            return { ...sd, pins, gauge: sd.gauge ? { ...sd.gauge, at: at(sd.gauge.organ) } : sd.gauge };
           };
           return { ...o, a: pin(o.a, 0), b: pin(o.b, 1) };
         };
@@ -769,7 +784,7 @@ export default function AppV4() {
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',
           msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
-      cmpStops.current = null; setCmpRec(null); setCmpNever(false); recFr.current = null; vcue.current = null; setRecBox(null); cmpOn.current = false; cmpRace.current = null;
+      cmpStops.current = null; setCmpRec(null); setCmpNever(false); recFr.current = null; vcue.current = null; setRecBox(null); cmpOn.current = false; cmpRace.current = null; cmpGuess.current = null;
     }, 1500); // let both bodies load (runs once, before the tab can be left)
   };
   // QA only: #cmpframe=<food>&phase=… mounts the two bodies at minute t and paints one comparison frame
@@ -797,7 +812,7 @@ export default function AppV4() {
     const ctx = beatCtx(shortName(videoName), built);
     const stops = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => { const text = chapterText(c, c.min); return { min: c.min, title: c.title, text, lines: beatLines({ min: c.min, title: c.title, text }, ctx) }; });
     const fx: PlanFx = { peakMin: peakOf(built, peakNow !== null), drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
-      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2) };
+      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels };
     const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;
     if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));

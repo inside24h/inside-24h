@@ -282,7 +282,12 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   for (const c of cues) {
     const t = c.t;
     switch (c.kind) {
-      case 'rewind': { // A2 tape rewind: a rising saw through a sweeping band, hiss, and a catch at the end
+      case 'rewind': { // A20 tape stop (round 4): the cold open's sound slows to a halt, then the rewind
+        { const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.setValueAtTime(320, t); o2.frequency.exponentialRampToValueAtTime(38, t + 0.24);
+          const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(200, t + 0.24);
+          const g = ctx.createGain(); g.gain.setValueAtTime(0.13, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+          o2.connect(f); f.connect(g); g.connect(sfx); o2.start(t); o2.stop(t + 0.28); }
+        // A2 tape rewind: a rising saw through a sweeping band, hiss, and a catch at the end
         const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.setValueAtTime(200, t); o2.frequency.exponentialRampToValueAtTime(1600, t + 0.45);
         const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.45);
         const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.04); g.gain.linearRampToValueAtTime(0.0001, t + 0.47);
@@ -336,6 +341,13 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
       case 'night': if (c.data?.v === 0) { nz(t, 0.5, 0.06, sfx, { type: 'highpass', f: 200, f1: 8000 }, 0, 0.2); [69, 73, 76, 83].forEach((n, i) => osc('sine', midi(n), null, t + 0.05 * i, 1.0, 0.03, sfx)); } break; // A16 sunrise
       default: break;
     }
+  }
+  // A13 heartbeat: lub-dub every 1.1 s (≈ 55/min, calm), only inside the model's heart-stress spans
+  const hearts: [number, number][] = [];
+  at('heart').forEach((c) => { if (c.data?.v === 1) hearts.push([c.t, outro]); else if (hearts.length) hearts[hearts.length - 1][1] = Math.min(hearts[hearts.length - 1][1], c.t); });
+  for (const [a, b] of hearts) for (let t = a + 0.2; t < b - 0.3; t += 1.1) {
+    osc('sine', 55, 48, t, 0.07, 0.18, sfx, 0, 0.004); nz(t, 0.07, 0.06, sfx, { type: 'lowpass', f: 150 });
+    osc('sine', 52, 45, t + 0.14, 0.06, 0.12, sfx, 0, 0.004);
   }
   // A14 ratchet: the clock's soft ticks through the night time-lapse
   for (const [a, b] of nights) for (let t = a + 0.2; t < b - 0.1; t += 1 / 8) { nz(t, 0.004, 0.025, sfx, { type: 'highpass', f: 3000 }, 0, 0.001); osc('sine', 2200, null, t, 0.008, 0.012, sfx, 0, 0.001); }

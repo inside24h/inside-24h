@@ -163,6 +163,17 @@ describe('effects timeline', () => {
     expect(p.cues.filter((c) => c.kind === 'race').map((c) => c.data?.side)).toEqual([0, 1]);
     expect(p.cues.filter((c) => c.kind === 'peak').length + p.cues.filter((c) => c.kind === 'verdict').length).toBeLessThanOrEqual(2);
   });
+  it('short comparison: the hook, the answer (its impact) and the verdict all fit, readable', () => {
+    const ch = FIX.cola;
+    const mins = [0, 20, 57, 90, 240, 720, 1440];
+    const stops = mins.map((m) => { const c = ch.filter((x) => x.min <= m).slice(-1)[0]; return { min: m, a: c.text, b: c.text, titleA: c.title, titleB: c.title }; });
+    const p = planCompare(stops, 'short', uFromMinutes, minutesFromU, { peakMin: 57, teaserMin: 57, verdict: true, lights: [0, 0, 0, 0] });
+    expect(p.seconds).toBeLessThanOrEqual(30.5);
+    expect(p.stops).toContain(57); // the answer's moment is never dropped
+    expect(p.cues.filter((c) => c.kind === 'peak').length).toBe(1);
+    expect(p.cues.filter((c) => c.kind === 'verdict').length).toBe(1);
+    for (const pg of p.pages) expect(pg.s).toBeGreaterThanOrEqual(READ.minPage - 1 / FPS);
+  });
   it('night: the tone comes in after 22:00 and leaves at 07:00, never as a flicker', () => {
     const p = planVideo(FIX['beer-3-over-2h'], 'long', uFromMinutes, minutesFromU, { drinkAtMin: 19 * 60, wakeMin: 7 * 60 });
     const n = p.cues.filter((c) => c.kind === 'night');

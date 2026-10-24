@@ -9,8 +9,8 @@ import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
-import { bodyMotion, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSplash, drawSunrise, drawVignette, since, vignetteAlpha } from './video-fx';
-import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, REWIND_S, TEASER_S } from './video-plan';
+import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSplash, drawSunrise, drawVignette, punchIn, since, vignetteAlpha } from './video-fx';
+import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
 /** ALL wording of the end cards and calls to action, in one place, so the owner can change it (2026-10-24). Honest:
  *  no promise of new foods on a schedule. */
@@ -18,11 +18,12 @@ export const VIDEO_COPY = {
   ctaSingle: 'Which food should we test next? 👇',
   ctaDrink: 'Which drink should we test next? 👇', // alcohol: never "tag your drinking buddy"
   ctaCompare: 'Did you guess right? 👇',
+  ctaComparePick: 'Which one would you pick? 👇', // when the video asked no guess (no clear answer for this pair)
   follow: (handle: string) => (handle ? `Follow ${handle} for the next one` : 'Follow for the next one'),
   guess2: 'Comment A or B before the end.',
   answerAt: 'Answer at 24 h.',
   fasterOut: 'Faster out ≠ better for you.', // the race with alcohol on one side (spec §4.1)
-  raceLabel: 'Out of the stomach',
+  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise' },
   smallPrint: 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0',
 } as const;
 /** The plan as the drawing needs it (the cues place every effect). */
@@ -41,6 +42,7 @@ export interface Overlay {
   solid?: boolean;        // food (the clock says "since the first bite")
   // 2026-10-24 effects: organ positions on the frame, the organ of this moment, alcohol (wording of the end card)
   pins?: Record<string, { x: number; y: number } | null>; focus?: string | null; alcohol?: boolean;
+  /** round 4: fizzy drink still in the stomach (0..1), beer foam, the main substance in the blood (0..1) */ fizz?: number; foam?: boolean; flow?: number;
 }
 const LIGHT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 const WORD = ['Fine', 'Mild stress', 'High stress'];
@@ -304,9 +306,10 @@ function drawStamp(ctx: CanvasRenderingContext2D, x: number, y: number, s: strin
 export interface CmpSide { name: string; color: string; step: string; caption: string; where?: string; sugar: string; sugarLevel: 0 | 1 | 2; lights: Light[];
   summary: { kcal: number; sugarPeak: string; worst: (Light & { note: string })[] };
   gauge?: PinnedGauge | null; // 2026-10-23 split screen: this body's number, pinned to its organ
-  pins?: Record<string, { x: number; y: number } | null>; alcohol?: boolean }
+  pins?: Record<string, { x: number; y: number } | null>; alcohol?: boolean; fizz?: number; foam?: boolean; flow?: number }
 export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean;
-  /** 2026-10-24 game: the guess line, the race out of the stomach (0..1 per side) */ guess?: boolean; race?: { a: number; b: number } }
+  /** 2026-10-24 game: the guess line, the race (0..1 per side); round 4: the answer, shown when it is decided */ guess?: boolean; race?: { a: number; b: number };
+  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar'; winner: 0 | 1 } }
 
 /** Comparison Reel (9:16): both bodies side by side at the top, where the whole width is free of platform buttons;
  *  the two captions stacked below, inside the safe column. Timing from planCompare (video-plan.ts). */
@@ -525,7 +528,7 @@ export function composeFrame(source: HTMLCanvasElement, format: Format, o: Overl
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const ctx = c.getContext('2d')!;
   // intro = exactly the video's first frame (the cover); outro = the end card fully in
-  const fr: VFrame = { phase, m: 0, t: 0, cap: o.caption, capA: phase === 'main' ? 1 : 0, k: phase === 'outro' ? 0.5 : 0 };
+  const fr: VFrame = { phase, m: 0, t: phase === 'intro' ? 2 : 0, cap: o.caption, capA: phase === 'main' ? 1 : 0, k: phase === 'outro' ? 0.5 : 0 }; // (t 2: the kinetic hook is complete on the cover)
   drawFrame(ctx, W, H, source, o, format, fr, null, null);
   return c;
 }
@@ -961,7 +964,7 @@ function gaugeHeight(ctx: CanvasRenderingContext2D, g: Gauge, reel: boolean, w: 
   const n = gaugeSmall(ctx, g, w, reel).length, lh = reel ? 27 : 24;
   return (reel ? 14 + 46 + 4 : 12 + 40 + 4) + n * lh + (g.curve ? (reel ? 52 : 44) : 0) + (reel ? 12 : 10);
 }
-function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, w: number, reel: boolean, fx: { bounce?: number; flash?: number } = {}) {
+function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, w: number, reel: boolean, fx: { bounce?: number; flash?: number; count?: boolean } = {}) {
   const h = gaugeHeight(ctx, g, reel, w), col = g.level === 0 && !g.curve ? '#ffffff' : LIGHT[g.level];
   const small = gaugeSmall(ctx, g, w, reel), lh = reel ? 27 : 24;
   ctx.save();
@@ -974,7 +977,7 @@ function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: 
   let fs = bigFs; ctx.font = `700 ${fs}px ${SANS}`;
   while (fs > 28 && ctx.measureText(g.big).width > w - 2 * pad) { fs -= 2; ctx.font = `700 ${fs}px ${SANS}`; }
   ctx.fillStyle = col; ctx.textAlign = 'left'; text(ctx, g.big, x + pad, y + (reel ? 14 : 12) + bigFs * 0.82);
-  ctx.font = `600 ${smFs}px ${SANS}`; ctx.fillStyle = '#d5e0ec';
+  ctx.font = `${fx.count ? 700 : 600} ${smFs}px ${SANS}`; ctx.fillStyle = fx.count ? LIGHT[g.level] : '#d5e0ec'; // counting up to the peak
   const sy = y + (reel ? 14 + 46 + 4 : 12 + 40 + 4);
   small.forEach((ln, i) => text(ctx, ln, x + pad, sy + i * lh + smFs * 0.86));
   if (g.curve && g.curve.length > 1) {
@@ -1037,14 +1040,26 @@ function footer(ctx: CanvasRenderingContext2D, W: number, H: number, format: For
 }
 
 /** Brand line, hook and clock at the top (single and split screen). */
-function topBand(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody>, kicker: string, handle: string, m: number, u: number, rate: number, solid: boolean, back = false) {
+function topBand(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody>, kicker: string, handle: string, m: number, u: number, rate: number, solid: boolean, back = false, kinT = 9) {
   const { reel, L, R } = Lo;
   ctx.font = `700 ${reel ? 26 : 22}px ${SANS}`; ctx.fillStyle = ACCENT; shade(ctx, true); ctx.textAlign = 'left';
   text(ctx, kicker, L, Lo.kickY);
   const kw = ctx.measureText(kicker).width;
   if (handle) { ctx.textAlign = 'right'; ctx.fillStyle = '#c9d6e4'; ctx.font = `600 ${reel ? 26 : 22}px ${SANS}`; const room = R - L - kw - 40; if (room > 120) text(ctx, fit(ctx, handle, room), R, Lo.kickY); ctx.textAlign = 'left'; }
   ctx.fillStyle = '#ffffff'; ctx.font = `400 ${Lo.head.px}px ${SERIF}`;
-  Lo.head.lines.forEach((ln, i) => text(ctx, ln, L, Lo.head0 + i * Lo.headLH));
+  Lo.head.lines.forEach((ln, i) => {
+    const y = Lo.head0 + i * Lo.headLH;
+    if (i === 0 || kinT >= 1.2 || Lo.head.lines.length < 2) { text(ctx, ln, L, y); return; }
+    // the promise line punches in, word by word (round 4)
+    let x = L;
+    ln.split(' ').forEach((wd, j) => {
+      const { a, s: sc } = punchIn(kinT, j);
+      const ww = ctx.measureText(wd + ' ').width;
+      // (slides in from the right instead of growing: a bigger word would touch the line above)
+      if (a > 0.01) { ctx.save(); ctx.globalAlpha *= a; text(ctx, wd, x + 100 * (sc - 1), y); ctx.restore(); }
+      x += ww;
+    });
+  });
   shade(ctx, false);
   drawClock(ctx, L, Lo.clockTop, Lo.clockH, m, u, rate, solid, reel, back);
 }
@@ -1056,6 +1071,17 @@ export function endTiming(fr: Pick<VFrame, 'phase' | 'k'>, outS: number) {
   if (fr.phase !== 'outro') return { main: 1, end: 0, top: 1, first: 0 };
   const tt = fr.k * outS, leave = 1 - smooth((tt - (outS - 0.95)) / 0.4);
   return { main: 1 - smooth(tt / 0.3), end: smooth((tt - 0.3) / 0.4) * leave, top: leave, first: smooth((tt - (outS - 0.5)) / 0.5) };
+}
+
+/** Round 4 effects on one body: bubbles in a fizzy stomach (foam on beer), the bloodstream gut → liver → heart → brain
+ *  as bright as the level in the blood, and a soft glow on the heart with each heartbeat (only in the model's
+ *  heart-stress spans, video-plan 'heart' cues; 1.1 s apart, well under 3 flashes a second). */
+function bodyLife(ctx: CanvasRenderingContext2D, pin: (k: string) => { x: number; y: number } | null, side: { fizz?: number; foam?: boolean; flow?: number; color?: string }, cues: Plan['cues'] | undefined, t: number) {
+  const st = pin('stomach'), pa = pin('pancreas');
+  if (st && pa) drawBubbles(ctx, st, Math.hypot(st.x - pa.x, st.y - pa.y) * 1.1, t, side.fizz ?? 0, !!side.foam);
+  drawBloodFlow(ctx, ['jejunum', 'portal_vein', 'liver', 'heart', 'brain'].map(pin), t, side.flow ?? 0, lighten(side.color ?? ACCENT));
+  const hb = since(cues, 'heart', t);
+  if (hb.cue?.data?.v === 1 && hb.age > 0.2) drawGlowPulse(ctx, pin('heart'), (hb.age - 0.2) % 1.1, '#ff5a6a', 90);
 }
 
 /** Body-first frame of the single video. 2026-10-24 creative upgrade: the cold open and its rewind, the sip splash,
@@ -1078,6 +1104,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   const micro = since(cues, 'micro', t);
   if (micro.cue?.data?.v === 1) drawGlowPulse(ctx, pinOf(o.focus) ?? tf(main?.at), micro.age, lighten(o.color ?? ACCENT));
   drawSplash(ctx, pinOf('tongue'), since(cues, 'sip', t).age, lighten(o.color ?? '#ffffff'));
+  bodyLife(ctx, pinOf, o, cues, t);
   const peak = since(cues, 'peak', t);
   drawShockwave(ctx, tf(main?.at) ?? pinOf(o.focus), peak.age, LIGHT[main?.level ?? 1]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
@@ -1104,13 +1131,14 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
       // the peak: the main number bounces (×1.15) and gets a PEAK stamp for 1.4 s; it also shows on the cold open
       const isMain = g === main, pk = isMain ? (fr.beat === 'teaser' ? 0.6 : peak.age) : Infinity;
       const flash = isMain && micro.cue?.data?.v === 2 && micro.age < 0.5 ? 1 - micro.age / 0.5 : 0;
-      drawGauge(ctx, g, x, y, gw, reel, { bounce: pk < 0.35 ? Math.sin(Math.PI * pk / 0.35) : 0, flash });
+      const counting = isMain && (vignetteAlpha(cues, t) > 0.01 && peak.age > 0.5 || peak.age < 0.4);
+      drawGauge(ctx, g, x, y, gw, reel, { bounce: pk < 0.35 ? Math.sin(Math.PI * pk / 0.35) : 0, flash, count: counting });
       if (pk <= 1.4) drawStamp2(ctx, 'PEAK', x + (right ? gw - 10 : 10), y + h + 8, LIGHT[g.level], right, Math.min(1, (1.4 - pk) / 0.25));
     });
     ctx.restore();
   }
   // 3) top: brand, hook, clock (it runs backwards in the rewind)
-  if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · WATCH THE NEXT 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid, fr.beat === 'rewind'); ctx.restore(); }
+  if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · WATCH THE NEXT 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid, fr.beat === 'rewind', fr.phase === 'intro' ? t : 9); ctx.restore(); }
   // 4) bottom: the moment's title and its short card; in a glide, the NEXT chip
   if (E.main > 0.001) {
     ctx.save(); ctx.globalAlpha = E.main * (fr.plateA ?? 1);
@@ -1283,6 +1311,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   const sipAge = since(cues, 'sip', t).age, peak = since(cues, 'peak', t);
   [o.a, o.b].forEach((sd, k) => {
     drawSplash(ctx, tf(sd.pins?.tongue ?? null), sipAge - k * 0.12, lighten(sd.color), 11 + k);
+    bodyLife(ctx, (key) => tf(sd.pins?.[key] ?? null), sd, k === 0 ? cues : undefined, t); // one heartbeat glow is enough (left)
     if (sd.gauge?.curve) drawShockwave(ctx, tf(sd.gauge.at), peak.age, LIGHT[sd.gauge.level]);
   });
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
@@ -1392,10 +1421,16 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   // one chip at a time above the captions: the guess (intro), "Answer at 24 h." (half time), "Faster out ≠ …" (race)
   const sip = since(cues, 'sip', t), tease = since(cues, 'next', t, (c) => c.data?.label === 'tease'), race = since(cues, 'race', t);
   const anyAlcohol = !!(o.a.alcohol || o.b.alcohol);
-  const chip = o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? VIDEO_COPY.guess2
-    : tease.age < 2.6 ? VIDEO_COPY.answerAt : anyAlcohol && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
+  // THE ANSWER (round 4): when the race is decided (the plan's 'peak' cue of a comparison), a banner names it, with
+  // the impact; the honesty card follows it when alcohol is on either side
+  const ans = o.answer, dec = since(cues, 'peak', t), ansS = ans ? readChars(ans.a1.length + ans.a2.length) + 0.6 : 0;
+  const showAns = !!ans && dec.age >= 0 && dec.age < ansS;
+  const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? VIDEO_COPY.guess2
+    : tease.age < 2.6 ? VIDEO_COPY.answerAt : anyAlcohol && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
+    : anyAlcohol && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
   void sip;
   if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, S.rightLow - L, true, true); ctx.restore(); }
+  if (showAns && ans) drawAnswer(ctx, W, Lo, ans, [o.a, o.b][ans.winner].color, dec.age, ansS);
   // the NEXT chip while the day runs on (the captions are away then)
   if (fr.beat === 'glide' && fr.next) {
     ctx.save(); ctx.globalAlpha *= 1 - (fr.plateA ?? 1);
@@ -1406,13 +1441,13 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   if (o.race) {
     const y = S.bottom + 150, bh = 20;
     ctx.fillStyle = '#9fb0c4'; ctx.font = `700 22px ${SANS}`; ctx.textAlign = 'center';
-    text(ctx, VIDEO_COPY.raceLabel.toUpperCase(), W / 2, y - 14, true); ctx.textAlign = 'left';
+    text(ctx, VIDEO_COPY.raceLabel[o.answer?.kind ?? 'stomach'].toUpperCase(), W / 2, y - 14, true); ctx.textAlign = 'left';
     [o.a, o.b].forEach((sd, k) => {
       const x0 = k ? W / 2 + 24 : L, x1 = k ? R : W / 2 - 24, p = Math.max(0, Math.min(1, k ? o.race!.b : o.race!.a));
       ctx.fillStyle = 'rgba(140,170,210,.22)'; roundRect(ctx, x0, y, x1 - x0, bh, bh / 2); ctx.fill();
       ctx.fillStyle = lighten(sd.color); roundRect(ctx, x0, y, Math.max(bh, (x1 - x0) * p), bh, bh / 2); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x1 - 2, y - 6); ctx.lineTo(x1 - 2, y + bh + 6); ctx.stroke(); // the finish line
-      if (p >= 1) { ctx.fillStyle = '#e6edf5'; ctx.font = `700 24px ${SANS}`; ctx.textAlign = k ? 'right' : 'left'; text(ctx, '✓ OUT', k ? x1 : x0, y + bh + 34, true); ctx.textAlign = 'left'; }
+      if (p >= 1 && o.answer?.kind !== 'sugar') { ctx.fillStyle = '#e6edf5'; ctx.font = `700 24px ${SANS}`; ctx.textAlign = k ? 'right' : 'left'; text(ctx, '✓ OUT', k ? x1 : x0, y + bh + 34, true); ctx.textAlign = 'left'; }
     });
   }
   // scoreboard: the four lights of each body, as they are now
@@ -1425,6 +1460,28 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
     });
   });
   ctx.restore();
+}
+
+/** The answer banner: "First out: Espresso." / "Out of the stomach in about 1 h.", over the bodies' middle, with a
+ *  pop and a ring (the impact); it leaves before the next words come. */
+function drawAnswer(ctx: CanvasRenderingContext2D, W: number, Lo: ReturnType<typeof layoutSplit>, a: NonNullable<CmpOverlay['answer']>, color: string, age: number, dur: number) {
+  const { S, L } = Lo, maxW = S.rightLow - L - 40;
+  const k1 = fitWrap(ctx, a.a1, maxW, 1, 52, 34, (px) => `800 ${px}px ${SANS}`), k2 = fitWrap(ctx, a.a2, maxW, 2, 34, 26, (px) => `600 ${px}px ${SANS}`);
+  ctx.font = `800 ${k1.px}px ${SANS}`; const w1 = ctx.measureText(k1.lines[0] ?? '').width;
+  ctx.font = `600 ${k2.px}px ${SANS}`; const w2 = Math.max(...k2.lines.map((l) => ctx.measureText(l).width));
+  const w = Math.min(S.rightLow - L, Math.max(w1, w2) + 60), h = 30 + k1.px + 14 + k2.lines.length * k2.px * 1.2 + 18;
+  const cx = W / 2, y = Lo.capTop - 130 - h, x = cx - w / 2;
+  const a0 = Math.min(1, age / 0.12) * (1 - Math.max(0, (age - (dur - 0.3)) / 0.3)), sc = 1 + 0.18 * (1 - smooth(age / 0.35));
+  drawShockwave(ctx, { x: cx, y: y + h / 2 }, age, lighten(color));
+  ctx.save(); ctx.globalAlpha *= Math.max(0, a0);
+  ctx.translate(cx, y + h / 2); ctx.scale(sc, sc); ctx.translate(-cx, -(y + h / 2));
+  ctx.fillStyle = 'rgba(6,12,20,.86)'; roundRect(ctx, x, y, w, h, 24); ctx.fill();
+  ctx.strokeStyle = lighten(color); ctx.lineWidth = 4; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff'; ctx.font = `800 ${k1.px}px ${SANS}`;
+  text(ctx, k1.lines[0] ?? '', cx, y + 22 + k1.px * 0.86);
+  ctx.fillStyle = '#d5e0ec'; ctx.font = `600 ${k2.px}px ${SANS}`;
+  k2.lines.forEach((ln, i) => text(ctx, ln, cx, y + 22 + k1.px + 14 + k2.px * 0.9 + i * k2.px * 1.2));
+  ctx.textAlign = 'left'; ctx.restore();
 }
 
 /** Comparison end card: both days in two columns (the lights come on in turn, left and right), the verdict lands
@@ -1441,7 +1498,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
   let y = y0 + 40;
   ctx.fillStyle = ACCENT; ctx.font = `700 30px ${SANS}`; text(ctx, 'AFTER 24 HOURS', L, y);
   y += 20;
-  const gap = 16, cw = (RL - L - gap) / 2, ch = 364;
+  const gap = 16, cw = (RL - L - gap) / 2, ch = o.answer ? 350 : 364;
   [o.a, o.b].forEach((s, k) => {
     const x = L + k * (cw + gap);
     ctx.fillStyle = 'rgba(16,28,44,.94)'; roundRect(ctx, x, y, cw, ch, 22); ctx.fill();
@@ -1451,11 +1508,11 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     ctx.fillStyle = '#e6edf5'; ctx.font = `700 24px ${SANS}`;
     text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 94);
     ctx.font = `600 22px ${SANS}`; ctx.fillStyle = '#b8c7d8';
-    text(ctx, fit(ctx, `Blood sugar ${s.summary.sugarPeak}`, cw - 40), x + 20, y + 124);
+    text(ctx, fit(ctx, `Blood sugar: ${s.summary.sugarPeak}`, cw - 40), x + 20, y + 124);
     s.summary.worst.slice(0, 4).forEach((l, j) => {
       const k2 = smooth((tt - CMP_LIGHTS_FROM_S - (j * 2 + k) * CMP_LIGHTS_STEP_S) / 0.2); // L1, R1, L2, R2 … (after the verdict)
       if (k2 <= 0.01) return;
-      const ry = y + 148 + j * 53;
+      const ry = y + 148 + j * (o.answer ? 49 : 53);
       ctx.save(); ctx.globalAlpha *= k2;
       ctx.fillStyle = LIGHT[l.level]; ctx.beginPath(); ctx.arc(x + 34, ry + 17, 12 * (1 + 0.2 * Math.sin(Math.PI * k2)), 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#e6edf5'; ctx.font = `700 22px ${SANS}`; text(ctx, fit(ctx, l.label, cw - 80), x + 58, ry + 14);
@@ -1464,6 +1521,13 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     });
   });
   y += ch + 16;
+  // the guess's answer first ("Did you guess right?" is about this), the overall verdict on its own line below
+  if (o.answer) {
+    const r = fitWrap(ctx, `✓ ${o.answer.recap}`, RL - L - 20, 2, 34, 26, (px) => `700 ${px}px ${SANS}`);
+    ctx.fillStyle = '#ffe2a0'; ctx.font = `700 ${r.px}px ${SANS}`;
+    r.lines.forEach((ln, i) => text(ctx, ln, L + 4, y + r.px * 0.9 + i * r.px * 1.18));
+    y += r.px * 0.9 + (r.lines.length - 1) * r.px * 1.18 + 22;
+  }
   if (o.verdict) {
     const vd = since(cues, 'verdict', 1e9).cue, age = vd ? tt - (vd.t - (cues?.find((c) => c.kind === 'outro')?.t ?? 0)) : 1;
     const v = fitWrap(ctx, o.verdict, RL - L - 44, 3, 34, 24, (px) => `700 ${px}px ${SANS}`);
@@ -1482,7 +1546,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     }
     y += bh + 16; // its place is kept before it lands, so nothing below moves
   }
-  const cta = fitWrap(ctx, VIDEO_COPY.ctaCompare, RL - L, 1, 42, 30, (px) => `700 ${px}px ${SANS}`);
+  const cta = fitWrap(ctx, o.answer ? VIDEO_COPY.ctaCompare : VIDEO_COPY.ctaComparePick, RL - L, 1, 42, 30, (px) => `700 ${px}px ${SANS}`);
   ctx.fillStyle = '#ffffff'; ctx.font = `700 ${cta.px}px ${SANS}`;
   const cy = Math.min(y + cta.px * 0.9, S.bottom - 46);
   text(ctx, cta.lines[0] ?? '', L, cy);

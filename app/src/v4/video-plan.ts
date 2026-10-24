@@ -121,7 +121,7 @@ export interface VFrame {
 /** One timeline for picture and sound (2026-10-24 creative spec §2.1): every effect and every sound effect is placed
  *  from these cues, so they always land on the same frame. */
 export type CueKind = 'start' | 'move' | 'stop' | 'page' | 'outro' | 'end'
-  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro';
+  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart';
 export interface Cue { t: number; kind: CueKind; data?: { level?: 0 | 1 | 2; side?: 0 | 1; v?: number; label?: string } }
 export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number; peakT?: number }
 /** What the effects need from the model (all optional; the plan works without). */
@@ -134,6 +134,8 @@ export interface PlanFx {
   compare?: boolean; verdict?: boolean; verdictTrophy?: boolean;
   race?: { a?: ArrayLike<number>; b?: ArrayLike<number> }; // comparison: progress 0..1 per minute (1 = done)
   tease?: boolean;        // the mid-video "Coming up: …" card (long cut; default on)
+  /** the heart light per minute (status.ts): a heartbeat is heard ONLY while the model says the heart is under stress */
+  heart?: ArrayLike<number>;
 }
 export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.75, LIGHTS_STEP_S = 0.35, MICRO_GAP_S = 2.9;
 /** Comparison end card: the verdict lands first (it is the answer to the guess, and must be read: + 1.5 s), then the
@@ -315,7 +317,8 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
   const dropped: CmpStopIn[] = [];
   while (total(pages) > lim.max && chosen.length > 2) {
     let drop = 1, best = Infinity;
-    for (let i = 1; i < chosen.length - 1; i++) { const v = value(chosen[i]) + (toU(chosen[i].min) - toU(chosen[i - 1].min)); if (v < best) { best = v; drop = i; } }
+    // (short cut: the last moment may go too, so the answer's moment always fits; the 24 h beat still closes the day)
+    for (let i = 1; i < chosen.length - (cut === 'short' ? 0 : 1); i++) { const v = value(chosen[i]) + (toU(chosen[i].min) - toU(chosen[i - 1].min)); if (v < best) { best = v; drop = i; } }
     dropped.push(chosen[drop]); chosen = chosen.filter((_s, i) => i !== drop); pages = pagesOf(chosen);
   }
   for (const d of dropped.sort((x, y) => value(y) - value(x))) { // a left-out moment that fits again comes back
@@ -434,6 +437,17 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
     let v = 0;
     frames.forEach((f, i) => { v += ((raw[i] ? 1 : 0) - v) * Math.min(1, 1 / F(0.8) * 2); f.night = Math.max(0, Math.min(1, v)); });
   }
+  // HEART (round 4): while the heart light is yellow or red for at least 2 s of video, a calm heartbeat (≈ 55/min,
+  // never faster: it must not suggest a racing pulse) and a soft glow on the heart
+  if (fx.heart) {
+    const on = frames.map((f) => f.phase !== 'outro' && f.beat !== 'teaser' && f.beat !== 'rewind' && (fx.heart![Math.round(Math.min(1440, Math.max(0, f.m)))] ?? 0) >= 1);
+    for (let i = 0; i < on.length;) {
+      if (!on[i]) { i++; continue; }
+      let j = i; while (j < on.length && on[j]) j++;
+      if (j - i >= F(2)) { cues.push({ t: i / FPS, kind: 'heart', data: { v: 1 } }, { t: j / FPS, kind: 'heart', data: { v: 0 } }); }
+      i = j;
+    }
+  }
   // RACE (comparison, §4.1): the first frame each side is done (e.g. out of the stomach)
   if (fx.race) {
     ([fx.race.a, fx.race.b] as (ArrayLike<number> | undefined)[]).forEach((curve, side) => {
@@ -449,7 +463,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
   }
   // MICRO-BEATS (§2.3): no stretch of more than 3 s without something new on screen (camera turn, organ pulse,
   // gauge tick); never two within 2 s
-  const visual = (c: Cue) => c.kind !== 'start' && c.kind !== 'end' && c.kind !== 'night';
+  const visual = (c: Cue) => c.kind !== 'start' && c.kind !== 'end' && c.kind !== 'night' && c.kind !== 'heart';
   const outroT = tOut;
   let times = cues.filter(visual).map((c) => c.t).filter((t) => t < outroT).sort((a, b) => a - b);
   times = [0, ...times, outroT];
