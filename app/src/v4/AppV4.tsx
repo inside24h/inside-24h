@@ -29,9 +29,10 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planCompare, planVideo, type Plan, type VFrame } from './video-plan';
+import { beatLines, type BeatCtx } from './video-beats';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
-import { ORGAN_AT, project, SIDE_X, type Shot, type V3 } from './video-cam';
-import { bodyGlowAt, mainGauge, SEG_FOCUS_V, whereGauge, type BuiltLike } from './video-body';
+import { ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
+import { bodyGlowAt, isLightDrink, mainGauge, SEG_FOCUS_V, VIDEO_PALETTE, whereGauge, type BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
 import { SIZE, type PinnedGauge } from './share';
@@ -87,7 +88,7 @@ const START_TILES = [
   { q: 'glass of milk', name: 'Milk', sub: '250 ml glass', color: '#f4f1ea' },
 ];
 const CMP_STOPS = [0, 5, 20, 45, 90, 180, 360, 720, 1440];
-const CMP_SHORT = [0, 20, 90, 1440];
+const CMP_SHORT = [0, 20, 90, 240, 720, 1440]; // 2026-10-24: the planner keeps what fits in 30 s; long gaps glide slower (video-plan moveS)
 const T50_OF: Record<string, number> = { espresso: 13, cola: 32, water: 13 }; // gastric half-times of the curated models
 // Database foods that match a health-bar item (healthBars.ts ITEM_FX)
 const HABIT_OF: Record<string, string> = { banana: 'banana', 'bread-white': 'bread', pizza: 'pizza', 'orange-juice': 'juice', 'green-tea': 'tea', beer: 'beer', 'red-wine': 'wine', 'white-wine': 'wine', 'chocolate-milk-bar': 'chocolate' };
@@ -176,6 +177,14 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
 }
 
 // ---- body-first video (2026-10-23): what the video camera films and what is pinned to the body ----
+/** The video's short name: no grams in brackets; a long name keeps its first part ("A whole pizza with extra
+ *  cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name. */
+const shortName = (n: string) => { const s = n.replace(/\s*\([^)]*\)/g, ''); return s.split(/\s+/).length > 5 && / with /.test(s) ? s.slice(0, s.indexOf(' with ')) : s; };
+/** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
+function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] } }): BeatCtx {
+  const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
+  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined };
+}
 /** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end. */
 function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefined)[], union = false): Shot {
@@ -195,6 +204,10 @@ function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefine
   return { focus: [...new Set(focus)], zoom: union ? 'mid' : 'close', tight: fr.hk ?? 0 };
 }
 const OPENING: Shot = { focus: [], zoom: 'wide' }; // the first frame: the whole body
+/** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
+ *  moment is read and out again for the quiet hours and the end. */
+const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? 1.56 - 0.06 * (fr?.hk ?? 0) : 1.62) });
+const SPLIT_OPENING: Shot = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 /** Where the drink is + the number that matters, at minute m (where is left out when it says the same). */
 function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKnown: boolean): PinnedGauge[] {
   const main = mainGauge(b, m, uFromMinutes(Math.min(1440, m)), unit, sugarKnown), where = whereGauge(b, m);
@@ -549,7 +562,7 @@ export default function AppV4() {
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
-    hook: `${((n) => (n.split(/\s+/).length > 5 && / with /.test(n) ? n.slice(0, n.indexOf(' with ')) : n))(videoName.replace(/\s*\([^)]*\)/g, ''))} — inside your body`,
+    hook: `${shortName(videoName)} — inside your body`,
     title: PRODUCT.name,
     sub: `${profile.sex === 'female' ? 'Woman' : 'Man'}, ${profile.ageY} · ${profile.heightCm} cm · ${profile.weightKg} kg${city ? ` · ${city.name}` : ''}`,
     clock: hhmm(profile.drinkAtMin + recStop), step: recChapter.title, caption: captionOf(chapterText(recChapter, recStop)), color: story.color, progress: u, handle, stamp: stampFor(recStop, /bite/i.test(story.chapters[0]?.title ?? '')),
@@ -667,7 +680,7 @@ export default function AppV4() {
   })() : undefined;
   const makeCompareVideo = (a: Analysis, b: Analysis) => {
     setCompare(null); setCmpRec({ a, b, u: 0 }); setShare({ state: 'rec', format: 'reel' }); setRecPct(0);
-    setRecBox('reel'); recFr.current = null; vcue.current = { shot: OPENING, start: OPENING }; cmpOn.current = true;
+    setRecBox('reel'); recFr.current = null; vcue.current = { shot: SPLIT_OPENING, start: SPLIT_OPENING }; cmpOn.current = true;
     setTimeout(async () => {
       const ca = document.querySelector<HTMLCanvasElement>('.stage canvas');
       if (!ca) { setShare({ state: 'error', msg: 'We couldn’t prepare the two bodies. Please try again.' }); setCmpRec(null); setRecBox(null); vcue.current = null; cmpOn.current = false; return; }
@@ -675,7 +688,8 @@ export default function AppV4() {
         flushSync(() => setCmpNever(true)); // bodies are loaded: from now on only the recorder draws frames
         // each side's words at each moment (as on screen); planCompare sets the reading times and the length
         const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
-        const plan = planCompare((shortVid ? CMP_SHORT : CMP_STOPS).map((at) => ({ min: at, a: chapterText(chap(a, at), at), b: chapterText(chap(b, at), at), titleA: chap(a, at).title, titleB: chap(b, at).title })),
+        const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built), factsFirst: true }); };
+        const plan = planCompare((shortVid ? CMP_SHORT : CMP_STOPS).map((at) => ({ min: at, a: chapterText(chap(a, at), at), b: chapterText(chap(b, at), at), titleA: chap(a, at).title, titleB: chap(b, at).title, linesA: cards(a, at), linesB: cards(b, at) })),
           shortVid ? 'short' : 'long', uFromMinutes, minutesFromU);
         cmpStops.current = plan.stops;
         const [FW, FH] = SIZE.reel;
@@ -694,9 +708,9 @@ export default function AppV4() {
         const { blob, ext, audio } = await recordCompare(ca, pinned, (m, fr) => {
           recFr.current = fr ?? null;
           flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r)));
-          if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = shotOf(fr, [chapAt(a, st0).focus, chapAt(b, st0).focus], true); }
+          if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = splitShot(fr); void chapAt(a, st0); }
           const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
-        }, plan, { sound: vidSound, onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = OPENING; } });
+        }, plan, { sound: vidSound, onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; } });
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what really happens inside you in 24 hours 👀 ${verdictOf(a, b, profile.glucoseUnit)} Which one would you pick? 👇 #Inside24h #health #nutrition`,
           msg: vidSound && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
@@ -724,7 +738,9 @@ export default function AppV4() {
   // key moments for the single Reel: the story's chapters (the swallow is part of 'first sip'), at most 10 stops
   // every chapter's words at its own minute (as on screen); video-plan.ts picks the moments and the caption times
   const reelPlan = (): Plan => {
-    const stops = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
+    // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
+    const ctx = beatCtx(shortName(videoName), built);
+    const stops = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => { const text = chapterText(c, c.min); return { min: c.min, title: c.title, text, lines: beatLines({ min: c.min, title: c.title, text }, ctx) }; });
     const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU);
     reelStops.current = plan.stops;
     if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]) }));
@@ -878,11 +894,11 @@ export default function AppV4() {
                   {cmpRec ? <CompareScene a={cmpRec.a} b={cmpRec.b} minute={minutesFromU(cmpRec.u)} cue={vcue} cams={cmpCams} focus={cmpFocus} /> : <>
                   <Body glow={vGlow ? vGlow.glow as Glow : mode === 'simple' || !started ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
                     liquid={mode === 'simple' && started ? softenTubes(story.liquid(minute), !!built.route) : {}} liquidColor={story.color} onBounds={setBounds}
-                    dim={vGlow ? 0.32 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])] : keepOrgans} />
+                    dim={vGlow ? 0.42 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])] : keepOrgans} palette={vGlow ? VIDEO_PALETTE : undefined} />
                   {/* first screen (nothing chosen yet): the body on its own, no liquid */}
                   {started && mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}
                   {started && mode === 'simple' && (built.route
-                    ? <LiquidRoute route={built.route} color={story.color} minute={minute} labels={share?.state !== 'rec'} maxLabels={calmNow ? 1 : 3} />
+                    ? <LiquidRoute route={built.route} color={story.color} minute={minute} labels={share?.state !== 'rec'} maxLabels={calmNow ? 1 : 3} subtle={!!vGlow && isLightDrink(story.color)} />
                     : <FlowPaths bounds={bounds} color={story.color} flows={story.flows(minute)} toKidneys={story.toKidneys} />)}
                   </>}
                 </Suspense>

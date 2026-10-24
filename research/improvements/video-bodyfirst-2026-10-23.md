@@ -64,3 +64,28 @@ Uzorci za vlasnika: `C:\claudework\video-samples\2026-10-23\` (16 MP4).
 - Sadržaj poglavlja (ne video kod): "1 hamburger, 1 small portion of french fries…", "20:20: the last of the 3 drinks" i sl. dolaze iz `foodProduct.ts`.
 - Short usporedba: 4 trenutka (0, 20, 90, 24 h) iz `CMP_SHORT`; srednji sati se preskaču brzo.
 - Sljedeći korak za viralnost: voiceover (video-strategy §5.4) i A/B hookova.
+
+---
+
+# Runda 2 (2026-10-24): pregled vlasnika/koordinatora → popravci
+
+Backup: `backups/20261023-232325-video3/`. Ništa nije commitano (runda 1 je commit c8967c4).
+
+| # | Primjedba | Popravak |
+|---|---|---|
+| 1 | Titlovi su komadi rečenica ("your stomach within about 40 minutes:", "is still in you at 23:00.") | Novi `app/src/v4/video-beats.ts`: svaka kartica je JEDNA kratka cjelovita misao (≤ 8 riječi, veliko slovo, završava točkom). Kratka rečenica iz poglavlja ide kakva jest; duga se reže samo na vlastitim ":" / ";" ako je svaki dio cijela rečenica; ~70 čestih dugih rečenica ima kratki oblik istog značenja (npr. "Each drink: half leaves within 40 minutes." + "The drink slows your stomach down."). Ništa novo se ne tvrdi. Plan (video-plan) sad slaže kartice, ne stranice rečenica. |
+| 2 | Broj na mjeraču ≠ broj u titlu (0.31–0.77 ‰ vs 0.33–0.83 ‰) | Vrijednosti koje se mijenjaju sa satom (‰, mmol/L, mg/dL, "mg of caffeine is left") NIKAD nisu na kartici — samo na mjeraču koji prati sat. Zagrade s takvim brojem se izbacuju ("There is still alcohol in your blood."). Test. |
+| 3 | "Last drink 80 minutes after the first" vs naslov "over 2 h" | Model (foodSim) daje N rundi na početku svakog odsječka: 3 pića kroz 2 h = jedno svakih 40 min, na 0, 40 i 80 min; prozor od 2 h završava na 2:00. Video sad kaže: prva kartica "3 × 500 ml of beer." + "Over 2 h: one drink every 40 minutes.", zadnje piće "Drink 3 of 3, at +1:20." + "One every 40 minutes, over 2 h." (isti sat kao gore). Test. |
+| 4 | Zaglavlje usporedbe ~40 % visine, prekriva glave/mozgove | Kompaktno: 1 red (brand mali) + hook i kompaktni sat u istom redu + red s imenima i brojem (čip) svakog tijela, sve do y≈435. Kamera usporedbe ima fiksni kadar (`splitPose`): vrh glave odmah ispod zaglavlja, mozak i želudac uvijek vidljivi, lagano "disanje" kadra. |
+| 5 | End card usporedbe: duh "e your body" iza naslova, izblijedjeli CTA preko teksta | Uzrok: pretapanje u prvi frame (petlja) preko end carda + istovremeno nestajanje titlova i dolazak end carda. Sada strogo redom (`endTiming`): titlovi odu (0,3 s) → end card dođe (0,4 s) → end card i naslov odu (0,4 s) → tek onda prvi frame (0,5 s). Test provjerava da se nijedne dvije riječi ne preklapaju ni u jednom frameu prvih 3 s i zadnjih 6,5 s (single + split). |
+| 6a | Mozak previše bijelo-plavo | Video paleta: mozak mirna ljubičasta (#6f5fd8), mekši rub, bez "scan" linije, slabiji sjaj. Pronađen i pravi uzrok bljeskanja u usporedbi: `onError={() => {}}` kao nova funkcija svaki frame → Body je svaki frame ponovno učitavao model (svježi materijali = bijeli mozak). Popravljeno u CompareVideo (stabilni NOOP) i u Body (učitava jednom, onError preko ref-a). |
+| 6b | Pivo/voda kao debela svijetla cijev | `LiquidRoute subtle` za svijetla pića u videu: tanji, mekši tok bez halo/obrisa. |
+| 6c | Kratka usporedba preskače srednje sate | CMP_SHORT = 0, 20, 90, 240, 720, 1440 (planer zadrži što stane), duga klizanja kroz tihe sate traju do 1,8 s (`moveS`), pravilo čitanja nepromijenjeno. |
+| 7 | Donjih ~25 % kadra tamno | Tamni gradijent samo iza titla (ispod njega lagani veo), ostala tijela prigušena na 0,42 umjesto 0,32 → noge/zdjelica/crijeva vidljivi do dna. |
+
+Dodatno: mjerač "gdje je" više ne pokazuje jednjak (prolaz traje sekunde, broj je bio besmislen, npr. "845 ml Food pipe").
+
+Testovi (novo): `video-plan.test.ts` → kartice (cijele misli, bez ":" na kraju, ≤ 8 riječi, ne počinju malim slovom / veznikom), nijedna kartica nema broj koji prati sat, bedtime primjer vlasnika, pacing (+1:20, 40 min, 2 h), vlasnikove razbijene kartice; `share.test.ts` → nijedan tekst preko teksta (intro + end, single + split), redoslijed petlje.
+
+Provjera runde 2: svih 16 videa ponovno renderirano kroz pravi UI → `C:\claudework\video-samples\2026-10-24\` (stara mapa 2026-10-23 netaknuta). Sve H.264 1080×1920 30 fps + AAC, 0 crnih frameova; long 63,9–74,4 s, short 27,4–29,4 s. Gusti kontakt listovi prvih 3 s (10 fps) i zadnjih 6 s (5 fps): `scratchpad/video2/r4/*-ends.png`, cijeli videi `r4/*-sheet.png` — bez treperenja mozga, bez teksta preko teksta, petlja ide redom (end card nestane → prvi frame). Usporedba se sad renderira ~2× brže (nema više ponovnog učitavanja modela svaki frame).
+tsc čisto, vitest 551/551, oba builda (split zadnji) prolaze. Privremene QA skripte: `app/scripts/_v2_plans.ts`, `_v2_beats.ts`, `_v3_dbg.ts` (mogu se obrisati uz potvrdu).

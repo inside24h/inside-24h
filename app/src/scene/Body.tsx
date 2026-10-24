@@ -73,11 +73,11 @@ const vertexShader = /* glsl */ `
   }`;
 
 const fragmentShader = /* glsl */ `
-  uniform vec3 color; uniform float base; uniform float rim; uniform float glow; uniform float time; uniform float dimv;
+  uniform vec3 color; uniform float base; uniform float rim; uniform float glow; uniform float time; uniform float dimv; uniform float scanK;
   varying vec3 vN; varying vec3 vV; varying float vY;
   void main() {
     float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.0);
-    float scan = exp(-pow((vY - (1.75 - mod(time * 0.12, 1.9))) * 40.0, 2.0)) * 0.25;
+    float scan = exp(-pow((vY - (1.75 - mod(time * 0.12, 1.9))) * 40.0, 2.0)) * 0.25 * scanK;
     float pulse = 0.85 + 0.15 * sin(time * 3.0);
     float k = base + f * rim + scan * rim + glow * (0.35 + f * 1.6) * pulse;
     gl_FragColor = vec4(color * k * dimv, 1.0);
@@ -119,14 +119,18 @@ interface BodyProps {
   liquid?: Liquid; liquidColor?: string; onBounds?: (b: Bounds) => void;
   /** Focus mode: every structure not listed in keep fades to this brightness (1 = off), so the liquid stands out. */
   dim?: number; keep?: string[];
+  /** Video (2026-10-24): a colour per structure instead of its usual one, e.g. a calm emissive tint for the brain. */
+  palette?: Partial<Record<string, string>>;
 }
 
-export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidColor = '#ffffff', onBounds, dim = 1, keep = [] }: BodyProps) {
+export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidColor = '#ffffff', onBounds, dim = 1, keep = [], palette }: BodyProps) {
   const keepSet = useMemo(() => new Set(keep), [keep.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
   const [scene, setScene] = useState<THREE.Group | null>(null);
   const bounds = useRef<Bounds>({});
   // each Body gets its own copy of the model (geometry shared), so two bodies can be shown side by side
-  useEffect(() => { loadAnatomy().then((s) => setScene(s.clone(true)), onError); }, [onError]);
+  // load once per Body: an inline onError (a new function every render) must not reload the model (2026-10-24)
+  const onErrorRef = useRef(onError); onErrorRef.current = onError;
+  useEffect(() => { loadAnatomy().then((s) => setScene(s.clone(true)), (e) => onErrorRef.current(e)); }, []);
 
   const { materials, liquids } = useMemo(() => {
     const out = new Map<string, THREE.ShaderMaterial>();
@@ -149,6 +153,7 @@ export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidCol
           glow: { value: 0 },
           time: { value: 0 },
           dimv: { value: 1 },
+          scanK: { value: 1 },
         },
         vertexShader,
         fragmentShader,
@@ -180,6 +185,16 @@ export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidCol
   }, [scene]);
 
   useEffect(() => () => { materials.forEach((m) => m.dispose()); liquids.forEach((m) => m.dispose()); }, [materials, liquids]);
+  // the palette (video): its colours while it is given, the usual ones again afterwards
+  const paletteKey = palette ? JSON.stringify(palette) : '';
+  useEffect(() => {
+    materials.forEach((m, key) => {
+      (m.uniforms.color.value as THREE.Color).set(palette?.[key] ?? STYLE[key as OrganKey]?.color ?? '#ffffff');
+      // a re-coloured structure also glows more softly (its overlapping parts must not add up to white)
+      m.uniforms.rim.value = (STYLE[key as OrganKey]?.rim ?? 0.5) * (palette?.[key] ? 0.4 : 1);
+      m.uniforms.scanK.value = palette?.[key] ? 0 : 1; // the scanner line would add up to white there too
+    });
+  }, [materials, paletteKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (scene && onBounds) onBounds({ ...bounds.current }); }, [scene, materials, onBounds]);
   const liquidCol = useMemo(() => new THREE.Color(liquidColor), [liquidColor]);
 

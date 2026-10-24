@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { drawCmpFrame, drawFrame, elapsedText, isInAppBrowser, layoutBody, layoutSplit, logText, SAFE, SIZE, videoSupport, type CmpOverlay, type Format, type Light, type Overlay, type TextBox } from './share';
+import { drawCmpFrame, drawFrame, elapsedText, endTiming, isInAppBrowser, layoutBody, layoutSplit, logText, SAFE, SIZE, videoSupport, type CmpOverlay, type Format, type Light, type Overlay, type TextBox } from './share';
 
 const IG = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0';
 const TT = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36 musical_ly_2023 BytedanceWebview/d8a21c6';
@@ -161,5 +161,35 @@ describe('body-first video frames', () => {
   }
   it('the clock reads time since the first sip, hours:minutes', () => {
     expect(elapsedText(0)).toBe('+0:00'); expect(elapsedText(45)).toBe('+0:45'); expect(elapsedText(725)).toBe('+12:05'); expect(elapsedText(1440)).toBe('+24:00');
+  });
+});
+
+// 2026-10-24 owner review: a ghost of the hook behind the end card title, a faded CTA over other text. No two words
+// may ever overlap, in any frame of the start and the end.
+describe('no text over text', () => {
+  const overlap = (a: TextBox, b: TextBox) => a.x0 < b.x1 - 2 && b.x0 < a.x1 - 2 && a.y0 < b.y1 - 2 && b.y0 < a.y1 - 2;
+  const check = (boxes: TextBox[], label: string) => {
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      expect(overlap(boxes[i], boxes[j]), `${label}: "${boxes[i].text}" × "${boxes[j].text}"`).toBe(false);
+    }
+  };
+  const plan = { stopsU: [0, 0.5, 1], introS: 3, outroS: 6.5 };
+  for (const w of [0.56, 0.42]) {
+    it(`single + split · font ${w}: every frame of the first 3 s and the last 6.5 s`, () => {
+      const o: Overlay = { ...OVERLAYS[0], hook: 'One can of cola — inside your body' };
+      const c: CmpOverlay = { ...CMP, hook: 'Espresso vs Beer — inside your body', a: { ...CMP.a, name: 'Espresso' }, b: { ...CMP.b, name: 'Beer' } };
+      for (const phase of ['intro', 'outro'] as const) for (let f = 0; f <= 60; f++) {
+        const fr = { phase, m: phase === 'intro' ? 0 : 1440, t: f / 10, u: phase === 'intro' ? 0 : 1, cap: 'Your blood sugar climbs to its peak.', capB: 'Blood alcohol is at its highest now.', title: 'Blood sugar peak', titleB: 'Alcohol peak', capA: 1, k: f / 60 };
+        check(logText(() => drawFrame(fakeCtx(w), 1080, 1920, SRC, o, 'reel', fr, plan, null)), `single/${phase}/${f}`);
+        check(logText(() => drawCmpFrame(fakeCtx(w), 1080, 1920, SRC, c, fr, plan, null)), `split/${phase}/${f}`);
+      }
+    });
+  }
+  it('the loop back to the first frame starts only after the end card has gone', () => {
+    for (let f = 0; f <= 200; f++) {
+      const E = endTiming({ phase: 'outro', k: f / 200 }, 6.5);
+      if (E.first > 0.01) { expect(E.end).toBeLessThan(0.01); expect(E.top).toBeLessThan(0.01); }
+      if (E.end > 0.01) expect(E.main).toBeLessThan(0.01);
+    }
   });
 });

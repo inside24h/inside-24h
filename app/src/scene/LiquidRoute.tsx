@@ -137,7 +137,9 @@ const ghostFrag = /* glsl */ `
 interface SegMesh { id: SegId; curve: THREE.CatmullRomCurve3; geo: THREE.TubeGeometry; ghost: THREE.TubeGeometry; halo: THREE.TubeGeometry; outline: THREE.TubeGeometry; mat: THREE.ShaderMaterial; ghostMat: THREE.ShaderMaterial; haloMat: THREE.ShaderMaterial; outlineMat: THREE.ShaderMaterial; len: number; seen: number }
 const RADIUS: Record<SegId, number> = { swallow: 0.0055, stomach: 0.009, duodenum: 0.006, small: 0.0055, portal: 0.004, blood: 0.004, kidney: 0.0035, bladder: 0.008, colon: 0.006 };
 
-export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3 }: { route: Route; color: string; minute: number; labels?: boolean; maxLabels?: number }) {
+/** `subtle` (video, 2026-10-24): a thinner, softer stream without the glow, so a big light drink (beer, water) is a flow,
+ *  not a thick bright tube over the organs. */
+export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3, subtle = false }: { route: Route; color: string; minute: number; labels?: boolean; maxLabels?: number; subtle?: boolean }) {
   const segs = useMemo<SegMesh[]>(() => {
     const paths = buildRoute();
     return (Object.keys(paths) as SegId[]).map((id) => {
@@ -166,11 +168,11 @@ export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3
       const u = s.mat.uniforms, x = state[s.id];
       u.time.value = st.clock.elapsedTime;
       (u.color.value as THREE.Color).lerp(col, k);
-      const target = x && x.frac > 0.002 ? Math.min(1, 0.6 + x.frac * 3) : 0; // any liquid present is clearly visible
+      const target = (x && x.frac > 0.002 ? Math.min(1, 0.6 + x.frac * 3) : 0) * (subtle ? 0.6 : 1); // any liquid present is clearly visible
       u.fill.value += (target - u.fill.value) * k;
       u.flow.value += ((x?.flow ?? 0) - u.flow.value) * k;
-      u.thick.value = RADIUS[s.id] * (0.1 + Math.min(0.35, (x?.frac ?? 0) * 1.5)); // always clearly thick once present
-      u.bead.value = RADIUS[s.id] * 0.4 * Math.min(1, 0.3 + (x?.flow ?? 0));
+      u.thick.value = subtle ? -RADIUS[s.id] * 0.45 : RADIUS[s.id] * (0.1 + Math.min(0.35, (x?.frac ?? 0) * 1.5)); // always clearly thick once present
+      u.bead.value = RADIUS[s.id] * (subtle ? 0.25 : 0.4) * Math.min(1, 0.3 + (x?.flow ?? 0));
       if (x?.front !== undefined) s.seen += (x.front - s.seen) * k; // progress known from the model
       else {
         // the front advances while liquid is in the segment (fast for drinks), and stays once reached
@@ -190,8 +192,8 @@ export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3
       {segs.map((s) => (
         <group key={s.id}>
           <mesh geometry={s.ghost} material={s.ghostMat} renderOrder={5} />
-          <mesh geometry={s.halo} material={s.haloMat} renderOrder={6} />
-          <mesh geometry={s.outline} material={s.outlineMat} renderOrder={6} />
+          {!subtle && <mesh geometry={s.halo} material={s.haloMat} renderOrder={6} />}
+          {!subtle && <mesh geometry={s.outline} material={s.outlineMat} renderOrder={6} />}
           <mesh geometry={s.geo} material={s.mat} renderOrder={7} />
         </group>
       ))}

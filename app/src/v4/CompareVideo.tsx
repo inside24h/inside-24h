@@ -9,13 +9,17 @@ import * as THREE from 'three';
 import { Body } from '../scene/Body';
 import { LiquidRoute } from '../scene/LiquidRoute';
 import type { Analysis } from './analyze';
-import { bodyGlowAt } from './video-body';
+import { bodyGlowAt, isLightDrink, VIDEO_PALETTE } from './video-body';
 import { cameraOf, poseOf, rigAt, SIDE_X, stepRig, type Rig } from './video-cam';
 import type { ShotCue } from './VideoCam';
 
 export { SIDE_X };
 /** Kept for older callers: the comparison no longer depends on the canvas shape. */
 export function halfOffset(_aspect: number) { return SIDE_X[1]; }
+
+/** Stable no-op handlers: a new function on every frame made Body load a fresh copy of the model each frame (the
+ *  brain flickered white while the copies swapped, found 2026-10-24). */
+const NOOP = () => {};
 
 /** The cameras, for pinning gauges to organs (AppV4 projects organ centres with them). */
 export interface CmpCams { cams: THREE.PerspectiveCamera[]; w: number; h: number }
@@ -29,8 +33,8 @@ function Side({ a, minute, x, focus, group }: { a: Analysis; minute: number; x: 
   const { glow, keep } = bodyGlowAt(a.built, minute, focus, a.glucose !== undefined);
   return (
     <group position={[x, 0, 0]} ref={group}>
-      <Body glow={glow} selected={null} onSelect={() => {}} onError={() => {}} liquid={soft} liquidColor={story.color} dim={0.32} keep={keep} />
-      {a.built.route && <LiquidRoute route={a.built.route} color={story.color} minute={minute} labels={false} />}
+      <Body glow={glow} selected={null} onSelect={NOOP} onError={NOOP} liquid={soft} liquidColor={story.color} dim={0.42} keep={keep} palette={VIDEO_PALETTE} />
+      {a.built.route && <LiquidRoute route={a.built.route} color={story.color} minute={minute} labels={false} subtle={isLightDrink(story.color)} />}
     </group>
   );
 }
@@ -55,7 +59,7 @@ export function CompareScene({ a, b, minute, cue, cams, focus }: {
     const goal = poseOf(c?.shot ?? { focus: [], zoom: 'wide' });
     rig.current = rig.current ? stepRig(rig.current, goal, Math.min(0.1, Math.max(0, dt))) : rigAt(goal);
     const w = size.width / 2, h = size.height;
-    const { pos, look } = cameraOf(rig.current, 33);
+    const { pos, look } = cameraOf(rig.current, 33, 0); // split screen: framed exactly (video-cam splitPose)
     cameras.forEach((cam, k) => {
       cam.aspect = w / h; cam.updateProjectionMatrix();
       cam.position.set(pos[0] + SIDE_X[k], pos[1], pos[2]);

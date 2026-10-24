@@ -30,13 +30,14 @@ export const VIEW_H: Record<Zoom, number> = { wide: 1.25, mid: 0.82, close: 0.56
 const BIG = new Set(['jejunum', 'ileum', 'colon_asc', 'colon_trans', 'colon_desc', 'cecum', 'aorta', 'vena_cava', 'liver', 'brain']); // brain: the whole head, not a wall of grey matter
 
 /** `tight` 0..1: a slow push-in while a moment is on screen (up to 18 % closer). */
-export interface Shot { focus: string[]; zoom: Zoom; tight?: number }
+export interface Shot { focus: string[]; zoom: Zoom; tight?: number; /** a fixed framing (split screen) */ pose?: Pose }
 export interface Pose { target: V3; viewH: number }
 
 /** Where the camera should look and how much height it should show, for a shot. Several organs (the comparison:
  *  one per body) are framed together; organs we don't know frame the whole body. */
 export function poseOf(shot: Shot): Pose {
   const pts = shot.focus.map((k) => ORGAN_AT[k]).filter(Boolean);
+  if (shot.pose) return shot.pose;
   const push = 1 - 0.18 * Math.max(0, Math.min(1, shot.tight ?? 0));
   if (!pts.length || shot.zoom === 'wide') return { target: WIDE_AT, viewH: VIEW_H.wide * push };
   let zoom = shot.zoom;
@@ -94,4 +95,12 @@ export function project(p: V3, view: ArrayLike<number>, proj: ArrayLike<number>,
   const c = m(proj, m(view, [p[0], p[1], p[2], 1]));
   if (c[3] <= 1e-6) return null;
   return { x: ((c[0] / c[3] + 1) / 2) * W, y: ((1 - c[1] / c[3]) / 2) * H };
+}
+
+/** Split screen (2026-10-24, owner review): both bodies framed so the top of the head sits just under the compact
+ *  header (`headPx` from the top of a 1920 px frame) and the stomach stays above the captions; the camera only
+ *  breathes in and out a little (`viewH` 1.5–1.62 m). Use with cameraOf(…, lift 0). */
+export function splitPose(viewH: number, headPx = 450, frameH = 1920): Pose {
+  const top = 1.64 + (headPx / frameH) * viewH; // world height at the top edge of the frame (1.64 = just above the brain)
+  return { target: [0, top - viewH / 2, 0.1], viewH };
 }

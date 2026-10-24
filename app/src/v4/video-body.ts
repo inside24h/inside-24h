@@ -40,13 +40,13 @@ export function bodyGlowAt(b: BuiltLike, m: number, focus?: string | null, sugar
   const bac = b.bac ? at(b.bac, mi) : 0;
   // the brain is many overlapping parts and turns white when shown at full brightness: it stays in the dimmed
   // layer (not in `keep`) and its glow carries it
-  const brain = Math.max(caf >= 8 ? Math.min(0.8, 0.3 + caf / 150) : 0, bac >= 0.05 ? Math.min(0.9, 0.35 + bac / 0.5) : 0);
+  const brain = Math.max(caf >= 8 ? Math.min(0.45, 0.15 + caf / 250) : 0, bac >= 0.05 ? Math.min(0.5, 0.18 + bac / 1) : 0);
   if (brain > 0) glow.brain = brain;
   const g = sugarKnown && b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
   if (g >= 0.5) glow.pancreas = Math.min(0.75, 0.25 + g / 4);
   const present = presentAt(b, mi);
   if (present.some(([id]) => id === 'portal')) glow.liver = Math.max(glow.liver ?? 0, 0.3);
-  if (focus) glow[focus] = Math.max(glow[focus] ?? 0, focus === 'brain' ? 0.2 : 0.5);
+  if (focus) glow[focus] = Math.max(glow[focus] ?? 0, focus === 'brain' ? 0.15 : 0.5);
   const keep = [...new Set([...present.flatMap(([id]) => SEG_ORGANS_V[id]), ...Object.keys(glow)])].filter((k) => k !== 'brain');
   return { glow, keep };
 }
@@ -80,8 +80,20 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
 
 /** Where most of the food or drink is right now ("Stomach · 214 ml"), pinned to that organ. */
 export function whereGauge(b: BuiltLike, m: number): Gauge | null {
-  const top = presentAt(b, m)[0];
+  // the food pipe is only passed through in seconds: its amount is not a reading worth pinning (2026-10-24)
+  const top = presentAt(b, m).filter(([id]) => id !== 'swallow')[0];
   if (!top || !b.route) return null;
   const v = top[1].amount;
   return { big: top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? b.route.unit}`, small: SEG_LABEL[top[0]], level: 0, organ: SEG_FOCUS_V[top[0]] };
+}
+
+/** Video colours (2026-10-24, owner review: the brain glowed white-blue): a calm violet tint for the brain, whose
+ *  many overlapping parts add up to white in its usual pale colour. */
+export const VIDEO_PALETTE: Record<string, string> = { brain: '#6f5fd8' };
+/** Light drinks (beer, water, milk) are drawn as a thin, soft stream in the video, not a thick bright tube. */
+export function isLightDrink(hex: string): boolean {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.4;
 }
