@@ -43,12 +43,19 @@ export function hookFor(h: HookIn): Hook {
   }
   // the surprise names what it is in (critic: "9 teaspoons of sugar." did not say cola)
   const tsp = /(\d+) g (?:of )?sugar[^.]*?about (\d+) teaspoons?/.exec(first);
-  if (tsp && Number(tsp[2]) >= 3) return { line1: fit(`${cap(name)}: ${tsp[2]} teaspoons of sugar.`) ? `${cap(name)}: ${tsp[2]} teaspoons of sugar.` : `${tsp[2]} teaspoons of sugar.`, line2: 'Watch where it goes.' };
+  // (round 6, critic: "Watch where it goes" was never paid off in the short): the moment that says where the sugar
+  // ends up pays it off
+  const where = h.chapters.find((c) => /burns about half of the fructose/.test(c.text) && c.min > 0);
+  if (tsp && Number(tsp[2]) >= 3) return { line1: fit(`${cap(name)}: ${tsp[2]} teaspoons of sugar.`) ? `${cap(name)}: ${tsp[2]} teaspoons of sugar.` : `${tsp[2]} teaspoons of sugar.`, line2: 'Watch where it goes.', ...(where ? { payoff: where.title } : {}) };
   if (h.caffeine) {
     // "still in you at bedtime" as the share the model says (critic: it promised a problem the end card then denied)
     const bed = h.chapters.find((c) => /^(Going to bed|Bedtime)$/.test(c.title) && /mg of caffeine is (?:still|left) in you/.test(c.text));
     const mg = bed && /(\d+) mg of caffeine is/.exec(bed.text)?.[1], fw = mg && h.caffeineMg ? share(Number(mg) / h.caffeineMg) : null;
     const line1 = fit(`${cap(name)}.`) ? `${cap(name)}.` : 'One coffee, 24 hours.';
+    // round 6 (critic P1: "a fifth at bedtime" is honest but an anticlimax): a small share at bedtime gives way to the
+    // toilet fact (1 in 3 people, within minutes), when the model tells it
+    const colon = h.chapters.find((c) => /1 in 3 people coffee makes the lower bowel start moving/.test(c.text));
+    if (colon && (!fw || Number(mg) / (h.caffeineMg ?? 1) < 0.3)) return { line1, line2: 'It sends 1 in 3 to the toilet.', payoff: colon.title };
     if (bed && fw) return { line1, line2: `${cap(fw)} is still in you at bedtime.`, payoff: bed.title };
     return { line1, line2: 'Watch where the caffeine goes.' };
   }

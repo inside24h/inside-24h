@@ -4,7 +4,7 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
-export type GuessKind = 'stomach' | 'blood' | 'sugar';
+export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime';
 export interface GuessSide {
   name: string;
   alcohol?: boolean;
@@ -55,8 +55,9 @@ export function sameAmount(a: GuessSide, b: GuessSide): boolean {
 }
 
 /** The clearest question for this pair, or null when the model does not separate them clearly. */
-export function chooseGuess(a: GuessSide, b: GuessSide): Guess | null {
+export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number } = {}): Guess | null {
   const sides = [a, b];
+  const anyAlcohol = !!(a.alcohol || b.alcohol);
   // 1) out of the stomach first
   const so = sides.map((s) => outAt(s.stomach));
   if (so[0] !== undefined && so[1] !== undefined && sameAmount(a, b) && clearlyApart(so[0], so[1])) {
@@ -69,13 +70,28 @@ export function chooseGuess(a: GuessSide, b: GuessSide): Guess | null {
   const blood = (s: GuessSide) => (s.bac && Math.max(...Array.from(s.bac)) > 0.05 ? { out: outAt(s.bac, 0.005), series: s.bac, floor: 0.005 }
     : s.caffeine && Math.max(...Array.from(s.caffeine)) >= 20 ? { out: outAt(s.caffeine, 10), series: s.caffeine, floor: 10 } : null);
   const bl = sides.map(blood);
-  if (bl[0] && bl[1]) {
+  // (round 6, critic P0: "which leaves your blood first?" was won by the beer, with an unstated "under 10 mg" for
+  // caffeine. With alcohol on a side the blood question is never asked; "still in you at bedtime" is, below)
+  if (!anyAlcohol && bl[0] && bl[1]) {
     const t = bl.map((x) => x!.out ?? 1e9);
     if (Math.min(t[0], t[1]) < 1e9 && clearlyApart(Math.min(t[0], 1440), Math.min(t[1], 1440))) {
       const w = (t[0] < t[1] ? 0 : 1) as 0 | 1;
       return { kind: 'blood', question: 'Guess: which leaves your blood first?', winner: w, decidedMin: t[w],
         answer1: `First out: ${the(sides[w].name)}.`, answer2: `Out of the blood in ${aboutTime(t[w])}.`,
         recap: `Answer: ${sides[w].name} left the blood first.`, progress: [race(bl[0].series, bl[0].floor), race(bl[1].series, bl[1].floor)] };
+    }
+  }
+  // 2b) with alcohol on a side: which is still in you at bedtime (each side says how much; nobody "wins")
+  const bed = opts.bedMin !== undefined ? Math.round(opts.bedMin) : -1;
+  if (anyAlcohol && bed >= 60 && bed <= 1440) {
+    const left = sides.map((s) => (s.bac ? { still: (s.bac[bed] ?? 0) >= 0.01, what: 'alcohol' as const, v: s.bac[bed] ?? 0 } : s.caffeine ? { still: (s.caffeine[bed] ?? 0) >= 5, what: 'caffeine' as const, v: s.caffeine[bed] ?? 0 } : null));
+    if (left[0] && left[1] && left[0].still !== left[1].still) {
+      const w = (left[0].still ? 0 : 1) as 0 | 1, x = left[w]!, other = sides[1 - w].name;
+      const flat = Float32Array.from({ length: N }, () => 0);
+      return { kind: 'bedtime', question: 'Guess: which is still in you at bedtime?', winner: w, decidedMin: bed,
+        answer1: `Still in you at bedtime: ${the(sides[w].name)}.`,
+        answer2: x.what === 'caffeine' ? `About ${Math.round(x.v)} mg of caffeine. The ${other.toLowerCase()} is out.` : `Some alcohol. The ${other.toLowerCase()} is out.`,
+        recap: `Answer: ${sides[w].name} was still in you at bedtime.`, progress: [flat, flat] };
     }
   }
   // 3) the bigger blood sugar rise (only when both have a measured curve, and the peaks differ clearly)

@@ -152,7 +152,7 @@ export interface PlanFx {
 export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.75, LIGHTS_STEP_S = 0.35, MICRO_GAP_S = 2.9;
 /** Comparison end card: the verdict lands first (it is the answer to the guess, and must be read: + 1.5 s), then the
  *  lights come on, left and right in turn, faster. */
-export const CMP_OUTRO_EXTRA_S = 1.5, CMP_LIGHTS_FROM_S = 1.35, CMP_LIGHTS_STEP_S = 0.2;
+export const CMP_OUTRO_EXTRA_S = 0.5, CMP_LIGHTS_FROM_S = 1.35, CMP_LIGHTS_STEP_S = 0.2; // (round 6: 7-8 s of end card was too long; fewer rows now)
 export const outroSeconds = (cut: Cut, compare = false) => OUTRO_S[cut] + (compare ? CMP_OUTRO_EXTRA_S : 0);
 export const TEASE_PREFIX = 'Coming up: ', TEASE_PREFIX2 = 'Still to come: ';
 /** "Coming up: the sugar dip." (≤ 5 words), from a chapter title. */
@@ -175,6 +175,8 @@ export const END_HOLD_S = 0.8;    // the "24 HOURS LATER" beat before the end ca
 export const DAY_END_TITLE = '24 hours later';
 /** Moments worth a "Coming up: …" (round 5, critic: "Coming up: building blocks." promised nothing). */
 export const TEASE_OK = /peak|dip|crash|sleep|bed|gone|morning|24 hours|large intestine|toilet/i;
+/** Moments that tell nothing a viewer can see or feel (round 6): never in the video. */
+export const DULL = /^Building blocks$/i;
 /** The long cut's first impact by this second (round 5). */
 export const PEAK_BY_S = 15;
 export const OUTRO_S = { long: 6.5, short: 5.0 } as const;   // end card: summary + call to action (+ a loop back to the start)
@@ -196,7 +198,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // one stop per minute (the later chapter wins, as on screen), in order, inside the day
   const byMin = new Map<number, StopIn>();
   for (const s of stopsIn) byMin.set(Math.max(0, Math.min(1440, s.min)), { ...s, min: Math.max(0, Math.min(1440, s.min)) });
-  let stops = [...byMin.values()].sort((a, b) => a.min - b.min);
+  // round 6 (critic: "Building blocks / Protein pieces in your blood peak now." promised and showed nothing): left out
+  let stops = [...byMin.values()].filter((s) => !DULL.test(s.title.trim()) || s.min === 0).sort((a, b) => a.min - b.min);
   if (!stops.length || stops[0].min !== 0) stops.unshift({ min: 0, title: stops[0]?.title ?? '', text: stops[0]?.text ?? '' });
   const story = stops; // the 24 h beat is added after the last moment (stamp only, the caption stays)
   // the peak's moment is never left out (it carries the impact); the cold open defaults to the most telling moment
@@ -227,7 +230,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     const firstS = (s: StopIn, i: number) => linesOf(s).slice(0, firstNOf(s, i)).reduce((a, p, j) => a + readSeconds(p, j === 0), 0);
     const len = (list: StopIn[]) => fixed + glides(list) + list.reduce((a, s, i) => a + firstS(s, i), 0);
     const rank = (s: StopIn) => val(s) + (s.min >= 10 ? 1.5 : 0); // a short cut should travel, not wait at the stomach
-    const pool = story.slice(1).filter((s) => payoffMin === undefined || s.min <= payoffMin || mustOf(s) > 0 || !!s.keep);
+    const endAt = Math.max(payoffMin ?? -1, peakMin ?? -1);
+    const pool = story.slice(1).filter((s) => endAt < 0 || s.min <= endAt || mustOf(s) > 0 || !!s.keep);
     const ranked = pool.sort((a, b) => Number(forced(b)) - Number(forced(a)) || rank(b) - rank(a) || a.min - b.min);
     for (const c of ranked) {
       if (chosen.length >= 5 && !forced(c)) break;

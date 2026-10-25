@@ -42,11 +42,22 @@ describe('the comparison guess', () => {
       expect(`${g.question} ${g.answer1} ${g.answer2} ${g.recap}`).not.toMatch(/\b(wins?|best|better|healthy)\b/i);
     });
   }
-  it('round 5: 30 ml espresso vs 500 ml beer is never a stomach race (it asks which leaves the blood first)', () => {
-    const a = analyze(parseMeal('espresso'), DEFAULT_PROFILE), b = analyze(parseMeal('beer'), DEFAULT_PROFILE);
-    const g = chooseGuess(guessSideOf(a), guessSideOf(b))!;
-    expect(g.kind).not.toBe('stomach');
-    expect(g.kind).toBe('blood'); expect(g.winner).toBe(1); // the beer's alcohol is out first: only then "Faster out ≠ better"
+  it('round 6: espresso vs beer is never a race the beer wins: it asks what is still in you at bedtime', () => {
+    const p = { ...DEFAULT_PROFILE, drinkAtMin: 17 * 60 };
+    const a = analyze(parseMeal('espresso'), p), b = analyze(parseMeal('beer'), p);
+    const bedMin = (((p.bedtimeMin - p.drinkAtMin) % 1440) + 1440) % 1440;
+    expect(chooseGuess(guessSideOf(a), guessSideOf(b))?.kind ?? 'none').not.toMatch(/stomach|blood/);
+    const g = chooseGuess(guessSideOf(a), guessSideOf(b), { bedMin })!;
+    expect(g.kind).toBe('bedtime'); expect(g.winner).toBe(0); // the espresso's caffeine is still there, the beer is out
+    expect(g.answer2).toMatch(/^About \d+ mg of caffeine\. The beer is out\.$/);
+    expect(`${g.answer1} ${g.recap}`).not.toMatch(/\b(wins?|best|better)\b/i);
+  });
+  it('round 6: with alcohol on a side the blood race is never asked', () => {
+    for (const [x, y] of [['espresso', 'beer'], ['beer', 'glass of red wine'], ['espresso', 'glass of red wine']]) for (const h of [8, 17, 21]) {
+      const p = { ...DEFAULT_PROFILE, drinkAtMin: h * 60 };
+      const g = chooseGuess(guessSideOf(analyze(parseMeal(x), p)), guessSideOf(analyze(parseMeal(y), p)), { bedMin: (((p.bedtimeMin - p.drinkAtMin) % 1440) + 1440) % 1440 });
+      expect(g?.kind ?? 'none', `${x}/${y} ${h}`).not.toBe('blood');
+    }
   });
   it('round 5: cola vs a glass (250 ml) is not a stomach race; cola vs 330 ml of water is, and water is out first', () => {
     const c = analyze(parseMeal('cola'), DEFAULT_PROFILE);

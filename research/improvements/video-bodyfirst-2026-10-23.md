@@ -222,3 +222,56 @@ Backup: `backups/20261024-221027-video6/`. Ništa nije commitano (runda 4 = be28
 - End card je i dalje statičan 4–6 s (čitanje). Jedna mrtva zona od 3,3 s ostaje u compare cola-voda long.
 - Voda od 330 ml koristi generički model (5 poglavlja), pa su kartice za vodu tanje nego za čašu od 250 ml.
 - P2 (donjih 25 % kadra, colu i burger razdvojiti u obroku, pinned komentari) nije rađeno. Zvuk je provjeren brojevima, ne slušalicama.
+
+---
+
+# Runda 6 (2026-10-25): P0 i P1 iz video-critique-2026-10-25.md
+
+Backup: `backups/20261025-112241-video7/`. Ništa nije commitano (runda 5 = f7bcef6).
+
+**P0**
+1. **Spavanje uz alkohol:** jedna kartica, "You may fall asleep faster, but sleep worse." (ili "…but sleep lighter."). Pozitivna polovica nikad ne ide bez negativne. Test prolazi kroz cijeli korpus kartica.
+2. **"Gone" iz istog raspona kao mjerač** (`goneRange`): od vrha, najlakše očitanje (−40 %) s najbržom jetrom (0,20 g/L/h) i najteže (+50 %) s najsporijom (0,10). Primjer: 3 piva daju "about 4–14 h", jedno pivo "1–4 h". Test: gornja granica ≥ vrh × 1,5 / 0,10 + vrijeme vrha.
+3. **Siročad:** "No extra urine." je zamijenjen jednom karticom "It hydrates like the same amount of water.".
+4. **Šećer:**
+   - Isti raspon na mjeraču i na end cardu (`sugarPct`, npr. "+26–60 %").
+   - Normalan porast je napisan mirno: "Blood sugar up · +26–60 % over usual: a normal rise", u mirnoj boji. "Up a lot" i crveno tek od +3 mmol/L.
+   - Where-mjerač za stvar o kojoj kartica govori je skriven (šećer, vlakna).
+   - Test: mjerač = end card.
+5. **Cola short:** hook "Watch where it goes" isplaćuje "Your body burns half the fruit sugar." (180 min). Uz to je ispravljen regex koji je kao isplatu uzimao "Into the small intestine".
+6. **"Building blocks"** se više nikad ne prikazuje (`DULL`), u oba cuta. Test.
+7. **Espresso vs pivo:** uz alkohol na bilo kojoj strani više se ne pita "which leaves your blood first?". Pitanje je "Guess: which is still in you at bedtime?", a odgovor "Still in you at bedtime: Espresso. About 32 mg of caffeine. The beer is out." (prag je 5 mg i broj piše). Banner odgovora je neutralno siv kad je alkohol u igri, a utrka se ne crta. Testovi pokrivaju 3 para × 3 vremena.
+8. **End card više nije zamrznut:** cijela kartica polako uđe 2,5 % (endDrift), a dodatak za compare je 1,5 → 0,5 s. Mjereno: end card single više nije statičan; compare long je 3,1 s.
+9. **Compare cola-voda +24:00:**
+   - Svaka strana kaže ono što je NOVO od zadnjeg momenta: prvo poglavlje tog trenutka, a u utrci za želudac prvo poglavlje želuca. Inače kaže sljedeće kartice istog poglavlja.
+   - Moment u kojem nijedna strana nema ništa novo se izbacuje.
+   - Kad planer izbaci neki moment, kartice se ponovno računaju za momente koji su ostali, pa se ništa ne gubi.
+   - CMP_STOPS bez 5. minute.
+   - Mrtvih zona nema.
+10. **Voda 330 ml:** "Half leaves your stomach within 13 minutes." je vraćen i dolazi na moment odgovora. Kartica "About as fast as water." za vodu je uklonjena.
+
+**P1**
+- Espresso hook: "One espresso. / It sends 1 in 3 to the toilet." kad je udio u trenutku spavanja mali (inače ostaje bedtime hook).
+- Alkohol na mjeraču:
+  - "BAC 0.05–0.12 % · may top US limit (0.08 %)"; anchor stoji samo kad ga raspon doseže (EU 0.05 % isto).
+  - Preciznost je 3 decimale kad je donja granica ispod 0.03 % (jedno pivo: "0.012–0.030 %").
+  - Compare chip pokazuje samo raspon.
+- 24 h: "Most of the fiber is still in you." / "Mouth to toilet usually takes 14–58 hours."
+- Mamurluk se spominje tek od 40 g alkohola. Ispod toga piše "Don't drive after drinking.".
+- End card govori riječima ("13 min in", "1½ h in"), ne "+0:13".
+- Mrtve zone 5–6 s: veliki organi (mozak, debelo crijevo, jetra) u drugom kadru idu na "wide", pa se kadar stvarno mijenja.
+- True peak: ceiling 0,76, TP je sada −1,4 do −2,2 dBTP.
+- `bacRange` za jedno pivo nije dirano (model hrane / podaci se ne mijenjaju). Navodim to kao otvoreno pitanje za vlasnika.
+
+## Provjera runde 6
+- 16 videa → `C:\claudework\video-samples\2026-10-25-v6\`. Sva su 1080×1920, 30 fps, AAC, bez crnih frameova. Long traju 62,3–71,9 s, short 23,3–29,2 s.
+- Thumbnaili: svih 16 ima cijeli hook na frameu 0.
+- Mrtve zone (pojas tijela, prag 4, ≥ 3 s): nijedna u 15 videa. Compare espresso-pivo long ima 3,1 s na end cardu.
+- Glasnoća: I −14,1 do −14,4 LUFS, TP −1,4 do −2,2 dBTP, LRA 3,2–5,0 LU, udarci +6,0 do +6,8 LU.
+- Onseti: ≤ 60 ms.
+- tsc je čist, vitest 689/689 (novi blok "round 6" u `video-plan.test.ts` + guess/hook testovi). Oba builda prolaze (split zadnji).
+
+## Otvoreno (runda 6)
+- `bacRange` jednog piva (0,01–0,03 %) je na donjem rubu Widmarka (critic očekuje 0,02–0,04 % natašte). Model za taj slučaj računa s hranom; podatke/model nisam mijenjao.
+- Na compare vodi kartica "Your small intestine absorbs it within minutes." se još ponavlja na 2 momenta (generički model vode ima malo poglavlja).
+- P2: donjih 25 % kadra, a naziv pizze na end cardu je duži od onog u hooku.

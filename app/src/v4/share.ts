@@ -24,7 +24,7 @@ export const VIDEO_COPY = {
   guess2: 'Comment A or B before the end.',
   answerAt: 'Answer at 24 h.',
   fasterOut: 'Faster out ≠ better for you.', // the race with alcohol on one side (spec §4.1)
-  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise' },
+  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime' },
   smallPrint: 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0',
 } as const;
 /** The plan as the drawing needs it (the cues place every effect). */
@@ -312,7 +312,7 @@ export interface CmpSide { name: string; color: string; step: string; caption: s
   /** round 5: how much ("330 ml", "1 shot · 30 ml"), shown under the name */ serving?: string }
 export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean;
   /** 2026-10-24 game: the guess line, the race (0..1 per side); round 4: the answer, shown when it is decided */ guess?: boolean; race?: { a: number; b: number };
-  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar'; winner: 0 | 1 } }
+  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar' | 'bedtime'; winner: 0 | 1 } }
 
 /** Comparison Reel (9:16): both bodies side by side at the top, where the whole width is free of platform buttons;
  *  the two captions stacked below, inside the safe column. Timing from planCompare (video-plan.ts). */
@@ -1130,7 +1130,10 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     const top = Lo.topBot + 14, bot = Lo.capTop - 14, gw = reel ? 300 : 280;
     // never a gauge that names the same thing as the card on screen with another number (safety net, video-beats.ts)
     const capNow = fr.phase === 'intro' ? '' : fr.cap ?? '';
-    const gs = (o.gauges ?? []).filter((g) => !numberConflict(capNow, [g.big])).slice(0, 2);
+    // (round 6: nor a where-gauge for the thing the card talks about: "22 g fiber" next to "Most of the fiber is still
+    // in you", "4 g sugar" next to a blood sugar card; one number per thing)
+    const noun = (g: Gauge) => (!g.curve ? /\b(fiber|sugar|caffeine|alcohol)\b/i.exec(g.big)?.[1]?.toLowerCase() : undefined);
+    const gs = (o.gauges ?? []).filter((g) => !numberConflict(capNow, [g.big]) && !(noun(g) && capNow.toLowerCase().includes(noun(g)!))).slice(0, 2);
     gs.forEach((g, i) => {
       const h = gaugeHeight(ctx, g, reel, gw), right = gs.length === 1 ? !!g.curve : i === 1;
       const at = tf(g.at), pin = onFrame(at, W, top, bot) ? at! : null;
@@ -1201,12 +1204,19 @@ function drawStamp2(ctx: CanvasRenderingContext2D, s: string, x: number, y: numb
   ctx.restore();
 }
 
+/** Round 6 (critic: the end card stood frozen for 4-8 s): the whole card drifts in slowly (a 2.5 % push-in over 6 s),
+ *  so the picture never stands still while it is read. */
+function endDrift(ctx: CanvasRenderingContext2D, W: number, H: number, tt: number) {
+  const s = 1 + 0.025 * Math.max(0, Math.min(1, tt / 6));
+  ctx.translate(W / 2, H * 0.42); ctx.scale(s, s); ctx.translate(-W / 2, -H * 0.42);
+}
 /** End card over the body: what the day did (the lights come on one by one) and one line to comment on. The hook and
  *  the clock (+24:00) stay at the top; the body stays visible behind the glass. Wording: VIDEO_COPY. */
 function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overlay, alpha: number, format: Format, topBot: number, tt = 9) {
   if (alpha <= 0.001) return;
   const reel = format === 'reel', S = SAFE[format], L = S.left, RL = S.rightLow;
   ctx.save(); ctx.globalAlpha = alpha;
+  endDrift(ctx, W, H, tt);
   const y0 = topBot + (reel ? 40 : 24);
   const g = ctx.createLinearGradient(0, y0 - 60, 0, y0 + 40);
   g.addColorStop(0, 'rgba(4,7,12,0)'); g.addColorStop(1, 'rgba(4,7,12,.86)');
@@ -1295,8 +1305,10 @@ function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: n
   while (bf > 22 && ctx.measureText(g.big).width > maxW - 28) { bf -= 2; ctx.font = `700 ${bf}px ${SANS}`; } // smaller, never cut
   const bw = ctx.measureText(g.big).width;
   // (round 5: the small line shrinks to fit, never cut to "0.12–…")
-  let sf = 20; ctx.font = `600 ${sf}px ${SANS}`; while (sf > 15 && ctx.measureText(g.small).width > maxW - 28) { sf -= 1; ctx.font = `600 ${sf}px ${SANS}`; }
-  const small = fit(ctx, g.small, maxW - 28); const sw = ctx.measureText(small).width;
+  // (round 6: the chip has room for the range only; the limit anchor stays on the single video's gauge)
+  const gs = g.small.replace(/ · .*$/, '');
+  let sf = 20; ctx.font = `600 ${sf}px ${SANS}`; while (sf > 15 && ctx.measureText(gs).width > maxW - 28) { sf -= 1; ctx.font = `600 ${sf}px ${SANS}`; }
+  const small = fit(ctx, gs, maxW - 28); const sw = ctx.measureText(small).width;
   const w = Math.min(maxW, Math.max(bw, sw) + 28), x0 = alignRight ? x - w : x;
   ctx.fillStyle = GLASS; roundRect(ctx, x0, y, w, h, 16); ctx.fill();
   ctx.strokeStyle = g.curve ? LIGHT[g.level] : 'rgba(220,235,250,.35)'; ctx.lineWidth = 3; ctx.stroke();
@@ -1449,7 +1461,8 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
     : alcWon && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
   void sip;
   if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, S.rightLow - L, true, true); ctx.restore(); }
-  if (showAns && ans) drawAnswer(ctx, W, Lo, ans, [o.a, o.b][ans.winner].color, dec.age, ansS);
+  // (round 6: with alcohol on either side the answer is neutral grey, never the winner's colour)
+  if (showAns && ans) drawAnswer(ctx, W, Lo, ans, o.a.alcohol || o.b.alcohol ? '#8a9bb0' : [o.a, o.b][ans.winner].color, dec.age, ansS);
   // the NEXT chip while the day runs on (the captions are away then)
   if (fr.beat === 'glide' && fr.next) {
     ctx.save(); ctx.globalAlpha *= 1 - (fr.plateA ?? 1);
@@ -1509,6 +1522,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
   if (alpha <= 0.001) return;
   const S = SAFE.reel, L = S.left, RL = S.rightLow;
   ctx.save(); ctx.globalAlpha = alpha;
+  endDrift(ctx, W, H, tt);
   const y0 = topBot + 24;
   const g = ctx.createLinearGradient(0, y0 - 60, 0, y0 + 40);
   g.addColorStop(0, 'rgba(4,7,12,0)'); g.addColorStop(1, 'rgba(4,7,12,.88)');

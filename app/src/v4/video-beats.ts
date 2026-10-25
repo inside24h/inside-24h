@@ -9,6 +9,9 @@
 // card: they live on the gauge next to the body, so the gauge and the words can never disagree (the chapter's
 // number is for its own minute; the gauge follows the clock).
 
+import { BAC_SPREAD, BAC_SPREAD_UP } from '../science/ranges';
+import { ELIM_RANGE } from '../science/alcoholClock';
+
 /** Longest card, in words (numbers and "×" count as words). */
 export const BEAT_WORDS = 8;
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
@@ -74,9 +77,9 @@ const RULES: Rule[] = [
   [/^Dangerous: people have died of alcohol poisoning/, () => ['Dangerous: alcohol poisoning level.']],
   [/^If someone can’t be woken or breathes slowly/, () => ['Can’t be woken? Call 112 (Europe).']],
   [/^There is still alcohol in your blood/, () => ['There is still alcohol in your blood.']],
-  [/^You may fall asleep faster, but the second half of the night will be clearly broken/, () => ['You may fall asleep faster.', 'Later, your sleep is clearly broken.']],
-  [/^You may fall asleep faster, but the second half of the night will be lighter and more broken/, () => ['You may fall asleep faster.', 'Later, your sleep is lighter and more broken.']],
-  [/^You may fall asleep faster, but the second half of the night will be a little lighter/, () => ['You may fall asleep faster.', 'Later, your sleep is a little lighter.']],
+  [/^You may fall asleep faster, but the second half of the night will be clearly broken/, () => ['You may fall asleep faster, but sleep worse.', 'Later, your sleep is clearly broken.']],
+  [/^You may fall asleep faster, but the second half of the night will be lighter and more broken/, () => ['You may fall asleep faster, but sleep worse.', 'Later, your sleep is lighter and more broken.']],
+  [/^You may fall asleep faster, but the second half of the night will be a little lighter/, () => ['You may fall asleep faster, but sleep lighter.', 'Later, your sleep is a little lighter.']],
   [/^In a typical body like yours the alcohol is gone by now, about ([\d.]+ h) after the first sip/, (m) => [`The alcohol is gone after about ${m[1]}.`]],
   [/^Livers differ/, () => ['Livers differ, so for some it takes longer.']],
   [/^Sleep, coffee, water or fresh air don’t speed it up/, () => ['Coffee or water don’t speed it up.']],
@@ -97,7 +100,7 @@ const RULES: Rule[] = [
   [/^About (\d+) hours later the glass has passed through you/, () => ['The glass has passed through you.', 'Your body water is back in balance.']],
   [/^The extra water \(?.*\)? is filtered by your kidneys into your bladder/, () => ['Your kidneys filter the extra water.', 'It collects in your bladder for hours.']],
   [/^A beer does not make you lose more water than you drank/, () => ['You don’t lose more water than you drank.']],
-  [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['No extra urine.', 'Cola hydrates like the same amount of water.']],
+  [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['It hydrates like the same amount of water.']],
   // meals
   [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, (m) => ['Many people feel sleepy after a big meal.', `It comes about ${m[1]} hours later.`]],
   // the protein arrives over hours; this moment is its peak (model review 2026-10-24: not "139 g reach your blood")
@@ -108,10 +111,12 @@ const RULES: Rule[] = [
   // no amount: the gauge shows how much has arrived at this minute (the chapter's total would disagree with it)
   [/^What you can’t digest, ([\d.]+) g of fiber, reaches the start of your large intestine/, () => ['The fiber reaches your large intestine.']],
   [/^The leftovers creep along your large intestine while water is taken back/, () => ['The leftovers creep along your large intestine.', 'Water is taken back on the way.']],
+  // round 6 (critic: "29 hours" without its range): the normal range, as the source gives it
+  [/^Food typically takes about (\d+) hours from mouth to toilet.*?anywhere from (\d+) to (\d+) hours/, (m) => [`Mouth to toilet usually takes ${m[2]}–${m[3]} hours.`]],
   [/^Food typically takes about (\d+) hours from mouth to toilet/, (m) => [`Food takes about ${m[1]} hours, mouth to toilet.`]],
   // "2% has left your body so far": 2 % of what? Said plainly (owner review 2026-10-24). Round 5 (critic: "almost
   // all of it is still inside you" read as "the pizza sits there undigested", next to a 3 g gauge): the leftovers
-  [/^(\d+)% has left your body so far/, (m) => [Number(m[1]) < 10 ? `Only ${m[1]}% of the leftovers are out yet.` : `${m[1]}% of the leftovers have left you.`]],
+  [/^(\d+)% has left your body so far/, (m) => [Number(m[1]) < 10 ? 'Most of the fiber is still in you.' : `${m[1]}% of the leftovers have left you.`]], // (round 6: plain words; the range follows)
   // (round 5, critic: the liver breaks caffeine down; the kidneys flush out the pieces, not "what is left")
   [/^Your kidneys flush out the breakdown products/, () => ['Your kidneys flush out its broken-down pieces.']],
   [/^Your gut bacteria start fermenting it/, () => ['Your gut bacteria start feeding on it.']],
@@ -150,12 +155,21 @@ export interface BeatCtx {
   pace?: { doses: number; overMin: number; everyMin: number; round: string };
   /** round 5: the caffeine dose (mg), so "still in you at bedtime" is said as a share of it ("about a fifth") */ caffeineMg?: number;
   /** round 5: clock time of the first sip (minutes after midnight), so "gone" is said as a range of hours */ drinkAtMin?: number;
+  /** round 6: the blood alcohol peak (g/L, typical body) and its minute: "gone" is then said from the SAME range as the
+   *  gauge (bodies −40 %/+50 %, BAC_SPREAD) and the livers' range (0.20 / 0.10 g/L an hour, ELIM_RANGE) */ bacPeak?: { g: number; min: number };
+  /** round 6: grams of alcohol (the hangover warning is said from 40 g up) */ alcoholG?: number;
 }
 /** A share in words ("a fifth", "two thirds"), or null when it is too small to name. */
 export function fractionWord(r: number): string | null {
   if (!(r >= 0.07)) return null;
   const W: [number, string][] = [[0.1, 'a tenth'], [0.2, 'a fifth'], [0.25, 'a quarter'], [1 / 3, 'a third'], [0.5, 'half'], [2 / 3, 'two thirds'], [0.75, 'three quarters'], [0.9, 'almost all']];
   return W.reduce((b, w) => (Math.abs(w[0] - r) < Math.abs(b[0] - r) ? w : b))[1];
+}
+/** Hours from the first sip until the alcohol is gone, as a range that covers the gauge: the lightest reading
+ *  (−40 %) with the fastest liver, the heaviest (+50 %) with the slowest, counted from the peak. */
+export function goneRange(peakG: number, peakMin: number): [number, number] {
+  const lo = (peakMin / 60) + (peakG * (1 - BAC_SPREAD)) / ELIM_RANGE.fast, hi = (peakMin / 60) + (peakG * (1 + BAC_SPREAD_UP)) / ELIM_RANGE.slow;
+  return [Math.max(1, Math.round(lo)), Math.ceil(hi)];
 }
 /** Safety cards that lead their moment (video-plan SAFETY: shown together in every cut). */
 const SAFE_CARD = /breath test|\bdrive\b/i;
@@ -195,9 +209,12 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
       const lo = Math.round(h(range[1], range[2])), hi = Math.round(h(range[3], range[4]));
       return hi > lo ? `The alcohol is gone after about ${lo}–${hi} h.` : null;
     })() : null;
-    if (goneSpan) push([goneSpan]);
+    // round 6: from the gauge's own range (critic: the top end needs ~13-14 h, the card said 10)
+    const gone2 = /alcohol is gone by now/.test(text) && ctx.bacPeak ? goneRange(ctx.bacPeak.g, ctx.bacPeak.min) : null;
+    const goneCard = gone2 ? `The alcohol is gone after about ${gone2[0]}–${gone2[1]} h.` : goneSpan;
+    if (goneCard) push([goneCard]);
     for (const s of sentencesOf(text)) {
-      if (goneSpan && /^(?:In a typical body like yours the alcohol is gone by now|Livers differ)/.test(s)) continue;
+      if (goneCard && /^(?:In a typical body like yours the alcohol is gone by now|Livers differ)/.test(s)) continue;
       // bedtime caffeine as a share of the dose ("About a fifth of it is still in you."; the mg are on the gauge)
       const left = /^About (\d+) mg of caffeine is (?:left|still) in you/.exec(s), fw = left && ctx.caffeineMg ? fractionWord(Number(left[1]) / ctx.caffeineMg) : null;
       if (fw) { const c = `About ${fw} of it is still in you.`; push([words(c) <= BEAT_WORDS ? c : `About ${fw} is still in you.`]); continue; }
@@ -205,6 +222,9 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
     }
     // the next morning with alcohol: the safety cards lead, together, with the time ("At 07:00, a breath test can be
     // positive." / "Don't drive."); "Waking up at 07:00." is then said by them
+    // round 6 (critic: a hangover after ONE beer is not typical): the hangover warning from 40 g of alcohol up;
+    // below that the plain rule
+    if (ctx.alcoholG !== undefined && ctx.alcoholG < 40) { const k = out.indexOf('A hangover can still make you drive worse.'); if (k >= 0) out[k] = 'Don’t drive after drinking.'; }
     const wake = out.map((c) => /^Waking up at (\d\d:\d\d)\.$/.exec(c)?.[1]).find(Boolean);
     if (out.some((c) => /breath test/i.test(c))) {
       const safe = out.filter((c) => SAFE_CARD.test(c)).map((c) => {
@@ -225,6 +245,8 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
       out.splice(0, out.length, ...head, ...rest);
     }
   }
+  // (round 6: water is not "about as fast as water")
+  if (/\bwater\b/i.test(ctx.name ?? '')) { const k = out.indexOf('About as fast as water.'); if (k >= 0) out.splice(k, 1); }
   return out.length ? out : [title];
 }
 function rule(sentence: string): string[] {

@@ -27,7 +27,7 @@ import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
-import { canEncode, captionOf, composeCmpFrame, composeFrame, elapsedText, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
+import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planCompare, planVideo, type Plan, type VFrame } from './video-plan';
 import { beatLines, type BeatCtx } from './video-beats';
 import { hookFor, hookForCompare } from './video-hook';
@@ -35,7 +35,7 @@ import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
 import { ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
-import { bodyGlowAt, isLightDrink, mainGauge, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereGauge, type BuiltLike } from './video-body';
+import { bodyGlowAt, inText, isLightDrink, mainGauge, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereGauge, type BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
 import { SIZE, VIDEO_COPY, type PinnedGauge } from './share';
@@ -90,7 +90,7 @@ const START_TILES = [
   { q: '1 apple', name: 'Apple', sub: '1 medium', color: '#c8e06a', solid: true },
   { q: 'glass of milk', name: 'Milk', sub: '250 ml glass', color: '#f4f1ea' },
 ];
-const CMP_STOPS = [0, 5, 20, 45, 90, 180, 360, 720, 1440];
+const CMP_STOPS = [0, 20, 45, 90, 180, 360, 720, 1440]; // (round 6: the first minutes in one moment, so each side's stomach fact is never dropped with a short early stop)
 const CMP_SHORT = [0, 20, 90, 240, 720, 1440]; // 2026-10-24: the planner keeps what fits in 30 s; long gaps glide slower (video-plan moveS)
 const T50_OF: Record<string, number> = { espresso: 13, cola: 32, water: 13 }; // gastric half-times of the curated models
 // Database foods that match a health-bar item (healthBars.ts ITEM_FX)
@@ -184,10 +184,13 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
  *  cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name. */
 const shortName = (n: string) => { const s = n.replace(/\s*\([^)]*\)/g, ''); return s.split(/\s+/).length > 5 && / with /.test(s) ? s.slice(0, s.indexOf(' with ')) : s; };
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
-function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number } }, drinkAtMin?: number): BeatCtx {
+function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number): BeatCtx {
   const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
+  // (round 6: the blood alcohol peak, so "gone" is said from the gauge's own range)
+  let pk = 0, pm = 0; if (built.bac && (built.alcoholG ?? 0) > 1) for (let m = 0; m <= Math.min(1440, built.bac.length - 1); m++) if (built.bac[m] > pk) { pk = built.bac[m]; pm = m; }
   return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined,
-    caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin };
+    caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin,
+    ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}) };
 }
 /** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end. */
@@ -209,10 +212,13 @@ function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefine
   if (fr.beat === 'glide') return { focus: [...new Set(focus)], zoom: union || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid' };
   // round 5 (critic: up to 13 s of the same shot): every new card, and every 2.6 s of a long one (fr.pg), reframes:
   // close on the organ, then wider with where the drink is, in turn
-  if ((fr.pg ?? 0) % 2 === 1) return { focus: [...new Set(known.length ? known : focus)], zoom: 'mid', tight: 0.5 * (fr.hk ?? 0) };
+  // (round 6: a big organ - brain, colon, liver - is never closer than 'mid', so its other framing is 'wide')
+  if ((fr.pg ?? 0) % 2 === 1) { const f2 = [...new Set(known.length ? known : focus)]; return { focus: f2, zoom: f2.every((k) => BIG_V.has(k)) ? 'wide' : 'mid', tight: 0.5 * (fr.hk ?? 0) }; }
   return { focus: [...new Set(focus)], zoom: union ? 'mid' : 'close', tight: fr.hk ?? 0 };
 }
 const OPENING: Shot = { focus: [], zoom: 'wide' }; // the first frame: the whole body
+/** Organs the camera never frames closer than 'mid' (video-cam.ts BIG). */
+const BIG_V = new Set(['jejunum', 'ileum', 'colon_asc', 'colon_trans', 'colon_desc', 'cecum', 'aorta', 'vena_cava', 'liver', 'brain']);
 /** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
  *  moment is read and out again for the quiet hours and the end. */
 const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62) }); // (round 5: breathes in and out with each card)
@@ -639,7 +645,7 @@ export default function AppV4() {
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
       // plain words (round 4); round 5: the time as on the video's clock ("at +0:20"), never a bare "13:13"; not tracked = grey
-      return { icon: ICON_OF[s.key], label: s.label, level: lvl, unknown: !!s.unknown, note: plainNote(s.key, lvl, at0, built, elapsedText(at0), !!s.unknown) };
+      return { icon: ICON_OF[s.key], label: s.label, level: lvl, unknown: !!s.unknown, note: plainNote(s.key, lvl, at0, built, inText(at0), !!s.unknown) };
     }),
   };
   const startShare = (format: Format) => {
@@ -726,7 +732,7 @@ export default function AppV4() {
         alcohol: (x.built.alcoholG ?? 0) > 1,
         ...lifeOf(x.label, x.built, m, gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined)),
         summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)),
-          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, unknown: !!s.unknown, note: plainNote(s.key, l, w, x.built, elapsedText(w), !!s.unknown) }; }) },
+          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, unknown: !!s.unknown, note: plainNote(s.key, l, w, x.built, inText(w), !!s.unknown) }; }) },
         serving: x.serving,
       };
     };
@@ -755,21 +761,57 @@ export default function AppV4() {
         // the game's facts from the model (spec §3.3): the race out of the stomach, the peak, the lights, the verdict
         // round 4: the question this pair answers clearly (out of the stomach / out of the blood / bigger sugar rise),
         // or none; its race bars and its answer come from the same model
-        const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)));
+        const bedMin = ((((profile.bedtimeMin - profile.drinkAtMin) % 1440) + 1440) % 1440);
+        const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)), { bedMin });
         cmpGuess.current = gq;
-        cmpRace.current = gq ? { a: gq.progress[0], b: gq.progress[1] } : null;
+        cmpRace.current = gq && gq.kind !== 'bedtime' ? { a: gq.progress[0], b: gq.progress[1] } : null; // (no race for "still in you at bedtime")
         const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
         const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit);
         const nonAlc = [a, b].filter((x) => (x.built.alcoholG ?? 0) <= 1), pk = [...nonAlc, a, b].map((x) => peakOf(x.built, x.glucose !== undefined)).find((x) => x !== undefined);
         // the impact lands on the answer when there is a guess (the moment the race is decided), else on the peak
         const hit = gq ? Math.round(gq.decidedMin) : pk;
         const fx: PlanFx = { peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
-          lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' ? cmpRace.current ?? undefined : undefined,
+          lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' ? cmpRace.current ?? undefined : undefined,
           heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
         // the peak gets a moment of its own (its impact lands when both bodies are there)
-        const cmpMins = [...new Set([...(shortVid ? CMP_SHORT : CMP_STOPS), ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
-        const plan = planCompare(cmpMins.map((at) => ({ min: at, a: chapterText(chap(a, at), at), b: chapterText(chap(b, at), at), titleA: chap(a, at).title, titleB: chap(b, at).title, linesA: cards(a, at), linesB: cards(b, at) })),
-          shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
+        const cmpMins0 = [...new Set([...(shortVid ? CMP_SHORT : CMP_STOPS), ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
+        // round 6 (critic: water showed one card for 28 s, and the same kidney cards ran 13 s at +24:00): each side says
+        // what is NEW since the last moment (every chapter passed on the way, in order), else the next cards of the
+        // chapter it is in; a moment with nothing new on either side is left out (the 24 h beat still ends the day)
+        const perStop = shortVid ? 1 : 2;
+        const sideCards = (x: Analysis, mins: number[]) => {
+          let prev = -1, seen = 0, lastLines: string[] = [];
+          return mins.map((at) => {
+            const fresh0 = x.built.story.chapters.filter((c) => c.min > prev && c.min <= at && (c.min === 0 || c.min >= 1));
+            // the chapter of this moment first (what is true NOW), then the ones passed on the way; in a stomach race
+            // the stomach chapter leads (it is the game's fact)
+            const rank = (c: typeof fresh0[number]) => (gq?.kind === 'stomach' && /stomach/i.test(c.title) ? 0 : c === fresh0[fresh0.length - 1] ? 1 : 2);
+            const fresh = fresh0.map((c, i) => ({ c, i })).sort((p, q) => rank(p.c) - rank(q.c) || p.i - q.i).map((p) => p.c);
+            prev = at;
+            if (fresh.length) {
+              const lines = fresh.flatMap((c) => cards(x, c.min));
+              lastLines = lines; seen = Math.min(lines.length, perStop);
+              return { lines, title: fresh[0].title, text: chapterText(fresh[0], fresh[0].min), isNew: true };
+            }
+            const rest = lastLines.slice(seen);
+            seen = Math.min(lastLines.length, seen + perStop);
+            const c = chap(x, at);
+            return { lines: rest.length ? rest : lastLines.slice(-1), title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
+          });
+        };
+        // (the planner may leave moments out to fit: the words are then worked out again for the moments it kept, so
+        // nothing a left-out moment would have said is lost; twice is enough)
+        const build = (mins0: number[]) => {
+          const sa = sideCards(a, mins0), sb = sideCards(b, mins0);
+          const keepAt = mins0.map((at, i) => i === 0 || at === hit || sa[i].isNew || sb[i].isNew);
+          const mins = mins0.filter((_m, i) => keepAt[i]);
+          const pick = <T,>(xs: T[]) => xs.filter((_x, i) => keepAt[i]);
+          const SA = pick(sa), SB = pick(sb);
+          return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines })),
+            shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
+        };
+        let used = cmpMins0, plan = build(used);
+        for (let k = 0; k < 3; k++) { const kept = cmpMins0.filter((m) => plan.stops.includes(m)); if (kept.length === used.length) break; used = kept; plan = build(used); }
         cmpStops.current = plan.stops;
         if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ seconds: plan.seconds, stops: plan.stops, guess: gq && { kind: gq.kind, q: gq.question, a: `${gq.answer1} ${gq.answer2}`, at: gq.decidedMin }, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, `${p.text} | ${p.textB ?? ''}`]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
         const [FW, FH] = SIZE.reel;

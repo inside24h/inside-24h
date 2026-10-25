@@ -73,7 +73,8 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
   const g = gs ? at(gs, mi) / 18.016 : 0;
   if (gs && Math.abs(g) >= 0.5) {
     void unit; // (round 5: said against your usual level, the same in any unit)
-    return { big: g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: sugarPlain(g), level: g >= 3 || g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
+    // round 6 (owner): a normal rise after a meal or a sweet drink is said calmly (calm colour), unless it is high
+    return { big: g >= 3 ? 'Blood sugar up a lot' : g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: sugarPlain(g), level: g >= 3 ? 2 : g > 0 ? 0 : g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
   }
   const caf = b.caffeine.doseMg >= 10 ? at(b.caffeine.body, mi) : 0;
   if (caf >= 20) return { big: `${Math.round(caf)} mg caffeine`, small: 'still in your body', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
@@ -86,12 +87,19 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
 export const USUAL_MMOL = 5.0;
 export function sugarPlain(g: number): string {
   if (g < 0) return g <= -1 ? 'clearly below usual' : 'a little below usual';
+  return `${sugarPct(g)} over usual: ${g >= 3 ? 'a big rise' : 'a normal rise'}`;
+}
+/** "+26–62 %": the blood sugar rise as a range against the usual level (the same on the gauge and the end card). */
+export function sugarPct(g: number): string {
   const [lo, hi] = glucoseRangeText(g).replace('+', '').split('–').map(Number);
-  return `${Math.round((lo / USUAL_MMOL) * 100)}–${Math.round((hi / USUAL_MMOL) * 100)} % above usual`;
+  return `+${Math.round((lo / USUAL_MMOL) * 100)}–${Math.round((hi / USUAL_MMOL) * 100)} %`;
 }
 export function bacPlain(gPerL: number): string {
-  const [lo, hi] = bacRange(gPerL);
-  return `Blood alcohol ${(lo / 10).toFixed(2)}–${(hi / 10).toFixed(2)} % (BAC)`;
+  // round 6: honest precision (one beer: "0.012–0.030 %", never a rounded "0.01–0.03" that reads as zero), and an
+  // anchor only where the range reaches it
+  const [lo, hi] = bacRange(gPerL).map((x) => x / 10), d = lo < 0.03 ? 3 : 2;
+  const anchor = lo >= 0.08 ? ' · over US limit (0.08 %)' : hi >= 0.08 ? ' · may top US limit (0.08 %)' : hi >= 0.05 ? ' · may top EU limit (0.05 %)' : '';
+  return `BAC ${lo.toFixed(d)}–${hi.toFixed(d)} %${anchor}`;
 }
 /** Where words for the gauge (round 5: "146 ml · Blood" said nothing). */
 const WHERE_SMALL: Partial<Record<SegId, string>> = {
@@ -144,17 +152,24 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
     if (sugarUnknown) return 'Not tracked for this one';
     if (level === 0) return 'Steady all day';
     const g = b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
-    return g < 0 ? `Dips below normal at ${t}` : level === 2 ? `Big sugar spike at ${t}` : `Sugar up for a while at ${t}`;
+    return g < 0 ? `Dips below normal ${t}` : level === 2 ? `Big sugar spike ${t}` : `Sugar up for a while ${t}`;
   }
-  if (key === 'heart') return level === 0 ? 'Normal all day' : level === 2 ? `Pulse clearly up at ${t}` : `Pulse a little up at ${t}`;
-  if (key === 'water') return level === 0 ? 'Fine all day' : level === 2 ? `Short of water at ${t}` : `A bit short of water at ${t}`;
+  if (key === 'heart') return level === 0 ? 'Normal all day' : level === 2 ? `Pulse clearly up ${t}` : `Pulse a little up ${t}`;
+  if (key === 'water') return level === 0 ? 'Fine all day' : level === 2 ? `Short of water ${t}` : `A bit short of water ${t}`;
   if (level === 0) return 'Fine all day';
   const bac = b.bac ? at(b.bac, mi) : 0, caf = b.caffeine.doseMg >= 1 ? at(b.caffeine.body, mi) : 0;
-  if (bac >= 0.5) return `Balance worse at ${t}`;
-  if (bac >= 0.2) return `Attention worse at ${t}`;
+  if (bac >= 0.5) return `Balance worse ${t}`;
+  if (bac >= 0.2) return `Attention worse ${t}`;
   if (bac > 0.02) return 'Lighter sleep that night';
-  if (caf >= 200) return level === 2 ? `Too much caffeine at ${t}` : `A lot of caffeine at ${t}`;
+  if (caf >= 200) return level === 2 ? `Too much caffeine ${t}` : `A lot of caffeine ${t}`;
   return 'Sleep may be a little lighter';
 }
 /** The end card's blood sugar line in plain words ("not measured" read like an error). */
-export const plainSugar = (peak: number | null, _text?: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `up to +${Math.round((peak / USUAL_MMOL) * 100)} %`); // (vs. your usual level; short enough for the end card's column)
+// (round 6: the same range as the gauge, critic P0: "+45 %" on the end card vs "26–62 %" on the gauge)
+export const plainSugar = (peak: number | null, _text?: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `${sugarPct(peak)}, ${peak >= 3 ? 'a big rise' : 'normal'}`);
+/** When in the day, in words: "13 min in", "1½ h in" (round 6: "+0:13" read like a code). */
+export function inText(m: number): string {
+  if (m < 55) return `${Math.max(1, Math.round(m))} min in`;
+  const h = Math.round(m / 30) / 2, w = Math.floor(h);
+  return `${w}${h - w >= 0.5 ? '½' : ''} h in`;
+}

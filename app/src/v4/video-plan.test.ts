@@ -6,7 +6,11 @@ import { minutesFromU, uFromMinutes } from '../time';
 import { END_HOLD_S, FPS, LENGTH, mustCards, PEAK_BY_S, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_OK, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
 import { musicShape, HUSH_S } from './video-audio';
 import fixtures from './video-plan.fixtures.json';
-import { beatLines, BEAT_WORDS, DYNAMIC, isCard, numberConflict, ruleCards } from './video-beats';
+import { beatLines, BEAT_WORDS, DYNAMIC, goneRange, isCard, numberConflict, ruleCards } from './video-beats';
+import { mainGauge, plainSugar, sugarPct } from './video-body';
+import { parseMeal } from './food/parse';
+import { analyze } from './analyze';
+import { DEFAULT_PROFILE } from '../science/profile';
 
 const FIX = fixtures as Record<string, StopIn[]>;
 const plan = (s: StopIn[], cut: 'long' | 'short') => planVideo(s, cut, uFromMinutes, minutesFromU);
@@ -107,7 +111,7 @@ describe('caption cards', () => {
     for (const { cards } of all) for (const t of cards) expect(DYNAMIC.test(t), t).toBe(false);
     // the owner's case: bedtime said 0.33–0.83 ‰ while the gauge said 0.31–0.77 ‰
     const bed = beatLines({ min: 30, title: 'Bedtime', text: 'There is still alcohol in your blood (about 0.33–0.83 ‰). You may fall asleep faster, but the second half of the night will be lighter and more broken.' });
-    expect(bed).toEqual(['There is still alcohol in your blood.', 'You may fall asleep faster.', 'Later, your sleep is lighter and more broken.']);
+    expect(bed).toEqual(['There is still alcohol in your blood.', 'You may fall asleep faster, but sleep worse.', 'Later, your sleep is lighter and more broken.']);
   });
   it('pacing: the last round is said as the model doses it (one every 40 minutes over 2 h: the third at +1:20)', () => {
     const pace = { doses: 3, overMin: 120, everyMin: 40, round: 'drink' };
@@ -195,7 +199,7 @@ describe('card vs gauge numbers (owner review 2026-10-24)', () => {
   it('the pizza fiber card has no number any more (the gauge counts it)', () => {
     const c = beatLines({ min: 732, title: 'Into the large intestine', text: 'What you can’t digest, 22.7 g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it.' });
     for (const x of c) expect(numberConflict(x, ['20 g fiber'])).toBe(false);
-    expect(beatLines({ min: 1440, title: '24 hours later', text: '2% has left your body so far.' })).toEqual(['Only 2% of the leftovers are out yet.']);
+    expect(beatLines({ min: 1440, title: '24 hours later', text: '2% has left your body so far.' })).toEqual(['Most of the fiber is still in you.']);
   });
 });
 
@@ -284,5 +288,46 @@ describe('round 5: every beat renders, payoffs, safety, no dead ends', () => {
     expect(at(10 - HUSH_S / 2)).toBeLessThan(0.05);
     expect(at(10.2)).toBe(1);
     expect(at(5)).toBeLessThan(0.7);
+  });
+});
+
+// ROUND 6 (second critique 2026-10-25, research/improvements/video-critique-2026-10-25.md)
+describe('round 6: honest alcohol, one number per thing', () => {
+  const alcCards = Object.entries(FIX).filter(([n]) => /beer/.test(n)).flatMap(([, cs]) => cs.flatMap((c) => beatLines(c, { name: 'beer', alcoholG: 60 })));
+  const corpus = [...alcCards, ...Object.values(FIX).flatMap((cs) => cs.flatMap((c) => sentences(c.text).flatMap((x) => ruleCards(x))))];
+  it('alcohol is never framed positively without its counterpart in the SAME card ("fall asleep faster, but sleep worse")', () => {
+    for (const c of corpus) if (/fall asleep faster|relax|feel good/i.test(c)) expect(c, c).toMatch(/\bbut\b/);
+    for (const v of ['clearly broken', 'lighter and more broken', 'a little lighter'])
+      expect(beatLines({ min: 240, title: 'Bedtime', text: `You may fall asleep faster, but the second half of the night will be ${v}.` })[0]).toMatch(/^You may fall asleep faster, but sleep (worse|lighter)\.$/);
+  });
+  it('"gone" covers the gauge: the heaviest reading (+50 %) with the slowest liver (0.10 g/L an hour), from the peak', () => {
+    const [lo, hi] = goneRange(0.8, 129);
+    expect(hi).toBeGreaterThanOrEqual(0.8 * 1.5 / 0.1 + 129 / 60);
+    expect(lo).toBeLessThan(8.5); expect(hi).toBeGreaterThan(8.5); // the typical body is inside it
+    const card = beatLines({ min: 508, title: 'Alcohol gone', text: 'In a typical body like yours the alcohol is gone by now, about 8.5 h after the first sip. Livers differ (0.10–0.20 ‰ an hour), so for most people somewhere between 04:51 tomorrow and 09:18 tomorrow.' }, { bacPeak: { g: 0.8, min: 129 }, drinkAtMin: 1320 })[0];
+    expect(card).toBe(`The alcohol is gone after about ${lo}–${hi} h.`);
+  });
+  it('a hangover warning only from 40 g of alcohol (one beer: "Don’t drive after drinking.")', () => {
+    const ch = { min: 720, title: 'Next morning', text: '07:00, waking up. The alcohol should be gone, but a hangover can still make you drive worse, even at 0 ‰.' };
+    expect(beatLines(ch, { alcoholG: 20 })).toContain('Don’t drive after drinking.');
+    expect(beatLines(ch, { alcoholG: 60 })).toContain('A hangover can still make you drive worse.');
+  });
+  it('the cola single never says "No extra urine." alone', () => {
+    for (const c of FIX.cola.flatMap((x) => beatLines(x))) expect(c).not.toBe('No extra urine.');
+    expect(beatLines(FIX.cola.find((c) => c.title === 'Kidneys')!)).toEqual(['It hydrates like the same amount of water.']);
+  });
+  it('the blood sugar rise is the same range on the gauge and the end card, and a normal rise is said calmly', () => {
+    const x = analyze(parseMeal('cola'), DEFAULT_PROFILE), g = x.built.effects.glucoseMgDl!;
+    let pk = 0, at = 0; for (let m = 0; m < 600; m++) if (g[m] > g[at]) at = m; pk = g[at] / 18.016;
+    const gauge = mainGauge(x.built, at, 0.2, 'mmol/L', true)!;
+    expect(gauge.small).toContain(sugarPct(pk)); expect(plainSugar(pk)).toContain(sugarPct(pk));
+    if (pk < 3) { expect(gauge.level).toBe(0); expect(gauge.small).toMatch(/normal rise/); }
+  });
+  it('the 24 h moment: plain words and the normal range (14–58 h), not "29 hours" alone', () => {
+    const c = beatLines(FIX['pizza-whole'].find((x) => x.min === 1440)!);
+    expect(c).toEqual(['Most of the fiber is still in you.', 'Mouth to toilet usually takes 14–58 hours.']);
+  });
+  it('"Building blocks" is never in the video', () => {
+    for (const cut of ['long', 'short'] as const) expect(plan(FIX['pizza-whole'], cut).pages.map((x) => x.text).join(' ')).not.toMatch(/Protein pieces|building blocks/i);
   });
 });
