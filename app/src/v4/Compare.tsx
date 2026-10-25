@@ -15,7 +15,8 @@ const LINE = ['#ffc83d', '#5cd3ff'];
 
 // everyday questions people actually argue about
 export const PAIRS: [string, string][] = [
-  ['1 can of cola', 'glass of water'], ['1 can of cola', 'diet cola'], ['orange juice', '1 orange'],
+  // (round 5: the same amount of water as the can, so the race out of the stomach is fair)
+  ['1 can of cola', '330 ml of water'], ['1 can of cola', 'diet cola'], ['orange juice', '1 orange'],
   ['beer', 'glass of red wine'], ['doughnut', '1 apple'], ['white bread', 'rye bread'],
   ['espresso', 'energy drink'], ['cornflakes', 'oatmeal'], ['potato chips', 'almonds'],
   ['milk chocolate', 'dark chocolate'], ['white rice', 'lentils'], ['coffee with milk', 'cappuccino'],

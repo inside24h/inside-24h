@@ -8,6 +8,8 @@ export type GuessKind = 'stomach' | 'blood' | 'sugar';
 export interface GuessSide {
   name: string;
   alcohol?: boolean;
+  /** round 5: how much went in (the most the stomach held, ml or g): the stomach race is only asked when both are
+   *  within ±10 % (critic: 30 ml espresso vs 500 ml beer, 330 ml cola vs 250 ml water made it trivial) */ amount?: number;
   /** what is in the stomach per minute (0..1440), from the route model */ stomach?: ArrayLike<number> | null;
   /** caffeine (mg in the body) and blood alcohol (g/L) per minute */ caffeine?: ArrayLike<number> | null; bac?: ArrayLike<number> | null;
   /** blood sugar change per minute (mmol/L), when the food has a measured curve */ sugar?: ArrayLike<number> | null;
@@ -44,13 +46,20 @@ export function aboutTime(min: number): string {
 /** Two times are clearly different: at least 15 minutes and 25 % apart. */
 export const clearlyApart = (a: number, b: number) => Math.abs(a - b) >= Math.max(15, 0.25 * Math.max(a, b));
 const the = (n: string) => n;
+/** Both sides about the same amount (±10 %): a fair race out of the stomach. Unknown amounts are measured from the
+ *  stomach curves. */
+export function sameAmount(a: GuessSide, b: GuessSide): boolean {
+  const amt = (s: GuessSide) => s.amount ?? (s.stomach ? Math.max(0, ...Array.from(s.stomach)) : NaN);
+  const x = amt(a), y = amt(b);
+  return x > 0 && y > 0 && Math.abs(x - y) <= 0.1 * Math.max(x, y);
+}
 
 /** The clearest question for this pair, or null when the model does not separate them clearly. */
 export function chooseGuess(a: GuessSide, b: GuessSide): Guess | null {
   const sides = [a, b];
   // 1) out of the stomach first
   const so = sides.map((s) => outAt(s.stomach));
-  if (so[0] !== undefined && so[1] !== undefined && clearlyApart(so[0], so[1])) {
+  if (so[0] !== undefined && so[1] !== undefined && sameAmount(a, b) && clearlyApart(so[0], so[1])) {
     const w = (so[0] < so[1] ? 0 : 1) as 0 | 1;
     return { kind: 'stomach', question: 'Guess: which leaves your stomach first?', winner: w, decidedMin: so[w]!,
       answer1: `First out: ${the(sides[w].name)}.`, answer2: `Out of the stomach in ${aboutTime(so[w]!)}.`,
@@ -64,7 +73,7 @@ export function chooseGuess(a: GuessSide, b: GuessSide): Guess | null {
     const t = bl.map((x) => x!.out ?? 1e9);
     if (Math.min(t[0], t[1]) < 1e9 && clearlyApart(Math.min(t[0], 1440), Math.min(t[1], 1440))) {
       const w = (t[0] < t[1] ? 0 : 1) as 0 | 1;
-      return { kind: 'blood', question: 'Guess: which is out of your blood first?', winner: w, decidedMin: t[w],
+      return { kind: 'blood', question: 'Guess: which leaves your blood first?', winner: w, decidedMin: t[w],
         answer1: `First out: ${the(sides[w].name)}.`, answer2: `Out of the blood in ${aboutTime(t[w])}.`,
         recap: `Answer: ${sides[w].name} left the blood first.`, progress: [race(bl[0].series, bl[0].floor), race(bl[1].series, bl[1].floor)] };
     }
@@ -83,11 +92,12 @@ export function chooseGuess(a: GuessSide, b: GuessSide): Guess | null {
 }
 
 /** A side of the race from the app's analysis of one food or drink (Compare / analyze.ts). */
-export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }): GuessSide {
+export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
   const r = x.built.route;
+  const stomach = r ? Float32Array.from({ length: N }, (_, m) => r.segs(m).stomach?.amount ?? 0) : null;
   return {
-    name: x.label, alcohol: (x.built.alcoholG ?? 0) > 1,
-    stomach: r ? Float32Array.from({ length: N }, (_, m) => r.segs(m).stomach?.amount ?? 0) : null,
+    name: name ?? x.label, alcohol: (x.built.alcoholG ?? 0) > 1, amount: stomach ? Math.max(0, ...Array.from(stomach)) : undefined,
+    stomach,
     caffeine: x.built.caffeine.doseMg >= 10 ? x.built.caffeine.body : null,
     bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null,
     sugar: x.glucose ? Float32Array.from({ length: N }, (_, m) => (x.glucose![m] ?? 0) / 18.016) : null,

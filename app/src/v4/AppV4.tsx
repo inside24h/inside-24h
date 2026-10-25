@@ -27,7 +27,7 @@ import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
-import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
+import { canEncode, captionOf, composeCmpFrame, composeFrame, elapsedText, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planCompare, planVideo, type Plan, type VFrame } from './video-plan';
 import { beatLines, type BeatCtx } from './video-beats';
 import { hookFor, hookForCompare } from './video-hook';
@@ -184,9 +184,10 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
  *  cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name. */
 const shortName = (n: string) => { const s = n.replace(/\s*\([^)]*\)/g, ''); return s.split(/\s+/).length > 5 && / with /.test(s) ? s.slice(0, s.indexOf(' with ')) : s; };
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
-function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] } }): BeatCtx {
+function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number } }, drinkAtMin?: number): BeatCtx {
   const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
-  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined };
+  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined,
+    caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin };
 }
 /** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end. */
@@ -206,16 +207,22 @@ function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefine
   const main = known[0], focus = union ? known : main ? [main, ...known.slice(1).filter((x) => Math.abs(ORGAN_AT[x][1] - ORGAN_AT[main][1]) < 0.22)] : known.slice(0, 1);
   // (split screen: each half is narrow, so never closer than 'mid')
   if (fr.beat === 'glide') return { focus: [...new Set(focus)], zoom: union || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid' };
+  // round 5 (critic: up to 13 s of the same shot): every new card, and every 2.6 s of a long one (fr.pg), reframes:
+  // close on the organ, then wider with where the drink is, in turn
+  if ((fr.pg ?? 0) % 2 === 1) return { focus: [...new Set(known.length ? known : focus)], zoom: 'mid', tight: 0.5 * (fr.hk ?? 0) };
   return { focus: [...new Set(focus)], zoom: union ? 'mid' : 'close', tight: fr.hk ?? 0 };
 }
 const OPENING: Shot = { focus: [], zoom: 'wide' }; // the first frame: the whole body
 /** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
  *  moment is read and out again for the quiet hours and the end. */
-const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? 1.56 - 0.06 * (fr?.hk ?? 0) : 1.62) });
+const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62) }); // (round 5: breathes in and out with each card)
 const SPLIT_OPENING: Shot = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 /** Where the drink is + the number that matters, at minute m (where is left out when it says the same). */
 function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKnown: boolean): PinnedGauge[] {
-  const main = mainGauge(b, m, uFromMinutes(Math.min(1440, m)), unit, sugarKnown), where = whereGauge(b, m);
+  const main = mainGauge(b, m, uFromMinutes(Math.min(1440, m)), unit, sugarKnown);
+  // one number per thing (round 5, critic: "4.8 g sugar · Blood" next to "Blood sugar up"): no sugar where-gauge
+  // while the blood sugar gauge is up
+  const w0 = whereGauge(b, m), where = w0 && main?.organ === 'pancreas' && /sugar/.test(w0.big) ? null : w0;
   // the same number twice (blood alcohol in "Blood", caffeine in "Blood"): only the main gauge
   const num = (s: string) => /[\d.,–]+/.exec(s)?.[0] ?? s;
   const same = !!main && !!where && ((/alcohol/.test(main.small) && where.big.includes('‰')) || num(where.big) === num(main.big));
@@ -246,6 +253,8 @@ function peakOf(b: PeakIn, sugarKnown: boolean): number | undefined {
   if (b.caffeine.doseMg >= 20) return arg(b.caffeine.body);
   return undefined;
 }
+/** The comparison's name for a side (round 5): the amount moves to its own line ("330 ml of water" → "Water"). */
+const cmpName = (label: string) => { const s = label.replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, ''); return s.charAt(0).toUpperCase() + s.slice(1); };
 /** Fizzy drinks get the can opening and the fizz in the sound (cosmetic only). */
 const isFizzy = (name: string) => /\b(cola|beer|lager|soda|sparkling|tonic|energy drink|cider|prosecco|champagne|radler)\b/i.test(name);
 // (the comparison race moved to video-guess.ts, round 4)
@@ -594,14 +603,16 @@ export default function AppV4() {
   const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null) : null;
   const hookNow = hookFor({ name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
     alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
-    pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined });
+    pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
+    grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg });
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
     // 2026-10-24: two lines, the surprise first and the promise second, from the model of this export (video-hook.ts)
     hook: `${hookNow.line1}\n${hookNow.line2}`,
     alcohol: (built.alcoholG ?? 0) > 1, focus: recChapter.focus,
-    title: PRODUCT.name,
+    // (round 5: the end card names it as the hook does, "A whole pizza with extra cheese, …")
+    title: productId === 'food' && foodParts.length === 1 ? videoName.replace(/\s*\([^)]*\)/g, '') : PRODUCT.name,
     sub: `${profile.sex === 'female' ? 'Woman' : 'Man'}, ${profile.ageY} · ${profile.heightCm} cm · ${profile.weightKg} kg${city ? ` · ${city.name}` : ''}`,
     clock: hhmm(profile.drinkAtMin + recStop), step: recChapter.title, caption: captionOf(chapterText(recChapter, recStop)), color: story.color, progress: u, handle, stamp: stampFor(recStop, /bite/i.test(story.chapters[0]?.title ?? '')),
     pop: (() => {
@@ -627,7 +638,8 @@ export default function AppV4() {
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
-      return { icon: ICON_OF[s.key], label: s.label, level: lvl, note: plainNote(s.key, lvl, at0, built, hhmm(profile.drinkAtMin + at0), !!s.unknown) }; // plain words (round 4)
+      // plain words (round 4); round 5: the time as on the video's clock ("at +0:20"), never a bare "13:13"; not tracked = grey
+      return { icon: ICON_OF[s.key], label: s.label, level: lvl, unknown: !!s.unknown, note: plainNote(s.key, lvl, at0, built, elapsedText(at0), !!s.unknown) };
     }),
   };
   const startShare = (format: Format) => {
@@ -705,7 +717,7 @@ export default function AppV4() {
       const dg = x.glucose ? x.glucose[mi] / 18.016 : 0;
       const en = x.systems.find((s) => s.key === 'energy')!;
       return {
-        name: x.label, color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
+        name: cmpName(x.label), color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
         where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
         sugar: x.sugarPeak === null ? 'Blood sugar ?' : Math.abs(dg) < 0.15 ? 'Blood sugar steady' : `Blood sugar ${sugarDeltaText(dg, profile.glucoseUnit)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
@@ -714,12 +726,13 @@ export default function AppV4() {
         alcohol: (x.built.alcoholG ?? 0) > 1,
         ...lifeOf(x.label, x.built, m, gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined)),
         summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)),
-          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, note: plainNote(s.key, l, w, x.built, hhmm(profile.drinkAtMin + w), !!s.unknown) }; }) },
+          worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, unknown: !!s.unknown, note: plainNote(s.key, l, w, x.built, elapsedText(w), !!s.unknown) }; }) },
+        serving: x.serving,
       };
     };
     const race = cmpRace.current;
     const gq = cmpGuess.current;
-    cmpOverlayRef.current = { hook: gq ? gq.question : hookForCompare(cmpRec.a.label, cmpRec.b.label, false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
+    cmpOverlayRef.current = { hook: gq ? gq.question : hookForCompare(cmpName(cmpRec.a.label), cmpName(cmpRec.b.label), false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
       answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
   }
   // the organ each body's current moment is about (the split-screen cameras frame both, the organs light up)
@@ -738,11 +751,11 @@ export default function AppV4() {
         flushSync(() => setCmpNever(true)); // bodies are loaded: from now on only the recorder draws frames
         // each side's words at each moment (as on screen); planCompare sets the reading times and the length
         const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
-        const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built), factsFirst: true }); };
+        const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built, profile.drinkAtMin), factsFirst: true }); };
         // the game's facts from the model (spec §3.3): the race out of the stomach, the peak, the lights, the verdict
         // round 4: the question this pair answers clearly (out of the stomach / out of the blood / bigger sugar rise),
         // or none; its race bars and its answer come from the same model
-        const gq = chooseGuess(guessSideOf(a), guessSideOf(b));
+        const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)));
         cmpGuess.current = gq;
         cmpRace.current = gq ? { a: gq.progress[0], b: gq.progress[1] } : null;
         const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
@@ -809,9 +822,11 @@ export default function AppV4() {
   // every chapter's words at its own minute (as on screen); video-plan.ts picks the moments and the caption times
   const reelPlan = (): Plan => {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
-    const ctx = beatCtx(shortName(videoName), built);
+    const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin);
     const stops = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => { const text = chapterText(c, c.min); return { min: c.min, title: c.title, text, lines: beatLines({ min: c.min, title: c.title, text }, ctx) }; });
-    const fx: PlanFx = { peakMin: peakOf(built, peakNow !== null), drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
+    // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
+    const payoff = hookNow.payoff ? story.chapters.find((c) => c.title === hookNow.payoff)?.min : undefined;
+    const fx: PlanFx = { peakMin: peakOf(built, peakNow !== null), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels };
     const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;

@@ -7,11 +7,11 @@ import { analyze } from './analyze';
 import { aboutTime, chooseGuess, clearlyApart, guessSideOf, outAt } from './video-guess';
 
 const PAIRS: [string, string][] = [ // = Compare.tsx PAIRS (a React file; the list is repeated here on purpose)
-  ['1 can of cola', 'glass of water'], ['1 can of cola', 'diet cola'], ['orange juice', '1 orange'],
+  ['1 can of cola', '330 ml of water'], ['1 can of cola', 'diet cola'], ['orange juice', '1 orange'],
   ['beer', 'glass of red wine'], ['doughnut', '1 apple'], ['white bread', 'rye bread'],
   ['espresso', 'energy drink'], ['cornflakes', 'oatmeal'], ['potato chips', 'almonds'],
   ['milk chocolate', 'dark chocolate'], ['white rice', 'lentils'], ['coffee with milk', 'cappuccino'],
-  ['espresso', 'beer'], ['cola', 'glass of water'],
+  ['espresso', 'beer'], ['cola', 'glass of water'], ['cola', '330 ml of water'],
 ];
 const words = (s: string) => s.trim().split(/\s+/).length;
 
@@ -28,6 +28,8 @@ describe('the comparison guess', () => {
       expect(g.recap).toContain([A, B][g.winner].name);
       const loser = 1 - g.winner;
       if (g.kind === 'stomach') {
+        // round 5: a fair race (the same amount, ±10 %)
+        expect(Math.abs(A.amount! - B.amount!)).toBeLessThanOrEqual(0.1 * Math.max(A.amount!, B.amount!));
         const t = [outAt(A.stomach), outAt(B.stomach)];
         expect(t[g.winner]).toBe(g.decidedMin);
         expect(t[g.winner]!).toBeLessThan(t[loser]!);
@@ -40,11 +42,22 @@ describe('the comparison guess', () => {
       expect(`${g.question} ${g.answer1} ${g.answer2} ${g.recap}`).not.toMatch(/\b(wins?|best|better|healthy)\b/i);
     });
   }
-  it('espresso vs beer asks about the stomach and the espresso is out first', () => {
+  it('round 5: 30 ml espresso vs 500 ml beer is never a stomach race (it asks which leaves the blood first)', () => {
     const a = analyze(parseMeal('espresso'), DEFAULT_PROFILE), b = analyze(parseMeal('beer'), DEFAULT_PROFILE);
     const g = chooseGuess(guessSideOf(a), guessSideOf(b))!;
-    expect(g.kind).toBe('stomach'); expect(g.winner).toBe(0);
-    expect(g.answer1).toBe('First out: Espresso.');
+    expect(g.kind).not.toBe('stomach');
+    expect(g.kind).toBe('blood'); expect(g.winner).toBe(1); // the beer's alcohol is out first: only then "Faster out ≠ better"
+  });
+  it('round 5: cola vs a glass (250 ml) is not a stomach race; cola vs 330 ml of water is, and water is out first', () => {
+    const c = analyze(parseMeal('cola'), DEFAULT_PROFILE);
+    expect(chooseGuess(guessSideOf(c), guessSideOf(analyze(parseMeal('glass of water'), DEFAULT_PROFILE)))?.kind).not.toBe('stomach');
+    const g = chooseGuess(guessSideOf(c, 'Cola'), guessSideOf(analyze(parseMeal('330 ml of water'), DEFAULT_PROFILE), 'Water'))!;
+    expect(g.kind).toBe('stomach'); expect(g.answer1).toBe('First out: Water.');
+  });
+  it('round 5: unequal amounts never get the stomach question', () => {
+    const flat = (t: number, v: number) => Float32Array.from({ length: 1441 }, (_, m) => (m < 1 ? 0 : m < t ? v : 0));
+    expect(chooseGuess({ name: 'A', stomach: flat(30, 30) }, { name: 'B', stomach: flat(90, 500) })).toBeNull();
+    expect(chooseGuess({ name: 'A', stomach: flat(30, 330) }, { name: 'B', stomach: flat(90, 340) })?.kind).toBe('stomach');
   });
   it('a near-tie is never asked', () => {
     const flat = (t: number) => Float32Array.from({ length: 1441 }, (_, m) => (m < 1 ? 0 : m < t ? 100 : 0));

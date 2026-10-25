@@ -162,3 +162,63 @@ Backup: `backups/20261024-171312-video5/`. Ništa nije commitano (runda 3 = 9434
 - Bijeli/raženi kruh i mliječna/tamna čokolada nemaju pogađanje (model ih ne razdvaja jasno) — CTA "Which one would you pick?".
 - Spec V17 brzinske linije nisu napravljene. Zvuk otkucaja/tape-stopa provjeren brojevima, ne slušalicama.
 - Vite dev server povremeno vrati 403 na stari dep-cache izvan roota (samo QA skripta; rješenje: nova cacheDir mapa).
+
+---
+
+# Runda 5 (2026-10-25): svi P0 i P1 iz video-critique-2026-10-24.md
+
+Backup: `backups/20261024-221027-video6/`. Ništa nije commitano (runda 4 = be28736).
+
+**P0**
+1. Thumbnail: frame 0 ima cijeli hook. Kinetički efekt više ne skriva riječi, nego ih nakon gutljaja redom oboji i lagano podigne (`kineticWord`). Hook kaže što se jede ili pije, npr. "One can of cola: 9 teaspoons of sugar.", "A whole pizza (1154 g): 2723 kcal.", "A fifth is still in you at bedtime." Test: frame 0 crta oba reda.
+2. Poštene usporedbe. Pitanje o želucu postavlja se samo kad su obje količine jednake (±10 %, `sameAmount`). Preset u Compare je sada cola vs 330 ml vode. Espresso vs pivo pita "which leaves your blood first?" (odgovor: pivo). Porcije se vide ispod imena ("330 ml" / "330 ml", "30 ml" / "500 ml"). Testovi pokrivaju sve parove, 30 vs 500 ml i 250 vs 330 ml.
+3. "Faster out ≠ better for you." prikazuje se samo kad prva izađe strana s alkoholom. Test pokriva i slučaj kad prvi izađe espresso.
+4. Pivo, sigurnosna poruka: sigurnosne kartice jutra vode i obavezne su u oba cuta (`SAFETY`, `mustCards`, forced moment).
+   - Pivo počinje u 19:00, pa model kaže da alkohola ujutro nema. Zato poruka glasi "At 07:00, the alcohol should be gone." / "A hangover can still make you drive worse."
+   - Kad alkohola ujutro ima: "At 07:00, a breath test can be positive." / "Don't drive." I to je testirano.
+5. Nikad prazna labela ni siroče. Labela se crta samo uz svoju karticu. Pravilo čija prva kartica ne prolazi ne daje ništa. "Coffee sends 1 in 3 to the toilet." stane (8 riječi). Test provjerava da nijedno pravilo ne gubi karticu i da je svaka planirana kartica na ekranu puno vrijeme.
+6. Isplata hooka (`payoffMin`) ulazi u svaki cut. Short završava priču na isplati, pa ona dolazi pri kraju. Espresso short sad ima bedtime karticu "About a fifth is still in you."
+7. Kraj dana: vožnja do +24:00 nosi chip "NEXT · +24:00 · 24 hours later", a stajanje bez riječi traje 0,8 s. Kamera promijeni kadar sa svakom karticom i najmanje svake 2,6 s (`pg`), pa se mijenja i split kadar.
+8. Mjehur: broj je urin nastao u zadnja 3 h. Natpis kaže "Urine made in the last 3 h", a iznad 500 ml "Made in 3 h: more than one pee".
+9. "Gone" je raspon iz modela, npr. "The alcohol is gone after about 6–10 h."
+10. Bubrezi i kofein: "Your kidneys flush out its broken-down pieces."
+11. Hidracija: "Cola hydrates like the same amount of water."
+
+**P1**
+- Jedan broj po stvari: dok je gore mjerač šećera u krvi, mjerač "g sugar" se ne prikazuje.
+  - Šećer se kaže kao "26–60 % above usual" (u odnosu na uobičajenih 5,0 mmol/L iz modela), alkohol kao "Blood alcohol 0.05–0.12 % (BAC)".
+  - Kraći red u chipu se smanji, ne reže se.
+- End card koristi vrijeme sa sata videa ("at +0:13"), bez golog "13:13".
+  - Compare end card ima fontove 26–30 px i prikazuje samo svjetla koja nisu zelena; ako su sva zelena, piše "All lights green".
+  - Šećer koji se ne prati prikazuje se sivo, ne zeleno.
+- "Coming up:" prikazuje se samo za moment s popisa dozvoljenih, pa nema više "building blocks".
+- 24 h: "Only 2% of the leftovers are out yet."
+- Hook espressa kaže koliki je udio još u tijelu. Hook za hranu je pitanje "Where is it 24 hours later?", a odgovara mu moment od 24 h.
+- Imena se slažu. End card pizze: "A whole pizza with extra cheese, ham and mushrooms".
+- Compare chip: "Comment: espresso or beer?".
+- Prvi udarac u long cutu je na 13,5–14,4 s (prije 27–34 s).
+  - Prije vrhunca svaki moment pokazuje jednu karticu.
+  - Najtiši momenti ispadnu; kamera i dalje putuje cijelim putem.
+  - Rastezanje teksta radi se tek od vrhunca.
+- Zvuk:
+  - Glazba ima svoj oblik: tiši dijelovi, utihne pod riserom, 0,3 s tišine pred udarac, pun groove na udarcu.
+  - Udarac ide kroz saturirani bus.
+  - Glasnoća se mjeri po BS.1770 u JS-u i postavlja na −14 LUFS.
+
+## Provjera runde 5
+- 16 videa kroz pravi UI → `C:\claudework\video-samples\2026-10-24-v5\`. Sva su 1080×1920, 30 fps, AAC, bez crnih frameova. Long traju 62,3–74,0 s, short 24,5–29,2 s.
+- Thumbnaili (`scratchpad/video2/r8/thumbs.png`): svih 16 ima cijeli hook na frameu 0.
+- Mrtve zone (razlika frameova u pojasu tijela, prag 4, ≥ 3 s):
+  - Usred videa ih nema, osim jedne od 3,3 s u compare cola-voda long (20 s).
+  - Statičan je samo end card (3,7–6,2 s čitanja rezultata i CTA-a).
+- Glasnoća (ebur128):
+  - I = −14,1 do −14,3 LUFS, TP −1,0 do −1,7 dBTP.
+  - LRA 3,3–5,2 LU (prije 0,5–1,5).
+  - Udarac je +6,5 do +7,2 LU momentary iznad prosjeka (prije +1,4 do +1,8); prije udarca je −5 do −15 LU (tišina).
+- Onseti: najgori pomak 10–60 ms.
+- tsc je čist, vitest 681/681 (novi testovi rundi 5 u `video-plan.test.ts`, `video-hook.test.ts` i `video-guess.test.ts`). Oba builda prolaze (split zadnji).
+
+## Otvoreno (runda 5)
+- End card je i dalje statičan 4–6 s (čitanje). Jedna mrtva zona od 3,3 s ostaje u compare cola-voda long.
+- Voda od 330 ml koristi generički model (5 poglavlja), pa su kartice za vodu tanje nego za čašu od 250 ml.
+- P2 (donjih 25 % kadra, colu i burger razdvojiti u obroku, pinned komentari) nije rađeno. Zvuk je provjeren brojevima, ne slušalicama.

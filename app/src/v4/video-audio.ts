@@ -176,8 +176,8 @@ export interface SoundOpts { music: boolean; fizzy?: boolean; solid?: boolean }
 const BPM2 = 120, BEAT2 = 60 / BPM2, BAR2 = 4 * BEAT2, CHORD2_S = 2 * BAR2;
 /** RMS of the full mix that measures about −14 LUFS for this material (calibrated with ffmpeg ebur128, QA 2026-10-24). */
 export const TARGET_RMS2 = 0.17;
-/** Sample ceiling of the limiter: ≈ −1.6 dBFS, so the AAC true peak stays under −1 dBTP. */
-export const CEIL2 = 0.83;
+/** Sample ceiling of the limiter: ≈ −1.9 dBFS, so the AAC true peak stays under −1 dBTP (round 5: denser impacts). */
+export const CEIL2 = 0.8;
 
 /** Lookahead limiter (5 ms): the gain is lowered just BEFORE a loud hit instead of clipping it, then recovers. */
 export function limit(chs: Float32Array[], ceil: number, sr: number) {
@@ -195,6 +195,64 @@ export function limit(chs: Float32Array[], ceil: number, sr: number) {
   }
 }
 
+export const LUFS_TARGET = -14;
+/** Integrated loudness (ITU-R BS.1770-4: K-weighting, 400 ms blocks with 75 % overlap, −70 LUFS absolute and −10 LU
+ *  relative gates) of a stereo signal, in LUFS. The K-weighting coefficients are the standard's for 48 kHz. */
+export function lufs(L: Float32Array, R: Float32Array, sr = SAMPLE_RATE): number {
+  const kw = (x: Float32Array) => {
+    const y = new Float64Array(x.length);
+    const b1 = [1.53512485958697, -2.69169618940638, 1.19839281085285], a1 = [-1.69065929318241, 0.73248077421585];
+    const b2 = [1, -2, 1], a2 = [-1.99004745483398, 0.99007225036621];
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0, w1 = 0, w2 = 0;
+    for (let i = 0; i < x.length; i++) {
+      const s = b1[0] * x[i] + b1[1] * x1 + b1[2] * x2 - a1[0] * y1 - a1[1] * y2; x2 = x1; x1 = x[i]; y2 = y1; y1 = s;
+      const v = b2[0] * s + b2[1] * z1 + b2[2] * z2 - a2[0] * w1 - a2[1] * w2; z2 = z1; z1 = s; w2 = w1; w1 = v; y[i] = v;
+    }
+    return y;
+  };
+  const kl = kw(L), kr = kw(R), blk = Math.round(0.4 * sr), hop = Math.round(0.1 * sr), ms: number[] = [];
+  for (let s = 0; s + blk <= kl.length; s += hop) { let e = 0; for (let i = s; i < s + blk; i++) e += kl[i] * kl[i] + kr[i] * kr[i]; ms.push(e / blk); }
+  const lk = (m: number) => -0.691 + 10 * Math.log10(Math.max(1e-12, m));
+  const abs = ms.filter((m) => lk(m) > -70);
+  if (!abs.length) return -Infinity;
+  const rel = lk(abs.reduce((a, b) => a + b, 0) / abs.length) - 10, gated = abs.filter((m) => lk(m) > rel);
+  return lk(gated.reduce((a, b) => a + b, 0) / Math.max(1, gated.length));
+}
+
+/** The music's level over the video (round 5), as [time, gain] points (linear between them), from the cue list:
+ *  full under the cold open, quieter verses after the sip (−5 dB), fuller after the first impact (−2 dB), quieter at
+ *  night and under the end card. Under a riser the music falls away, then 0.3 s of near silence, and the impact lands
+ *  on the full groove for one bar. Pure (tested in video-plan.test.ts). */
+export const HUSH_S = 0.3;
+export function musicShape(cues: Cue[], seconds: number): [number, number][] {
+  const at = (k: Cue['kind']) => cues.filter((c) => c.kind === k).map((c) => c.t);
+  const sip = at('sip')[0] ?? 1, outro = at('outro')[0] ?? seconds - 6;
+  const impacts = [...at('peak'), ...at('verdict')].sort((a, b) => a - b), risers = at('riser');
+  const nights: [number, number][] = [];
+  cues.filter((c) => c.kind === 'night').forEach((c) => { if (c.data?.v === 1) nights.push([c.t, outro]); else if (nights.length) nights[nights.length - 1][1] = c.t; });
+  const level = (t: number) => {
+    let v = t < sip + 1 ? 1 - 0.45 * Math.max(0, Math.min(1, (t - sip) / 1)) : impacts.some((p) => p < t) ? 0.8 : 0.55;
+    if (nights.some(([a, b]) => t >= a && t < b)) v = Math.min(v, 0.5);
+    if (t >= outro) v = 0.7;
+    for (const p of impacts) {
+      const r = risers.filter((x) => x < p && x > p - 3).pop() ?? p - 1.2;
+      if (t >= r && t < p - HUSH_S) v *= 1 - 0.65 * ((t - r) / Math.max(0.1, p - HUSH_S - r)); // falls away under the riser
+      else if (t >= p - HUSH_S && t < p) v = 0.03;                                               // the hush
+      else if (t >= p && t < p + BAR2) v = 1;                                                    // the drop lands
+      else if (t >= p + BAR2 && t < p + BAR2 + 1) v = 1 + (v - 1) * (t - p - BAR2);              // back to the verse
+    }
+    return v;
+  };
+  const pts: [number, number][] = [];
+  for (let i = 0, n = Math.ceil(seconds * 100); i <= n; i++) {
+    const t = i / 100, v = level(t);
+    if (!pts.length || Math.abs(v - pts[pts.length - 1][1]) > 0.004 || i === n) pts.push([t, v]);
+  }
+  // exact edges around each hush (no 10 ms ramp into or out of the silence)
+  for (const p of impacts) pts.push([p - HUSH_S + 0.012, 0.03], [p - 0.002, 0.03], [p + 0.004, 1]);
+  return pts.sort((a, b) => a[0] - b[0]);
+}
+
 /** Renders the v2 soundtrack: picture and sound from one cue list. */
 export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOpts): Promise<AudioBuffer> {
   const sr = SAMPLE_RATE, len = Math.ceil(seconds * sr);
@@ -204,8 +262,12 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   const toBus = (ch0: number) => { const sp = ctx.createChannelSplitter(2), g = ctx.createGain(); g.connect(sp); sp.connect(merger, 0, ch0); sp.connect(merger, 1, ch0 + 1); g.channelCount = 2; g.channelCountMode = 'explicit'; return g; };
   const musicOut = toBus(0), sfx = toBus(2);
   const duck = ctx.createGain(); duck.gain.value = 1;
+  // round 5 (critic: "the sound is a wall", LRA 0.5–1.5 LU, impacts only +2 LU): the music has a shape of its own
+  // (`dyn`, musicShape): quieter verses, a build that falls away under the riser, a short hush right before each
+  // impact, then the full groove on the impact; quieter at night and under the end card
+  const dyn = ctx.createGain(); dyn.gain.value = 1;
   const under = ctx.createBiquadFilter(); under.type = 'lowpass'; under.frequency.value = 18000; under.Q.value = 0.7;
-  duck.connect(under); under.connect(musicOut);
+  duck.connect(dyn); dyn.connect(under); under.connect(musicOut);
   const noise = noiseBuffer(ctx, 3, 7);
   const at = (k: Cue['kind']) => cues.filter((c) => c.kind === k);
   const outro = at('outro')[0]?.t ?? seconds - 6;
@@ -231,6 +293,10 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   const ir = ctx.createBuffer(2, Math.round(sr * 1.2), sr);
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let s = 99 + c >>> 0; for (let i = 0; i < d.length; i++) { s = (s * 1664525 + 1013904223) >>> 0; d[i] = ((s / 4294967296) * 2 - 1) * Math.exp(-i / (sr * 0.32)); } }
   const verb = ctx.createConvolver(); verb.buffer = ir; const verbG = ctx.createGain(); verbG.gain.value = 0.5; verb.connect(verbG); verbG.connect(sfx);
+  // the impacts' own bus (round 5): a soft saturator, so the hit is dense (loud for the ear and the meter) without a
+  // sharp peak the limiter would have to cut
+  const imp = ctx.createWaveShaper(); imp.curve = Float32Array.from({ length: 1025 }, (_, i) => Math.tanh(2.6 * ((i / 512) - 1)) / Math.tanh(2.6)); imp.oversample = '2x';
+  const impG = ctx.createGain(); impG.gain.value = 0.5; imp.connect(impG); impG.connect(sfx);
 
   // ---- MUSIC (always rendered: the loudness is measured on the full mix, also for "effects only")
   {
@@ -269,6 +335,9 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
     // ducking (a sidechain written from the cue list): −6 dB under each impact, −3 dB under the sip
     for (const t of [...peaks, ...verdicts]) { duck.gain.setValueAtTime(1, Math.max(0, t - 0.4)); duck.gain.linearRampToValueAtTime(0.5, t - 0.32); duck.gain.setValueAtTime(0.5, t); duck.gain.linearRampToValueAtTime(1, t + 0.45); }
     duck.gain.setValueAtTime(1, Math.max(0, sip - 0.05)); duck.gain.linearRampToValueAtTime(0.7, sip + 0.03); duck.gain.linearRampToValueAtTime(1, sip + 0.7);
+    // the music's shape (see `dyn`), from the same cue list
+    dyn.gain.setValueAtTime(1, 0);
+    for (const [t, v] of musicShape(cues, seconds)) dyn.gain.linearRampToValueAtTime(v, t);
     // night: the music goes under water and comes back up at sunrise
     for (const [a, b] of nights) {
       under.frequency.setValueAtTime(18000, a); under.frequency.exponentialRampToValueAtTime(900, a + 0.8);
@@ -330,6 +399,21 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
       }
       case 'peak': case 'verdict': { // A12 impact: sub drop, a body of noise, a reverb tail; the verdict also shimmers (A19)
         osc('sine', 60, 35, t, 0.6, 0.55, sfx, 0, 0.003);
+        // round 5: weight where the ear (and the loudness meter) hears it, after the hush: a mid boom, a body and a
+        // wide crash with a tail (≥ +5 LU momentary over the mix, checked with ffmpeg ebur128)
+        // (held for 0.3 s, then a 0.6 s decay: the meter's 400 ms window, and the ear, get a real hit)
+        const held = (src: AudioScheduledSourceNode, node: AudioNode, peak: number, pan: number) => {
+          const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.004); g.gain.setValueAtTime(peak, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+          const p = ctx.createStereoPanner(); p.pan.value = pan; node.connect(g); g.connect(p); p.connect(imp); src.start(t); src.stop(t + 0.95);
+        };
+        { const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.setValueAtTime(150, t); o2.frequency.exponentialRampToValueAtTime(55, t + 0.8); held(o2, o2, 0.5, 0); }
+        for (const [pan, f0, off] of [[-0.3, 2600, 0.4], [0.3, 2100, 1.3]] as const) {
+          const s2 = ctx.createBufferSource(); s2.buffer = noise; s2.playbackRate.value = 1; const bf = ctx.createBiquadFilter(); bf.type = 'bandpass'; bf.Q.value = 0.5;
+          bf.frequency.setValueAtTime(f0, t); bf.frequency.exponentialRampToValueAtTime(f0 * 0.4, t + 0.9); s2.connect(bf);
+          const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.45, t + 0.003); g.gain.setValueAtTime(0.45, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+          const p = ctx.createStereoPanner(); p.pan.value = pan; bf.connect(g); g.connect(p); p.connect(imp); s2.start(t, off, 1); s2.stop(t + 0.95);
+        }
+        nz(t, 0.9, 0.25, verb, { type: 'bandpass', f: 2000, f1: 800, q: 0.6 }, 0, 0.002, 0.9);
         const s = ctx.createBufferSource(); s.buffer = noise; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 800; const g = ctx.createGain(); env(g, t, 0.003, 0.25, 0.15);
         s.connect(f); f.connect(g); g.connect(sfx); g.connect(verb); s.start(t, 1.1, 0.25);
         osc('sine', 110, 55, t, 0.25, 0.12, verb);
@@ -360,8 +444,17 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   let sum = 0;
   for (let i = 0; i < len; i++) { const l = m0[i] + s0[i], r = m1[i] + s1[i]; sum += l * l + r * r; }
   const rms = Math.sqrt(sum / Math.max(1, 2 * len)) || 1e-6;
-  // "effects only": the same gain as the full mix (the effects stay at their level, they are not pushed to −14 LUFS)
-  const gain = o.music ? TARGET_RMS2 / rms : Math.min(TARGET_RMS2 / rms, 6);
+  // round 5: the full mix is measured as the platforms measure it (ITU-R BS.1770 integrated loudness, after the
+  // limiter) and set to −14 LUFS in two steps; "effects only" gets the same gain as the full mix (the effects stay at
+  // their level, they are not pushed to −14 LUFS)
+  let gain = TARGET_RMS2 / rms;
+  for (let k = 0; k < 2; k++) {
+    for (let i = 0; i < len; i++) { L[i] = (m0[i] + s0[i]) * gain; R[i] = (m1[i] + s1[i]) * gain; }
+    limit([L, R], CEIL2, sr);
+    const I = lufs(L, R, sr);
+    if (isFinite(I)) gain *= Math.pow(10, (LUFS_TARGET - I) / 20);
+  }
+  if (!o.music) gain = Math.min(gain, 6);
   for (let i = 0; i < len; i++) { L[i] = ((o.music ? m0[i] : 0) + s0[i]) * gain; R[i] = ((o.music ? m1[i] : 0) + s1[i]) * gain; }
   limit([L, R], CEIL2, sr);
   const fade = Math.round(0.3 * sr);

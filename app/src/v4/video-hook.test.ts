@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { minutesFromU, uFromMinutes } from '../time';
 import { hookFor, hookForCompare, numbersIn } from './video-hook';
 import { planVideo, type StopIn } from './video-plan';
-import { drawCmpFrame, logText, VIDEO_COPY, type CmpOverlay } from './share';
+import { drawBodyFrame, drawCmpFrame, kineticWord, logText, VIDEO_COPY, type CmpOverlay, type Overlay } from './share';
+import { bacPlain, mainGauge, sugarPlain } from './video-body';
 import fixtures from './video-plan.fixtures.json';
 import { parseMeal } from './food/parse';
 import { DEFAULT_PROFILE } from '../science/profile';
@@ -27,13 +28,22 @@ describe('hooks', () => {
   ];
   for (const [name, h] of cases) it(`${name}: two short lines, every number comes from the video's own chapters`, () => {
     const k = hookFor(h);
-    expect(words(k.line1)).toBeLessThanOrEqual(7); expect(words(k.line2)).toBeLessThanOrEqual(7);
+    expect(words(k.line1)).toBeLessThanOrEqual(8); expect(words(k.line2)).toBeLessThanOrEqual(8);
     const source = `${h.name} ${h.chapters.map((c) => c.text).join(' ')}`;
     for (const n of numbersIn(`${k.line1} ${k.line2}`)) if (n !== '24') expect(source, `${name}: ${n}`).toContain(n); // ("24 hours" is the format itself)
     if (h.alcohol) expect(`${k.line1} ${k.line2}`).not.toMatch(/\b(best|wins?|better|healthy|cure|hangover)\b/i);
   });
-  it('cola leads with its teaspoons (the surprise first)', () => {
-    expect(hookFor(cases[0][1]).line1).toBe('9 teaspoons of sugar.');
+  it('cola leads with its teaspoons, and says it is cola (round 5: the thumbnail says what it is)', () => {
+    expect(hookFor(cases[0][1]).line1).toBe('One can of cola: 9 teaspoons of sugar.');
+  });
+  it('round 5: espresso says how much is still in you at bedtime, and that moment pays it off', () => {
+    const k = hookFor({ ...cases[1][1], caffeineMg: 63 });
+    expect(k.line2).toBe('Most is still in you at bedtime.'.replace('Most', 'Almost all'));
+    expect(k.payoff).toBe('Going to bed');
+  });
+  it('round 5: a big food number comes with its size; the 24 h moment answers the promise', () => {
+    const k = hookFor({ ...cases[3][1], grams: 1104 });
+    expect(k.line1).toBe('A whole pizza (1104 g): 2572 kcal.'); expect(k.line2).toBe('Where is it 24 hours later?'); expect(k.payoff).toBe('24 hours later');
   });
   it('the comparison asks a question the race answers', () => {
     const k = hookForCompare('Espresso', 'Beer', true);
@@ -59,6 +69,39 @@ describe('comparison game honesty', () => {
     expect(all).not.toMatch(/🏆|wins/);
     expect(all).toContain('✓ OUT');
   });
+  it('round 5: when the side WITHOUT alcohol is out first, "Faster out ≠ better for you." never shows (it read as "espresso is bad")', () => {
+    const cues = [{ t: 5, kind: 'race' as const, data: { side: 0 as const } }, { t: 5, kind: 'peak' as const }];
+    for (const t of [5.5, 7, 9, 11]) {
+      const ans = { a1: 'First out: Espresso.', a2: 'Out of the stomach in about 25 min.', recap: 'Answer: Espresso left the stomach first.', kind: 'stomach' as const, winner: 0 as const };
+      const boxes = logText(() => drawCmpFrame(fake(), 1080, 1920, { width: 1080, height: 1920 } as HTMLCanvasElement, { ...o, answer: ans },
+        { phase: 'main', m: 120, t, capA: 1, k: 0, cap: 'x.', capB: 'y.' }, { stopsU: [0, 1], introS: 3, outroS: 8, cues }, null));
+      expect(boxes.map((b) => b.text).join(' | ')).not.toContain(VIDEO_COPY.fasterOut);
+    }
+  });
+  it('round 5: the guess chip names the two drinks ("Comment: espresso or beer?"), never "A or B"', () => {
+    const boxes = logText(() => drawCmpFrame(fake(), 1080, 1920, { width: 1080, height: 1920 } as HTMLCanvasElement, o,
+      { phase: 'intro', m: 0, t: 1.5, capA: 0, k: 0.5, beat: 'hook' }, { stopsU: [0, 1], introS: 3, outroS: 8, cues: [] }, null));
+    const all = boxes.map((b) => b.text).join(' ');
+    expect(all).toContain('Comment: espresso or beer?'); expect(all).not.toMatch(/\bA or B\b/);
+  });
+  it('round 5: frame 0 (the thumbnail) shows the WHOLE hook, both lines', () => {
+    const ov: Overlay = { hook: 'One can of cola: 9 teaspoons of sugar.\nWatch where it goes.', title: 'One can of cola', sub: '', clock: '', step: '', caption: '', progress: 0, lights: [], summary: [], handle: '@inside24h' };
+    const boxes = logText(() => drawBodyFrame(fake(), 1080, 1920, { width: 1080, height: 1920 } as HTMLCanvasElement, ov, 'reel',
+      { phase: 'intro', m: 20, t: 0, capA: 0, k: 0, beat: 'teaser' }, { stopsU: [0, 1], introS: 3, outroS: 6.5, cues: [] }, null));
+    const all = boxes.map((b) => b.text).join(' ');
+    for (const w of ['Watch', 'where', 'it', 'goes.']) expect(all).toContain(w);
+    expect(all).toContain('One can of cola: 9 teaspoons of sugar.');
+    expect(kineticWord(-0.5, 0)).toBe(0); expect(kineticWord(0.15, 0)).toBeGreaterThan(0);
+  });
+});
+
+describe('round 5: plain numbers on the gauges', () => {
+  it('blood sugar is said against your usual level, blood alcohol as BAC %, no mmol/L or ‰', () => {
+    expect(sugarPlain(2.0)).toMatch(/^\d+–\d+ % above usual$/);
+    expect(bacPlain(0.8)).toMatch(/^Blood alcohol 0\.\d\d–0\.\d\d % \(BAC\)$/);
+    const x = analyze(parseMeal('cola'), DEFAULT_PROFILE);
+    for (const m of [20, 40, 75]) { const g = mainGauge(x.built, m, 0.2, 'mmol/L', true); if (g) expect(`${g.big} ${g.small}`).not.toMatch(/mmol|‰/); }
+  });
 });
 
 describe('no flashing (WCAG 2.3.1)', () => {
@@ -79,7 +122,7 @@ describe('end card lights in plain words (round 4)', () => {
     const x = analyze(parseMeal(c), { ...DEFAULT_PROFILE, drinkAtMin: h * 60 });
     for (const s of x.systems) {
       const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2;
-      const n = plainNote(s.key, l, w, x.built, '13:13', !!s.unknown);
+      const n = plainNote(s.key, l, w, x.built, '+13:13', !!s.unknown);
       expect(n, `${c} ${s.key}`).toMatch(/^[A-Z]/);
       expect(n.length, n).toBeLessThanOrEqual(32);
       expect(n, n).not.toMatch(/stress|measured|glyc|mmol|‰/i);

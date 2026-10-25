@@ -7,7 +7,7 @@
 // - the organ the current moment is about lights (its chapter's focus);
 // - the organs the drink is passing through stay bright, the rest of the body dims.
 import { at } from '../science/espressoSim';
-import { bacRangeText, glucoseRangeTextIn } from '../science/ranges';
+import { bacRange, glucoseRangeText } from '../science/ranges';
 import { minutesFromU } from '../time';
 import { SEG_LABEL, type Route, type SegId, type SegState } from '../scene/segments';
 
@@ -68,17 +68,36 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
   const bac = b.bac ? at(b.bac, mi) : 0;
   // plain words first, the number second (owner, 2026-10-24); the words are the app's own levels [AL4]:
   // from 0.2 ‰ attention is worse, from 0.5 ‰ reaction time and balance (typical value, the range is underneath)
-  if (bac >= 0.1) return { big: bac >= 0.5 ? 'Balance worse' : bac >= 0.2 ? 'Attention worse' : 'Low, not zero', small: `Blood alcohol ${bacRangeText(bac)}`, level: bac >= 0.5 ? 2 : 1, organ: 'brain', curve: curveOf(b.bac!), u };
+  if (bac >= 0.1) return { big: bac >= 0.5 ? 'Balance worse' : bac >= 0.2 ? 'Attention worse' : 'Low, not zero', small: bacPlain(bac), level: bac >= 0.5 ? 2 : 1, organ: 'brain', curve: curveOf(b.bac!), u };
   const gs = sugarKnown ? b.effects.glucoseMgDl : undefined;
   const g = gs ? at(gs, mi) / 18.016 : 0;
   if (gs && Math.abs(g) >= 0.5) {
-    const n = g > 0 ? glucoseRangeTextIn(g, unit).replace(/ .*$/, '') : unit === 'mg/dL' ? `${Math.round(g * 18.016)}` : g.toFixed(1);
-    return { big: g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: `${n} ${unit} vs. before`, level: g >= 3 || g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
+    void unit; // (round 5: said against your usual level, the same in any unit)
+    return { big: g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: sugarPlain(g), level: g >= 3 || g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
   }
   const caf = b.caffeine.doseMg >= 10 ? at(b.caffeine.body, mi) : 0;
   if (caf >= 20) return { big: `${Math.round(caf)} mg caffeine`, small: 'still in your body', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
   return null;
 }
+
+/** Round 5 (critic: "‰ and mmol/L mean nothing to most people"): blood sugar against your usual level (the model
+ *  starts every curve at a usual 5.0 mmol/L), as a range of percent; blood alcohol as BAC in % (the usual English
+ *  way, = ‰ ÷ 10), as a range. */
+export const USUAL_MMOL = 5.0;
+export function sugarPlain(g: number): string {
+  if (g < 0) return g <= -1 ? 'clearly below usual' : 'a little below usual';
+  const [lo, hi] = glucoseRangeText(g).replace('+', '').split('–').map(Number);
+  return `${Math.round((lo / USUAL_MMOL) * 100)}–${Math.round((hi / USUAL_MMOL) * 100)} % above usual`;
+}
+export function bacPlain(gPerL: number): string {
+  const [lo, hi] = bacRange(gPerL);
+  return `Blood alcohol ${(lo / 10).toFixed(2)}–${(hi / 10).toFixed(2)} % (BAC)`;
+}
+/** Where words for the gauge (round 5: "146 ml · Blood" said nothing). */
+const WHERE_SMALL: Partial<Record<SegId, string>> = {
+  stomach: 'In your stomach', duodenum: 'In your gut', small: 'In your small intestine', portal: 'On its way to the liver',
+  blood: 'In your blood', kidney: 'In your kidneys', colon: 'In your large intestine',
+};
 
 /** Where most of the food or drink is right now ("Stomach · 214 ml"), pinned to that organ. */
 export function whereGauge(b: BuiltLike, m: number): Gauge | null {
@@ -88,7 +107,10 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
   const v = top[1].amount;
   // everyday words: fructose and glucose are "sugar" on the video (one word anyone knows)
   const big = (top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? b.route.unit}`).replace(/\b(?:fructose|glucose)\b/g, 'sugar');
-  return { big, small: SEG_LABEL[top[0]], level: 0, organ: SEG_FOCUS_V[top[0]] };
+  // the bladder number is the urine made in the last 3 h (routes.ts recent()); over a bladderful it says so
+  // (critic: "857 ml in the bladder" is not possible: people pee before that)
+  const small = top[0] === 'bladder' ? (v > 500 ? 'Made in 3 h: more than one pee' : 'Urine made in the last 3 h') : WHERE_SMALL[top[0]] ?? SEG_LABEL[top[0]];
+  return { big, small, level: 0, organ: SEG_FOCUS_V[top[0]] };
 }
 
 /** Video colours (2026-10-24, owner review: the brain glowed white-blue): a calm violet tint for the brain, whose
@@ -135,4 +157,4 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
   return 'Sleep may be a little lighter';
 }
 /** The end card's blood sugar line in plain words ("not measured" read like an error). */
-export const plainSugar = (peak: number | null, text: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `up to ${text}`);
+export const plainSugar = (peak: number | null, _text?: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `up to +${Math.round((peak / USUAL_MMOL) * 100)} %`); // (vs. your usual level; short enough for the end card's column)

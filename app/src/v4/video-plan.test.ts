@@ -3,9 +3,10 @@
 // as the app wrote them on 2026-10-22 (cola, water, espresso, 3 beers over 2 h, a whole pizza, kebab, a 3-item meal).
 import { describe, expect, it } from 'vitest';
 import { minutesFromU, uFromMinutes } from '../time';
-import { FPS, LENGTH, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
+import { END_HOLD_S, FPS, LENGTH, mustCards, PEAK_BY_S, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_OK, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
+import { musicShape, HUSH_S } from './video-audio';
 import fixtures from './video-plan.fixtures.json';
-import { beatLines, BEAT_WORDS, DYNAMIC, isCard, numberConflict } from './video-beats';
+import { beatLines, BEAT_WORDS, DYNAMIC, isCard, numberConflict, ruleCards } from './video-beats';
 
 const FIX = fixtures as Record<string, StopIn[]>;
 const plan = (s: StopIn[], cut: 'long' | 'short') => planVideo(s, cut, uFromMinutes, minutesFromU);
@@ -194,6 +195,94 @@ describe('card vs gauge numbers (owner review 2026-10-24)', () => {
   it('the pizza fiber card has no number any more (the gauge counts it)', () => {
     const c = beatLines({ min: 732, title: 'Into the large intestine', text: 'What you can’t digest, 22.7 g of fiber, reaches the start of your large intestine. Your gut bacteria start fermenting it.' });
     for (const x of c) expect(numberConflict(x, ['20 g fiber'])).toBe(false);
-    expect(beatLines({ min: 1440, title: '24 hours later', text: '2% has left your body so far.' })).toEqual(['Almost all of it is still inside you.']);
+    expect(beatLines({ min: 1440, title: '24 hours later', text: '2% has left your body so far.' })).toEqual(['Only 2% of the leftovers are out yet.']);
+  });
+});
+
+// ROUND 5 (fresh-eyes critique 2026-10-24, research/improvements/video-critique-2026-10-24.md)
+describe('round 5: every beat renders, payoffs, safety, no dead ends', () => {
+  const DRINK_AT = 22 * 60; // the fixtures were written for a first sip at 22:00
+  const withLines = (name: string, chapters: StopIn[]) => chapters.map((c) => ({ ...c, lines: beatLines(c, { name, caffeineMg: name === 'espresso' ? 63 : name === 'cola' ? 32 : undefined, drinkAtMin: DRINK_AT }) }));
+  const corpus = Object.values(FIX).flatMap((cs) => cs.flatMap((c) => sentences(c.text)));
+  it('no rule ever loses a card: everything a rule says is a valid card (no orphan "Even before the caffeine kicks in.")', () => {
+    for (const sn of corpus) for (const c of ruleCards(sn)) expect(isCard(c), `${c} (from: ${sn.slice(0, 60)})`).toBe(true);
+    expect(beatLines(FIX.espresso.find((c) => c.title === 'Your colon reacts')!)[0]).toBe('Coffee sends 1 in 3 to the toilet.');
+  });
+  for (const [name, chapters] of Object.entries(FIX)) for (const cut of ['long', 'short'] as const) {
+    it(`${name} ${cut}: every planned card is on screen for its full time, and a moment starts with its first card`, () => {
+      const stops = withLines(name, chapters), p = plan(stops, cut);
+      for (const pg of p.pages) {
+        const n = p.frames.filter((f) => f.cap === pg.text && f.stop === pg.stop && f.beat === 'hold').length;
+        expect(n, pg.text).toBeGreaterThanOrEqual(Math.floor(READ.minPage * FPS) - 1);
+      }
+      for (const st of new Set(p.pages.map((x) => x.stop))) {
+        const lines = stops.filter((x) => x.min === st).pop()?.lines ?? [];
+        const first = p.pages.find((x) => x.stop === st)!.text;
+        if (!first.startsWith(TEASE_PREFIX)) expect(first, `${name} @${st}`).toBe(lines[0]);
+      }
+      // the end of the day: at most END_HOLD_S of body without words after the clock reaches +24:00
+      const iOut = p.frames.findIndex((f) => f.phase === 'outro'), i24 = p.frames.findIndex((f) => f.m >= 1440);
+      expect((iOut - i24) / FPS).toBeLessThanOrEqual(cut === 'long' && chapters.some((c) => c.min >= 1440) ? 99 : END_HOLD_S + 0.05);
+      // the glide to +24:00 names where it goes (no stretch without words)
+      const glide24 = p.frames.filter((f) => f.beat === 'glide' && f.stop === 1440);
+      if (glide24.length) expect(glide24.every((f) => (f.plateA ?? 1) > 0.5 || !!f.next)).toBe(true);
+      // the camera reframes at least every 2.6 s while a moment is read
+      let run = 1;
+      for (let i = 1; i < p.frames.length; i++) { const a = p.frames[i - 1], b = p.frames[i]; run = a.beat === 'hold' && b.beat === 'hold' && a.pg === b.pg ? run + 1 : 1; expect(run).toBeLessThanOrEqual(Math.round(2.6 * FPS) + 1); }
+    });
+  }
+  it('beer: "a breath test can be positive" and "Don’t drive." are in BOTH cuts, together, first on their moment', () => {
+    const stops = withLines('beer', FIX['beer-3-over-2h']);
+    const morning = stops.find((s) => s.title === 'Next morning')!;
+    expect(mustCards(morning.lines!)).toBeGreaterThanOrEqual(2);
+    expect(morning.lines![0]).toMatch(/breath test/); expect(morning.lines![1]).toBe('Don’t drive.');
+    for (const cut of ['long', 'short'] as const) {
+      const p = plan(stops, cut), texts = p.pages.map((x) => x.text);
+      expect(texts.some((t) => /breath test/.test(t)), cut).toBe(true);
+      expect(texts).toContain('Don’t drive.');
+    }
+  });
+  it('beer at 19:00 (alcohol gone by morning): the hangover warning leads the morning and is in the short cut too', () => {
+    const ch = { min: 720, title: 'Next morning', text: '07:00, waking up. The alcohol should be gone, but a hangover can still make you drive worse, even at 0 ‰. If you use insulin or diabetes tablets, watch for low blood sugar this morning: after an evening of drinking it can drop after breakfast.' };
+    const lines = beatLines(ch, { name: 'beer' });
+    expect(lines.slice(0, 2)).toEqual(['At 07:00, the alcohol should be gone.', 'A hangover can still make you drive worse.']);
+    expect(mustCards(lines)).toBe(2);
+    const stops = [...withLines('beer', FIX['beer-3-over-2h']).filter((s) => s.title !== 'Next morning'), { ...ch, lines }].sort((a, b) => a.min - b.min);
+    const p = planVideo(stops, 'short', uFromMinutes, minutesFromU, { peakMin: 129 });
+    expect(p.pages.map((x) => x.text)).toContain('A hangover can still make you drive worse.');
+  });
+  it('alcohol "gone" is a range of hours from the chapter’s own range (critic: 8.5 h vs a gauge that allowed ~12 h)', () => {
+    const gone = withLines('beer', FIX['beer-3-over-2h']).find((s) => s.title === 'Alcohol gone')!;
+    expect(gone.lines![0]).toMatch(/^The alcohol is gone after about \d+–\d+ h\.$/);
+    expect(gone.lines!.join(' ')).not.toMatch(/Livers differ/);
+  });
+  it('short: the hook’s payoff (bedtime) is in, has its own card, and the story ends there', () => {
+    const stops = withLines('espresso', FIX.espresso), bed = stops.find((s) => s.title === 'Going to bed')!;
+    const p = planVideo(stops, 'short', uFromMinutes, minutesFromU, { peakMin: 43, payoffMin: bed.min });
+    const own = p.pages.filter((x) => x.stop === bed.min);
+    expect(own.length).toBeGreaterThan(0);
+    expect(p.stops.filter((m) => m > Math.max(bed.min, 43) && m < 1440)).toEqual([]);
+    expect(bed.lines![0]).toMatch(/^About (?:almost all|a \w+|half|two thirds|three quarters) (?:of it )?is still in you\.$/);
+  });
+  it('long: the first impact lands by 15 s', () => {
+    for (const [name, peak] of [['cola', 20], ['beer-3-over-2h', 129], ['espresso', 43]] as const) {
+      const p = planVideo(withLines(name, FIX[name]), 'long', uFromMinutes, minutesFromU, { peakMin: peak });
+      expect(p.peakT!, name).toBeLessThanOrEqual(PEAK_BY_S + 0.05);
+      expect(p.seconds).toBeGreaterThanOrEqual(LENGTH.long.min);
+    }
+  });
+  it('"Coming up: …" only names a turn worth waiting for', () => {
+    for (const [name, chapters] of Object.entries(FIX)) {
+      const t = plan(withLines(name, chapters), 'long').pages.find((x) => x.text.startsWith(TEASE_PREFIX));
+      if (t) expect(t.text, name).toMatch(TEASE_OK);
+      if (t) expect(t.text).not.toMatch(/building blocks/i);
+    }
+  });
+  it('the music: a hush right before each impact, the full groove on it, quieter verses', () => {
+    const cues = [{ t: 0, kind: 'sip' as const }, { t: 8.4, kind: 'riser' as const }, { t: 10, kind: 'peak' as const }, { t: 30, kind: 'outro' as const }];
+    const pts = musicShape(cues, 36), at = (t: number) => { let v = 1; for (const [x, y] of pts) if (x <= t) v = y; return v; };
+    expect(at(10 - HUSH_S / 2)).toBeLessThan(0.05);
+    expect(at(10.2)).toBe(1);
+    expect(at(5)).toBeLessThan(0.7);
   });
 });

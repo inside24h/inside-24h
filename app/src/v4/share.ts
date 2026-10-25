@@ -9,7 +9,8 @@ import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
-import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSplash, drawSunrise, drawVignette, punchIn, since, vignetteAlpha } from './video-fx';
+import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSplash, drawSunrise, drawVignette, since, vignetteAlpha } from './video-fx';
+import { commentLine } from './video-hook';
 import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
 /** ALL wording of the end cards and calls to action, in one place, so the owner can change it (2026-10-24). Honest:
@@ -30,7 +31,8 @@ export const VIDEO_COPY = {
 export type PlanView = Pick<Plan, 'stopsU' | 'introS' | 'outroS'> & { cues?: Plan['cues'] };
 
 export type Format = 'reel' | 'feed';
-export interface Light { icon: string; label: string; level: 0 | 1 | 2 }
+export interface Light { icon: string; label: string; level: 0 | 1 | 2; /** round 5: not tracked (grey, never a green "fine") */ unknown?: boolean }
+const lightCol = (l: Pick<Light, 'level' | 'unknown'>) => (l.unknown ? '#8292a7' : LIGHT[l.level]);
 export interface Overlay {
   hook: string; title: string; sub: string; clock: string; step: string; caption: string;
   where?: string; color?: string; progress: number; lights: Light[];
@@ -306,7 +308,8 @@ function drawStamp(ctx: CanvasRenderingContext2D, x: number, y: number, s: strin
 export interface CmpSide { name: string; color: string; step: string; caption: string; where?: string; sugar: string; sugarLevel: 0 | 1 | 2; lights: Light[];
   summary: { kcal: number; sugarPeak: string; worst: (Light & { note: string })[] };
   gauge?: PinnedGauge | null; // 2026-10-23 split screen: this body's number, pinned to its organ
-  pins?: Record<string, { x: number; y: number } | null>; alcohol?: boolean; fizz?: number; foam?: boolean; flow?: number }
+  pins?: Record<string, { x: number; y: number } | null>; alcohol?: boolean; fizz?: number; foam?: boolean; flow?: number;
+  /** round 5: how much ("330 ml", "1 shot · 30 ml"), shown under the name */ serving?: string }
 export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean;
   /** 2026-10-24 game: the guess line, the race (0..1 per side); round 4: the answer, shown when it is decided */ guess?: boolean; race?: { a: number; b: number };
   answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar'; winner: 0 | 1 } }
@@ -1049,14 +1052,15 @@ function topBand(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody
   ctx.fillStyle = '#ffffff'; ctx.font = `400 ${Lo.head.px}px ${SERIF}`;
   Lo.head.lines.forEach((ln, i) => {
     const y = Lo.head0 + i * Lo.headLH;
-    if (i === 0 || kinT >= 1.2 || Lo.head.lines.length < 2) { text(ctx, ln, L, y); return; }
-    // the promise line punches in, word by word (round 4)
+    if (i === 0 || kinT < 0 || kinT >= 2 || Lo.head.lines.length < 2) { text(ctx, ln, L, y); return; }
+    // the promise line's words light up one after another (round 4 kinetic hook). Round 5 (critic: frame 0 showed half
+    // the hook): every word is on screen from frame 0, the punch only colours and lifts each word in turn
     let x = L;
     ln.split(' ').forEach((wd, j) => {
-      const { a, s: sc } = punchIn(kinT, j);
+      const k = kineticWord(kinT, j);
       const ww = ctx.measureText(wd + ' ').width;
-      // (slides in from the right instead of growing: a bigger word would touch the line above)
-      if (a > 0.01) { ctx.save(); ctx.globalAlpha *= a; text(ctx, wd, x + 100 * (sc - 1), y); ctx.restore(); }
+      ctx.save(); if (k > 0) ctx.fillStyle = `rgb(255,${Math.round(255 - 55 * k)},${Math.round(255 - 194 * k)})`;
+      text(ctx, wd, x, y - 5 * k); ctx.restore();
       x += ww;
     });
   });
@@ -1064,6 +1068,12 @@ function topBand(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody
   drawClock(ctx, L, Lo.clockTop, Lo.clockH, m, u, rate, solid, reel, back);
 }
 
+/** 0..1 highlight of word `j` of the hook's promise line at `t` seconds after the sip (each word 0.12 s after the
+ *  last, up to the colour then back to white in 0.4 s). Frame 0 (t < 0) shows every word plain. */
+export function kineticWord(t: number, j: number): number {
+  const u = t - 0.1 - j * 0.12;
+  return u < 0 || u >= 0.4 ? 0 : u < 0.08 ? u / 0.08 : 1 - (u - 0.08) / 0.32;
+}
 /** How the end of the video hands over, so that two texts are NEVER on screen at the same time (2026-10-24):
  *  the moment's words leave (0.3 s) → the end card comes in (0.4 s) → … → the end card and the headline leave
  *  (0.4 s) → the first frame comes back (0.5 s, the loop). Outside the end card: main = 1, top = 1. */
@@ -1138,7 +1148,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     ctx.restore();
   }
   // 3) top: brand, hook, clock (it runs backwards in the rewind)
-  if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · WATCH THE NEXT 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid, fr.beat === 'rewind', fr.phase === 'intro' ? t : 9); ctx.restore(); }
+  if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · WATCH THE NEXT 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid, fr.beat === 'rewind', fr.phase === 'intro' ? t - TEASER_S - REWIND_S : 9); ctx.restore(); }
   // 4) bottom: the moment's title and its short card; in a glide, the NEXT chip
   if (E.main > 0.001) {
     ctx.save(); ctx.globalAlpha = E.main * (fr.plateA ?? 1);
@@ -1148,9 +1158,9 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     const capBot = S.bottom - 4, capY0 = capBot - (capFit.lines.length - 1) * Lo.capLH - capFit.px * 0.22;
     shade(ctx, true);
     if (fr.tease && cap) { ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = '#ffc83d'; text(ctx, 'STILL TO COME', L, capY0 - capFit.px * 0.86 - 16); }
-    else if (title && !titleOnly) {
+    else if (title && !titleOnly && cap) { // (round 5: never a label without its card)
       ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = ACCENT;
-      text(ctx, fit(ctx, title.toUpperCase(), RL - L), L, cap ? capY0 - capFit.px * 0.86 - 16 : capBot - 6);
+      text(ctx, fit(ctx, title.toUpperCase(), RL - L), L, capY0 - capFit.px * 0.86 - 16);
     }
     if (cap) {
       ctx.save(); ctx.globalAlpha *= fr.capA; ctx.fillStyle = fr.tease ? '#ffe2a0' : '#ffffff'; ctx.font = `${titleOnly ? 700 : 600} ${capFit.px}px ${SANS}`;
@@ -1220,11 +1230,11 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
     ctx.translate(L + (RL - L) / 2, ry + hh / 2); ctx.scale(pop, pop); ctx.translate(-(L + (RL - L) / 2), -(ry + hh / 2));
     ctx.fillStyle = 'rgba(16,28,44,.92)'; roundRect(ctx, L, ry, RL - L, hh, 18); ctx.fill();
     const r = Math.min(24, hh * 0.32);
-    ctx.fillStyle = LIGHT[l.level]; ctx.beginPath(); ctx.arc(L + 18 + r, ry + hh / 2, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = lightCol(l); ctx.beginPath(); ctx.arc(L + 18 + r, ry + hh / 2, r, 0, Math.PI * 2); ctx.fill();
     ctx.textAlign = 'center'; ctx.font = `${Math.round(r * 1.05)}px ${EMOJI}`; ctx.fillStyle = '#04070c'; ctx.fillText(l.icon, L + 18 + r, ry + hh / 2 + r * 0.38); ctx.textAlign = 'left';
     const tx = L + 18 + 2 * r + 18, tw = RL - tx - 16;
     ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${reel ? 28 : 24}px ${SANS}`; text(ctx, fit(ctx, l.label, tw), tx, ry + hh * 0.44);
-    ctx.fillStyle = LIGHT[l.level]; ctx.font = `600 ${reel ? 24 : 21}px ${SANS}`; text(ctx, fit(ctx, l.note, tw), tx, ry + hh * 0.82);
+    ctx.fillStyle = lightCol(l); ctx.font = `600 ${reel ? 24 : 21}px ${SANS}`; text(ctx, fit(ctx, l.note, tw), tx, ry + hh * 0.82);
     ctx.restore();
   });
   y += rows * rh + (reel ? 18 : 12);
@@ -1284,13 +1294,15 @@ function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: n
   let bf = 30; ctx.font = `700 ${bf}px ${SANS}`;
   while (bf > 22 && ctx.measureText(g.big).width > maxW - 28) { bf -= 2; ctx.font = `700 ${bf}px ${SANS}`; } // smaller, never cut
   const bw = ctx.measureText(g.big).width;
-  ctx.font = `600 20px ${SANS}`; const small = fit(ctx, g.small, maxW - 28); const sw = ctx.measureText(small).width;
+  // (round 5: the small line shrinks to fit, never cut to "0.12–…")
+  let sf = 20; ctx.font = `600 ${sf}px ${SANS}`; while (sf > 15 && ctx.measureText(g.small).width > maxW - 28) { sf -= 1; ctx.font = `600 ${sf}px ${SANS}`; }
+  const small = fit(ctx, g.small, maxW - 28); const sw = ctx.measureText(small).width;
   const w = Math.min(maxW, Math.max(bw, sw) + 28), x0 = alignRight ? x - w : x;
   ctx.fillStyle = GLASS; roundRect(ctx, x0, y, w, h, 16); ctx.fill();
   ctx.strokeStyle = g.curve ? LIGHT[g.level] : 'rgba(220,235,250,.35)'; ctx.lineWidth = 3; ctx.stroke();
   ctx.textAlign = 'left';
   ctx.font = `700 ${bf}px ${SANS}`; ctx.fillStyle = g.curve ? LIGHT[g.level] : '#ffffff'; text(ctx, fit(ctx, g.big, w - 28), x0 + 14, y + 30);
-  ctx.font = `600 20px ${SANS}`; ctx.fillStyle = '#d5e0ec'; text(ctx, small, x0 + 14, y + h - 12);
+  ctx.font = `600 ${sf}px ${SANS}`; ctx.fillStyle = '#d5e0ec'; text(ctx, small, x0 + 14, y + h - 12);
   ctx.restore();
   return w;
 }
@@ -1341,7 +1353,10 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
       const line = fit(ctx, nm.lines[0] ?? s.name, nx1 - nx0), nw = ctx.measureText(line).width;
       ctx.textAlign = k ? 'left' : 'right'; ctx.fillStyle = '#ffffff';
       const tx = k ? nx0 : nx1;
-      text(ctx, line, tx, Lo.nameY); shade(ctx, false);
+      text(ctx, line, tx, Lo.nameY);
+      // round 5 (critic: the servings were never said): how much, under the name ("1 can · 330 ml")
+      if (s.serving) { ctx.font = `600 24px ${SANS}`; ctx.fillStyle = '#c9d6e4'; text(ctx, fit(ctx, s.serving, nx1 - nx0), tx, Lo.nameY + 40); ctx.font = `400 ${nm.px}px ${SERIF}`; }
+      shade(ctx, false);
       ctx.fillStyle = s.color; roundRect(ctx, k ? tx : tx - nw, Lo.nameY + 9, nw, 5, 2.5); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; ctx.stroke();
       ctx.textAlign = 'left';
@@ -1362,7 +1377,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
       shade(ctx, true);
       const c = balanced(ctx, fitWrap(ctx, cap, w, 3, Lo.capFs, 26, (px) => `600 ${px}px ${SANS}`), cap, w);
       const capBot = S.bottom - 4, y0 = capBot - (c.lines.length - 1) * Lo.capLH - c.px * 0.22;
-      if (title && !titleOnly) {
+      if (title && !titleOnly && cap) { // (round 5: never a label without its card)
         ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = lighten(s.color);
         const tl = cap ? wrap(ctx, title.toUpperCase(), w, 2) : [title.toUpperCase()], ty = cap ? y0 - c.px * 0.86 - 14 : capBot - 6;
         tl.forEach((ln, i) => text(ctx, fit(ctx, ln, w), x0, ty - (tl.length - 1 - i) * (Lo.kickFs + 6)));
@@ -1425,9 +1440,13 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   // the impact; the honesty card follows it when alcohol is on either side
   const ans = o.answer, dec = since(cues, 'peak', t), ansS = ans ? readChars(ans.a1.length + ans.a2.length) + 0.6 : 0;
   const showAns = !!ans && dec.age >= 0 && dec.age < ansS;
-  const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? VIDEO_COPY.guess2
-    : tease.age < 2.6 ? VIDEO_COPY.answerAt : anyAlcohol && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
-    : anyAlcohol && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
+  // round 5 (critic P0): "Faster out ≠ better for you." only ever frames the ALCOHOL side, i.e. only when the side
+  // that is out first has alcohol (it read as "espresso is bad" after "First out: Espresso")
+  const sidesAB = [o.a, o.b], alcWon = ans ? !!sidesAB[ans.winner]?.alcohol : !!sidesAB[race.cue?.data?.side ?? 0]?.alcohol;
+  void anyAlcohol;
+  const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? commentLine(o.a.name, o.b.name)
+    : tease.age < 2.6 ? VIDEO_COPY.answerAt : alcWon && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
+    : alcWon && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
   void sip;
   if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, S.rightLow - L, true, true); ctx.restore(); }
   if (showAns && ans) drawAnswer(ctx, W, Lo, ans, [o.a, o.b][ans.winner].color, dec.age, ansS);
@@ -1498,25 +1517,32 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
   let y = y0 + 40;
   ctx.fillStyle = ACCENT; ctx.font = `700 30px ${SANS}`; text(ctx, 'AFTER 24 HOURS', L, y);
   y += 20;
-  const gap = 16, cw = (RL - L - gap) / 2, ch = o.answer ? 350 : 364;
+  // round 5 (critic: "two cards of ~10 px text"): bigger words (≥ 26 px), and only the lights that were not green
+  // (all green = one line)
+  const shown = (s: CmpSide) => { const w = s.summary.worst.filter((l) => l.level > 0).slice(0, 3); return w.length ? w : null; };
+  const rowsMax = Math.max(1, ...[o.a, o.b].map((s) => shown(s)?.length ?? 1)), RH = 64;
+  const gap = 16, cw = (RL - L - gap) / 2, ch = 150 + rowsMax * RH + 8;
   [o.a, o.b].forEach((s, k) => {
     const x = L + k * (cw + gap);
     ctx.fillStyle = 'rgba(16,28,44,.94)'; roundRect(ctx, x, y, cw, ch, 22); ctx.fill();
     ctx.strokeStyle = lighten(s.color); ctx.lineWidth = 3; ctx.stroke();
     const nm = fitWrap(ctx, s.name, cw - 40, 1, 44, 26, (px) => `400 ${px}px ${SERIF}`);
     ctx.fillStyle = '#ffffff'; ctx.font = `400 ${nm.px}px ${SERIF}`; text(ctx, fit(ctx, nm.lines[0] ?? s.name, cw - 40), x + 20, y + 54);
-    ctx.fillStyle = '#e6edf5'; ctx.font = `700 24px ${SANS}`;
-    text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 94);
-    ctx.font = `600 22px ${SANS}`; ctx.fillStyle = '#b8c7d8';
-    text(ctx, fit(ctx, `Blood sugar: ${s.summary.sugarPeak}`, cw - 40), x + 20, y + 124);
-    s.summary.worst.slice(0, 4).forEach((l, j) => {
+    ctx.fillStyle = '#e6edf5'; ctx.font = `700 30px ${SANS}`;
+    text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 98);
+    const sg = fitWrap(ctx, `Blood sugar: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 22, (px) => `600 ${px}px ${SANS}`);
+    ctx.font = `600 ${sg.px}px ${SANS}`; ctx.fillStyle = '#b8c7d8';
+    text(ctx, fit(ctx, sg.lines[0] ?? '', cw - 40), x + 20, y + 134);
+    const rows = shown(s) ?? [{ icon: '✓', label: 'All lights green', level: 0 as const, note: 'Nothing flagged all day' }];
+    rows.forEach((l, j) => {
       const k2 = smooth((tt - CMP_LIGHTS_FROM_S - (j * 2 + k) * CMP_LIGHTS_STEP_S) / 0.2); // L1, R1, L2, R2 … (after the verdict)
       if (k2 <= 0.01) return;
-      const ry = y + 148 + j * (o.answer ? 49 : 53);
+      const ry = y + 152 + j * RH;
       ctx.save(); ctx.globalAlpha *= k2;
-      ctx.fillStyle = LIGHT[l.level]; ctx.beginPath(); ctx.arc(x + 34, ry + 17, 12 * (1 + 0.2 * Math.sin(Math.PI * k2)), 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#e6edf5'; ctx.font = `700 22px ${SANS}`; text(ctx, fit(ctx, l.label, cw - 80), x + 58, ry + 14);
-      ctx.fillStyle = LIGHT[l.level]; ctx.font = `600 20px ${SANS}`; text(ctx, fit(ctx, l.note, cw - 80), x + 58, ry + 40);
+      ctx.fillStyle = LIGHT[l.level]; ctx.beginPath(); ctx.arc(x + 34, ry + 20, 13 * (1 + 0.2 * Math.sin(Math.PI * k2)), 0, Math.PI * 2); ctx.fill();
+      const lb = fitWrap(ctx, l.label, cw - 80, 1, 28, 22, (px) => `700 ${px}px ${SANS}`), nt = fitWrap(ctx, l.note, cw - 80, 1, 26, 20, (px) => `600 ${px}px ${SANS}`);
+      ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${lb.px}px ${SANS}`; text(ctx, fit(ctx, l.label, cw - 80), x + 58, ry + 18);
+      ctx.fillStyle = LIGHT[l.level]; ctx.font = `600 ${nt.px}px ${SANS}`; text(ctx, fit(ctx, l.note, cw - 80), x + 58, ry + 48);
       ctx.restore();
     });
   });

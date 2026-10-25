@@ -44,9 +44,17 @@ export function analyze(parts: Part[], p: Profile, overMin = 0) {
     sleepDelayMin: v.extraLatencyMin, // minutes caffeine adds to falling asleep (verdictOf)
     // the name for Compare, its video and verdict: with the amount when it is not one usual serving ("2 espressos",
     // "3 × 500 ml of beer"), so "Beer vs Beer" or "Espresso … 127 mg" never hides how much (QA 2026-10-23)
-    label: one && Math.abs(one.grams - one.food.serving.grams) > 1 ? capFirst(amountPhrase(one).replace(/ \([^)]*\)/g, '')) : def.content.name };
+    label: one && Math.abs(one.grams - one.food.serving.grams) > 1 ? capFirst(amountPhrase(one).replace(/ \([^)]*\)/g, '')) : def.content.name,
+    // how much, in a few words, for the comparison video (round 5: "1 can · 330 ml" vs "330 ml")
+    serving: one ? servingText(one.amountLabel) : `${Math.round(parts.reduce((a, x) => a + x.grams, 0))} g` };
 }
 export type Analysis = ReturnType<typeof analyze>;
+/** "1 × can (≈ 330 ml)" → "1 can · 330 ml"; "330 ml" stays; "Whole · 1104 g" stays. */
+export function servingText(label: string): string {
+  const m = /^(\d+(?:\.\d+)?|½) × ([^(]+?) \(≈ ([^)]+)\)$/.exec(label.trim());
+  if (m) return `${m[1]} ${m[2].trim()} · ${m[3]}`;
+  return label.replace(/[()≈]/g, '').replace(/\s+/g, ' ').trim();
+}
 
 type Unit = Profile['glucoseUnit'];
 /** "+2.3 mmol/L" or "+41 mg/dL": a sugar CHANGE (given in mmol/L) in the unit picked in "Your body". */

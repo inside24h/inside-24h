@@ -42,7 +42,7 @@ const RULES: Rule[] = [
   [/^A small drink leaves fast: half of it moves on within about (\d+) minutes/, (m) => ['A small drink leaves fast.', `Half moves on within ${m[1]} minutes.`]],
   [/^Coffee also makes your stomach produce more acid/, () => ['Coffee also makes more stomach acid.']],
   // gut, blood, liver
-  [/^In about 1 in 3 people coffee makes the lower bowel start moving within minutes/, () => ['Coffee sends 1 in 3 people to the toilet.', 'Even before the caffeine kicks in.']],
+  [/^In about 1 in 3 people coffee makes the lower bowel start moving within minutes/, () => ['Coffee sends 1 in 3 to the toilet.', 'Even before the caffeine kicks in.']],
   [/^Your stomach wall and small intestine absorb the caffeine/, () => ['Your gut absorbs all of the caffeine.', 'It all passes into your blood.']],
   [/^In the first part of your small intestine the sugar is split into glucose and fructose/, () => ['Your gut splits the sugar in two.', 'Both parts reach your blood in minutes.']],
   [/^In the small intestine it is taken apart: (.+)$/, (m) => ['In the small intestine it is taken apart.',
@@ -51,7 +51,7 @@ const RULES: Rule[] = [
   [/^Some of the alcohol was already absorbed through your stomach wall/, () => ['Some alcohol was absorbed through your stomach wall.']],
   [/^Your small intestine absorbs the .+ into your blood within minutes/, () => ['Your small intestine absorbs it within minutes.']],
   [/^Blood from your gut goes to the liver first/, () => ['Blood from your gut reaches the liver first.']],
-  [/^Your gut wall and liver together hold back about (\d+)% of the fructose/, (m) => [`Gut and liver catch ${m[1]}% of the fruit sugar.`, 'Most of the rest goes into your blood.']],
+  [/^Your gut wall and liver together hold back about (\d+)% of the fructose/, (m) => [`Gut and liver catch ${m[1]}% of fruit sugar.`, 'Most of the rest goes into your blood.']],
   [/^Over the next hours your body burns about half of the fructose for energy and, mainly in the liver, turns about (\d+)% into glucose/, (m) => ['Your body burns half the fruit sugar.', `Your liver turns ${m[1]}% into blood sugar.`]],
   [/^Your liver takes the caffeine apart: half of it is gone about every ([\d.]+) hours/, (m) => ['Your liver takes the caffeine apart.', `Half is gone every ${m[1]} hours.`]],
   // blood sugar
@@ -97,7 +97,7 @@ const RULES: Rule[] = [
   [/^About (\d+) hours later the glass has passed through you/, () => ['The glass has passed through you.', 'Your body water is back in balance.']],
   [/^The extra water \(?.*\)? is filtered by your kidneys into your bladder/, () => ['Your kidneys filter the extra water.', 'It collects in your bladder for hours.']],
   [/^A beer does not make you lose more water than you drank/, () => ['You don’t lose more water than you drank.']],
-  [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['No extra urine.', 'Cola hydrates about as well as water.']],
+  [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['No extra urine.', 'Cola hydrates like the same amount of water.']],
   // meals
   [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, (m) => ['Many people feel sleepy after a big meal.', `It comes about ${m[1]} hours later.`]],
   // the protein arrives over hours; this moment is its peak (model review 2026-10-24: not "139 g reach your blood")
@@ -109,9 +109,11 @@ const RULES: Rule[] = [
   [/^What you can’t digest, ([\d.]+) g of fiber, reaches the start of your large intestine/, () => ['The fiber reaches your large intestine.']],
   [/^The leftovers creep along your large intestine while water is taken back/, () => ['The leftovers creep along your large intestine.', 'Water is taken back on the way.']],
   [/^Food typically takes about (\d+) hours from mouth to toilet/, (m) => [`Food takes about ${m[1]} hours, mouth to toilet.`]],
-  // "2% has left your body so far": 2 % of what? Said plainly (owner review 2026-10-24)
-  [/^(\d+)% has left your body so far/, (m) => [Number(m[1]) < 10 ? 'Almost all of it is still inside you.' : `${m[1]}% of the leftovers have left you.`]],
-  [/^Your kidneys flush out the breakdown products/, () => ['Your kidneys flush out what is left.']],
+  // "2% has left your body so far": 2 % of what? Said plainly (owner review 2026-10-24). Round 5 (critic: "almost
+  // all of it is still inside you" read as "the pizza sits there undigested", next to a 3 g gauge): the leftovers
+  [/^(\d+)% has left your body so far/, (m) => [Number(m[1]) < 10 ? `Only ${m[1]}% of the leftovers are out yet.` : `${m[1]}% of the leftovers have left you.`]],
+  // (round 5, critic: the liver breaks caffeine down; the kidneys flush out the pieces, not "what is left")
+  [/^Your kidneys flush out the breakdown products/, () => ['Your kidneys flush out its broken-down pieces.']],
   [/^Your gut bacteria start fermenting it/, () => ['Your gut bacteria start feeding on it.']],
   // first sip
   [/^Real espressos vary a lot: the strongest one measured had (\d+) mg/, (m) => ['Real espressos vary a lot.', `The strongest one measured had ${m[1]} mg.`]],
@@ -146,7 +148,17 @@ export interface BeatCtx {
   /** split screen: the start shows its numbers first (the name is already over the body) */ factsFirst?: boolean;
   /** pacing ("Over how long?"): rounds and the time between them, as the model doses them */
   pace?: { doses: number; overMin: number; everyMin: number; round: string };
+  /** round 5: the caffeine dose (mg), so "still in you at bedtime" is said as a share of it ("about a fifth") */ caffeineMg?: number;
+  /** round 5: clock time of the first sip (minutes after midnight), so "gone" is said as a range of hours */ drinkAtMin?: number;
 }
+/** A share in words ("a fifth", "two thirds"), or null when it is too small to name. */
+export function fractionWord(r: number): string | null {
+  if (!(r >= 0.07)) return null;
+  const W: [number, string][] = [[0.1, 'a tenth'], [0.2, 'a fifth'], [0.25, 'a quarter'], [1 / 3, 'a third'], [0.5, 'half'], [2 / 3, 'two thirds'], [0.75, 'three quarters'], [0.9, 'almost all']];
+  return W.reduce((b, w) => (Math.abs(w[0] - r) < Math.abs(b[0] - r) ? w : b))[1];
+}
+/** Safety cards that lead their moment (video-plan SAFETY: shown together in every cut). */
+const SAFE_CARD = /breath test|\bdrive\b/i;
 const elapsed = (m: number) => { const r = Math.round(m); return `+${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}`; };
 const hoursLabel = (min: number) => (min % 60 ? `${Math.round(min / 6) / 10} h` : `${min / 60} h`);
 
@@ -174,13 +186,58 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
     const p = ctx.pace;
     push([`${cap(p.round)} ${p.doses} of ${p.doses}, at ${elapsed(ch.min)}.`, `One every ${Math.round(p.everyMin)} minutes, over ${hoursLabel(p.overMin)}.`]);
     if (/keeps rising/.test(text)) push(['Blood alcohol keeps rising for a while.']);
-  } else for (const s of sentencesOf(text)) push(rule(s));
+  } else {
+    // round 5: "gone" as a range of hours (critic: "gone after 8.5 h" while the gauge allowed ~12 h), from the
+    // chapter's own range of clock times ("for most people somewhere between 04:51 tomorrow and 09:18 tomorrow")
+    const range = /between (\d\d):(\d\d)\b[^.]*? and (\d\d):(\d\d)\b/.exec(text);
+    const goneSpan = /alcohol is gone by now/.test(text) && range && ctx.drinkAtMin !== undefined ? (() => {
+      const h = (hh: string, mm: string) => ((((Number(hh) * 60 + Number(mm) - ctx.drinkAtMin!) % 1440) + 1440) % 1440) / 60;
+      const lo = Math.round(h(range[1], range[2])), hi = Math.round(h(range[3], range[4]));
+      return hi > lo ? `The alcohol is gone after about ${lo}–${hi} h.` : null;
+    })() : null;
+    if (goneSpan) push([goneSpan]);
+    for (const s of sentencesOf(text)) {
+      if (goneSpan && /^(?:In a typical body like yours the alcohol is gone by now|Livers differ)/.test(s)) continue;
+      // bedtime caffeine as a share of the dose ("About a fifth of it is still in you."; the mg are on the gauge)
+      const left = /^About (\d+) mg of caffeine is (?:left|still) in you/.exec(s), fw = left && ctx.caffeineMg ? fractionWord(Number(left[1]) / ctx.caffeineMg) : null;
+      if (fw) { const c = `About ${fw} of it is still in you.`; push([words(c) <= BEAT_WORDS ? c : `About ${fw} is still in you.`]); continue; }
+      push(rule(s));
+    }
+    // the next morning with alcohol: the safety cards lead, together, with the time ("At 07:00, a breath test can be
+    // positive." / "Don't drive."); "Waking up at 07:00." is then said by them
+    const wake = out.map((c) => /^Waking up at (\d\d:\d\d)\.$/.exec(c)?.[1]).find(Boolean);
+    if (out.some((c) => /breath test/i.test(c))) {
+      const safe = out.filter((c) => SAFE_CARD.test(c)).map((c) => {
+        const b = /^(A breath test can (?:still )?be positive\.)$/.exec(c);
+        const at = b && wake ? `At ${wake}, ${b[1].charAt(0).toLowerCase()}${b[1].slice(1)}` : c;
+        return isCard(at) ? at : c;
+      });
+      const keepWake = !safe.some((c) => /^At \d\d:\d\d,/.test(c));
+      const rest = out.filter((c) => !SAFE_CARD.test(c) && !(wake && !keepWake && /^Waking up at /.test(c)));
+      out.splice(0, out.length, ...safe, ...rest);
+    } else if (/^Next morning$/i.test(title) && out.some((c) => SAFE_CARD.test(c))) {
+      // (a first sip early in the evening: the model says the alcohol should be gone by morning; its safety words
+      // lead the moment: "At 07:00, the alcohol should be gone." / "A hangover can still make you drive worse.")
+      const i = out.findIndex((c) => SAFE_CARD.test(c)), lead = i > 0 && !/^Waking up/.test(out[i - 1]) ? out[i - 1] : null;
+      const first = lead && wake ? `At ${wake}, ${lead.charAt(0).toLowerCase()}${lead.slice(1)}` : lead;
+      const head = [...(first && isCard(first) ? [first] : lead ? [lead] : []), out[i]];
+      const rest = out.filter((c, k) => k !== i && c !== lead && !(wake && first && /^Waking up at /.test(c)));
+      out.splice(0, out.length, ...head, ...rest);
+    }
+  }
   return out.length ? out : [title];
 }
 function rule(sentence: string): string[] {
-  for (const [re, f] of RULES) { const m = re.exec(sentence); if (m) return f(m); }
+  for (const [re, f] of RULES) {
+    const m = re.exec(sentence);
+    // round 5 (critic: "Even before the caffeine kicks in." stood alone, its first card too long and dropped): a
+    // rule whose first card is not a valid card gives nothing, never an orphan (video-hook.test checks every rule)
+    if (m) { const c = f(m); return isCard(c[0] ?? '') ? c : []; }
+  }
   return generic(sentence);
 }
+/** The cards one sentence gives (tests: no rule ever loses a card). */
+export const ruleCards = (sentence: string) => { for (const [re, f] of RULES) { const m = re.exec(sentence); if (m) return f(m); } return generic(sentence); };
 
 /** Safety net (2026-10-24, owner review: "20 g fiber" on the gauge, "22.7 g of fiber" on the card): true when a card
  *  and a gauge on screen name the same thing (same unit and the same word after it) with different numbers. */
