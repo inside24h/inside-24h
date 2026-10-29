@@ -437,7 +437,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
   const glide = (from: number, to: number, nextStop: { min: number; title?: string } | null) => {
     const n = F(moveS(toU, from, to)), out = F(0.25);
     const g0 = frames.length;
-    cues.push({ t: tNow(), kind: 'move' });
+    cues.push({ t: tNow(), kind: 'move', data: { v: Math.round(to - from) } }); // (round 9: how much of the day this glide skips, for the sound)
     const chip = !!nextStop?.title && (n / FPS >= NEXT_MIN_S || nextStop.min >= 1440); // (the day's end is always named)
     if (nextStop && chip) cues.push({ t: tNow() + 0.15, kind: 'next', data: { label: nextStop.title, v: nextStop.min } });
     for (let i = 1; i <= n; i++) {

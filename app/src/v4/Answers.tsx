@@ -184,9 +184,9 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     if (evening && wakeRel >= 60) {
       const W = day(wakeRel).replace(' tomorrow', '');
       const typ = clk.typicalAt(wakeRel), slow = clk.slowAt(wakeRel);
-      const limits = ' Limits differ by country. In Croatia: 0.5 ‰ for most drivers and 0 ‰ for novice and professional drivers.';
+      const limits = ' Driving limits: US 0.08 % (0.8 ‰) · EU 0.05 % (0.5 ‰), and 0 for novice and professional drivers in many countries, Croatia among them.';
       const a = typ >= 0.2
-        ? `No. At ${W} a typical body like yours would still have about ${bacRangeText(typ)} in the blood${typ >= 0.5 ? ', even above the general 0.5 ‰ limit' : ''}. Sleeping doesn’t make it go faster.`
+        ? `No. At ${W} a typical body like yours would still have about ${bacRangeText(typ)} in the blood${typ >= 0.8 ? ', even above the US 0.08 % and EU 0.05 % limits' : typ >= 0.5 ? ', even above the EU 0.05 % limit' : ''}. Sleeping doesn’t make it go faster.`
         : typ > GONE_GL
           ? `No. At ${W} a typical body like yours would still have a little alcohol in the blood (about ${bacRangeText(typ)}): a breath test can be positive.`
           : slow > GONE_GL

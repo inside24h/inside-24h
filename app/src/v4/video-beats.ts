@@ -62,7 +62,7 @@ const RULES: Rule[] = [
   [/^Your pancreas releases insulin to bring it back down/, () => ['Insulin brings your blood sugar back down.']],
   [/^Your blood sugar drops (?:just|a little) below where you started/, () => ['Your blood sugar dips below where it started.']],
   // caffeine
-  [/^(?:About )?(\d+) mg of caffeine reaches your brain and blocks the tiredness signal a little/, (m) => [`About ${m[1]} mg of caffeine reaches your brain.`, 'It blocks the tiredness signal a little.']],
+  [/^(?:About )?(\d+) mg of caffeine reaches your brain and blocks the tiredness signal a little/, () => ['The caffeine reaches your brain.', 'It blocks the tiredness signal a little.']], // (round 9: no mg on the card, the gauge counts it),
   [/^The caffeine reaches your brain and blocks the “I’m tired” signal a little/, () => ['The caffeine reaches your brain.', 'It blocks the “I’m tired” signal a little.']],
   [/^(\d+) mg of caffeine in total, spread over (.+?): it builds up with each \w+ and is highest now/, (m) => [`${m[1]} mg of caffeine, spread over ${m[2]}.`, 'It builds up and is highest now.']],
   [/^It reaches your brain and blocks the tiredness signal a little/, () => ['It reaches your brain.', 'It blocks the tiredness signal a little.']],

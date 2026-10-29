@@ -94,6 +94,25 @@ export function drawRewindLines(ctx: CanvasRenderingContext2D, W: number, H: num
   ctx.restore();
 }
 
+/** V17 (round 9): speed lines while the day races through a quiet stretch. `rate` = minutes of the day per second of
+ *  video; they start at 30 min/s and are full at 120. Only a few faint streaks in the frame's side margins (the
+ *  body in the middle stays clear), tapered at both ends, running down the frame. */
+export const speedAlpha = (rate: number | undefined) => clamp01(((rate ?? 0) - 30) / 90);
+export function drawSpeedLines(ctx: CanvasRenderingContext2D, W: number, t: number, a: number, top: number, bot: number) {
+  if (a <= 0.01 || bot <= top) return;
+  const r = rng(17);
+  ctx.save();
+  for (let i = 0; i < 10; i++) {
+    const side = i % 2, x = side ? W - (0.02 + 0.1 * r()) * W : (0.02 + 0.1 * r()) * W;
+    const len = 120 + 160 * r(), sp = 1300 + 900 * r(), ph = r(), op = 0.5 + 0.5 * r();
+    const span = bot - top + len, y = top - len + (((t * sp) / span + ph) % 1) * span;
+    const g = ctx.createLinearGradient(0, y, 0, y + len);
+    g.addColorStop(0, 'rgba(207,232,255,0)'); g.addColorStop(0.6, 'rgba(207,232,255,1)'); g.addColorStop(1, 'rgba(207,232,255,0)');
+    ctx.globalAlpha = 0.12 * a * op; ctx.fillStyle = g; ctx.fillRect(x, Math.max(top, y), 2 + (i % 3), Math.min(bot, y + len) - Math.max(top, y));
+  }
+  ctx.restore();
+}
+
 /** Night tone (22:00–07:00 on the clock): a deep blue veil and a small moon. */
 export function drawNight(ctx: CanvasRenderingContext2D, W: number, H: number, a: number, moonAt: { x: number; y: number }) {
   if (a <= 0.003) return;

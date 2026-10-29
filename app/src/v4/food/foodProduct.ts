@@ -6,7 +6,7 @@ import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesTo
 import { sleepAnchors } from '../../science/anchors';
 import { alcoholGE, simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
-import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
+import { bacRange, bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
 import { FOOD_CLAIMS, foodSourceClaims } from '../../content/food';
 import { ESPRESSO } from '../../content/espresso';
 import { partsPhrase } from './naming';
@@ -247,7 +247,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (meal.alcoholG > 1) {
     // a range, never one number or a "safe" time: Widmark estimates are off by 20–40% [AL3, alcohol.md W6]
     // the top of the range at the level of alcohol-poisoning deaths gets a danger sentence, not just "balance is worse" [AL9]
-    const drive = (b: number) => (poisonRisk(b) ? 'Dangerous: people have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).' : b >= 0.5 ? 'Reaction time and balance are worse. Don’t drive.' : b >= 0.2 ? 'Attention is already worse. Don’t drive.' : 'Low, but not zero. Don’t drive.'); // [AL4]
+    const drive = (b: number) => (poisonRisk(b) ? 'Dangerous: people have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).' : b >= 0.5 ? 'Reaction time and balance are worse. Don’t drive.' : b >= 0.2 ? (bacRange(b)[0] < 0.2 ? 'Attention may already be worse. Don’t drive.' : 'Attention is already worse. Don’t drive.') : 'Low, but not zero. Don’t drive.'); // [AL4] (round 9: "may" while the range starts under 0.2 ‰)
     const fedNote = meal.fed ? ', lower than on an empty stomach' : '';
     // more than ≈ one drink: we assume it all at once; spread out, the peak is lower but the end about the same [AL14, C]
     // paced: what all at once would have given; all at once with several drinks: point at the control [AL14, AL16]

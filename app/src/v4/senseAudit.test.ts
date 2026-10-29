@@ -67,7 +67,7 @@ describe('alcohol: gone-time, next morning, overflow', () => {
       const m = ans(a, /Can I drive tomorrow morning/);
       expect(m, `${id}×${n}@${t}`).toBeDefined();
       expect(m!.a).not.toMatch(/^Yes|you are safe|you’re safe to|safe to drive(?! )/i);
-      expect(m!.a).toMatch(/Croatia: 0\.5 ‰ for most drivers and 0 ‰ for novice and professional drivers/);
+      expect(m!.a).toMatch(/Driving limits: US 0\.08 % \(0\.8 ‰\) · EU 0\.05 % \(0\.5 ‰\), and 0 for novice and professional drivers/); // (round 9, owner: both limits)
       expect(m!.tone).toBeGreaterThanOrEqual(1);
     }
     // the friend who blew positive after 12 h of sleep: 10 beers at 23:00 are still in the blood at 07:00

@@ -381,7 +381,11 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
         }
         break;
       }
-      case 'move': nz(t, 0.95, 0.16, sfx, { type: 'bandpass', f: 350, f1: 2800, q: 1.4 }, 0, 0.55); break; // A7 whoosh
+      case 'move': nz(t, 0.95, 0.16, sfx, { type: 'bandpass', f: 350, f1: 2800, q: 1.4 }, 0, 0.55); // A7 whoosh
+        // round 9 (A7 reverse + V17): a long jump through the day (≥ 4 h) adds a soft falling air rush as the camera
+        // pulls back and the speed lines run, panned slowly across
+        if ((c.data?.v ?? 0) >= 240) { nz(t + 0.12, 1.15, 0.05, sfx, { type: 'bandpass', f: 2800, f1: 350, q: 0.8 }, -0.35, 0.45); nz(t + 0.3, 0.9, 0.03, sfx, { type: 'highpass', f: 4200 }, 0.35, 0.35); }
+        break;
       case 'stop': if (t > 1.2) { osc('sine', 1318.5, null, t, 0.22, 0.07, sfx); osc('sine', 1975.5, null, t + 0.004, 0.16, 0.035, sfx); } break; // A8 tick
       case 'page': osc('sine', 987.8, null, t, 0.16, 0.035, sfx); break;
       case 'micro': osc('sine', 1567.98, null, t, 0.09, 0.022, sfx, c.data?.v === 1 ? -0.3 : 0.3); break; // a soft beat with each small picture event

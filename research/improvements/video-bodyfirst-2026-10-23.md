@@ -312,3 +312,40 @@ Backup: `backups/20261025-153639-video8/`. Ništa nije commitano (runda 6 = a28a
 ## Otvoreno
 - Kalibracija jednog piva natašte (vidi gore): treba odluka vlasnika ili novi izvor podataka.
 - Na compare espresso-pivo long beer strana 2–3 puta ponovi "We can't tell when you're safe to drive." (isto poglavlje, nema novog teksta).
+
+---
+
+# Runda 9 (2026-10-29): svaka hrana iz baze, P2, V17, obje granice za vožnju
+
+Backup: `C:\claudework\inside-24h-backups\20261029-180811-video9\` + git (HEAD prije runde = 16f5744).
+
+1. **Robusnost za cijelu bazu.**
+   - Logika plana je premještena iz `AppV4.tsx` u čisti modul `video-story.ts`, bez promjene ponašanja: `shortName`, `beatCtx`, `peakOf`, `gaugesAt`, `singleStops`, `comparePlan`. App i testovi sada grade isti plan.
+   - Novi `video-story.test.ts` vrti svih **150** stavki iz `fooddb.json` (long i short), 8 slučajeva pića (vrijeme i količina) i 12 compare parova. Provjerava:
+     - minimalno vrijeme čitanja;
+     - da se ista kartica ne ponavlja dulje od 6 s;
+     - trajanje plana;
+     - da su brojevi isti kao na mjeraču;
+     - da nema praznog teksta, `undefined` ni `NaN`;
+     - da nema hrvatskog teksta;
+     - da alkohol nikad ne pobjeđuje;
+     - safe zone i tekst preko teksta na uzorkovanim frameovima (fake canvas).
+   - Popravci u generatoru:
+     - Kartica "About N mg of caffeine reaches your brain." više nema broj (mjerač pokazuje drugi broj). Sad je "The caffeine reaches your brain.".
+     - Svaka kartica se kaže jednom po videu. Kod sve masne hrane "Fat takes a slower route, via the lymph." stajala je 9 s zaredom.
+     - Kartica nestane prije nego što dođe NEXT čip, i u singlu i u splitu. Prije su se dva teksta pretapala na istom mjestu.
+     - Kinetički hook se diže 3 px, ne 5, pa ne dira gornji redak.
+     - Compare banner odgovora i NEXT čipovi su centrirani unutar kolone gumba. "Bigger rise: Kebab / doner." je prije ulazio pod gumbe.
+     - Big i small u compare chipu se više ne preklapaju.
+     - "Ćevapi" na ekranu postaje "Cevapi" (`plainLatin`).
+2. **Odluka vlasnika: obje granice.**
+   - Mjerač u videu: "BAC … % · US limit 0.08 % · EU 0.05 %" čim raspon dosegne 0,05 %. Kad je cijeli raspon iznad 0,08 %: "· over US 0.08 % and EU 0.05 % limits".
+   - U appu se mijenja odgovor "Can I drive tomorrow morning?". Prije: "Limits differ by country. In Croatia…". Sada: "Driving limits: US 0.08 % (0.8 ‰) · EU 0.05 % (0.5 ‰), and 0 for novice and professional drivers in many countries, Croatia among them.".
+   - Promijenjeni su i tekst pravila u `status.ts` i claim AL4.
+3. **P2 iz kritike.**
+   - "Attention is already worse." kaže se samo kad je cijeli raspon iznad 0,2 ‰. Inače piše "Attention may already be worse." (mjerač: "Focus may dip"; end card: "Attention may be worse …").
+   - End card ima isto kratko ime kao hook (pizza).
+   - Donjih ~25 % kadra namjerno ostaje bez teksta, jer je tamo UI platforme.
+4. **Novi efekti.**
+   - V17 brzinske linije u glideu (`drawSpeedLines`): rate > 30 min/s, samo bočni rubovi, alpha ≤ 0,12, tijelo ostaje čisto.
+   - Cue `move` nosi koliko dana preskače (`data.v`). Skok od ≥ 4 h dobiva tihi padajući "air rush" (A7 reverse + highpass šum, pan). Glasnoća ide kroz isti −14 LUFS / limiter lanac.

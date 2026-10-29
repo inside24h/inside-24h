@@ -9,7 +9,7 @@ import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
-import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSplash, drawSunrise, drawVignette, since, vignetteAlpha } from './video-fx';
+import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, vignetteAlpha } from './video-fx';
 import { commentLine } from './video-hook';
 import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
@@ -962,7 +962,13 @@ function drawClock(ctx: CanvasRenderingContext2D, x: number, y: number, h: numbe
 }
 
 /** One small gauge: big number, short label, optional curve of the day with a dot at "now". Returns its height. */
-const gaugeSmall = (ctx: CanvasRenderingContext2D, g: Gauge, w: number, reel: boolean) => { ctx.font = `600 ${reel ? 23 : 20}px ${SANS}`; return wrap(ctx, g.small, w - 2 * (reel ? 18 : 14), 2); };
+const gaugeSmall = (ctx: CanvasRenderingContext2D, g: Gauge, w: number, reel: boolean) => {
+  ctx.font = `600 ${reel ? 23 : 20}px ${SANS}`;
+  // (round 9: "BAC … % · US limit 0.08 % · EU limit 0.05 %" breaks at its dots, one thing per line, when each part fits)
+  const parts = g.small.split(' · '), room = w - 2 * (reel ? 18 : 14);
+  if (parts.length > 1 && parts.length <= 3 && parts.every((p) => ctx.measureText(p).width <= room)) return parts;
+  return wrap(ctx, g.small, room, 2);
+};
 function gaugeHeight(ctx: CanvasRenderingContext2D, g: Gauge, reel: boolean, w: number) {
   const n = gaugeSmall(ctx, g, w, reel).length, lh = reel ? 27 : 24;
   return (reel ? 14 + 46 + 4 : 12 + 40 + 4) + n * lh + (g.curve ? (reel ? 52 : 44) : 0) + (reel ? 12 : 10);
@@ -1060,7 +1066,7 @@ function topBand(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody
       const k = kineticWord(kinT, j);
       const ww = ctx.measureText(wd + ' ').width;
       ctx.save(); if (k > 0) ctx.fillStyle = `rgb(255,${Math.round(255 - 55 * k)},${Math.round(255 - 194 * k)})`;
-      text(ctx, wd, x, y - 5 * k); ctx.restore();
+      text(ctx, wd, x, y - 3 * k); ctx.restore(); // (round 9: a 3 px lift never touches the line above)
       x += ww;
     });
   });
@@ -1118,6 +1124,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   const peak = since(cues, 'peak', t);
   drawShockwave(ctx, tf(main?.at) ?? pinOf(o.focus), peak.age, LIGHT[main?.level ?? 1]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
+  if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.topBot, Lo.capTop); // V17 (round 9)
   scrims(ctx, W, H, Lo.topBot, Lo.capTop);
   drawNight(ctx, W, H, fr.night ?? 0, { x: R - 24, y: Lo.clockTop + Lo.clockH / 2 });
   drawSunrise(ctx, W, H, since(cues, 'night', t, (c) => c.data?.v === 0).age);
@@ -1154,7 +1161,9 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; topBand(ctx, Lo, fr.phase === 'intro' ? 'INSIDE 24H · WATCH THE NEXT 24 HOURS' : 'INSIDE 24H', o.handle, fr.m, u, fr.rate ?? 0, !!o.solid, fr.beat === 'rewind', fr.phase === 'intro' ? t - TEASER_S - REWIND_S : 9); ctx.restore(); }
   // 4) bottom: the moment's title and its short card; in a glide, the NEXT chip
   if (E.main > 0.001) {
-    ctx.save(); ctx.globalAlpha = E.main * (fr.plateA ?? 1);
+    // (round 9: the card leaves BEFORE the NEXT chip comes in, never a cross-fade of two texts in the same place)
+    const plate = fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
+    ctx.save(); ctx.globalAlpha = E.main * plate;
     const title = (fr.title ?? o.step ?? '').trim(), cap = (fr.phase === 'intro' ? '' : fr.cap ?? '').trim();
     const titleOnly = !!cap && cap.replace(/\.$/, '').toLowerCase() === title.toLowerCase();
     const capFit = balanced(ctx, fitWrap(ctx, cap, RL - L, 2, Lo.capFs, 42, (px) => `${titleOnly ? 700 : 600} ${px}px ${SANS}`), cap, RL - L);
@@ -1173,7 +1182,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     shade(ctx, false);
     ctx.restore();
     if (fr.beat === 'glide' && fr.next) {
-      ctx.save(); ctx.globalAlpha = E.main * (1 - (fr.plateA ?? 1));
+      ctx.save(); ctx.globalAlpha = E.main * Math.max(0, 1 - 2 * (fr.plateA ?? 1));
       drawNextChip(ctx, `NEXT · ${elapsedText(fr.next.min)} · ${fr.next.title}`, L, S.bottom - 62, RL - L, reel);
       ctx.restore();
     }
@@ -1313,7 +1322,7 @@ function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: n
   ctx.fillStyle = GLASS; roundRect(ctx, x0, y, w, h, 16); ctx.fill();
   ctx.strokeStyle = g.curve ? LIGHT[g.level] : 'rgba(220,235,250,.35)'; ctx.lineWidth = 3; ctx.stroke();
   ctx.textAlign = 'left';
-  ctx.font = `700 ${bf}px ${SANS}`; ctx.fillStyle = g.curve ? LIGHT[g.level] : '#ffffff'; text(ctx, fit(ctx, g.big, w - 28), x0 + 14, y + 30);
+  ctx.font = `700 ${bf}px ${SANS}`; ctx.fillStyle = g.curve ? LIGHT[g.level] : '#ffffff'; text(ctx, fit(ctx, g.big, w - 28), x0 + 14, y + 29);
   ctx.font = `600 ${sf}px ${SANS}`; ctx.fillStyle = '#d5e0ec'; text(ctx, small, x0 + 14, y + h - 12);
   ctx.restore();
   return w;
@@ -1339,6 +1348,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     if (sd.gauge?.curve) drawShockwave(ctx, tf(sd.gauge.at), peak.age, LIGHT[sd.gauge.level]);
   });
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
+  if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.headerBot, Lo.capTop); // V17 (round 9)
   scrims(ctx, W, H, Lo.headerBot - 70, Lo.capTop);
   drawNight(ctx, W, H, fr.night ?? 0, { x: W / 2, y: Lo.headerBot + 30 });
   drawSunrise(ctx, W, H, since(cues, 'night', t, (c) => c.data?.v === 0).age);
@@ -1380,7 +1390,8 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     ctx.strokeStyle = ACCENT; ctx.lineWidth = 2.5; ctx.stroke();
     ctx.fillStyle = ACCENT; ctx.font = `700 21px ${SANS}`; ctx.textAlign = 'center'; text(ctx, 'VS', W / 2, Lo.nameY - 2); ctx.textAlign = 'left';
     // each side's moment: its title, its short card
-    ctx.save(); ctx.globalAlpha *= fr.plateA ?? 1;
+    // (round 9: the cards leave before the NEXT chip comes in, never two texts cross-fading in one place)
+    ctx.save(); ctx.globalAlpha *= fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
     const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' ? '' : fr.capB ?? '']];
     sides.forEach((s, k) => {
       const [x0, x1] = Lo.cols[k], w = x1 - x0;
@@ -1460,13 +1471,13 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
     : tease.age < 2.6 && !(ans && dec.age >= 0) ? VIDEO_COPY.answerAt : alcWon && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
     : alcWon && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
   void sip;
-  if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, S.rightLow - L, true, true); ctx.restore(); }
+  if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, 2 * (S.rightLow - W / 2), true, true); ctx.restore(); } // (round 9: centred, so it clears the button column)
   // (round 6: with alcohol on either side the answer is neutral grey, never the winner's colour)
   if (showAns && ans) drawAnswer(ctx, W, Lo, ans, o.a.alcohol || o.b.alcohol ? '#8a9bb0' : [o.a, o.b][ans.winner].color, dec.age, ansS);
   // the NEXT chip while the day runs on (the captions are away then)
   if (fr.beat === 'glide' && fr.next) {
-    ctx.save(); ctx.globalAlpha *= 1 - (fr.plateA ?? 1);
-    drawNextChip(ctx, `NEXT · ${elapsedText(fr.next.min)} · ${fr.next.title}`, W / 2, S.bottom - 62, S.rightLow - L, true, true);
+    ctx.save(); ctx.globalAlpha *= Math.max(0, 1 - 2 * (fr.plateA ?? 1));
+    drawNextChip(ctx, `NEXT · ${elapsedText(fr.next.min)} · ${fr.next.title}`, W / 2, S.bottom - 62, 2 * (S.rightLow - W / 2), true, true);
     ctx.restore();
   }
   // lower part (below the captions; graphics, its small words are decoration): the race and the scoreboard
@@ -1497,11 +1508,12 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
 /** The answer banner: "First out: Espresso." / "Out of the stomach in about 1 h.", over the bodies' middle, with a
  *  pop and a ring (the impact); it leaves before the next words come. */
 function drawAnswer(ctx: CanvasRenderingContext2D, W: number, Lo: ReturnType<typeof layoutSplit>, a: NonNullable<CmpOverlay['answer']>, color: string, age: number, dur: number) {
-  const { S, L } = Lo, maxW = S.rightLow - L - 40;
+  // (round 9: centred between the bodies, so its half-width is what clears the button column: "Bigger rise: Kebab / doner." ran under it)
+  const { S } = Lo, maxW = 2 * (S.rightLow - W / 2) - 40;
   const k1 = fitWrap(ctx, a.a1, maxW, 1, 52, 34, (px) => `800 ${px}px ${SANS}`), k2 = fitWrap(ctx, a.a2, maxW, 2, 34, 26, (px) => `600 ${px}px ${SANS}`);
   ctx.font = `800 ${k1.px}px ${SANS}`; const w1 = ctx.measureText(k1.lines[0] ?? '').width;
   ctx.font = `600 ${k2.px}px ${SANS}`; const w2 = Math.max(...k2.lines.map((l) => ctx.measureText(l).width));
-  const w = Math.min(S.rightLow - L, Math.max(w1, w2) + 60), h = 30 + k1.px + 14 + k2.lines.length * k2.px * 1.2 + 18;
+  const w = Math.min(2 * (S.rightLow - W / 2), Math.max(w1, w2) + 60), h = 30 + k1.px + 14 + k2.lines.length * k2.px * 1.2 + 18;
   const cx = W / 2, y = Lo.capTop - 130 - h, x = cx - w / 2;
   const a0 = Math.min(1, age / 0.12) * (1 - Math.max(0, (age - (dur - 0.3)) / 0.3)), sc = 1 + 0.18 * (1 - smooth(age / 0.35));
   drawShockwave(ctx, { x: cx, y: y + h / 2 }, age, lighten(color));
