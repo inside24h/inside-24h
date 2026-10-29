@@ -174,20 +174,57 @@ export function drawBubbles(ctx: CanvasRenderingContext2D, at: { x: number; y: n
 
 /** The bloodstream: soft dots travelling gut → liver → heart → brain along the organs' projected positions, as many
  *  and as bright as the level of the drink's main substance in the blood (`level` 0..1). */
-export function drawBloodFlow(ctx: CanvasRenderingContext2D, path: ({ x: number; y: number } | null | undefined)[], t: number, level: number, color: string) {
+export function drawBloodFlow(ctx: CanvasRenderingContext2D, path: ({ x: number; y: number } | null | undefined)[], t: number, level: number, color: string, surge = 0, sparkle = false, win?: [number, number]) {
   const pts = path.filter((p): p is { x: number; y: number } => !!p);
-  if (pts.length < 2 || level <= 0.03) return;
+  const lv = Math.min(1, Math.max(level, 0.6 * surge));
+  if (pts.length < 2 || lv <= 0.03) return;
   const seg = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y)), total = seg.reduce((a, b) => a + b, 0);
   if (total < 20) return;
-  const pos = (d: number) => { let x = d % total; for (let i = 0; i < seg.length; i++) { if (x <= seg[i]) { const k = x / (seg[i] || 1); return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * k, y: pts[i].y + (pts[i + 1].y - pts[i].y) * k }; } x -= seg[i]; } return pts[pts.length - 1]; };
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = color;
-  const n = Math.round(4 + 10 * level);
+  const pos = (d: number) => { let x = ((d % total) + total) % total; for (let i = 0; i < seg.length; i++) { if (x <= seg[i]) { const k = x / (seg[i] || 1); return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * k, y: pts[i].y + (pts[i + 1].y - pts[i].y) * k }; } x -= seg[i]; } return pts[pts.length - 1]; };
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = color; ctx.strokeStyle = color;
+  // round 10: comets (a head and a fading tail of 3), more and faster during the surge; sugar twinkles
+  // (only inside the picture's window between the top text and the caption, fading out 50 px before its edges; each
+  // comet sways a little off the straight line between organs, so the stream looks alive, not a string of beads)
+  const vis = (y: number) => (win ? clamp01((y - win[0]) / 50) * clamp01((win[1] - y) / 50) : 1);
+  const n = Math.round(4 + 10 * lv + 7 * surge), speed = 160 * (1 + 1.2 * surge), r0 = 5.5 * (1 + 0.35 * surge);
+  const head = (0.5 + 0.25 * surge) * lv;
   for (let i = 0; i < n; i++) {
-    const p = pos(t * 160 + (i / n) * total);
-    ctx.globalAlpha = 0.5 * level; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 0.18 * level; ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.fill();
+    const d0 = t * speed + (i / n) * total, sway = (d: number) => { const q = pos(d), q2 = pos(d + 6), dx = q2.x - q.x, dy = q2.y - q.y, l = Math.hypot(dx, dy) || 1, w = 5 * Math.sin(d * 0.045 + i * 2.1); return { x: q.x - (dy / l) * w, y: q.y + (dx / l) * w }; };
+    for (let j = 3; j >= 0; j--) {
+      const p = sway(d0 - j * r0 * 2.2), fade = 1 - j / 4;
+      ctx.globalAlpha = head * fade * (j ? 0.55 : 1) * vis(p.y); ctx.beginPath(); ctx.arc(p.x, p.y, r0 * (j ? 0.75 * fade : 1), 0, Math.PI * 2); ctx.fill();
+    }
+    const p = sway(d0);
+    ctx.globalAlpha = 0.2 * lv * (1 + surge) * vis(p.y); ctx.beginPath(); ctx.arc(p.x, p.y, r0 * 2.6, 0, Math.PI * 2); ctx.fill();
+    if (sparkle && i % 3 === 0) { // a small four-point glint, twinkling (each at its own phase, < 3 per second)
+      const tw = Math.max(0, Math.sin(t * 5.2 + i * 1.7)), L = r0 * (1.6 + 1.6 * tw);
+      ctx.globalAlpha = 0.6 * lv * tw * vis(p.y); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(p.x - L, p.y); ctx.lineTo(p.x + L, p.y); ctx.moveTo(p.x, p.y - L); ctx.lineTo(p.x, p.y + L); ctx.stroke();
+    }
   }
   ctx.restore();
+}
+
+/** Round 10: how strong the bloodstream surge is, `age` seconds after its cue: up in 0.25 s, then easing off (≈ 2.5 s).
+ *  With `build` (the surge that rides the riser): up to 0.4 in 0.25 s, building to 1 at the impact, then easing off. */
+export function surgeLevel(age: number, build = 0): number {
+  if (!(age >= 0) || age > build + 2.6) return 0;
+  if (build > 0.25) {
+    if (age < build) return age < 0.25 ? 0.4 * smooth(age / 0.25) : 0.4 + 0.6 * smooth((age - 0.25) / (build - 0.25));
+    return Math.exp(-(age - build) / 0.8);
+  }
+  return age < 0.25 ? smooth(age / 0.25) : Math.exp(-(age - 0.25) / 0.8);
+}
+
+/** Round 10: the organ "hit" as a new moment lands: a thin ring out from the organ (r 16 → 120 px in 0.5 s) and a soft
+ *  glow, in time with the thump in the sound. One per moment (moments are ≥ 2.4 s apart: far under 3 flashes a second). */
+export const HIT_S = 0.5;
+export function drawOrganHit(ctx: CanvasRenderingContext2D, at: { x: number; y: number } | null | undefined, age: number, color: string, scale = 1) {
+  if (!at || age < 0 || age > HIT_S) return;
+  const k = easeOutCubic(age / HIT_S);
+  ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = 0.6 * (1 - age / HIT_S); ctx.lineWidth = (5 - 4 * k) * scale;
+  ctx.beginPath(); ctx.arc(at.x, at.y, (16 + 104 * k) * scale, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  drawGlowPulse(ctx, at, age * (0.6 / HIT_S), color, 100 * scale);
 }
 
 /** Kinetic words (the hook's second line): each word punches in (scale 1.4 → 1, 0.12 s), one after the other from

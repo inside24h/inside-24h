@@ -29,7 +29,7 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
-import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, comparePlan, gaugesAt, peakOf, plainLatin, shortName, singleStops } from './video-story';
+import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, comparePlan, gaugesAt, peakOf, plainLatin, shortName, singleStops, surgeOf } from './video-story';
 import { hookFor, hookForCompare } from './video-hook';
 import type { Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
@@ -783,7 +783,7 @@ export default function AppV4() {
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = hookNow.payoff ? story.chapters.find((c) => c.title === hookNow.payoff)?.min : undefined;
     const fx: PlanFx = { peakMin: peakOf(built, peakNow !== null), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
-      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels };
+      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null) };
     const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;
     if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
@@ -950,7 +950,7 @@ export default function AppV4() {
                   {/* first screen (nothing chosen yet): the body on its own, no liquid */}
                   {started && mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}
                   {started && mode === 'simple' && (built.route
-                    ? <LiquidRoute route={built.route} color={story.color} minute={minute} labels={share?.state !== 'rec'} maxLabels={calmNow ? 1 : 3} subtle={!!vGlow && isLightDrink(story.color)} />
+                    ? <LiquidRoute route={built.route} color={story.color} minute={minute} labels={share?.state !== 'rec'} maxLabels={calmNow ? 1 : 3} subtle={!!vGlow && isLightDrink(story.color)} vivid={!!vGlow} />
                     : <FlowPaths bounds={bounds} color={story.color} flows={story.flows(minute)} toKidneys={story.toKidneys} />)}
                   </>}
                 </Suspense>

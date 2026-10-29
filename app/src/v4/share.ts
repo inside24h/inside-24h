@@ -9,7 +9,7 @@ import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
-import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, vignetteAlpha } from './video-fx';
+import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
 import { commentLine } from './video-hook';
 import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
@@ -1092,13 +1092,21 @@ export function endTiming(fr: Pick<VFrame, 'phase' | 'k'>, outS: number) {
 /** Round 4 effects on one body: bubbles in a fizzy stomach (foam on beer), the bloodstream gut → liver → heart → brain
  *  as bright as the level in the blood, and a soft glow on the heart with each heartbeat (only in the model's
  *  heart-stress spans, video-plan 'heart' cues; 1.1 s apart, well under 3 flashes a second). */
-function bodyLife(ctx: CanvasRenderingContext2D, pin: (k: string) => { x: number; y: number } | null, side: { fizz?: number; foam?: boolean; flow?: number; color?: string }, cues: Plan['cues'] | undefined, t: number) {
+function bodyLife(ctx: CanvasRenderingContext2D, pin: (k: string) => { x: number; y: number } | null, side: { fizz?: number; foam?: boolean; flow?: number; color?: string }, cues: Plan['cues'] | undefined, t: number,
+  sg: { age: number; kind?: string; build?: number } = { age: Infinity }, win?: [number, number]) {
   const st = pin('stomach'), pa = pin('pancreas');
   if (st && pa) drawBubbles(ctx, st, Math.hypot(st.x - pa.x, st.y - pa.y) * 1.1, t, side.fizz ?? 0, !!side.foam);
-  drawBloodFlow(ctx, ['jejunum', 'portal_vein', 'liver', 'heart', 'brain'].map(pin), t, side.flow ?? 0, lighten(side.color ?? ACCENT));
+  // round 10: the bloodstream surges as the substance reaches half its peak (video-plan 'surge'): more, faster
+  // comets, and the heart then the brain light up in the substance's colour as the wave reaches them
+  const sl = surgeLevel(sg.age, sg.build ?? 0), sc = SURGE_COLOR[sg.kind ?? ''] ?? lighten(side.color ?? ACCENT);
+  drawBloodFlow(ctx, ['jejunum', 'portal_vein', 'liver', 'heart', 'brain'].map(pin), t, side.flow ?? 0, lighten(side.color ?? ACCENT), sl, sg.kind === 'sugar' && sl > 0.02, win);
+  if (sl > 0) { drawGlowPulse(ctx, pin('heart'), sg.age - 0.15, sc, 110); drawGlowPulse(ctx, pin('brain'), sg.age - 0.5, sc, 130); }
   const hb = since(cues, 'heart', t);
   if (hb.cue?.data?.v === 1 && hb.age > 0.2) drawGlowPulse(ctx, pin('heart'), (hb.age - 0.2) % 1.1, '#ff5a6a', 90);
 }
+
+/** Round 10: the colour of the bloodstream surge by substance (the brain's colours, video-body paletteAt). */
+const SURGE_COLOR: Record<string, string> = { sugar: '#ffd27a', caffeine: '#5ef0a8', alcohol: '#ffb02e' };
 
 /** Body-first frame of the single video. 2026-10-24 creative upgrade: the cold open and its rewind, the sip splash,
  *  the peak (riser vignette → punch, shake, ring, PEAK), micro-beats, NEXT chips, the night tone (video-fx.ts). */
@@ -1120,8 +1128,12 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   const micro = since(cues, 'micro', t);
   if (micro.cue?.data?.v === 1) drawGlowPulse(ctx, pinOf(o.focus) ?? tf(main?.at), micro.age, lighten(o.color ?? ACCENT));
   drawSplash(ctx, pinOf('tongue'), since(cues, 'sip', t).age, lighten(o.color ?? '#ffffff'));
-  bodyLife(ctx, pinOf, o, cues, t);
+  const sg = since(cues, 'surge', t);
+  bodyLife(ctx, pinOf, o, cues, t, { age: sg.age, kind: sg.cue?.data?.label, build: sg.cue?.data?.v }, [Lo.topBot, Lo.capTop]);
   const peak = since(cues, 'peak', t);
+  // round 10: each new moment lands with a hit on its organ (and a thump in the sound), not on the impact itself
+  const hit = since(cues, 'stop', t);
+  if (hit.cue && hit.cue.t > 1.2 && Math.abs(hit.cue.t - (peak.cue?.t ?? -9)) > 0.3) drawOrganHit(ctx, pinOf(o.focus) ?? tf(main?.at), hit.age, lighten(o.color ?? ACCENT));
   drawShockwave(ctx, tf(main?.at) ?? pinOf(o.focus), peak.age, LIGHT[main?.level ?? 1]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
   if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.topBot, Lo.capTop); // V17 (round 9)
@@ -1344,7 +1356,10 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   const sipAge = since(cues, 'sip', t).age, peak = since(cues, 'peak', t);
   [o.a, o.b].forEach((sd, k) => {
     drawSplash(ctx, tf(sd.pins?.tongue ?? null), sipAge - k * 0.12, lighten(sd.color), 11 + k);
-    bodyLife(ctx, (key) => tf(sd.pins?.[key] ?? null), sd, k === 0 ? cues : undefined, t); // one heartbeat glow is enough (left)
+    const sg = since(cues, 'surge', t);
+    bodyLife(ctx, (key) => tf(sd.pins?.[key] ?? null), sd, k === 0 ? cues : undefined, t, (sg.cue?.data?.side ?? 0) === k ? { age: sg.age, kind: sg.cue?.data?.label, build: sg.cue?.data?.v } : undefined, [Lo.headerBot, Lo.capTop]); // one heartbeat glow is enough (left)
+    const hit = since(cues, 'stop', t);
+    if (sd.gauge && hit.cue && hit.cue.t > 1.2 && Math.abs(hit.cue.t - (peak.cue?.t ?? -9)) > 0.3) drawOrganHit(ctx, tf(sd.gauge.at), hit.age - k * 0.08, lighten(sd.color), 0.7);
     if (sd.gauge?.curve) drawShockwave(ctx, tf(sd.gauge.at), peak.age, LIGHT[sd.gauge.level]);
   });
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);

@@ -128,7 +128,7 @@ export interface VFrame {
 /** One timeline for picture and sound (2026-10-24 creative spec §2.1): every effect and every sound effect is placed
  *  from these cues, so they always land on the same frame. */
 export type CueKind = 'start' | 'move' | 'stop' | 'page' | 'outro' | 'end'
-  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart';
+  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart' | 'surge';
 export interface Cue { t: number; kind: CueKind; data?: { level?: 0 | 1 | 2; side?: 0 | 1; v?: number; label?: string } }
 export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number; peakT?: number }
 /** What the effects need from the model (all optional; the plan works without). */
@@ -148,7 +148,14 @@ export interface PlanFx {
   payoffMin?: number;
   /** round 5: the long cut's first impact lands by this second (critic: "the first wow at 27 s is too late"). */
   peakByS?: number;
+  /** round 10: while the drink's main substance climbs in the blood (from SURGE_FROM of its peak, `min`, to the peak,
+   *  `max`; video-story `surgeOf`), and which one: the bloodstream surges on screen and in the sound, once, at the
+   *  first second of that stretch that is clear of the sip, the riser and the impact. */
+  surge?: { min: number; max: number; kind: SurgeKind; side?: 0 | 1 };
 }
+export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
+/** Round 10: the surge keeps this far from the sip, the riser and the impact (seconds), so no two big events overlap. */
+export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
 export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.75, LIGHTS_STEP_S = 0.35, MICRO_GAP_S = 2.9;
 /** Comparison end card: the verdict lands first (it is the answer to the guess, and must be read: + 1.5 s), then the
  *  lights come on, left and right in turn, faster. */
@@ -525,6 +532,22 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
       const f = frames.findIndex((fr) => fr.phase === 'main' && curve[Math.min(1440, Math.max(0, Math.round(fr.m)))] >= 1);
       if (f >= 0) cues.push({ t: f / FPS, kind: 'race', data: { side: side as 0 | 1 } });
     });
+  }
+  // SURGE (round 10): the first frame while the drink's main substance climbs in the blood (model minutes) that is
+  // clear of the sip, the riser and the impact (one big event at a time), and before the impact (it builds to it)
+  if (fx.surge) {
+    const sg = fx.surge, busy = cues.filter((c) => c.kind === 'sip' || c.kind === 'peak' || c.kind === 'verdict').map((c) => c.t);
+    const riser = cues.find((c) => c.kind === 'riser'), peak = cues.find((c) => c.kind === 'peak');
+    // (and 0.9 s from a new moment's organ hit and from the first heartbeat: never more than 3 glows in a second)
+    const near = cues.filter((c) => c.kind === 'stop' || (c.kind === 'heart' && c.data?.v === 1)).map((c) => c.t);
+    const free = (t: number) => t < tOut - 1 && !(peak && t > peak.t) && !(riser && peak && t >= riser.t - SURGE_CLEAR_S && t <= peak.t + SURGE_CLEAR_S) && busy.every((b) => Math.abs(b - t) >= SURGE_CLEAR_S)
+      && near.every((b) => Math.abs(b - t) >= 0.9);
+    const inWin = (fr: VFrame) => fr.phase === 'main' && fr.beat !== 'teaser' && fr.beat !== 'rewind' && fr.m >= sg.min && fr.m <= sg.max;
+    const f = frames.findIndex((fr, i) => inWin(fr) && free(i / FPS));
+    if (f >= 0) cues.push({ t: f / FPS, kind: 'surge', data: { label: sg.kind, side: sg.side } });
+    // the climb happens during the glide into the peak (a drink: first sip → peak): the surge rides the riser instead,
+    // building with it up to the impact (`v` = seconds to the impact; the sound leaves the riser alone)
+    else if (riser && peak && frames.some((fr, i) => inWin(fr) && i / FPS >= riser.t - 0.5 && i / FPS <= peak.t)) cues.push({ t: riser.t, kind: 'surge', data: { label: sg.kind, side: sg.side, v: peak.t - riser.t } });
   }
   // the comparison's open loop at about half time: "Answer at 24 h." (§3.3)
   if (fx.compare && cut === 'long') {

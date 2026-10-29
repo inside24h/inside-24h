@@ -88,7 +88,7 @@ const vert = /* glsl */ `
     gl_Position = projectionMatrix * mv;
   }`;
 const frag = /* glsl */ `
-  uniform vec3 color; uniform float time; uniform float fill; uniform float front; uniform float flow; uniform float len;
+  uniform vec3 color; uniform float time; uniform float fill; uniform float front; uniform float flow; uniform float len; uniform float vivid;
   varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vBead;
   void main() {
     if (vUv.x > front) discard;                       // the liquid has not got this far yet
@@ -98,6 +98,15 @@ const frag = /* glsl */ `
     vec3 edgeCol = lum > 0.45 ? color * 0.62 : min(color * 4.0 + 0.08, vec3(1.0));
     vec3 c = mix(color, edgeCol, 0.55 * f);
     c = mix(c, vec3(1.0), 0.35 * vBead * (1.0 - f));   // glossy highlight on each droplet
+    if (vivid > 0.0) {
+      // video only (round 10): a dark drink (cola, coffee) glows in a lighter tone of its own colour instead of reading as
+      // a black pipe, and soft bands of light travel along the stream (faster while it is moving on)
+      float dk = 1.0 - clamp(max(color.r, max(color.g, color.b)) * 1.6, 0.0, 1.0);
+      vec3 hue = color / max(max(color.r, max(color.g, color.b)), 0.02) * 0.85; // the drink's own hue at full strength (cola: amber)
+      c = mix(c, hue, 0.45 * vivid * dk);
+      float band = pow(0.5 + 0.5 * sin(vUv.x * len * 60.0 - time * (2.5 + 6.0 * flow)), 8.0);
+      c += min(color * 4.5 + 0.15, vec3(1.0)) * 0.3 * vivid * band * (0.35 + 0.65 * flow) * (1.0 - 0.6 * f);
+    }
     float edge = smoothstep(front, front - 0.03, vUv.x); // soft leading edge
     float a = fill * 0.96 * edge;
     if (a < 0.02) discard;
@@ -139,14 +148,14 @@ const RADIUS: Record<SegId, number> = { swallow: 0.0055, stomach: 0.009, duodenu
 
 /** `subtle` (video, 2026-10-24): a thinner, softer stream without the glow, so a big light drink (beer, water) is a flow,
  *  not a thick bright tube over the organs. */
-export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3, subtle = false }: { route: Route; color: string; minute: number; labels?: boolean; maxLabels?: number; subtle?: boolean }) {
+export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3, subtle = false, vivid = false }: { route: Route; color: string; minute: number; labels?: boolean; maxLabels?: number; subtle?: boolean; vivid?: boolean }) {
   const segs = useMemo<SegMesh[]>(() => {
     const paths = buildRoute();
     return (Object.keys(paths) as SegId[]).map((id) => {
       const curve = new THREE.CatmullRomCurve3(paths[id], false, 'centripetal', 0.5);
       const len = curve.getLength();
       const n = Math.max(24, Math.round(len * 900));
-      const uniforms = { color: { value: new THREE.Color(color) }, time: { value: 0 }, fill: { value: 0 }, front: { value: 0 }, flow: { value: 0 }, thick: { value: 0 }, bead: { value: 0 }, len: { value: len } };
+      const uniforms = { color: { value: new THREE.Color(color) }, time: { value: 0 }, fill: { value: 0 }, front: { value: 0 }, flow: { value: 0 }, thick: { value: 0 }, bead: { value: 0 }, len: { value: len }, vivid: { value: 0 } };
       const mat = new THREE.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: frag, transparent: true, depthWrite: false, depthTest: false, blending: THREE.NormalBlending });
       const haloMat = new THREE.ShaderMaterial({ uniforms: { ...uniforms, thick: { value: 0 } }, vertexShader: vert, fragmentShader: haloFrag, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
       const outlineMat = new THREE.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: outlineFrag, transparent: true, depthWrite: false, depthTest: false, blending: THREE.NormalBlending });
@@ -167,6 +176,7 @@ export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3
     for (const s of segs) {
       const u = s.mat.uniforms, x = state[s.id];
       u.time.value = st.clock.elapsedTime;
+      u.vivid.value = vivid ? 1 : 0;
       (u.color.value as THREE.Color).lerp(col, k);
       const target = (x && x.frac > 0.002 ? Math.min(1, 0.6 + x.frac * 3) : 0) * (subtle ? 0.6 : 1); // any liquid present is clearly visible
       u.fill.value += (target - u.fill.value) * k;

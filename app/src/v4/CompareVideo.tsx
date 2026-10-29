@@ -34,7 +34,7 @@ function Side({ a, minute, x, focus, group }: { a: Analysis; minute: number; x: 
   return (
     <group position={[x, 0, 0]} ref={group}>
       <Body glow={glow} selected={null} onSelect={NOOP} onError={NOOP} liquid={soft} liquidColor={story.color} dim={0.42} keep={keep} palette={paletteAt(a.built, minute)} />
-      {a.built.route && <LiquidRoute route={a.built.route} color={story.color} minute={minute} labels={false} subtle={isLightDrink(story.color)} />}
+      {a.built.route && <LiquidRoute route={a.built.route} color={story.color} minute={minute} labels={false} subtle={isLightDrink(story.color)} vivid />}
     </group>
   );
 }

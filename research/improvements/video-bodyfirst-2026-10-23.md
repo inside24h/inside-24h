@@ -364,3 +364,67 @@ Backup: `C:\claudework\inside-24h-backups\20261029-180811-video9\` + git (HEAD p
   - end card pizze je "A whole pizza";
   - kartica o limfi se više ne ponavlja.
 - tsc je čist, vitest 705/705 (1 skip: privremeni `_dbg9.test.ts`, nije commitan). Oba builda prolaze (split zadnji).
+
+---
+
+# Runda 10 (2026-10-29): kritika zadržavanja gledatelja, krvotok, udarci organa, novi zvukovi
+
+Backup: `C:\claudework\inside-24h-backups\20261029-193012-video10\` + git (HEAD prije runde = 4e3209b).
+
+## Kritika (6 uzoraka prije promjena)
+- **Prva sekunda:** hook frame = cijelo tijelo + hook, odmah gutljaj i premotavanje. Dobro, bez promjene.
+- **Najveći vizualni problem:** tamna pića (cola, kava) su u crijevima bila crna/siva cijev. Najvažniji dio priče ("gdje ide") izgledao je kao mrtva crna zmija.
+- **Krvotok:** točkice krvotoka (runda 4) su bile premale da se vide na mobitelu. Nije bilo trenutka "sad ulazi u krv".
+- **Ritam:** novi trenutak (stop) imao je samo tihi "tick". Na tijelu se ništa nije dogodilo dok kamera ne stigne.
+- **Ostalo (bez promjene):** kebab long 24:00 drži ~10 s s dvije kartice (sadržaj je važan payoff). Usporedba u splitu ima mala tijela (kompromis 9:16).
+
+## Što je napravljeno
+1. **Val u krvotoku (surge).** Novi cue `surge`, jedan po videu.
+   - Minuta dolazi iz modela (`surgeOf` u `video-story.ts`): ista tvar kao vrh (alkohol, inače jasan porast šećera, inače kofein), od 25 % vrha do vrha.
+   - Planer bira prvu slobodnu sekundu u tom rasponu. Mora biti ≥ 1,4 s od gutljaja, risera i udarca, ≥ 0,9 s od novog trenutka i prvog otkucaja, i uvijek prije udarca.
+   - Kod pića se rast događa baš u glideu prema vrhu. Tada val "jaše" riser (`data.v` = sekunde do udarca) i raste zajedno s njim do udarca.
+   - Slika: više i brže "komete" s repom od jetre do srca i mozga; srce pa mozak zasvijetle u boji tvari (šećer zlatno, kofein zeleno, alkohol jantar); šećer ima male iskre.
+   - Bez teksta i broja, pa se nikad ne može razlikovati od mjerača.
+2. **Krvotok uvijek vidljiv.** Komete s repom i blagim njihanjem (više nije "niz perli"). Gase se 50 px prije gornjeg teksta i titla.
+3. **Udarac organa na svakom novom trenutku:** tanki prsten i sjaj na organu trenutka (0,5 s) + tihi "thump" (92 → 52 Hz) ispod ticka. Ne dolazi na sam vrh, jer vrh ima svoj udarac. U splitu je na organu mjerača obje strane.
+4. **Zvukovi vala:** zračni "swell" + mekani niski puls. Uz to glas tvari:
+   - šećer: pentatonske iskrice;
+   - kofein: svijetli "switch on";
+   - alkohol: topli, lagano padajući swell.
+   - Kad val jaše riser, swell se ne svira (riser je swell), a glas tvari je tiši.
+5. **Tamna pića svijetle (samo video).** `LiquidRoute vivid`: tamno piće dobije vlastitu nijansu u punoj jačini (cola je jantarno-crvena, ne crna). Uz to mekane trake svjetla putuju niz tok, brže dok se tok miče. App izvan snimanja je nepromijenjen.
+6. **Testovi.** Sweep svih 150 namirnica sada provjerava i tajming efekata (`fxTiming`):
+   - najviše 1 val, nikad na gutljaju, riseru ili udarcu;
+   - val nikad poslije udarca ni na end cardu;
+   - nikad više od 3 bljeska u 1 s (udarci organa, mikro-pulsevi, val, udarci, otkucaji srca).
+   - Novi blok "round 10": `surgeOf` po tvari (voda nema val); val pada u model-raspon kod > 90 % namirnica s vrhom (80/80); glatka ovojnica bez skokova između frameova.
+   - Test je odmah našao gomilu od 4 bljeska u 3 piva u 21 h, popravljeno.
+
+Znanstveni modeli nisu mijenjani. Na ekranu nema novih brojeva ni riječi.
+
+## Ocjena zadržavanja (0–10, prije → poslije)
+| Uzorak | Prije | Poslije | Zašto |
+|---|---|---|---|
+| kebab long | 7,0 | 7,5 | udarac organa svakih ~4 s, šećerni val prije vrha; 24:00 i dalje dugo |
+| cola short | 7,5 | 8,5 | cola je svijetleći jantarni tok, val sa iskrama raste u udarac |
+| espresso short | 7,5 | 8,0 | kofeinski val na 10,5 s (mozak zeleno), thump na trenucima |
+| pivo ×3 long | 8,0 | 8,5 | alkoholni val jaše riser u vrh |
+| pizza long | 7,0 | 7,5 | zlatni val do mozga prije vrha, udarci organa |
+| compare cola-voda short | 7,0 | 7,5 | val na strani cole, udarci na oba tijela |
+
+## Provjera runde 10
+- Uzorci u `C:\claudework\video-samples\2026-10-29-v10\` (6 MP4):
+  - kebab-long (66,0 s)
+  - cola-short (28,8 s)
+  - espresso-short (27,4 s)
+  - beer-3-over-2h-long (65,6 s)
+  - pizza-builder-long (66,1 s)
+  - compare-cola-vs-water-short (25,6 s)
+- Svi su 1080×1920, 30 fps, H.264 + AAC, bez crnih frameova i bez grešaka u konzoli.
+- Glasnoća: −14,1 do −14,3 LUFS, true peak −1,8 do −1,9 dBTP.
+- Thump na stopu: +4,5 dB niskih frekvencija (< 130 Hz) u odnosu na prije.
+- tsc je čist, vitest 724/724 (1 skip: `_dbg9.test.ts`). Oba builda prolaze (split zadnji).
+
+## Za vlasnika
+- **Otkucaji srca za kofein:** namjerno NISU dodani. Model kaže da se puls ne mijenja (spec A13), pa bi zvuk tvrdio nešto netočno. Otkucaji ostaju samo dok model kaže da je srce pod stresom (npr. pivo noću).
+- **Krvotok ide okomito** (jetra → srce → mozak), pa kod širokog kadra izgleda kao uspravni stup kometa. Ako je previše, može se smanjiti broj kometa u valu.

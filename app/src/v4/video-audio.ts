@@ -386,7 +386,30 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
         // pulls back and the speed lines run, panned slowly across
         if ((c.data?.v ?? 0) >= 240) { nz(t + 0.12, 1.15, 0.05, sfx, { type: 'bandpass', f: 2800, f1: 350, q: 0.8 }, -0.35, 0.45); nz(t + 0.3, 0.9, 0.03, sfx, { type: 'highpass', f: 4200 }, 0.35, 0.35); }
         break;
-      case 'stop': if (t > 1.2) { osc('sine', 1318.5, null, t, 0.22, 0.07, sfx); osc('sine', 1975.5, null, t + 0.004, 0.16, 0.035, sfx); } break; // A8 tick
+      case 'stop': if (t > 1.2) {
+        osc('sine', 1318.5, null, t, 0.22, 0.07, sfx); osc('sine', 1975.5, null, t + 0.004, 0.16, 0.035, sfx); // A8 tick
+        // round 10: the organ thump under the tick (the picture's organ hit), not on the impact (it has its own)
+        if (!peaks.some((p) => Math.abs(p - t) < 0.3)) { osc('sine', 92, 52, t, 0.2, 0.2, sfx, 0, 0.004); nz(t, 0.03, 0.06, sfx, { type: 'lowpass', f: 320 }, 0, 0.002); }
+      } break;
+      case 'surge': { // round 10: the bloodstream surge: an upward air swell and a soft low pulse, then a voice per substance
+        // (riding the riser, `v` > 0: the riser is the swell, so only the substance's own voice, a little quieter)
+        const ride = (c.data?.v ?? 0) > 0, vg = ride ? 0.7 : 1;
+        if (!ride) { nz(t - 0.2, 0.75, 0.07, sfx, { type: 'bandpass', f: 500, f1: 3600, q: 1.2 }, -0.2, 0.3); osc('sine', 72, 50, t + 0.05, 0.32, 0.12, sfx, 0, 0.01); }
+        const kind = c.data?.label;
+        if (kind === 'sugar') { // sparkle: high pentatonic glints, seeded, spread across the stereo field
+          let sd = 913; const rnd = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
+          const notes = [88, 90, 93, 95, 97, 100];
+          for (let i = 0; i < 9; i++) osc('sine', midi(notes[Math.floor(rnd() * notes.length)]), null, t + 0.05 + i * 0.07 + rnd() * 0.03, 0.28, 0.03 * vg, sfx, (rnd() - 0.5) * 1.2, 0.002);
+        } else if (kind === 'caffeine') { // a bright "switch on": a quick upward zap and a clear ping
+          osc('triangle', 660, 1320, t, 0.22, 0.05 * vg, sfx, -0.25, 0.005); osc('triangle', 990, 1980, t + 0.03, 0.2, 0.03 * vg, sfx, 0.25, 0.005);
+          osc('sine', 1760, null, t + 0.24, 0.35, 0.035 * vg, sfx, 0, 0.003);
+        } else if (kind === 'alcohol' && !ride) { // a warm, slightly sagging swell
+          for (const det of [-8, 8]) { const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.detune.value = det; o2.frequency.setValueAtTime(220, t); o2.frequency.exponentialRampToValueAtTime(196, t + 1.0);
+            const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+            const p = ctx.createStereoPanner(); p.pan.value = det < 0 ? -0.3 : 0.3; o2.connect(f); f.connect(g); g.connect(p); p.connect(sfx); o2.start(t); o2.stop(t + 1.15); }
+        }
+        break;
+      }
       case 'page': osc('sine', 987.8, null, t, 0.16, 0.035, sfx); break;
       case 'micro': osc('sine', 1567.98, null, t, 0.09, 0.022, sfx, c.data?.v === 1 ? -0.3 : 0.3); break; // a soft beat with each small picture event
       case 'next': if (c.data?.label === 'tease') { osc('triangle', 659.25, null, t, 0.3, 0.1, sfx); osc('triangle', 987.77, null, t + 0.12, 0.4, 0.1, sfx); } // A17 stinger

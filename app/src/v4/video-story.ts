@@ -5,7 +5,7 @@ import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { beatLines, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
-import { planCompare, planVideo, type Plan, type PlanFx, type StopIn } from './video-plan';
+import { planCompare, planVideo, SURGE_FROM, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
 import { mainGauge, whereGauge, type BuiltLike } from './video-body';
 import { worstMoment } from './status';
 import { verdictOf, type Analysis } from './analyze';
@@ -41,6 +41,23 @@ export function peakOf(b: PeakIn, sugarKnown: boolean): number | undefined {
   const g = sugarKnown ? b.effects.glucoseMgDl : undefined;
   if (g && arg(g) > 0 && g[arg(g)] / 18.016 >= 0.5) return arg(g);
   if (b.caffeine.doseMg >= 20) return arg(b.caffeine.body);
+  return undefined;
+}
+
+/** Round 10: the bloodstream surge. The same substance as peakOf (alcohol, else a clear sugar rise, else caffeine),
+ *  and the stretch of the day while its model level climbs from a quarter of its peak to the peak (the video picks
+ *  the first free second in it). Picture and sound only
+ *  (no words, no number), so it can never disagree with the gauge. */
+export function surgeOf(b: PeakIn, sugarKnown: boolean): { min: number; max: number; kind: SurgeKind } | undefined {
+  const g = sugarKnown ? b.effects.glucoseMgDl : undefined, gMax = g ? Math.max(...Array.from(g.subarray(0, 1441))) : 0;
+  const pick: [Float64Array, SurgeKind] | undefined = (b.alcoholG ?? 0) > 1 && b.bac ? [b.bac, 'alcohol']
+    : g && gMax / 18.016 >= 0.5 ? [g, 'sugar'] // (peakOf's "clear rise": at least 0.5 mmol/L)
+      : b.caffeine.doseMg >= 20 ? [b.caffeine.body, 'caffeine'] : undefined;
+  if (!pick) return undefined;
+  const [sr, kind] = pick, end = Math.min(1440, sr.length - 1);
+  let pm = 0; for (let i = 1; i <= end; i++) if (sr[i] > sr[pm]) pm = i;
+  if (!(sr[pm] > 0) || pm < 2) return undefined;
+  for (let m = 1; m <= pm; m++) if (sr[m] >= SURGE_FROM * sr[pm]) return { min: m, max: pm, kind };
   return undefined;
 }
 
@@ -89,7 +106,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, shortVid
   const nonAlc = [a, b].filter((x) => (x.built.alcoholG ?? 0) <= 1), pk = [...nonAlc, a, b].map((x) => peakOf(x.built, x.glucose !== undefined)).find((x) => x !== undefined);
   // the impact lands on the answer when there is a guess (the moment the race is decided), else on the peak
   const hit = gq ? Math.round(gq.decidedMin) : pk;
-  const fx: PlanFx = { peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
+  // round 10: the bloodstream surge on the first side that has one (the same order as the peak: no alcohol first)
+  const sg = ([...nonAlc, a, b].map((x) => { const s = surgeOf(x.built, x.glucose !== undefined); return s && { ...s, side: (x === a ? 0 : 1) as 0 | 1 }; })).find((x) => !!x);
+  const fx: PlanFx = { surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
     lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)

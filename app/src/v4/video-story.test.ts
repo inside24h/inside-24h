@@ -9,10 +9,11 @@ import { analyze, type Analysis } from './analyze';
 import { DEFAULT_PROFILE, type Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { hookFor, hookForCompare } from './video-hook';
-import { CMP_REPEAT_S, FPS, LENGTH, READ, readSeconds, type Plan, type PlanFx } from './video-plan';
+import { CMP_REPEAT_S, FPS, LENGTH, READ, readSeconds, SURGE_CLEAR_S, type Plan, type PlanFx } from './video-plan';
+import { HIT_S, surgeLevel } from './video-fx';
 import { numberConflict } from './video-beats';
 import { worstMoment } from './status';
-import { beatCtx, cmpName, plainLatin, comparePlan, gaugesAt, peakOf, shortName, singlePlan, singleStops } from './video-story';
+import { beatCtx, cmpName, plainLatin, comparePlan, gaugesAt, peakOf, surgeOf, shortName, singlePlan, singleStops } from './video-story';
 import { drawCmpFrame, drawFrame, logText, SAFE, SIZE, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
 
 type Food = { id: string; name: string; aliases?: string[] };
@@ -39,7 +40,7 @@ function singlePlanOf(x: Analysis, cut: 'long' | 'short', p: Profile = P) {
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg });
   const payoff = hook.payoff ? story.chapters.find((c) => c.title === hook.payoff)?.min : undefined;
   const fx: PlanFx = { peakMin: peakOf(b, x.glucose !== undefined), payoffMin: payoff, drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
-    lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels };
+    lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   return { plan: singlePlan(stops, cut, fx), hook, stops };
 }
 
@@ -65,7 +66,35 @@ function checkPlan(plan: Plan, cut: 'long' | 'short', label: string, bad: string
     }
   }
   for (const c of plan.cues) textOk(c.data?.label, `${label} cue ${c.kind}`, bad);
+  fxTiming(plan, label, bad);
   for (const f of plan.frames) { textOk(f.cap, `${label} frame`, bad); if (f.next) textOk(f.next.title, `${label} next`, bad); if (!Number.isFinite(f.m) || !Number.isFinite(f.t)) { bad.push(`${label}: NaN frame`); break; } }
+}
+
+/** Round 10: the effects never pile up. At most one bloodstream surge, clear of the sip, the riser and the impact, and
+ *  in the main part; and in any 1 s window at most 3 light changes (WCAG 2.3.1): organ hits on new moments, organ
+ *  pulses of the micro-beats, the surge's two glows, the impacts, the heartbeat glows. */
+function fxTiming(plan: Plan, label: string, bad: string[]) {
+  const at = (k: string) => plan.cues.filter((c) => c.kind === k);
+  const surge = at('surge'), peak = at('peak')[0], riser = at('riser')[0], outro = at('outro')[0]?.t ?? plan.seconds;
+  if (surge.length > 1) bad.push(`${label}: ${surge.length} surges`);
+  for (const s of surge) {
+    for (const c of [...at('sip'), ...at('peak'), ...at('verdict')]) if (Math.abs(c.t - s.t) < SURGE_CLEAR_S - 1e-6) bad.push(`${label}: surge ${s.t.toFixed(2)} s on top of ${c.kind}`);
+    const ride = (s.data?.v ?? 0) > 0; // (the surge that rides the riser starts with it and builds to the impact)
+    if (ride && !(riser && peak && Math.abs(s.t - riser.t) < 1e-6 && Math.abs(s.t + (s.data?.v ?? 0) - peak.t) < 1e-6)) bad.push(`${label}: riding surge not on the riser`);
+    if (!ride && riser && peak && s.t >= riser.t - SURGE_CLEAR_S && s.t <= peak.t + SURGE_CLEAR_S) bad.push(`${label}: surge in the riser`);
+    if (s.t > outro - 1) bad.push(`${label}: surge on the end card`);
+    if (peak && s.t > peak.t) bad.push(`${label}: surge after the impact`);
+    if (!s.data?.label) bad.push(`${label}: surge without a substance`);
+  }
+  const flashes: number[] = [];
+  for (const c of at('stop')) if (c.t > 1.2 && !(peak && Math.abs(peak.t - c.t) <= 0.3)) flashes.push(c.t);
+  for (const c of at('micro')) if (c.data?.v === 1) flashes.push(c.t);
+  for (const c of surge) flashes.push(c.t + 0.15, c.t + 0.5);
+  for (const c of [...at('peak'), ...at('verdict')]) flashes.push(c.t);
+  const hearts = at('heart');
+  hearts.forEach((c, i) => { if (c.data?.v !== 1) return; const end = hearts.slice(i + 1).find((h) => h.data?.v === 0)?.t ?? outro; for (let t = c.t + 0.2; t < end; t += 1.1) flashes.push(t); });
+  flashes.sort((a, b) => a - b);
+  for (let i = 0; i + 3 < flashes.length; i++) if (flashes[i + 3] - flashes[i] < 1) { bad.push(`${label}: 4 flashes within 1 s at ${flashes[i].toFixed(2)} s`); break; }
 }
 
 // ---- drawing: a fake 2D context that measures text by its font size (share.test.ts) ----
@@ -195,5 +224,38 @@ describe('round 9: owner decisions and new effects', () => {
     expect(moves.every((c) => Number.isFinite(c.data?.v))).toBe(true);
     expect(moves.some((c) => (c.data?.v ?? 0) >= 240)).toBe(true);
     expect(plan.frames.some((f) => f.beat === 'glide' && (f.rate ?? 0) > 60)).toBe(true);
+  });
+});
+
+describe('round 10: the bloodstream surge and the organ hits', () => {
+  it('surgeOf follows the main substance and its climb (sugar, caffeine, alcohol), and nothing for water', () => {
+    const k = (q: string) => { const x = run(q)!; return surgeOf(x.built, x.glucose !== undefined); };
+    expect(k('cola')?.kind).toBe('sugar');
+    expect(k('espresso')?.kind).toBe('caffeine');
+    expect(k('beer')?.kind).toBe('alcohol');
+    expect(k('glass of water')).toBeUndefined();
+    for (const q of ['cola', 'espresso', 'beer', 'kebab']) { const s = k(q)!; expect(s.min).toBeGreaterThan(0); expect(s.max).toBeGreaterThanOrEqual(s.min); }
+  });
+  it('the surge lands while the level climbs (model minutes), once, in most videos with a peak', () => {
+    let withPeak = 0, withSurge = 0;
+    for (const { x } of ALL) {
+      if (!x) continue;
+      const s = surgeOf(x.built, x.glucose !== undefined); if (!s) continue;
+      withPeak++;
+      const { plan } = singlePlanOf(x, 'long'), c = plan.cues.filter((y) => y.kind === 'surge');
+      expect(c.length).toBeLessThanOrEqual(1);
+      if (!c.length) continue;
+      withSurge++;
+      const v = c[0].data?.v ?? 0, ms = plan.frames.slice(Math.round(c[0].t * FPS), Math.round((c[0].t + v) * FPS) + 1).map((f) => f.m);
+      expect(ms.some((m) => m >= s.min - 1e-6 && m <= s.max + 1e-6), `${x.label}: surge outside the climb`).toBe(true);
+      expect(c[0].data?.label).toBe(s.kind);
+    }
+    expect(withSurge).toBeGreaterThan(withPeak * 0.9);
+  });
+  it('the surge eases in and out; an organ hit is short', () => {
+    expect(surgeLevel(-0.1)).toBe(0); expect(surgeLevel(Infinity)).toBe(0); expect(surgeLevel(0.25)).toBeCloseTo(1, 5);
+    expect(surgeLevel(1.5)).toBeLessThan(0.3); expect(surgeLevel(3)).toBe(0);
+    for (let a = 0; a < 2.6; a += 1 / FPS) expect(Math.abs(surgeLevel(a + 1 / FPS) - surgeLevel(a))).toBeLessThan(0.2); // no jump between frames
+    expect(HIT_S).toBeLessThanOrEqual(0.6);
   });
 });
