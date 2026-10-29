@@ -428,3 +428,13 @@ Znanstveni modeli nisu mijenjani. Na ekranu nema novih brojeva ni riječi.
 ## Za vlasnika
 - **Otkucaji srca za kofein:** namjerno NISU dodani. Model kaže da se puls ne mijenja (spec A13), pa bi zvuk tvrdio nešto netočno. Otkucaji ostaju samo dok model kaže da je srce pod stresom (npr. pivo noću).
 - **Krvotok ide okomito** (jetra → srce → mozak), pa kod širokog kadra izgleda kao uspravni stup kometa. Ako je previše, može se smanjiti broj kometa u valu.
+
+## Runda 10b (2026-10-29): kraj koji živi, krvotok kao žile
+Backup: `C:\claudework\inside-24h-backups\20261029-200558-video10b\`.
+1. **Kraj videa više ne miruje.** Na 24 h beatu i ispod end carda kamera se polako primiče i odmiče (`idleDrift`, jedan dah svakih 10 s, uz postojeće njihanje). Isto vrijedi za split. Na organu gdje je ostatak hrane/pića je spori "dah" svjetla (`drawBreath`, alpha 0,08–0,2, nije bljesak).
+2. **Krvotok kao žile.** Umjesto okomitog stupa točkica: tri zakrivljene žile koje se razilaze između organa i spajaju na njima (slabe linije), manje kometa, različite brzine i veličine, i fade po dubini.
+3. **Kofein:** i dalje bez otkucaja srca (model kaže da se puls ne mijenja).
+4. **Testovi:** sweep svih namirnica (single i compare) provjerava da slika nigdje ne stoji dulje od 3 s (`frameMoves`). Novi blok "round 10b": glatki drift na kraju, zakrivljene žile.
+- Uzorci u `C:\claudework\video-samples\2026-10-29-v10b\`: kebab-long, pizza-builder-long, cola-short, compare-cola-vs-water-short. Glasnoća −14,1 do −14,3 LUFS, TP −1,8/−1,9 dBTP, bez crnih frameova.
+- tsc je čist, vitest 772/772 (1 skip). Oba builda prolaze.
+- Site build nije commitan jer sadrži necommitane promjene baze hrane drugog agenta.

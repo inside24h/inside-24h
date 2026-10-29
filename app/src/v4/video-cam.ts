@@ -104,3 +104,21 @@ export function splitPose(viewH: number, headPx = 450, frameH = 1920): Pose {
   const top = 1.64 + (headPx / frameH) * viewH; // world height at the top edge of the frame (1.64 = just above the brain)
   return { target: [0, top - viewH / 2, 0.1], viewH };
 }
+
+/** Round 10b (critic: "a still picture for ~10 s at the end"): the 24 h beat and the end card keep the camera alive
+ *  with a slow push in and out (one breath every IDLE_S seconds, as `tight` 0..1, on top of the sway), from the
+ *  frame's own time, so it never jumps. null outside the end. */
+export const IDLE_S = 10;
+export function idleDrift(fr: { phase?: string; beat?: string; t: number } | null | undefined): number | null {
+  if (!fr || (fr.phase !== 'outro' && fr.beat !== 'end')) return null;
+  return 0.5 - 0.5 * Math.cos((2 * Math.PI * fr.t) / IDLE_S);
+}
+/** Round 10b, for the tests: does the picture move from frame a to frame b? The day (and the drink) moves, the
+ *  camera glides, pushes in while a moment is read (hk), or breathes at the end (idleDrift). */
+export function frameMoves(a: { m: number; t: number; beat?: string; phase?: string; hk?: number }, b: { m: number; t: number; beat?: string; phase?: string; hk?: number }): boolean {
+  if (Math.abs(b.m - a.m) > 1e-3) return true;
+  if (b.beat === 'teaser' || b.beat === 'rewind' || b.beat === 'glide') return true;
+  if (b.hk !== undefined && a.hk !== undefined && Math.abs(b.hk - a.hk) > 1e-6) return true;
+  const ia = idleDrift(a), ib = idleDrift(b);
+  return ia !== null && ib !== null && Math.abs(ib - ia) > 1e-6;
+}

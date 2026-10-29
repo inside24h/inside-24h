@@ -10,7 +10,8 @@ import { DEFAULT_PROFILE, type Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { hookFor, hookForCompare } from './video-hook';
 import { CMP_REPEAT_S, FPS, LENGTH, READ, readSeconds, SURGE_CLEAR_S, type Plan, type PlanFx } from './video-plan';
-import { HIT_S, surgeLevel } from './video-fx';
+import { HIT_S, surgeLevel, vesselLine, VESSEL_BEND } from './video-fx';
+import { frameMoves, idleDrift } from './video-cam';
 import { numberConflict } from './video-beats';
 import { worstMoment } from './status';
 import { beatCtx, cmpName, plainLatin, comparePlan, gaugesAt, peakOf, surgeOf, shortName, singlePlan, singleStops } from './video-story';
@@ -67,6 +68,11 @@ function checkPlan(plan: Plan, cut: 'long' | 'short', label: string, bad: string
   }
   for (const c of plan.cues) textOk(c.data?.label, `${label} cue ${c.kind}`, bad);
   fxTiming(plan, label, bad);
+  // round 10b: the picture never stands still for more than 3 s (the day, the camera, or the end's slow breath)
+  for (let i = 1, still = 0; i < plan.frames.length; i++) {
+    still = frameMoves(plan.frames[i - 1], plan.frames[i]) ? 0 : still + 1;
+    if (still > 3 * FPS) { bad.push(`${label}: still picture for > 3 s at ${plan.frames[i].t.toFixed(1)} s`); break; }
+  }
   for (const f of plan.frames) { textOk(f.cap, `${label} frame`, bad); if (f.next) textOk(f.next.title, `${label} next`, bad); if (!Number.isFinite(f.m) || !Number.isFinite(f.t)) { bad.push(`${label}: NaN frame`); break; } }
 }
 
@@ -257,5 +263,35 @@ describe('round 10: the bloodstream surge and the organ hits', () => {
     expect(surgeLevel(1.5)).toBeLessThan(0.3); expect(surgeLevel(3)).toBe(0);
     for (let a = 0; a < 2.6; a += 1 / FPS) expect(Math.abs(surgeLevel(a + 1 / FPS) - surgeLevel(a))).toBeLessThan(0.2); // no jump between frames
     expect(HIT_S).toBeLessThanOrEqual(0.6);
+  });
+});
+
+describe('round 10b: a living end, organic vessels', () => {
+  it('the end breathes: the camera drifts on every frame of the 24 h beat and the end card, smoothly', () => {
+    const x = run('kebab')!, { plan } = singlePlanOf(x, 'long');
+    const end = plan.frames.filter((f) => f.beat === 'end');
+    expect(end.length).toBeGreaterThan(3 * FPS);
+    for (let i = 1; i < end.length; i++) {
+      const a = idleDrift(end[i - 1])!, b = idleDrift(end[i])!;
+      expect(b).toBeGreaterThanOrEqual(0); expect(b).toBeLessThanOrEqual(1);
+      expect(Math.abs(b - a)).toBeLessThan(0.02); // no jump between frames
+    }
+    expect(idleDrift(plan.frames.find((f) => f.beat === 'hold'))).toBeNull();
+  });
+  it('the old end (no breath) would have failed: a frozen 24 h beat counts as still', () => {
+    const f = { m: 1440, t: 60, beat: 'end' }, g = { ...f, t: 60 + 1 / FPS };
+    expect(frameMoves(f, g)).toBe(true);
+    expect(frameMoves({ m: 1440, t: 1, beat: 'hold' }, { m: 1440, t: 1 + 1 / FPS, beat: 'hold' })).toBe(false);
+  });
+  it('the vessels wind: each bows away from the straight line between organs, and they part between them', () => {
+    const pts = [{ x: 540, y: 1300 }, { x: 530, y: 1050 }, { x: 545, y: 800 }, { x: 540, y: 500 }]; // a wide shot: nearly a vertical line
+    const lines = VESSEL_BEND.map((b) => vesselLine(pts, b));
+    for (const l of lines) {
+      expect(Math.max(...l.p.map((q) => Math.abs(q.x - 540)))).toBeGreaterThan(10);
+      expect(l.p.every((q) => Number.isFinite(q.x) && Number.isFinite(q.y))).toBe(true);
+      expect(l.at(l.len * 3.5).y).toBeGreaterThan(0); // wraps round
+    }
+    const mid = lines.map((l) => l.at(l.len * 0.2).x);
+    expect(Math.max(...mid) - Math.min(...mid)).toBeGreaterThan(15);
   });
 });

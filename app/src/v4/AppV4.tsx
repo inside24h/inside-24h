@@ -34,7 +34,7 @@ import { hookFor, hookForCompare } from './video-hook';
 import type { Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
-import { ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
+import { idleDrift, ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
 import { bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, type BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
@@ -183,7 +183,7 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
 /** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end. */
 function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefined)[], union = false): Shot {
-  if (!fr || fr.beat === 'end' || fr.phase === 'outro') return { focus: [], zoom: 'wide' };
+  if (!fr || fr.beat === 'end' || fr.phase === 'outro') return { focus: [], zoom: 'wide', tight: idleDrift(fr) ?? 0 }; // (round 10b: a slow breath, never still)
   // the cold open: on the organ of the peak (the chapter's focus at that minute)
   if (fr.beat === 'teaser') return { focus: organs.filter((x): x is string => !!x && !!ORGAN_AT[x]).slice(0, 1), zoom: 'mid' };
   // the first sip / bite: follow it down, mouth → food pipe → stomach (the hook is the first part of it)
@@ -209,7 +209,7 @@ const OPENING: Shot = { focus: [], zoom: 'wide' }; // the first frame: the whole
 const BIG_V = new Set(['jejunum', 'ileum', 'colon_asc', 'colon_trans', 'colon_desc', 'cecum', 'aorta', 'vena_cava', 'liver', 'brain']);
 /** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
  *  moment is read and out again for the quiet hours and the end. */
-const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62) }); // (round 5: breathes in and out with each card)
+const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62 - 0.1 * (idleDrift(fr) ?? 0)) }); // (round 5: breathes in and out with each card)
 const SPLIT_OPENING: Shot = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 // (round 9: gaugesAt moved to video-story.ts)
 /** A pixel of a canvas of cw×ch drawn cover-cropped into a fw×fh frame (share.ts drawCover). */

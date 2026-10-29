@@ -172,37 +172,79 @@ export function drawBubbles(ctx: CanvasRenderingContext2D, at: { x: number; y: n
   ctx.restore();
 }
 
-/** The bloodstream: soft dots travelling gut → liver → heart → brain along the organs' projected positions, as many
- *  and as bright as the level of the drink's main substance in the blood (`level` 0..1). */
-export function drawBloodFlow(ctx: CanvasRenderingContext2D, path: ({ x: number; y: number } | null | undefined)[], t: number, level: number, color: string, surge = 0, sparkle = false, win?: [number, number]) {
+/** The bloodstream: soft comets travelling gut → liver → heart → brain along the organs' projected positions, as many
+ *  and as bright as the level of the drink's main substance in the blood (`level` 0..1).
+ *  Round 10b (critic: "a vertical column of dots" in wide shots): three curved vessels that part between the organs
+ *  and meet at them (each bends its own way), drawn as faint lines, with fewer comets of varied speed and size that
+ *  dip in and out of depth (smaller and dimmer when "behind"). `speedK` slows the whole stream (the 24 h afterglow). */
+export function drawBloodFlow(ctx: CanvasRenderingContext2D, path: ({ x: number; y: number } | null | undefined)[], t: number, level: number, color: string, surge = 0, sparkle = false, win?: [number, number], speedK = 1) {
   const pts = path.filter((p): p is { x: number; y: number } => !!p);
   const lv = Math.min(1, Math.max(level, 0.6 * surge));
   if (pts.length < 2 || lv <= 0.03) return;
-  const seg = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y)), total = seg.reduce((a, b) => a + b, 0);
-  if (total < 20) return;
-  const pos = (d: number) => { let x = ((d % total) + total) % total; for (let i = 0; i < seg.length; i++) { if (x <= seg[i]) { const k = x / (seg[i] || 1); return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * k, y: pts[i].y + (pts[i + 1].y - pts[i].y) * k }; } x -= seg[i]; } return pts[pts.length - 1]; };
-  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = color; ctx.strokeStyle = color;
-  // round 10: comets (a head and a fading tail of 3), more and faster during the surge; sugar twinkles
-  // (only inside the picture's window between the top text and the caption, fading out 50 px before its edges; each
-  // comet sways a little off the straight line between organs, so the stream looks alive, not a string of beads)
+  const vessels = VESSEL_BEND.map((bend) => vesselLine(pts, bend));
+  const lens = vessels.map((v) => v.len);
+  if (Math.max(...lens) < 20) return;
+  // (only inside the picture's window between the top text and the caption, fading out 50 px before its edges)
   const vis = (y: number) => (win ? clamp01((y - win[0]) / 50) * clamp01((win[1] - y) / 50) : 1);
-  const n = Math.round(4 + 10 * lv + 7 * surge), speed = 160 * (1 + 1.2 * surge), r0 = 5.5 * (1 + 0.35 * surge);
-  const head = (0.5 + 0.25 * surge) * lv;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = color; ctx.strokeStyle = color;
+  // the vessels themselves, faint
+  ctx.lineWidth = 2;
+  for (const v of vessels) for (let k = 1; k < v.p.length; k++) {
+    const q0 = v.p[k - 1], q1 = v.p[k];
+    ctx.globalAlpha = 0.07 * lv * vis((q0.y + q1.y) / 2); ctx.beginPath(); ctx.moveTo(q0.x, q0.y); ctx.lineTo(q1.x, q1.y); ctx.stroke();
+  }
+  const r = rng(53);
+  const n = Math.round(3 + 6 * lv + 5 * surge), speed = 150 * (1 + 1.2 * surge) * speedK, r0 = 5.5 * (1 + 0.35 * surge);
+  const head = (0.55 + 0.25 * surge) * lv;
   for (let i = 0; i < n; i++) {
-    const d0 = t * speed + (i / n) * total, sway = (d: number) => { const q = pos(d), q2 = pos(d + 6), dx = q2.x - q.x, dy = q2.y - q.y, l = Math.hypot(dx, dy) || 1, w = 5 * Math.sin(d * 0.045 + i * 2.1); return { x: q.x - (dy / l) * w, y: q.y + (dx / l) * w }; };
+    const v = vessels[i % vessels.length], sp = speed * (0.65 + 0.7 * r()), size = r0 * (0.65 + 0.6 * r()), ph = r(), dph = r() * 6.28;
+    const d0 = t * sp + ph * v.len, depth = (d: number) => 0.5 + 0.5 * Math.sin(d * 0.012 + dph);
     for (let j = 3; j >= 0; j--) {
-      const p = sway(d0 - j * r0 * 2.2), fade = 1 - j / 4;
-      ctx.globalAlpha = head * fade * (j ? 0.55 : 1) * vis(p.y); ctx.beginPath(); ctx.arc(p.x, p.y, r0 * (j ? 0.75 * fade : 1), 0, Math.PI * 2); ctx.fill();
+      const d = d0 - j * size * 2.2, p = v.at(d), dp = depth(d), fade = 1 - j / 4;
+      ctx.globalAlpha = head * fade * (j ? 0.5 : 1) * (0.3 + 0.7 * dp) * vis(p.y);
+      ctx.beginPath(); ctx.arc(p.x, p.y, size * (0.7 + 0.45 * dp) * (j ? 0.75 * fade : 1), 0, Math.PI * 2); ctx.fill();
     }
-    const p = sway(d0);
-    ctx.globalAlpha = 0.2 * lv * (1 + surge) * vis(p.y); ctx.beginPath(); ctx.arc(p.x, p.y, r0 * 2.6, 0, Math.PI * 2); ctx.fill();
+    const p = v.at(d0), dp = depth(d0);
+    ctx.globalAlpha = 0.18 * lv * (1 + surge) * (0.3 + 0.7 * dp) * vis(p.y); ctx.beginPath(); ctx.arc(p.x, p.y, size * 2.6, 0, Math.PI * 2); ctx.fill();
     if (sparkle && i % 3 === 0) { // a small four-point glint, twinkling (each at its own phase, < 3 per second)
-      const tw = Math.max(0, Math.sin(t * 5.2 + i * 1.7)), L = r0 * (1.6 + 1.6 * tw);
+      const tw = Math.max(0, Math.sin(t * 5.2 + i * 1.7)), L = size * (1.6 + 1.6 * tw);
       ctx.globalAlpha = 0.6 * lv * tw * vis(p.y); ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(p.x - L, p.y); ctx.lineTo(p.x + L, p.y); ctx.moveTo(p.x, p.y - L); ctx.lineTo(p.x, p.y + L); ctx.stroke();
     }
   }
   ctx.restore();
+}
+/** Round 10b: how far each of the three vessels bows out between two organs (share of the distance; the sign
+ *  alternates organ to organ, so the vessels wind instead of running straight). */
+export const VESSEL_BEND = [0.16, -0.1, 0.3] as const;
+/** A vessel through the points: quadratic curves bowing out by `bend` × the distance, sampled every ~8 px, and its
+ *  position at a distance `d` along it (wrapping round). */
+export function vesselLine(pts: { x: number; y: number }[], bend: number): { p: { x: number; y: number }[]; len: number; at: (d: number) => { x: number; y: number } } {
+  const p: { x: number; y: number }[] = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy), sg = i % 2 ? 1 : -1;
+    const c = { x: (a.x + b.x) / 2 - (dy / (l || 1)) * l * bend * sg, y: (a.y + b.y) / 2 + (dx / (l || 1)) * l * bend * sg };
+    const m = Math.max(2, Math.ceil(l / 8));
+    for (let k = 1; k <= m; k++) { const u = k / m, w = 1 - u; p.push({ x: w * w * a.x + 2 * w * u * c.x + u * u * b.x, y: w * w * a.y + 2 * w * u * c.y + u * u * b.y }); }
+  }
+  const seg = p.slice(1).map((q, i) => Math.hypot(q.x - p[i].x, q.y - p[i].y)), len = seg.reduce((x, y) => x + y, 0);
+  const at = (d: number) => {
+    let x = len > 0 ? ((d % len) + len) % len : 0;
+    for (let i = 0; i < seg.length; i++) { if (x <= seg[i]) { const k = x / (seg[i] || 1); return { x: p[i].x + (p[i + 1].x - p[i].x) * k, y: p[i].y + (p[i + 1].y - p[i].y) * k }; } x -= seg[i]; }
+    return p[p.length - 1];
+  };
+  return { p, len, at };
+}
+
+/** Round 10b: the 24 h afterglow: a slow breath of light on the organ where the rest still is (period 3.2 s, alpha
+ *  0.08–0.2: a breath, never a flash), so the picture is never still under the last words and the end card. */
+export const BREATH_S = 3.2;
+export function drawBreath(ctx: CanvasRenderingContext2D, at: { x: number; y: number } | null | undefined, t: number, color: string, r = 120, k = 1) {
+  if (!at || k <= 0.01) return;
+  const a = (0.08 + 0.12 * (0.5 - 0.5 * Math.cos((2 * Math.PI * t) / BREATH_S))) * k;
+  const g = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, r);
+  g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(at.x - r, at.y - r, 2 * r, 2 * r); ctx.restore();
 }
 
 /** Round 10: how strong the bloodstream surge is, `age` seconds after its cue: up in 0.25 s, then easing off (≈ 2.5 s).

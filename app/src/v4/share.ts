@@ -9,7 +9,7 @@ import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
-import { bodyMotion, drawBloodFlow, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
+import { bodyMotion, drawBloodFlow, drawBreath, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
 import { commentLine } from './video-hook';
 import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
@@ -1130,6 +1130,8 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   drawSplash(ctx, pinOf('tongue'), since(cues, 'sip', t).age, lighten(o.color ?? '#ffffff'));
   const sg = since(cues, 'surge', t);
   bodyLife(ctx, pinOf, o, cues, t, { age: sg.age, kind: sg.cue?.data?.label, build: sg.cue?.data?.v }, [Lo.topBot, Lo.capTop]);
+  // round 10b: the 24 h afterglow: a slow breath of light on the organ where the rest still is (under the end card too)
+  if (fr.beat === 'end') { const where = (o.gauges ?? []).find((g) => !g.curve) ?? main; drawBreath(ctx, (where?.at ? tf(where.at) : null) ?? pinOf(o.focus), t, lighten(o.color ?? ACCENT), 130, fr.phase === 'outro' ? 0.6 : 1); }
   const peak = since(cues, 'peak', t);
   // round 10: each new moment lands with a hit on its organ (and a thump in the sound), not on the impact itself
   const hit = since(cues, 'stop', t);
@@ -1358,6 +1360,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     drawSplash(ctx, tf(sd.pins?.tongue ?? null), sipAge - k * 0.12, lighten(sd.color), 11 + k);
     const sg = since(cues, 'surge', t);
     bodyLife(ctx, (key) => tf(sd.pins?.[key] ?? null), sd, k === 0 ? cues : undefined, t, (sg.cue?.data?.side ?? 0) === k ? { age: sg.age, kind: sg.cue?.data?.label, build: sg.cue?.data?.v } : undefined, [Lo.headerBot, Lo.capTop]); // one heartbeat glow is enough (left)
+    if (fr.beat === 'end') drawBreath(ctx, tf(sd.gauge?.at ?? sd.pins?.stomach ?? null), t + k * 0.8, lighten(sd.color), 95, fr.phase === 'outro' ? 0.6 : 1); // (round 10b)
     const hit = since(cues, 'stop', t);
     if (sd.gauge && hit.cue && hit.cue.t > 1.2 && Math.abs(hit.cue.t - (peak.cue?.t ?? -9)) > 0.3) drawOrganHit(ctx, tf(sd.gauge.at), hit.age - k * 0.08, lighten(sd.color), 0.7);
     if (sd.gauge?.curve) drawShockwave(ctx, tf(sd.gauge.at), peak.age, LIGHT[sd.gauge.level]);
