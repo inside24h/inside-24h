@@ -339,7 +339,7 @@ Backup: `C:\claudework\inside-24h-backups\20261029-180811-video9\` + git (HEAD p
      - Big i small u compare chipu se više ne preklapaju.
      - "Ćevapi" na ekranu postaje "Cevapi" (`plainLatin`).
 2. **Odluka vlasnika: obje granice.**
-   - Mjerač u videu: "BAC … % · US limit 0.08 % · EU 0.05 %" čim raspon dosegne 0,05 %. Kad je cijeli raspon iznad 0,08 %: "· over US 0.08 % and EU 0.05 % limits".
+   - Mjerač u videu ima tri retka: "BAC … %" / "US limit 0.08 %" / "EU limit 0.05 %", čim raspon dosegne 0,05 %. Kad je cijeli raspon iznad 0,08 %, piše "Over US limit …" / "Over EU limit …".
    - U appu se mijenja odgovor "Can I drive tomorrow morning?". Prije: "Limits differ by country. In Croatia…". Sada: "Driving limits: US 0.08 % (0.8 ‰) · EU 0.05 % (0.5 ‰), and 0 for novice and professional drivers in many countries, Croatia among them.".
    - Promijenjeni su i tekst pravila u `status.ts` i claim AL4.
 3. **P2 iz kritike.**
@@ -349,3 +349,18 @@ Backup: `C:\claudework\inside-24h-backups\20261029-180811-video9\` + git (HEAD p
 4. **Novi efekti.**
    - V17 brzinske linije u glideu (`drawSpeedLines`): rate > 30 min/s, samo bočni rubovi, alpha ≤ 0,12, tijelo ostaje čisto.
    - Cue `move` nosi koliko dana preskače (`data.v`). Skok od ≥ 4 h dobiva tihi padajući "air rush" (A7 reverse + highpass šum, pan). Glasnoća ide kroz isti −14 LUFS / limiter lanac.
+
+## Provjera runde 9
+- Uzorci u `C:\claudework\video-samples\2026-10-29-v9\`:
+  - pizza-builder-long (66,1 s)
+  - espresso-short (27,4 s)
+  - beer-3-over-2h-long (65,6 s)
+  - compare-espresso-vs-beer-long (72,7 s)
+- Svi su 1080×1920, 30 fps, H.264 + AAC.
+- Glasnoća: −14,1 do −14,2 LUFS, peak −1,5 do −1,9 dBFS.
+- Pregledani kontakt listovi:
+  - pivski mjerač ima tri retka i dvije granice;
+  - "Attention may already be worse." je na compareu;
+  - end card pizze je "A whole pizza";
+  - kartica o limfi se više ne ponavlja.
+- tsc je čist, vitest 705/705 (1 skip: privremeni `_dbg9.test.ts`, nije commitan). Oba builda prolaze (split zadnji).
