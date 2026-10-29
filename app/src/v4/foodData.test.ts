@@ -200,7 +200,7 @@ describe('label overrides: exactly the label, and the source is shown', () => {
   });
   it('every override has its own claim with a level, text and an existing source', () => {
     const withSrc = FOODS.filter((f) => f.src?.length);
-    expect(withSrc.map((f) => f.id).sort()).toEqual(['burek', 'cevapi', 'cheese-parmesan', 'cola', 'energy-drink', 'nutella', 'olives']);
+    expect(withSrc.map((f) => f.id).sort()).toEqual(['burek', 'cevapi', 'cheese-parmesan', 'cola', 'energy-drink', 'nutella', 'oat-milk', 'olives']);
     for (const f of withSrc) {
       const ids = foodSourceClaims(f.id);
       expect(ids.length).toBe(f.src!.length);

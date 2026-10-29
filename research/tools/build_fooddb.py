@@ -35,6 +35,7 @@ GI_LOWVAR = {"white_bread", "white_rice"}
 # Each row re-read on 2026-10-17 in the PDF from Europe PMC (PMC2584181/supplementaryFiles, pdftotext -raw).
 # Moved here from the app (parse.ts GI_ADD) so the database is the one source.
 A1 = "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects)"
+T21 = "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1"
 GI_SUPP = {
  "a1_grapes": (59, A1 + " row 984: Grapes, black, Waltham Cross (Australia), 59, 11 subjects, bread reference, single test"),
  "a1_cherries": (63, A1 + " row 970: Cherries, dark, raw, pitted (Australia), 63 ± 6, 10 subjects, single test"),
@@ -67,6 +68,20 @@ GI_SUPP = {
  # >= 10 healthy adults; Table 2 = less robust methods. Rows are quoted as read. Details: VARIANTS-DONE.md round 3.
  "pizza_healthy": (43, "Our mean of every whole-pizza test in healthy people (level B): Atkinson 2008 (PMC2584181) Suppl. Table A1 rows 1222-1224, Pizza Hut (Australia), 10 subjects each: Super Supreme pan 36 ± 6, Super Supreme thin and crispy 30 ± 4, Vegetarian Supreme thin and crispy 49 ± 6; Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3761: pizza, wheat dough with tomato, onion, mozzarella and ham, baked (Lebanon), 56 ± 7, 12 subjects. Mean 43, range 30-56. Not used: a whole-wheat pizza (A1 row 1225, 54 ± 4) and two tests in people with diabetes (A2 row 2248 cheese pizza 60, row 2249 plain dough with parmesan and tomato 80). No plain cheese pizza was tested in healthy people; a baked pizza base alone gave 52 ± 4 (2021 Suppl. Table 1 row 68)"),
  "a1_burgers": (66, A1 + " rows 1175-1178, the measured whole-burger GI: four burgers on a white bun, 10 subjects each, all 66 (hamburger with ketchup, pickle, onion and mustard 66 ± 8; lean beef burger with tomato, lettuce, cheese, onion and sauce 66 ± 4; Fillet-O-Fish 66 ± 10; McChicken 66 ± 3)"),
+ # ---- 2026-10-29 round 2: new foods. Rows read in the 2021 Suppl. Tables 1 (ISO method; nutritotal.com.br mirror of the
+ # online supplement, pdftotext -raw) and in 2008 A1 (Europe PMC PMC2584181 supplementaryFiles, dc08-1239_1.pdf).
+ "t21_soft_pretzel": (80, T21 + " row 209: Soft pretzel (Ditsch, Mainz, Germany), 80 ± 6, 11 subjects, the European lye pretzel; a US wheat soft pretzel (row 208) gave 66 ± 4, 12 subjects"),
+ "t21_hard_pretzels": (84, T21 + " row 1566: Pretzels, oven-baked, traditional wheat flavor, 97% fat free (Parker's, Australia), 84 ± 6, 10 subjects; Atkinson 2008 A1 row 1463, the same kind, 83 ± 9"),
+ "t21_blueberry_muffin": (50, T21 + " row 36: Blueberry muffin (Sara Lee Bakery, Australia), 50 ± 3, 10 subjects; muffins, mean of 13 foods 53"),
+ "t21_fruit_bun": (66, T21 + " row 63: Hot cross buns, spiced sweet bun with dried fruit (Australia), 66 ± 6, 9 subjects: the nearest tested food, no cinnamon roll was tested"),
+ "t21_gummy": (76, T21 + " row 1635: Sour Straws, strawberry flavor, gummy/chewy confectionery (Australia), 76 ± 7, 10 subjects; jelly beans (row 1607) 76 ± 6, 12 subjects"),
+ "t21_rich_tea": (40, T21 + " row 825: Rich Tea biscuits (UK), 40 ± 5, 10 subjects: the British plain tea biscuit of the Marie kind; a Canadian Rich Tea in 2008 A1 row 700 gave 55 ± 4 (6 subjects)"),
+ "t21_cream_wafer": (61, T21 + " row 1682: Tronky Nocciola, wafer bar filled with hazelnut cream (Ferrero, Italy), 61 ± 7, 10 subjects"),
+ "t21_choc_chip": (42, T21 + " rows 794-801: Montana Chocolate Chip Cookies (Kinnikinnic Foods, Canada), mean of eight studies 42 (one product, single tests 43 ± 3 and similar)"),
+ "a1_chicken_nuggets": (46, A1 + " row 1183: Chicken nuggets, frozen, reheated in microwave oven, 46 ± 4, 10 subjects: the nearest tested breaded chicken"),
+ "t21_oat_milk": (69, T21 + " row 144: Oat milk, calcium enriched, Vitasoy (Australia), 69 ± 6, 9 subjects"),
+ "t21_cranberry": (59, T21 + ": Cranberry juice, mean of three studies 59 (row 1191 Ocean Spray cranberry juice cocktail 52 ± 3, 10 subjects, and two more Ocean Spray drinks)"),
+ "t21_carrot_juice": (43, T21 + " row 1190: Carrot juice, freshly made (Australia), 43 ± 3, 9 subjects, single test"),
  "a1_pita": (68, A1 + " row 295: Pita bread, white, mini (UK), 68 ± 5, 10 subjects; listed again in Atkinson 2021 Suppl. Table 1 row 347 (ISO method)"),
  "a1_wheat_tortilla": (30, A1 + " row 1845: Wheat tortilla (Mexico), 30 on the glucose scale (43 ± 7 on the bread scale), 8 subjects, single test; the 2021 edition lists it in Suppl. Table 2 because of the small number; no white flour wrap was tested"),
  "white_bread_sub": (75, "Atkinson 2008 (PMC2584181) Table 1: White wheat bread, 75 ± 2, mean of multiple studies. Nearly all the carbohydrate in a sub is the white roll, so the white-bread GI is used (our calculation, level C). Whole sandwiches tested on white bread vary with the filling: chicken tandoori on a white French roll 78 ± 7, a white roll with cheese 50 ± 5, white toast with cheddar 35 ± 2 (Suppl. Table A1 rows 1259, 1264, 1270)"),

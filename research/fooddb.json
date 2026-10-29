@@ -327,6 +327,14 @@
     {
      "k": "nectar",
      "chip": "Nectar"
+    },
+    {
+     "k": "cranberry-juice",
+     "chip": "Cranberry"
+    },
+    {
+     "k": "carrot-juice",
+     "chip": "Carrot"
     }
    ]
   }
@@ -399,6 +407,14 @@
     {
      "k": "nectar",
      "chip": "Nectar"
+    },
+    {
+     "k": "cranberry-juice",
+     "chip": "Cranberry"
+    },
+    {
+     "k": "carrot-juice",
+     "chip": "Carrot"
     }
    ]
   }
@@ -471,6 +487,14 @@
     {
      "k": "nectar",
      "chip": "Nectar"
+    },
+    {
+     "k": "cranberry-juice",
+     "chip": "Cranberry"
+    },
+    {
+     "k": "carrot-juice",
+     "chip": "Carrot"
     }
    ]
   }
@@ -800,6 +824,161 @@
       "cite": "USDA FoodData Central, SR Legacy 174125: Beverages, coffee, brewed, espresso, restaurant-prepared, decaffeinated",
       "url": "https://fdc.nal.usda.gov/food-details/174125/nutrients",
       "claim": "DBV-espresso.decaf"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "americano",
+    "chip": "Americano",
+    "name": "Americano",
+    "words": [
+     "americano",
+     "amerikano"
+    ],
+    "aliases": [
+     "americano",
+     "amerikano",
+     "caffe americano",
+     "produzena kava",
+     "produzeni espresso",
+     "produžena kava",
+     "produženi espresso"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "150 ml",
+     "grams": 150.1,
+     "source": "our recipe: 30 g espresso + 120.1 g water",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 1.8,
+     "carbs": 0.334,
+     "sugars": 0.0,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 0.036,
+     "satFat": 0.018,
+     "protein": 0.024,
+     "sodiumMg": 5.999,
+     "caffeineMg": 42.373,
+     "alcoholG": 0.0,
+     "waterG": 99.48
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (espresso, water)",
+    "gi": null,
+    "giSource": null,
+    "color": "#2b1608",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "espresso",
+      "usdaFdcId": 171891,
+      "usdaDescription": "Beverages, coffee, brewed, espresso, restaurant-prepared",
+      "grams": 30.0
+     },
+     {
+      "ref": "water",
+      "usdaFdcId": 173647,
+      "usdaDescription": "Beverages, water, tap, drinking",
+      "grams": 120.1
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Americano is our recipe: a USDA espresso (30 ml) topped up with 120 ml hot water.",
+      "cite": "Our recipe from USDA SR Legacy parts: 30 g Beverages, coffee, brewed, espresso, restaurant-prepared (171891); 120.1 g Beverages, water, tap, drinking (173647)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-espresso.americano"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "vienna",
+    "chip": "With cream",
+    "name": "Espresso with whipped cream",
+    "words": [
+     "becka",
+     "sa slagom",
+     "slagom"
+    ],
+    "aliases": [
+     "becka kava",
+     "bečka kava",
+     "coffee with whipped cream",
+     "espresso sa slagom",
+     "espresso sa šlagom",
+     "espresso with whipped cream",
+     "kava s slagom",
+     "kava s šlagom",
+     "kava sa slagom",
+     "kava sa šlagom",
+     "vienna coffee"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 cup",
+     "grams": 45.0,
+     "source": "our recipe: 30 g espresso + 15 g Cream, whipped, cream topping, pressurized",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 91.7,
+     "carbs": 5.277,
+     "sugars": 2.667,
+     "freeSugars": 2.667,
+     "fiber": 0.0,
+     "fat": 7.527,
+     "satFat": 4.67,
+     "protein": 1.147,
+     "sodiumMg": 12.0,
+     "caffeineMg": 141.333,
+     "alcoholG": 0.0,
+     "waterG": 85.633
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (espresso, Cream, whipped, cream topping, pressurized)",
+    "gi": null,
+    "giSource": null,
+    "color": "#2b1608",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "espresso",
+      "usdaFdcId": 171891,
+      "usdaDescription": "Beverages, coffee, brewed, espresso, restaurant-prepared",
+      "grams": 30.0
+     },
+     {
+      "ref": 170860,
+      "usdaFdcId": 170860,
+      "usdaDescription": "Cream, whipped, cream topping, pressurized",
+      "grams": 15.0
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Espresso with whipped cream is our recipe: a USDA espresso (30 ml) with 15 g spray whipped cream (USDA, about 5 tablespoons; our estimate of a café topping).",
+      "cite": "Our recipe from USDA SR Legacy parts: 30 g Beverages, coffee, brewed, espresso, restaurant-prepared (171891); 15 g Cream, whipped, cream topping, pressurized (170860)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-espresso.vienna"
      }
     ],
     "range": null,
@@ -3207,6 +3386,71 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "3.25% fat, with added vitamin D.",
+  "ask": "Lactose-free?",
+  "chip": "Regular",
+  "variants": [
+   {
+    "v": "lactose-free",
+    "chip": "Lactose-free",
+    "name": "Lactose-free milk",
+    "words": [
+     "bez laktoze",
+     "lactose free",
+     "lactose-free"
+    ],
+    "aliases": [
+     "bezlaktozno mlijeko",
+     "lactose free milk",
+     "lactose-free milk",
+     "mlijeko bez laktoza",
+     "mlijeko bez laktoze"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "250 ml",
+     "grams": 257.8,
+     "assumed": false,
+     "source": "volume 250 ml x USDA density 1.031 g/ml (from portion 'cup' = 244 g)"
+    },
+    "per100g": {
+     "kcal": 50.0,
+     "carbs": 4.8,
+     "sugars": 5.06,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 1.98,
+     "satFat": 1.26,
+     "protein": 3.3,
+     "sodiumMg": 47.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 89.2
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#f4f1ea",
+    "usdaFdcId": 171267,
+    "usdaDescription": "Milk, reduced fat, fluid, 2% milkfat, with added vitamin A and vitamin D",
+    "recipe": null,
+    "usdaProxy": true,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "B",
+      "text": "Lactose-free milk: the values of USDA 2% milk (lactose-free milks in Croatian shops are mostly 1.5–2.8% fat). Lactose-free milk has the same nutrients; its lactose is split into glucose and galactose, so it tastes sweeter but has no more sugar.",
+      "cite": "USDA FoodData Central, SR Legacy 171267: Milk, reduced fat, fluid, 2% milkfat, with added vitamin A and vitamin D",
+      "url": "https://fdc.nal.usda.gov/food-details/171267/nutrients",
+      "claim": "DBV-milk-whole.lactose-free"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
   "choose": {
    "k": "milk",
    "ask": "Which milk?",
@@ -3627,6 +3871,10 @@
     {
      "k": "rice-milk",
      "chip": "Rice"
+    },
+    {
+     "k": "oat-milk",
+     "chip": "Oat"
     }
    ]
   }
@@ -3692,6 +3940,10 @@
     {
      "k": "rice-milk",
      "chip": "Rice"
+    },
+    {
+     "k": "oat-milk",
+     "chip": "Oat"
     }
    ]
   }
@@ -3758,6 +4010,10 @@
     {
      "k": "rice-milk",
      "chip": "Rice"
+    },
+    {
+     "k": "oat-milk",
+     "chip": "Oat"
     }
    ]
   }
@@ -4221,6 +4477,69 @@
     ],
     "range": null,
     "overrides": null
+   },
+   {
+    "v": "wheat",
+    "chip": "Wheat",
+    "name": "Wheat beer",
+    "words": [
+     "psenicno",
+     "weiss",
+     "wheat"
+    ],
+    "aliases": [
+     "hefeweizen",
+     "psenicno pivo",
+     "pšenično pivo",
+     "weissbier",
+     "weizen",
+     "wheat beer",
+     "witbier"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "500 ml",
+     "grams": 502.1,
+     "assumed": false,
+     "source": "volume 500 ml x USDA density 1.004 g/ml (from portion 'fl oz' = 29.7 g)"
+    },
+    "per100g": {
+     "kcal": 43.0,
+     "carbs": 3.55,
+     "sugars": 0.0,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.46,
+     "sodiumMg": 4.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 3.9,
+     "waterG": 92.0
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#e5a823",
+    "usdaFdcId": 168746,
+    "usdaDescription": "Alcoholic beverage, beer, regular, all",
+    "recipe": null,
+    "usdaProxy": true,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "B",
+      "text": "Wheat beer: USDA has no wheat-beer record, so the values are those of the USDA record “Alcoholic beverage, beer, regular, all” (about 4.5% alcohol). Wheat beers are often 5–5.5%.",
+      "cite": "USDA FoodData Central, SR Legacy 168746: Alcoholic beverage, beer, regular, all",
+      "url": "https://fdc.nal.usda.gov/food-details/168746/nutrients",
+      "claim": "DBV-beer.wheat"
+     }
+    ],
+    "range": null,
+    "overrides": null
    }
   ],
   "sizes": {
@@ -4430,6 +4749,80 @@
       "cite": "USDA FoodData Central, SR Legacy 173176: Alcoholic beverage, wine, dessert, sweet",
       "url": "https://fdc.nal.usda.gov/food-details/173176/nutrients",
       "claim": "DBV-red-wine.dessert"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "mulled",
+    "chip": "Mulled",
+    "name": "Mulled wine",
+    "words": [
+     "kuhano"
+    ],
+    "aliases": [
+     "gluhwein",
+     "gluvajn",
+     "glühwein",
+     "kuhano vino",
+     "kuhanog vina",
+     "kuvano vino",
+     "mulled wine"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "200 ml",
+     "grams": 218.8,
+     "source": "our recipe: 198.8 g red wine + 20 g sugar",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 112.6,
+     "carbs": 11.51,
+     "sugars": 9.686,
+     "freeSugars": 9.122,
+     "fiber": 0.0,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.064,
+     "sodiumMg": 3.726,
+     "caffeineMg": 0.0,
+     "alcoholG": 9.631,
+     "waterG": 78.593
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (red wine, sugar)",
+    "gi": null,
+    "giSource": null,
+    "color": "#6b0f1f",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "red-wine",
+      "usdaFdcId": 173190,
+      "usdaDescription": "Alcoholic beverage, wine, table, red",
+      "grams": 198.8
+     },
+     {
+      "ref": "sugar",
+      "usdaFdcId": 169655,
+      "usdaDescription": "Sugars, granulated",
+      "grams": 20.0
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Mulled wine is our recipe: 200 ml USDA red table wine with 20 g sugar (a common recipe: 1 liter of wine with 100 g sugar and spices). All of the wine's alcohol is counted; heating drives some off, so the real alcohol can be lower.",
+      "cite": "Our recipe from USDA SR Legacy parts: 198.8 g Alcoholic beverage, wine, table, red (173190); 20 g Sugars, granulated (169655)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-red-wine.mulled"
      }
     ],
     "range": null,
@@ -5455,10 +5848,13 @@
     "aliases": [
      "drinkable yogurt",
      "drinking yogurt",
+     "jogurt tekuci",
+     "jogurt tekući",
      "jogurt za pice",
      "jogurt za piće",
      "tekuci jogurt",
      "tekući jogurt",
+     "tekuči jogurt",
      "yogurt drink"
     ],
     "kind": "semi",
@@ -5501,6 +5897,69 @@
       "cite": "USDA FoodData Central, SR Legacy 171284: Yogurt, plain, whole milk",
       "url": "https://fdc.nal.usda.gov/food-details/171284/nutrients",
       "claim": "DBV-yogurt-plain.drinkable"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "soy",
+    "chip": "Soy",
+    "name": "Soy yogurt",
+    "words": [
+     "biljni",
+     "sojin",
+     "soy"
+    ],
+    "aliases": [
+     "biljni jogurt",
+     "plant yogurt",
+     "soja jogurt",
+     "sojin jogurt",
+     "soy yogurt",
+     "vegan jogurt",
+     "vegan yogurt"
+    ],
+    "kind": "semi",
+    "serving": {
+     "label": "1 cup, 227 g",
+     "grams": 227.0,
+     "source": "USDA SR Legacy food_portion (1 container = 227 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 66.0,
+     "carbs": 9.69,
+     "sugars": 5.29,
+     "freeSugars": 5.29,
+     "fiber": 0.4,
+     "fat": 1.76,
+     "satFat": 0.22,
+     "protein": 2.64,
+     "sodiumMg": 13.0,
+     "caffeineMg": null,
+     "alcoholG": null,
+     "waterG": 84.7
+    },
+    "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
+    "gi": null,
+    "giSource": null,
+    "color": "#f7f3ea",
+    "usdaFdcId": 175227,
+    "usdaDescription": "SILK Plain soy yogurt",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Soy yogurt: values from the USDA record “SILK Plain soy yogurt”; plain soy yogurts usually contain added sugar (upper-bound rule).",
+      "cite": "USDA FoodData Central, SR Legacy 175227: SILK Plain soy yogurt",
+      "url": "https://fdc.nal.usda.gov/food-details/175227/nutrients",
+      "claim": "DBV-yogurt-plain.soy"
      }
     ],
     "range": null,
@@ -5651,6 +6110,69 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "",
+  "ask": "Which strained yogurt?",
+  "chip": "Greek",
+  "variants": [
+   {
+    "v": "skyr",
+    "chip": "Skyr",
+    "name": "Skyr",
+    "words": [
+     "skyr"
+    ],
+    "aliases": [
+     "icelandic yogurt",
+     "islandski jogurt",
+     "skir",
+     "skyr",
+     "skyr jogurt"
+    ],
+    "kind": "semi",
+    "serving": {
+     "label": "1 cup, 170 g",
+     "grams": 170.0,
+     "source": "USDA SR Legacy food_portion (1 container = 170 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 59.0,
+     "carbs": 3.6,
+     "sugars": 3.24,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 0.39,
+     "satFat": 0.12,
+     "protein": 10.19,
+     "sodiumMg": 36.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 85.1
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#f8f4ea",
+    "usdaFdcId": 170894,
+    "usdaDescription": "Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program)",
+    "recipe": null,
+    "usdaProxy": true,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "B",
+      "text": "Skyr: USDA has no skyr record; the values are the USDA plain nonfat Greek yogurt (a strained fat-free yogurt of the same kind, about 10 g protein per 100 g).",
+      "cite": "USDA FoodData Central, SR Legacy 170894: Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program)",
+      "url": "https://fdc.nal.usda.gov/food-details/170894/nutrients",
+      "claim": "DBV-yogurt-greek.skyr"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
   "choose": {
    "k": "yogurt",
    "ask": "Which yogurt?",
@@ -5826,6 +6348,22 @@
     {
      "k": "cheese-parmesan",
      "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
     }
    ]
   }
@@ -5839,7 +6377,6 @@
    "gauda",
    "gouda",
    "sir",
-   "trapist",
    "zuti sir",
    "žuti sir"
   ],
@@ -5909,6 +6446,22 @@
     {
      "k": "cheese-parmesan",
      "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
     }
    ]
   }
@@ -5988,6 +6541,22 @@
     {
      "k": "cheese-parmesan",
      "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
     }
    ]
   }
@@ -6065,6 +6634,22 @@
     {
      "k": "cheese-parmesan",
      "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
     }
    ]
   }
@@ -6209,6 +6794,22 @@
     {
      "k": "cheese-parmesan",
      "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
     }
    ]
   }
@@ -6307,6 +6908,22 @@
     {
      "k": "cheese-parmesan",
      "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
     }
    ]
   }
@@ -6692,11 +7309,14 @@
      "hard roll",
      "kaiser",
      "kaiser roll",
+     "kajzerca",
      "kajzerica",
      "kajzerice",
      "kifla s makom",
      "kifla sa sezamom",
      "pecivo s makom",
+     "pecivo s sezamom",
+     "pecivo sa makom",
      "pecivo sa sezamom",
      "pecivo sa sjemenkama",
      "poppy seed roll",
@@ -6844,8 +7464,8 @@
      "waterG": 30.1
     },
     "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-    "gi": null,
-    "giSource": null,
+    "gi": 60,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Rye breads, mean of 13 foods 60; single rye breads differ by type (sourdough rye 48 ± 5, pumpernickel 49 ± 4, rye-wheat sourdough 62 ± 4)",
     "color": "#efe0b8",
     "usdaFdcId": 175029,
     "usdaDescription": "Rolls, dinner, rye",
@@ -6896,6 +7516,10 @@
     {
      "k": "pita-bread",
      "chip": "Pita"
+    },
+    {
+     "k": "tortilla",
+     "chip": "Tortilla"
     },
     {
      "k": "bread-white.roll",
@@ -6977,6 +7601,10 @@
      "chip": "Pita"
     },
     {
+     "k": "tortilla",
+     "chip": "Tortilla"
+    },
+    {
      "k": "bread-white.roll",
      "chip": "Roll"
     }
@@ -7053,6 +7681,10 @@
     {
      "k": "pita-bread",
      "chip": "Pita"
+    },
+    {
+     "k": "tortilla",
+     "chip": "Tortilla"
     },
     {
      "k": "bread-white.roll",
@@ -7134,6 +7766,10 @@
     {
      "k": "pita-bread",
      "chip": "Pita"
+    },
+    {
+     "k": "tortilla",
+     "chip": "Tortilla"
     },
     {
      "k": "bread-white.roll",
@@ -9461,10 +10097,9 @@
   "id": "pancake",
   "name": "Pancakes (US-style)",
   "aliases": [
-   "palacinka",
-   "palacinke",
-   "palačinka",
-   "palačinke",
+   "american pancakes",
+   "americke palacinke",
+   "američke palačinke",
    "pancake",
    "pancakes",
    "pancakes (us-style)"
@@ -9503,47 +10138,52 @@
   "recipe": null,
   "usdaProxy": true,
   "notes": "PROXY for palačinke: a US fluffy pancake from recipe (baking powder, 4-inch); crêpes are thinner. Upper-bound rule (sugar in recipe).",
-  "ask": "With?",
-  "chip": "Plain",
+  "ask": "Which pancakes?",
+  "chip": "US-style",
   "variants": [
    {
-    "v": "jam",
-    "chip": "Jam",
-    "name": "Pancakes with jam",
+    "v": "crepe",
+    "chip": "Crepes",
+    "name": "Crepes",
     "words": [
-     "dzemom",
-     "marmeladom",
-     "pekmezom"
+     "tanke"
     ],
     "aliases": [
-     "palacinke s dzemom",
-     "palacinke s marmeladom",
-     "palačinke s džemom",
-     "palačinke s marmeladom",
-     "pancakes with jam"
+     "crepe",
+     "crepes",
+     "crêpes",
+     "palacinci",
+     "palacinka",
+     "palacinke",
+     "palačinci",
+     "palačinka",
+     "palačinke",
+     "palcinke",
+     "palćinke",
+     "thin pancakes"
     ],
     "kind": "solid",
     "serving": {
-     "label": "2 pancakes",
-     "grams": 96.0,
-     "source": "our recipe: 76 g pancakes + 20 g jam / preserves",
+     "label": "2 crepes",
+     "grams": 179.0,
+     "source": "our recipe: 50 g Wheat flour, white, all-purpose, enriched, bleached + 103 g milk + 20 g Egg, whole, raw, fresh + 6 g Oil, sunflower, linoleic (less than 60%)",
      "assumed": true
     },
     "per100g": {
-     "kcal": 237.6,
-     "carbs": 36.75,
-     "sugars": null,
-     "freeSugars": null,
-     "fiber": null,
-     "fat": 7.694,
-     "satFat": 1.68,
-     "protein": 5.144,
-     "sodiumMg": 354.208,
-     "caffeineMg": null,
-     "alcoholG": null,
-     "waterG": 48.233
+     "kcal": 182.4,
+     "carbs": 24.158,
+     "sugars": 3.023,
+     "freeSugars": 0.0,
+     "fiber": 0.754,
+     "fat": 6.558,
+     "satFat": 1.8,
+     "protein": 6.101,
+     "sodiumMg": 41.168,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 62.532
     },
-    "freeSugarsBasis": "not determined: a part has no free-sugar value",
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Wheat flour, white, all-purpose, enriched, bleached, milk, Egg, whole, raw, fresh, Oil, sunflower, linoleic (less than 60%))",
     "gi": null,
     "giSource": null,
     "color": "#e9c98a",
@@ -9551,10 +10191,117 @@
     "usdaDescription": null,
     "recipe": [
      {
-      "ref": "pancake",
-      "usdaFdcId": 175009,
-      "usdaDescription": "Pancakes, plain, prepared from recipe",
-      "grams": 76.0
+      "ref": 168894,
+      "usdaFdcId": 168894,
+      "usdaDescription": "Wheat flour, white, all-purpose, enriched, bleached",
+      "grams": 50.0
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 103.0
+     },
+     {
+      "ref": 171287,
+      "usdaFdcId": 171287,
+      "usdaDescription": "Egg, whole, raw, fresh",
+      "grams": 20.0
+     },
+     {
+      "ref": 171017,
+      "usdaFdcId": 171017,
+      "usdaDescription": "Oil, sunflower, linoleic (less than 60%)",
+      "grams": 6.0
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Crepes are our recipe: 2 crêpes from our home recipe (USDA flour 50 g, whole milk 100 ml, egg 20 g, sunflower oil 6 g; a common batter of 250 g flour, 500 ml milk and 2 eggs makes about 10). USDA has no crêpe record.",
+      "cite": "Our recipe from USDA SR Legacy parts: 50 g Wheat flour, white, all-purpose, enriched, bleached (168894); 103 g Milk, whole, 3.25% milkfat, with added vitamin D (171265); 20 g Egg, whole, raw, fresh (171287); 6 g Oil, sunflower, linoleic (less than 60%) (171017)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-pancake.crepe"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "jam",
+    "chip": "Jam crepes",
+    "name": "Crepes with jam",
+    "words": [
+     "dzemom",
+     "marmeladom",
+     "pekmezom"
+    ],
+    "aliases": [
+     "crepes with jam",
+     "palacinke s dzemom",
+     "palacinke s marmeladom",
+     "palacinke s pekmezom",
+     "palacinke sa dzemom",
+     "palačinke s džemom",
+     "palačinke s marmeladom",
+     "palačinke s pekmezom"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "2 crepes",
+     "grams": 199.0,
+     "source": "our recipe: 50 g Wheat flour, white, all-purpose, enriched, bleached + 103 g milk + 20 g Egg, whole, raw, fresh + 6 g Oil, sunflower, linoleic (less than 60%) + 20 g jam / preserves",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 192.0,
+     "carbs": 28.651,
+     "sugars": 7.593,
+     "freeSugars": 4.874,
+     "fiber": 0.789,
+     "fat": 5.906,
+     "satFat": 1.621,
+     "protein": 5.525,
+     "sodiumMg": 40.246,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 59.313
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Wheat flour, white, all-purpose, enriched, bleached, milk, Egg, whole, raw, fresh, Oil, sunflower, linoleic (less than 60%), jam / preserves)",
+    "gi": null,
+    "giSource": null,
+    "color": "#e9c98a",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": 168894,
+      "usdaFdcId": 168894,
+      "usdaDescription": "Wheat flour, white, all-purpose, enriched, bleached",
+      "grams": 50.0
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 103.0
+     },
+     {
+      "ref": 171287,
+      "usdaFdcId": 171287,
+      "usdaDescription": "Egg, whole, raw, fresh",
+      "grams": 20.0
+     },
+     {
+      "ref": 171017,
+      "usdaFdcId": 171017,
+      "usdaDescription": "Oil, sunflower, linoleic (less than 60%)",
+      "grams": 6.0
      },
      {
       "ref": "jam",
@@ -9571,8 +10318,8 @@
        "all"
       ],
       "level": "C",
-      "text": "Pancakes with jam is our recipe: 2 USDA pancakes (76 g) with 1 tablespoon of jam (20 g, USDA portion).",
-      "cite": "Our recipe from USDA SR Legacy parts: 76 g Pancakes, plain, prepared from recipe (175009); 20 g Jams and preserves (169641)",
+      "text": "Crepes with jam is our recipe: 2 crêpes from our home recipe (USDA flour 50 g, whole milk 100 ml, egg 20 g, sunflower oil 6 g; a common batter of 250 g flour, 500 ml milk and 2 eggs makes about 10), with 1 tablespoon of jam (20 g, USDA portion).",
+      "cite": "Our recipe from USDA SR Legacy parts: 50 g Wheat flour, white, all-purpose, enriched, bleached (168894); 103 g Milk, whole, 3.25% milkfat, with added vitamin D (171265); 20 g Egg, whole, raw, fresh (171287); 6 g Oil, sunflower, linoleic (less than 60%) (171017); 20 g Jams and preserves (169641)",
       "url": "https://fdc.nal.usda.gov/",
       "claim": "DBV-pancake.jam"
      }
@@ -9582,43 +10329,47 @@
    },
    {
     "v": "nutella",
-    "chip": "Chocolate spread",
-    "name": "Pancakes with chocolate spread",
+    "chip": "Chocolate crepes",
+    "name": "Crepes with chocolate spread",
     "words": [
      "cokoladom",
+     "linoladom",
      "nutellom"
     ],
     "aliases": [
+     "crepes with chocolate",
+     "crepes with chocolate spread",
+     "crepes with nutella",
      "palacinke s cokoladom",
+     "palacinke s linoladom",
      "palacinke s nutellom",
+     "palacinke sa nutelom",
+     "palačinke s linoladom",
      "palačinke s nutellom",
-     "palačinke s čokoladom",
-     "pancakes with chocolate",
-     "pancakes with chocolate spread",
-     "pancakes with nutella"
+     "palačinke s čokoladom"
     ],
     "kind": "solid",
     "serving": {
-     "label": "2 pancakes",
-     "grams": 96.0,
-     "source": "our recipe: 76 g pancakes + 20 g hazelnut chocolate spread",
+     "label": "2 crepes",
+     "grams": 199.0,
+     "source": "our recipe: 50 g Wheat flour, white, all-purpose, enriched, bleached + 103 g milk + 20 g Egg, whole, raw, fresh + 6 g Oil, sunflower, linoleic (less than 60%) + 20 g hazelnut chocolate spread",
      "assumed": true
     },
     "per100g": {
-     "kcal": 292.0,
-     "carbs": 34.383,
-     "sugars": null,
-     "freeSugars": null,
+     "kcal": 218.2,
+     "carbs": 27.509,
+     "sugars": 8.377,
+     "freeSugars": 5.658,
      "fiber": null,
-     "fat": 14.117,
-     "satFat": 3.887,
-     "protein": 6.379,
-     "sodiumMg": 356.5,
-     "caffeineMg": null,
-     "alcoholG": null,
-     "waterG": 42.108
+     "fat": 9.005,
+     "satFat": 2.685,
+     "protein": 6.121,
+     "sodiumMg": 41.352,
+     "caffeineMg": 0.704,
+     "alcoholG": 0.0,
+     "waterG": 56.358
     },
-    "freeSugarsBasis": "not determined: a part has no free-sugar value",
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Wheat flour, white, all-purpose, enriched, bleached, milk, Egg, whole, raw, fresh, Oil, sunflower, linoleic (less than 60%), hazelnut chocolate spread)",
     "gi": null,
     "giSource": null,
     "color": "#e9c98a",
@@ -9626,10 +10377,28 @@
     "usdaDescription": null,
     "recipe": [
      {
-      "ref": "pancake",
-      "usdaFdcId": 175009,
-      "usdaDescription": "Pancakes, plain, prepared from recipe",
-      "grams": 76.0
+      "ref": 168894,
+      "usdaFdcId": 168894,
+      "usdaDescription": "Wheat flour, white, all-purpose, enriched, bleached",
+      "grams": 50.0
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 103.0
+     },
+     {
+      "ref": 171287,
+      "usdaFdcId": 171287,
+      "usdaDescription": "Egg, whole, raw, fresh",
+      "grams": 20.0
+     },
+     {
+      "ref": 171017,
+      "usdaFdcId": 171017,
+      "usdaDescription": "Oil, sunflower, linoleic (less than 60%)",
+      "grams": 6.0
      },
      {
       "ref": "nutella",
@@ -9646,8 +10415,8 @@
        "all"
       ],
       "level": "C",
-      "text": "Pancakes with chocolate spread is our recipe: 2 USDA pancakes (76 g) with 20 g hazelnut chocolate spread (Nutella label values).",
-      "cite": "Our recipe from USDA SR Legacy parts: 76 g Pancakes, plain, prepared from recipe (175009); 20 g Chocolate-flavored hazelnut spread (168000)",
+      "text": "Crepes with chocolate spread is our recipe: 2 crêpes from our home recipe (USDA flour 50 g, whole milk 100 ml, egg 20 g, sunflower oil 6 g; a common batter of 250 g flour, 500 ml milk and 2 eggs makes about 10), with 20 g hazelnut chocolate spread (Nutella label values).",
+      "cite": "Our recipe from USDA SR Legacy parts: 50 g Wheat flour, white, all-purpose, enriched, bleached (168894); 103 g Milk, whole, 3.25% milkfat, with added vitamin D (171265); 20 g Egg, whole, raw, fresh (171287); 6 g Oil, sunflower, linoleic (less than 60%) (171017); 20 g Chocolate-flavored hazelnut spread (168000)",
       "url": "https://fdc.nal.usda.gov/",
       "claim": "DBV-pancake.nutella"
      },
@@ -9723,6 +10492,138 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "",
+  "ask": "Which chicken?",
+  "chip": "Breast",
+  "variants": [
+   {
+    "v": "thigh",
+    "chip": "Thigh",
+    "name": "Chicken thigh",
+    "words": [
+     "batak",
+     "thigh",
+     "zabatak"
+    ],
+    "aliases": [
+     "batak",
+     "chicken leg",
+     "chicken thigh",
+     "peceni batak",
+     "pečeni batak",
+     "pileci batak",
+     "pileci zabatak",
+     "pileći batak",
+     "pileći zabatak",
+     "zabatak"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 thigh",
+     "grams": 137.0,
+     "source": "USDA SR Legacy food_portion (1 thigh with skin = 137 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 232.0,
+     "carbs": 0.0,
+     "sugars": 0.0,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 14.71,
+     "satFat": 4.11,
+     "protein": 23.26,
+     "sodiumMg": 102.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 62.0
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#f0dcc0",
+    "usdaFdcId": 173625,
+    "usdaDescription": "Chicken, broilers or fryers, thigh, meat and skin, cooked, roasted",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Chicken thigh: values from the USDA record for roasted chicken thigh with skin; 1 thigh = 137 g without the bone.",
+      "cite": "USDA FoodData Central, SR Legacy 173625: Chicken, broilers or fryers, thigh, meat and skin, cooked, roasted",
+      "url": "https://fdc.nal.usda.gov/food-details/173625/nutrients",
+      "claim": "DBV-chicken-breast.thigh"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "wings",
+    "chip": "Wings",
+    "name": "Chicken wings",
+    "words": [
+     "krilca",
+     "wings"
+    ],
+    "aliases": [
+     "chicken wings",
+     "krilca",
+     "pecena krilca",
+     "pečena krilca",
+     "pileca krilca",
+     "pileća krilca",
+     "wings"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 portion, 85 g",
+     "grams": 85.0,
+     "source": "USDA SR Legacy food_portion (3 oz = 85 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 254.0,
+     "carbs": 0.0,
+     "sugars": 0.0,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 16.87,
+     "satFat": 4.98,
+     "protein": 23.79,
+     "sodiumMg": 98.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 59.4
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#f0dcc0",
+    "usdaFdcId": 173630,
+    "usdaDescription": "Chicken, broilers or fryers, wing, meat and skin, cooked, roasted",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Chicken wings: values from the USDA record for roasted chicken wings with skin; a portion of 85 g meat (USDA 3 oz).",
+      "cite": "USDA FoodData Central, SR Legacy 173630: Chicken, broilers or fryers, wing, meat and skin, cooked, roasted",
+      "url": "https://fdc.nal.usda.gov/food-details/173630/nutrients",
+      "claim": "DBV-chicken-breast.wings"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
   "choose": {
    "k": "meat",
    "ask": "Which meat?",
@@ -9813,6 +10714,73 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "",
+  "ask": "Which beef?",
+  "chip": "Steak",
+  "variants": [
+   {
+    "v": "veal",
+    "chip": "Veal",
+    "name": "Roast veal",
+    "words": [
+     "telece",
+     "teletina",
+     "veal"
+    ],
+    "aliases": [
+     "roast veal",
+     "telece meso",
+     "telece pecenje",
+     "teletina",
+     "teleće meso",
+     "teleće pečenje",
+     "veal"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 portion, 85 g",
+     "grams": 85.0,
+     "source": "USDA SR Legacy food_portion (3 oz = 85 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 160.0,
+     "carbs": 0.0,
+     "sugars": 0.0,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 4.65,
+     "satFat": 1.84,
+     "protein": 27.7,
+     "sodiumMg": 68.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 66.1
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#8a4a2a",
+    "usdaFdcId": 173821,
+    "usdaDescription": "Veal, leg (top round), separable lean and fat, cooked, roasted",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Roast veal: values from the USDA record for roasted veal leg (lean and fat); a portion of 85 g (USDA 3 oz).",
+      "cite": "USDA FoodData Central, SR Legacy 173821: Veal, leg (top round), separable lean and fat, cooked, roasted",
+      "url": "https://fdc.nal.usda.gov/food-details/173821/nutrients",
+      "claim": "DBV-beef-steak.veal"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
   "choose": {
    "k": "meat",
    "ask": "Which meat?",
@@ -10274,7 +11242,19 @@
     },
     {
      "k": "squid",
-     "chip": "Squid"
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
     }
    ]
   }
@@ -10354,7 +11334,19 @@
     },
     {
      "k": "squid",
-     "chip": "Squid"
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
     }
    ]
   }
@@ -10438,7 +11430,19 @@
     },
     {
      "k": "squid",
-     "chip": "Squid"
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
     }
    ]
   }
@@ -10518,7 +11522,19 @@
     },
     {
      "k": "squid",
-     "chip": "Squid"
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
     }
    ]
   }
@@ -11835,6 +12851,14 @@
     {
      "k": "potato-salad.oil",
      "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
     }
    ]
   }
@@ -12185,6 +13209,14 @@
     {
      "k": "potato-salad.oil",
      "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
     }
    ]
   }
@@ -12265,6 +13297,14 @@
     {
      "k": "potato-salad.oil",
      "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
     }
    ]
   }
@@ -16314,9 +17354,11 @@
      "cajni keksi",
      "marie biscuit",
      "marie keks",
+     "plasma keks",
      "plazma",
      "plazma keks",
      "plazma keksi",
+     "plazme",
      "tea biscuits",
      "čajni keksi"
     ],
@@ -16342,8 +17384,8 @@
      "waterG": 9.8
     },
     "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-    "gi": null,
-    "giSource": null,
+    "gi": 40,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 825: Rich Tea biscuits (UK), 40 ± 5, 10 subjects: the British plain tea biscuit of the Marie kind; a Canadian Rich Tea in 2008 A1 row 700 gave 55 ± 4 (6 subjects)",
     "color": "#e0b878",
     "usdaFdcId": 171867,
     "usdaDescription": "Cookies, Marie biscuit",
@@ -16401,8 +17443,8 @@
      "waterG": 3.6
     },
     "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-    "gi": null,
-    "giSource": null,
+    "gi": 42,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 rows 794-801: Montana Chocolate Chip Cookies (Kinnikinnic Foods, Canada), mean of eight studies 42 (one product, single tests 43 ± 3 and similar)",
     "color": "#e0b878",
     "usdaFdcId": 172716,
     "usdaDescription": "Cookies, chocolate chip, commercially prepared, regular, higher fat, enriched",
@@ -16437,6 +17479,8 @@
      "cream wafers",
      "napolitanka",
      "napolitanke",
+     "napolitanki",
+     "neapolitanke",
      "oblatne",
      "wafers"
     ],
@@ -16462,8 +17506,8 @@
      "waterG": 1.7
     },
     "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-    "gi": null,
-    "giSource": null,
+    "gi": 61,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1682: Tronky Nocciola, wafer bar filled with hazelnut cream (Ferrero, Italy), 61 ± 7, 10 subjects",
     "color": "#e0b878",
     "usdaFdcId": 172736,
     "usdaDescription": "Cookies, sugar wafers with creme filling, regular",
@@ -16676,8 +17720,8 @@
      "waterG": 21.0
     },
     "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-    "gi": null,
-    "giSource": null,
+    "gi": 56,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Croissant, mean of two foods 56 (row 22 all-butter croissant, Australia, 45 ± 6; row 23 croissant, Oman, 67 ± 2); the two tests differ, so the croissant type matters; the base food's GI, used for this variant too",
     "color": "#e2b25e",
     "usdaFdcId": 174989,
     "usdaDescription": "Croissants, cheese",
@@ -16690,7 +17734,7 @@
        "all"
       ],
       "level": "A",
-      "text": "Cheese croissant: values from the USDA record “Croissants, cheese”, 1 medium = 57 g.",
+      "text": "Cheese croissant: values from the USDA record “Croissants, cheese”, 1 medium = 57 g. No cheese croissant was tested for GI; the butter croissant's value is used.",
       "cite": "USDA FoodData Central, SR Legacy 174989: Croissants, cheese",
       "url": "https://fdc.nal.usda.gov/food-details/174989/nutrients",
       "claim": "DBV-croissant.cheese"
@@ -19627,8 +20671,10 @@
   "id": "pretzel",
   "name": "Soft pretzel",
   "aliases": [
+   "brezel",
    "perec",
    "pereca",
+   "perece",
    "pereci",
    "pretzel",
    "slani perec",
@@ -19659,8 +20705,8 @@
    "waterG": 15.0
   },
   "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-  "gi": null,
-  "giSource": null,
+  "gi": 80,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 209: Soft pretzel (Ditsch, Mainz, Germany), 80 ± 6, 11 subjects, the European lye pretzel; a US wheat soft pretzel (row 208) gave 66 ± 4, 12 subjects",
   "color": "#a8642a",
   "usdaFdcId": 169064,
   "usdaDescription": "Pretzels, soft",
@@ -19709,8 +20755,8 @@
      "waterG": 3.1
     },
     "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-    "gi": null,
-    "giSource": null,
+    "gi": 84,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1566: Pretzels, oven-baked, traditional wheat flavor, 97% fat free (Parker's, Australia), 84 ± 6, 10 subjects; Atkinson 2008 A1 row 1463, the same kind, 83 ± 9",
     "color": "#a8642a",
     "usdaFdcId": 167555,
     "usdaDescription": "Snacks, pretzels, hard, plain, salted",
@@ -19846,6 +20892,10 @@
      "chip": "Pita"
     },
     {
+     "k": "tortilla",
+     "chip": "Tortilla"
+    },
+    {
      "k": "bread-white.roll",
      "chip": "Roll"
     }
@@ -19859,9 +20909,11 @@
    "blueberry muffin",
    "mafin",
    "mafin s borovnicama",
+   "mafina",
    "mafini",
    "muffin",
-   "muffins"
+   "muffins",
+   "mufin"
   ],
   "kind": "solid",
   "serving": {
@@ -19888,8 +20940,8 @@
    "waterG": 25.0
   },
   "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-  "gi": null,
-  "giSource": null,
+  "gi": 50,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 36: Blueberry muffin (Sara Lee Bakery, Australia), 50 ± 3, 10 subjects; muffins, mean of 13 foods 53",
   "color": "#c88a5a",
   "usdaFdcId": 172765,
   "usdaDescription": "Muffins, blueberry, commercially prepared (Includes mini-muffins)",
@@ -19942,14 +20994,17 @@
    "cimet rolica",
    "cinnamon bun",
    "cinnamon roll",
+   "puz",
    "puz s grozdicama",
    "puz s grozdjicama",
    "puzic",
    "puzici",
+   "puž",
    "puž s grožđicama",
    "pužić",
    "pužići",
-   "raisin roll"
+   "raisin roll",
+   "rolica s cimetom"
   ],
   "kind": "solid",
   "serving": {
@@ -19976,8 +21031,8 @@
    "waterG": 24.8
   },
   "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
-  "gi": null,
-  "giSource": null,
+  "gi": 66,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 63: Hot cross buns, spiced sweet bun with dried fruit (Australia), 66 ± 6, 9 subjects: the nearest tested food, no cinnamon roll was tested",
   "color": "#c9874a",
   "usdaFdcId": 175034,
   "usdaDescription": "Sweet rolls, cinnamon, commercially prepared with raisins",
@@ -20118,14 +21173,15 @@
   "name": "Breaded schnitzel",
   "aliases": [
    "becki odrezak",
+   "becki snicel",
    "becki snicl",
    "bečki odrezak",
    "bečki šnicl",
    "breaded schnitzel",
    "pohana svinjetina",
    "pohana teletina",
-   "pohani",
    "pohani odrezak",
+   "pohani svinjski odrezak",
    "schnitzel",
    "snicl",
    "wiener schnitzel",
@@ -20207,8 +21263,8 @@
      "waterG": 54.8
     },
     "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
-    "gi": null,
-    "giSource": null,
+    "gi": 46,
+    "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1183: Chicken nuggets, frozen, reheated in microwave oven, 46 ± 4, 10 subjects: the nearest tested breaded chicken",
     "color": "#d9a050",
     "usdaFdcId": 173346,
     "usdaDescription": "Chicken tenders, breaded, frozen, prepared",
@@ -20283,12 +21339,13 @@
    "ground meat",
    "mince",
    "minced meat",
+   "mleveno meso",
    "mljevena govedina",
-   "mljeveno",
    "mljeveno govede meso",
    "mljeveno govedje meso",
    "mljeveno goveđe meso",
-   "mljeveno meso"
+   "mljeveno meso",
+   "mljeveno meso kuhano"
   ],
   "kind": "solid",
   "serving": {
@@ -20579,25 +21636,40 @@
     },
     {
      "k": "squid",
-     "chip": "Squid"
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
     }
    ]
   }
  },
  {
   "id": "squid",
-  "name": "Squid (fried calamari)",
+  "name": "Fried calamari",
   "aliases": [
    "calamari",
    "fried calamari",
+   "fried squid",
    "kalamari",
    "lignja",
    "lignje",
+   "lignje przene",
+   "lignje pržene",
+   "linje",
    "pohane lignje",
    "przene lignje",
    "pržene lignje",
-   "squid",
-   "squid (fried calamari)"
+   "squid"
   ],
   "kind": "solid",
   "serving": {
@@ -20664,7 +21736,19 @@
     },
     {
      "k": "squid",
-     "chip": "Squid"
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
     }
    ]
   }
@@ -20676,6 +21760,7 @@
    "paradajz salata",
    "rajcica salata",
    "rajčica salata",
+   "salata od paradajza",
    "salata od rajcice",
    "salata od rajčice",
    "tomato salad"
@@ -21014,6 +22099,14 @@
     {
      "k": "potato-salad.oil",
      "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
     }
    ]
   }
@@ -21361,6 +22454,14 @@
     {
      "k": "potato-salad.oil",
      "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
     }
    ]
   }
@@ -21531,20 +22632,29 @@
     {
      "k": "potato-salad.oil",
      "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
     }
    ]
   }
  },
  {
   "id": "nectar",
-  "name": "Fruit nectar (apricot)",
+  "name": "Apricot nectar",
   "aliases": [
    "apricot nectar",
    "fruit nectar",
-   "fruit nectar (apricot)",
    "juice drink",
    "nectar",
+   "nectar od marelice",
    "nektar",
+   "nektar marelica",
    "nektar od marelice",
    "sok od marelice",
    "vocni nektar",
@@ -21729,6 +22839,14 @@
     {
      "k": "nectar",
      "chip": "Nectar"
+    },
+    {
+     "k": "cranberry-juice",
+     "chip": "Cranberry"
+    },
+    {
+     "k": "carrot-juice",
+     "chip": "Carrot"
     }
    ]
   }
@@ -21742,9 +22860,11 @@
    "bomboni",
    "candy",
    "gumene bombone",
+   "gumeni bombon",
    "gumeni bomboni",
    "gumeni medvjedici",
    "gumeni medvjedići",
+   "gumice",
    "gummies",
    "gummy bears",
    "gummy candy",
@@ -21780,8 +22900,8 @@
    "waterG": 1.0
   },
   "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
-  "gi": null,
-  "giSource": null,
+  "gi": 76,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1635: Sour Straws, strawberry flavor, gummy/chewy confectionery (Australia), 76 ± 7, 10 subjects; jelly beans (row 1607) 76 ± 6, 12 subjects",
   "color": "#e8506a",
   "usdaFdcId": 167989,
   "usdaDescription": "Candies, gumdrops, starch jelly pieces",
@@ -21981,6 +23101,1575 @@
     {
      "k": "spinach",
      "chip": "Spinach"
+    }
+   ]
+  }
+ },
+ {
+  "id": "oat-milk",
+  "name": "Oat milk",
+  "aliases": [
+   "mlijeko od zobi",
+   "oat drink",
+   "oat milk",
+   "zobeni napitak",
+   "zobeno",
+   "zobeno mlijeko",
+   "zobeno mljeko"
+  ],
+  "kind": "liquid",
+  "serving": {
+   "label": "250 ml",
+   "grams": 253.6,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.014 g/ml (from portion 'fl oz (approximate weight, 1 serving)' = 240 g)"
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "alcoholG",
+     "caffeineMg",
+     "carbs",
+     "fat",
+     "fiber",
+     "kcal",
+     "protein",
+     "satFat",
+     "sodiumMg",
+     "sugars"
+    ],
+    "basis": "per100ml",
+    "label": {
+     "kcal": 48,
+     "fat": 1.5,
+     "satFat": 0.2,
+     "carbs": 8.0,
+     "sugars": 3.5,
+     "fiber": 0.8,
+     "protein": 1.1,
+     "sodiumMg": 40,
+     "caffeineMg": 0,
+     "alcoholG": 0
+    },
+    "usdaBefore": {
+     "kcal": 47.0,
+     "fat": 0.97,
+     "satFat": 0.0,
+     "carbs": 9.17,
+     "sugars": 5.28,
+     "fiber": 0.3,
+     "protein": 0.28,
+     "sodiumMg": 39.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0
+    },
+    "level": "B",
+    "text": "Oat milk: values from the Oatly oat drink label (per 100 ml: 48 kcal, 1.5 g fat, 7.2 g carbohydrate of which 3.5 g sugars, 0.8 g fiber, 1.1 g protein, 0.1 g salt), read from Open Food Facts. Other Oatly drinks run from 39 kcal (organic) to 61 kcal (barista).",
+    "source": "Open Food Facts: Oatly Lait d'Avoine / oat drink, EAN 7394376615979 (48 kcal, fat 1.5 g, saturates 0.2 g, carbohydrate 7.2 g, sugars 3.5 g, fibre 0.8 g, protein 1.1 g, salt 0.1 g per 100 ml); range Oatly Organic 7394376123337 (39 kcal) to Barista 7394376616228 (61 kcal)",
+    "url": "https://world.openfoodfacts.org/product/7394376615979",
+    "note": "EU carbohydrate excludes fiber; USDA-style carbs = 7.2 + 0.8 = 8.0 so the app's available carbohydrate (carbs - fiber) is the label's 7.2. Sodium = salt 0.1 / 2.5 = 40 mg. Level B: label read on Open Food Facts, not on the pack.",
+    "rangesPer100g": {
+     "kcal": [
+      39,
+      61
+     ]
+    }
+   }
+  ],
+  "per100g": {
+   "kcal": 47.319,
+   "carbs": 7.886,
+   "sugars": 3.45,
+   "freeSugars": null,
+   "fiber": 0.789,
+   "fat": 1.479,
+   "satFat": 0.197,
+   "protein": 1.084,
+   "sodiumMg": 39.432,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 89.3
+  },
+  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+  "gi": 69,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 144: Oat milk, calcium enriched, Vitasoy (Australia), 69 ± 6, 9 subjects",
+  "color": "#efe4cc",
+  "usdaFdcId": 171942,
+  "usdaDescription": "Beverages, rice milk, unsweetened",
+  "usdaDataset": "SR Legacy + label override",
+  "recipe": null,
+  "usdaProxy": true,
+  "notes": "Values: Oatly oat drink EU label (override). Sugars in oat drinks come from enzymes splitting the oat starch; the WHO text we read does not classify this, so free sugars are null (as rice milk).",
+  "choose": {
+   "k": "plant-milk",
+   "ask": "Which plant milk?",
+   "words": [
+    "biljno mlijeko",
+    "plant milk"
+   ],
+   "opts": [
+    {
+     "k": "soy-milk",
+     "chip": "Soy"
+    },
+    {
+     "k": "almond-milk",
+     "chip": "Almond"
+    },
+    {
+     "k": "rice-milk",
+     "chip": "Rice"
+    },
+    {
+     "k": "oat-milk",
+     "chip": "Oat"
+    }
+   ]
+  }
+ },
+ {
+  "id": "cheese-swiss",
+  "name": "Emmental cheese",
+  "aliases": [
+   "emental",
+   "ementaler",
+   "ementaller",
+   "emmental",
+   "emmental cheese",
+   "emmentaler",
+   "svicarski sir",
+   "swiss cheese",
+   "švicarski sir"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 slice",
+   "grams": 28.0,
+   "source": "USDA SR Legacy food_portion (1 slice (1 oz) = 28 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 393.0,
+   "carbs": 1.44,
+   "sugars": 0.0,
+   "freeSugars": 0.0,
+   "fiber": 0.0,
+   "fat": 30.99,
+   "satFat": 18.23,
+   "protein": 26.96,
+   "sodiumMg": 187.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 37.6
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#f3e3a0",
+  "usdaFdcId": 171251,
+  "usdaDescription": "Cheese, swiss",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: Swiss cheese (the Emmental type).",
+  "choose": {
+   "k": "cheese",
+   "ask": "Which cheese?",
+   "words": [
+    "cheese",
+    "sir",
+    "sira"
+   ],
+   "opts": [
+    {
+     "k": "cheese-gouda",
+     "chip": "Gouda"
+    },
+    {
+     "k": "cheese-cheddar",
+     "chip": "Cheddar"
+    },
+    {
+     "k": "cheese-mozzarella",
+     "chip": "Mozzarella"
+    },
+    {
+     "k": "cheese-feta",
+     "chip": "Feta"
+    },
+    {
+     "k": "cheese-cottage",
+     "chip": "Cottage"
+    },
+    {
+     "k": "cheese-parmesan",
+     "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
+    }
+   ]
+  }
+ },
+ {
+  "id": "cheese-trappist",
+  "name": "Trappist cheese",
+  "aliases": [
+   "port salut",
+   "trapist",
+   "trapist sir",
+   "trapista",
+   "trappist",
+   "trappist cheese"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 slice",
+   "grams": 28.0,
+   "source": "USDA SR Legacy food_portion (1 slice (1 oz) = 28 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 352.0,
+   "carbs": 0.57,
+   "sugars": 0.57,
+   "freeSugars": 0.0,
+   "fiber": 0.0,
+   "fat": 28.2,
+   "satFat": 16.69,
+   "protein": 23.78,
+   "sodiumMg": 534.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 45.5
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#f0d890",
+  "usdaFdcId": 170849,
+  "usdaDescription": "Cheese, port de salut",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: port de salut, the original French Trappist cheese; Croatian trapist is the same semi-hard washed-curd kind.",
+  "choose": {
+   "k": "cheese",
+   "ask": "Which cheese?",
+   "words": [
+    "cheese",
+    "sir",
+    "sira"
+   ],
+   "opts": [
+    {
+     "k": "cheese-gouda",
+     "chip": "Gouda"
+    },
+    {
+     "k": "cheese-cheddar",
+     "chip": "Cheddar"
+    },
+    {
+     "k": "cheese-mozzarella",
+     "chip": "Mozzarella"
+    },
+    {
+     "k": "cheese-feta",
+     "chip": "Feta"
+    },
+    {
+     "k": "cheese-cottage",
+     "chip": "Cottage"
+    },
+    {
+     "k": "cheese-parmesan",
+     "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
+    }
+   ]
+  }
+ },
+ {
+  "id": "cheese-cream",
+  "name": "Cream cheese",
+  "aliases": [
+   "cream cheese",
+   "krem sir",
+   "kremasti sir",
+   "kremni sir",
+   "namazni sir",
+   "philadelphia",
+   "sirni namaz"
+  ],
+  "kind": "semi",
+  "serving": {
+   "label": "1 tbsp",
+   "grams": 14.5,
+   "source": "USDA SR Legacy food_portion (1 tbsp = 14.5 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 350.0,
+   "carbs": 5.52,
+   "sugars": 3.76,
+   "freeSugars": 0.0,
+   "fiber": 0.0,
+   "fat": 34.44,
+   "satFat": 20.21,
+   "protein": 6.15,
+   "sodiumMg": 314.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 52.6
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#f6f0e0",
+  "usdaFdcId": 173418,
+  "usdaDescription": "Cheese, cream",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "",
+  "choose": {
+   "k": "cheese",
+   "ask": "Which cheese?",
+   "words": [
+    "cheese",
+    "sir",
+    "sira"
+   ],
+   "opts": [
+    {
+     "k": "cheese-gouda",
+     "chip": "Gouda"
+    },
+    {
+     "k": "cheese-cheddar",
+     "chip": "Cheddar"
+    },
+    {
+     "k": "cheese-mozzarella",
+     "chip": "Mozzarella"
+    },
+    {
+     "k": "cheese-feta",
+     "chip": "Feta"
+    },
+    {
+     "k": "cheese-cottage",
+     "chip": "Cottage"
+    },
+    {
+     "k": "cheese-parmesan",
+     "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
+    }
+   ]
+  }
+ },
+ {
+  "id": "cheese-brie",
+  "name": "Brie cheese",
+  "aliases": [
+   "bri",
+   "brie",
+   "brie cheese",
+   "brie sir"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 portion, 28 g",
+   "grams": 28.4,
+   "source": "USDA SR Legacy food_portion (1 oz = 28.35 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 334.0,
+   "carbs": 0.45,
+   "sugars": 0.45,
+   "freeSugars": 0.0,
+   "fiber": 0.0,
+   "fat": 27.68,
+   "satFat": 17.41,
+   "protein": 20.75,
+   "sodiumMg": 629.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 48.4
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#f2ecd4",
+  "usdaFdcId": 172177,
+  "usdaDescription": "Cheese, brie",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "",
+  "ask": "Which soft cheese?",
+  "chip": "Brie",
+  "variants": [
+   {
+    "v": "camembert",
+    "chip": "Camembert",
+    "name": "Camembert",
+    "words": [
+     "camembert",
+     "kamember"
+    ],
+    "aliases": [
+     "camembert",
+     "camembert cheese",
+     "kamamber",
+     "kamember"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 wedge",
+     "grams": 38.0,
+     "source": "USDA SR Legacy food_portion (1 wedge (1.33 oz) = 38 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 300.0,
+     "carbs": 0.46,
+     "sugars": 0.46,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 24.26,
+     "satFat": 15.26,
+     "protein": 19.8,
+     "sodiumMg": 842.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 51.8
+    },
+    "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+    "gi": null,
+    "giSource": null,
+    "color": "#f2ecd4",
+    "usdaFdcId": 172178,
+    "usdaDescription": "Cheese, camembert",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Camembert: values from the USDA record “Cheese, camembert”, 1 wedge = 38 g.",
+      "cite": "USDA FoodData Central, SR Legacy 172178: Cheese, camembert",
+      "url": "https://fdc.nal.usda.gov/food-details/172178/nutrients",
+      "claim": "DBV-cheese-brie.camembert"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
+  "choose": {
+   "k": "cheese",
+   "ask": "Which cheese?",
+   "words": [
+    "cheese",
+    "sir",
+    "sira"
+   ],
+   "opts": [
+    {
+     "k": "cheese-gouda",
+     "chip": "Gouda"
+    },
+    {
+     "k": "cheese-cheddar",
+     "chip": "Cheddar"
+    },
+    {
+     "k": "cheese-mozzarella",
+     "chip": "Mozzarella"
+    },
+    {
+     "k": "cheese-feta",
+     "chip": "Feta"
+    },
+    {
+     "k": "cheese-cottage",
+     "chip": "Cottage"
+    },
+    {
+     "k": "cheese-parmesan",
+     "chip": "Parmesan"
+    },
+    {
+     "k": "cheese-swiss",
+     "chip": "Emmental"
+    },
+    {
+     "k": "cheese-trappist",
+     "chip": "Trappist"
+    },
+    {
+     "k": "cheese-cream",
+     "chip": "Cream cheese"
+    },
+    {
+     "k": "cheese-brie",
+     "chip": "Brie"
+    }
+   ]
+  }
+ },
+ {
+  "id": "cranberry-juice",
+  "name": "Cranberry juice drink",
+  "aliases": [
+   "brusnica",
+   "brusnica sok",
+   "cranberry",
+   "cranberry juice",
+   "cranberry juice drink",
+   "sok brusnica",
+   "sok od brusnice"
+  ],
+  "kind": "liquid",
+  "serving": {
+   "label": "250 ml",
+   "grams": 267.1,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 1.069 g/ml (from portion 'fl oz' = 31.6 g)"
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 54.0,
+   "carbs": 13.52,
+   "sugars": 11.87,
+   "freeSugars": 11.87,
+   "fiber": 0.0,
+   "fat": 0.1,
+   "satFat": 0.01,
+   "protein": 0.0,
+   "sodiumMg": 2.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 86.2
+  },
+  "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
+  "gi": 59,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Cranberry juice, mean of three studies 59 (row 1191 Ocean Spray cranberry juice cocktail 52 ± 3, 10 subjects, and two more Ocean Spray drinks)",
+  "color": "#b8203a",
+  "usdaFdcId": 171903,
+  "usdaDescription": "Cranberry juice cocktail, bottled",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: cranberry juice cocktail (about 27% juice, sweetened), the usual shop kind. Free sugars: all (juice plus added sugar).",
+  "choose": {
+   "k": "juice",
+   "ask": "Which juice?",
+   "words": [
+    "juice",
+    "sok",
+    "soka",
+    "vocni sok"
+   ],
+   "opts": [
+    {
+     "k": "orange-juice",
+     "chip": "Orange"
+    },
+    {
+     "k": "apple-juice",
+     "chip": "Apple"
+    },
+    {
+     "k": "tomato-juice",
+     "chip": "Tomato"
+    },
+    {
+     "k": "nectar",
+     "chip": "Nectar"
+    },
+    {
+     "k": "cranberry-juice",
+     "chip": "Cranberry"
+    },
+    {
+     "k": "carrot-juice",
+     "chip": "Carrot"
+    }
+   ]
+  }
+ },
+ {
+  "id": "carrot-juice",
+  "name": "Carrot juice",
+  "aliases": [
+   "carrot juice",
+   "mrkvin sok",
+   "sok mrkva",
+   "sok od mrkve"
+  ],
+  "kind": "liquid",
+  "serving": {
+   "label": "250 ml",
+   "grams": 249.4,
+   "assumed": false,
+   "source": "volume 250 ml x USDA density 0.998 g/ml (from portion 'fl oz' = 29.5 g)"
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 40.0,
+   "carbs": 9.28,
+   "sugars": 3.91,
+   "freeSugars": 0.0,
+   "fiber": 0.8,
+   "fat": 0.15,
+   "satFat": 0.03,
+   "protein": 0.95,
+   "sodiumMg": 66.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 88.9
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": 43,
+  "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1190: Carrot juice, freshly made (Australia), 43 ± 3, 9 subjects, single test",
+  "color": "#f08a2a",
+  "usdaFdcId": 170491,
+  "usdaDescription": "Carrot juice, canned",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "WHO free-sugar definition names fruit juices, not vegetable juice (as tomato juice).",
+  "choose": {
+   "k": "juice",
+   "ask": "Which juice?",
+   "words": [
+    "juice",
+    "sok",
+    "soka",
+    "vocni sok"
+   ],
+   "opts": [
+    {
+     "k": "orange-juice",
+     "chip": "Orange"
+    },
+    {
+     "k": "apple-juice",
+     "chip": "Apple"
+    },
+    {
+     "k": "tomato-juice",
+     "chip": "Tomato"
+    },
+    {
+     "k": "nectar",
+     "chip": "Nectar"
+    },
+    {
+     "k": "cranberry-juice",
+     "chip": "Cranberry"
+    },
+    {
+     "k": "carrot-juice",
+     "chip": "Carrot"
+    }
+   ]
+  }
+ },
+ {
+  "id": "sea-bass",
+  "name": "Sea bass (cooked)",
+  "aliases": [
+   "brancin",
+   "brancin na zaru",
+   "brancin na žaru",
+   "dorada",
+   "komarca",
+   "komarča",
+   "lubin",
+   "orada",
+   "sea bass",
+   "sea bass (cooked)",
+   "sea bream",
+   "seabass"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 fillet",
+   "grams": 101.0,
+   "source": "USDA SR Legacy food_portion (1 fillet = 101 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 124.0,
+   "carbs": 0.0,
+   "sugars": null,
+   "freeSugars": 0.0,
+   "fiber": 0.0,
+   "fat": 2.56,
+   "satFat": 0.66,
+   "protein": 23.63,
+   "sodiumMg": 87.0,
+   "caffeineMg": null,
+   "alcoholG": null,
+   "waterG": 72.1
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#c8ccd0",
+  "usdaFdcId": 173694,
+  "usdaDescription": "Fish, sea bass, mixed species, cooked, dry heat",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": true,
+  "notes": "USDA record: sea bass, mixed species, cooked, dry heat. Gilthead sea bream has no USDA record and uses this one (PROXY): both are lean white farmed Adriatic fish.",
+  "choose": {
+   "k": "fish",
+   "ask": "Which fish?",
+   "words": [
+    "fish",
+    "riba",
+    "ribu"
+   ],
+   "opts": [
+    {
+     "k": "cod",
+     "chip": "White fish"
+    },
+    {
+     "k": "salmon",
+     "chip": "Salmon"
+    },
+    {
+     "k": "sardines",
+     "chip": "Sardines"
+    },
+    {
+     "k": "tuna-canned",
+     "chip": "Tuna"
+    },
+    {
+     "k": "mackerel",
+     "chip": "Mackerel"
+    },
+    {
+     "k": "squid",
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
+    }
+   ]
+  }
+ },
+ {
+  "id": "shrimp",
+  "name": "Shrimp (cooked)",
+  "aliases": [
+   "gamberi",
+   "kozica",
+   "kozice",
+   "prawns",
+   "racici",
+   "račići",
+   "shrimp",
+   "shrimp (cooked)",
+   "skampi",
+   "škampi"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 portion, 85 g",
+   "grams": 85.0,
+   "source": "USDA SR Legacy food_portion (3 oz = 85 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 99.0,
+   "carbs": 0.2,
+   "sugars": null,
+   "freeSugars": 0.0,
+   "fiber": null,
+   "fat": 0.28,
+   "satFat": 0.06,
+   "protein": 23.98,
+   "sodiumMg": 111.0,
+   "caffeineMg": null,
+   "alcoholG": null,
+   "waterG": 74.3
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#f2a090",
+  "usdaFdcId": 175180,
+  "usdaDescription": "Crustaceans, shrimp, cooked",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: shrimp, cooked. Langoustines use it too: USDA has no langoustine record.",
+  "choose": {
+   "k": "fish",
+   "ask": "Which fish?",
+   "words": [
+    "fish",
+    "riba",
+    "ribu"
+   ],
+   "opts": [
+    {
+     "k": "cod",
+     "chip": "White fish"
+    },
+    {
+     "k": "salmon",
+     "chip": "Salmon"
+    },
+    {
+     "k": "sardines",
+     "chip": "Sardines"
+    },
+    {
+     "k": "tuna-canned",
+     "chip": "Tuna"
+    },
+    {
+     "k": "mackerel",
+     "chip": "Mackerel"
+    },
+    {
+     "k": "squid",
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
+    }
+   ]
+  }
+ },
+ {
+  "id": "fish-sticks",
+  "name": "Fish sticks",
+  "aliases": [
+   "fish fingers",
+   "fish sticks",
+   "riblji prsti",
+   "riblji stapici",
+   "riblji štapići"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "4 sticks",
+   "grams": 112,
+   "source": "USDA portion: 1 stick = 28 g; 4 sticks is our assumption of a portion",
+   "assumed": false
+  },
+  "piece": {
+   "label": "stick",
+   "grams": 28,
+   "source": "USDA portion: 1 stick (4\" × 1\" × ½\") = 28 g"
+  },
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 277.0,
+   "carbs": 21.66,
+   "sugars": 1.65,
+   "freeSugars": null,
+   "fiber": 1.5,
+   "fat": 16.23,
+   "satFat": 3.73,
+   "protein": 11.01,
+   "sodiumMg": 402.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 49.5
+  },
+  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+  "gi": null,
+  "giSource": null,
+  "color": "#e8c070",
+  "usdaFdcId": 174195,
+  "usdaDescription": "Fish, fish sticks, frozen, prepared",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: fish sticks, frozen, prepared (breaded). Free sugars null: breading, no split.",
+  "choose": {
+   "k": "fish",
+   "ask": "Which fish?",
+   "words": [
+    "fish",
+    "riba",
+    "ribu"
+   ],
+   "opts": [
+    {
+     "k": "cod",
+     "chip": "White fish"
+    },
+    {
+     "k": "salmon",
+     "chip": "Salmon"
+    },
+    {
+     "k": "sardines",
+     "chip": "Sardines"
+    },
+    {
+     "k": "tuna-canned",
+     "chip": "Tuna"
+    },
+    {
+     "k": "mackerel",
+     "chip": "Mackerel"
+    },
+    {
+     "k": "squid",
+     "chip": "Calamari"
+    },
+    {
+     "k": "sea-bass",
+     "chip": "Sea bass"
+    },
+    {
+     "k": "shrimp",
+     "chip": "Shrimp"
+    },
+    {
+     "k": "fish-sticks",
+     "chip": "Fish sticks"
+    }
+   ]
+  }
+ },
+ {
+  "id": "rocket-salad",
+  "name": "Rocket salad",
+  "aliases": [
+   "arugula",
+   "rikola",
+   "rikola salata",
+   "rocket",
+   "rocket salad",
+   "rucola",
+   "rukola"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 bowl, 40 g",
+   "grams": 40,
+   "source": "our assumption: 2 handfuls (USDA ½ cup = 10 g)",
+   "assumed": true
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 25.0,
+   "carbs": 3.65,
+   "sugars": 2.05,
+   "freeSugars": 0.0,
+   "fiber": 1.6,
+   "fat": 0.66,
+   "satFat": 0.09,
+   "protein": 2.58,
+   "sodiumMg": 27.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 91.7
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#5a8a3a",
+  "usdaFdcId": 169387,
+  "usdaDescription": "Arugula, raw",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "",
+  "builder": {
+   "title": "Dressing?",
+   "ask": "Dressing?",
+   "unit": "",
+   "groups": [
+    {
+     "k": "base",
+     "label": "Base",
+     "one": true,
+     "opts": [
+      {
+       "k": "base",
+       "chip": "Rocket",
+       "name": "rocket",
+       "grams": 40,
+       "rng": null,
+       "on": true,
+       "p": {
+        "kcal": 25.0,
+        "carbs": 3.65,
+        "sugars": 2.05,
+        "freeSugars": 0.0,
+        "fiber": 1.6,
+        "fat": 0.66,
+        "satFat": 0.09,
+        "protein": 2.58,
+        "sodiumMg": 27.0,
+        "caffeineMg": 0.0,
+        "alcoholG": 0.0,
+        "waterG": 91.7
+       },
+       "gi": null,
+       "fdc": 169387,
+       "food": "rocket-salad",
+       "words": [],
+       "aliases": [],
+       "recipe": null,
+       "src": [
+        {
+         "fields": [
+          "all"
+         ],
+         "level": "A",
+         "text": "Rocket: the USDA record of the database food, its usual serving.",
+         "cite": "USDA FoodData Central, SR Legacy 169387: Arugula, raw",
+         "url": "https://fdc.nal.usda.gov/food-details/169387/nutrients",
+         "claim": "DBB-rocket-salad-base"
+        }
+       ],
+       "giSource": null
+      }
+     ]
+    },
+    {
+     "k": "dressing",
+     "label": "Dressing",
+     "one": false,
+     "opts": [
+      {
+       "k": "olive-oil",
+       "chip": "Olive oil",
+       "name": "olive oil",
+       "grams": 13.5,
+       "rng": [
+        4.5,
+        27
+       ],
+       "on": false,
+       "p": {
+        "kcal": 884.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "freeSugars": 0.0,
+        "fiber": 0.0,
+        "fat": 100.0,
+        "satFat": 13.81,
+        "protein": 0.0,
+        "sodiumMg": 2.0,
+        "caffeineMg": 0.0,
+        "alcoholG": 0.0,
+        "waterG": 0.0
+       },
+       "gi": null,
+       "fdc": 171413,
+       "food": "olive-oil",
+       "words": [
+        "maslinovim uljem",
+        "oil",
+        "olive oil",
+        "uljem"
+       ],
+       "aliases": [],
+       "recipe": null,
+       "src": [
+        {
+         "fields": [
+          "all"
+         ],
+         "level": "C",
+         "text": "Olive oil: 1 tablespoon, 13.5 g (USDA portion; people use about 1 teaspoon to 2 tablespoons).",
+         "cite": "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)",
+         "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
+         "claim": "DBB-rocket-salad-olive-oil"
+        }
+       ],
+       "giSource": null
+      },
+      {
+       "k": "sunflower-oil",
+       "chip": "Sunflower oil",
+       "name": "sunflower oil",
+       "grams": 13.6,
+       "rng": [
+        4.5,
+        27
+       ],
+       "on": false,
+       "p": {
+        "kcal": 884.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "freeSugars": null,
+        "fiber": 0.0,
+        "fat": 100.0,
+        "satFat": 10.1,
+        "protein": 0.0,
+        "sodiumMg": 0.0,
+        "caffeineMg": 0.0,
+        "alcoholG": 0.0,
+        "waterG": 0.0
+       },
+       "gi": null,
+       "fdc": 171017,
+       "food": null,
+       "words": [
+        "suncokretovim uljem",
+        "sunflower oil"
+       ],
+       "aliases": [],
+       "recipe": null,
+       "src": [
+        {
+         "fields": [
+          "all"
+         ],
+         "level": "C",
+         "text": "Sunflower oil: 1 tablespoon, 13.6 g (USDA portion).",
+         "cite": "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)",
+         "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
+         "claim": "DBB-rocket-salad-sunflower-oil"
+        }
+       ],
+       "giSource": null
+      },
+      {
+       "k": "vinegar",
+       "chip": "Vinegar",
+       "name": "vinegar",
+       "grams": 14.9,
+       "rng": [
+        5,
+        30
+       ],
+       "on": false,
+       "p": {
+        "kcal": 18.0,
+        "carbs": 0.04,
+        "sugars": 0.04,
+        "freeSugars": null,
+        "fiber": 0.0,
+        "fat": 0.0,
+        "satFat": 0.0,
+        "protein": 0.0,
+        "sodiumMg": 2.0,
+        "caffeineMg": 0.0,
+        "alcoholG": 0.0,
+        "waterG": 94.8
+       },
+       "gi": null,
+       "fdc": 172237,
+       "food": null,
+       "words": [
+        "ocat",
+        "octom",
+        "vinegar"
+       ],
+       "aliases": [],
+       "recipe": null,
+       "src": [
+        {
+         "fields": [
+          "all"
+         ],
+         "level": "C",
+         "text": "Vinegar: 1 tablespoon, 14.9 g of distilled (spirit) vinegar (USDA portion), the kind most used in Croatia.",
+         "cite": "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)",
+         "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
+         "claim": "DBB-rocket-salad-vinegar"
+        }
+       ],
+       "giSource": null
+      },
+      {
+       "k": "salt",
+       "chip": "Salt",
+       "name": "salt",
+       "grams": 0.4,
+       "rng": [
+        0.4,
+        1.5
+       ],
+       "on": false,
+       "p": {
+        "kcal": 0.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "freeSugars": null,
+        "fiber": 0.0,
+        "fat": 0.0,
+        "satFat": 0.0,
+        "protein": 0.0,
+        "sodiumMg": 38758.0,
+        "caffeineMg": 0.0,
+        "alcoholG": 0.0,
+        "waterG": 0.2
+       },
+       "gi": null,
+       "fdc": 173468,
+       "food": null,
+       "words": [
+        "salt",
+        "solju"
+       ],
+       "aliases": [],
+       "recipe": null,
+       "src": [
+        {
+         "fields": [
+          "all"
+         ],
+         "level": "C",
+         "text": "Salt: a dash, 0.4 g (USDA portion ‘dash’), about 155 mg sodium. People often use more.",
+         "cite": "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)",
+         "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
+         "claim": "DBB-rocket-salad-salt"
+        }
+       ],
+       "giSource": null
+      }
+     ]
+    }
+   ],
+   "presets": [],
+   "src": [
+    {
+     "fields": [
+      "all"
+     ],
+     "level": "C",
+     "text": "Rocket salad: USDA raw rocket (arugula) plus the dressing you pick, in USDA spoon portions.",
+     "cite": "USDA SR Legacy portions; 21 CFR 101.12 (dressing reference amount 30 g)",
+     "url": "https://www.law.cornell.edu/cfr/text/21/101.12",
+     "claim": "DBB-rocket-salad"
+    }
+   ],
+   "combinations": 16
+  },
+  "choose": {
+   "k": "salad",
+   "ask": "Which salad?",
+   "words": [
+    "salad",
+    "salata",
+    "salate",
+    "salatu"
+   ],
+   "opts": [
+    {
+     "k": "salad-lettuce",
+     "chip": "Green"
+    },
+    {
+     "k": "cabbage",
+     "chip": "Cabbage"
+    },
+    {
+     "k": "sauerkraut",
+     "chip": "Sauerkraut"
+    },
+    {
+     "k": "tomato-salad",
+     "chip": "Tomato"
+    },
+    {
+     "k": "cucumber-salad",
+     "chip": "Cucumber"
+    },
+    {
+     "k": "potato-salad.oil",
+     "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
+    }
+   ]
+  }
+ },
+ {
+  "id": "beetroot",
+  "name": "Pickled beetroot",
+  "aliases": [
+   "beetroot",
+   "beets",
+   "cikla",
+   "cikla salata",
+   "crvena repa",
+   "pickled beetroot",
+   "pickled beets",
+   "salata od cikle"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 bowl, 100 g",
+   "grams": 100,
+   "source": "our assumption: USDA 1 cup of slices = 227 g; a side salad is less",
+   "assumed": true
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 65.0,
+   "carbs": 16.28,
+   "sugars": 11.05,
+   "freeSugars": 11.05,
+   "fiber": 0.8,
+   "fat": 0.08,
+   "satFat": 0.01,
+   "protein": 0.8,
+   "sodiumMg": 149.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 81.9
+  },
+  "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
+  "gi": null,
+  "giSource": null,
+  "color": "#8a1a3a",
+  "usdaFdcId": 170480,
+  "usdaDescription": "Beets, pickled, canned, solids and liquids",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: pickled beets, canned, with the liquid. Upper-bound free sugars: the pickle usually has added sugar, no split.",
+  "choose": {
+   "k": "salad",
+   "ask": "Which salad?",
+   "words": [
+    "salad",
+    "salata",
+    "salate",
+    "salatu"
+   ],
+   "opts": [
+    {
+     "k": "salad-lettuce",
+     "chip": "Green"
+    },
+    {
+     "k": "cabbage",
+     "chip": "Cabbage"
+    },
+    {
+     "k": "sauerkraut",
+     "chip": "Sauerkraut"
+    },
+    {
+     "k": "tomato-salad",
+     "chip": "Tomato"
+    },
+    {
+     "k": "cucumber-salad",
+     "chip": "Cucumber"
+    },
+    {
+     "k": "potato-salad.oil",
+     "chip": "Potato"
+    },
+    {
+     "k": "rocket-salad",
+     "chip": "Rocket"
+    },
+    {
+     "k": "beetroot",
+     "chip": "Beetroot"
+    }
+   ]
+  }
+ },
+ {
+  "id": "tortilla",
+  "name": "Flour tortilla",
+  "aliases": [
+   "flour tortilla",
+   "psenicna tortilja",
+   "pšenična tortilja",
+   "tortilja",
+   "tortilje",
+   "tortilla",
+   "tortillas",
+   "wrap tortilja"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 tortilla",
+   "grams": 72.0,
+   "source": "USDA SR Legacy food_portion (1 tortilla (approx 10\" dia) = 72 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 306.0,
+   "carbs": 49.38,
+   "sugars": 3.71,
+   "freeSugars": null,
+   "fiber": 3.5,
+   "fat": 7.99,
+   "satFat": 2.92,
+   "protein": 8.2,
+   "sodiumMg": 736.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 32.0
+  },
+  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+  "gi": 30,
+  "giSource": "Atkinson 2008 (PMC2584181) Suppl. Table A1 (healthy subjects) row 1845: Wheat tortilla (Mexico), 30 on the glucose scale (43 ± 7 on the bread scale), 8 subjects, single test; the 2021 edition lists it in Suppl. Table 2 because of the small number; no white flour wrap was tested",
+  "color": "#eedcb0",
+  "usdaFdcId": 175037,
+  "usdaDescription": "Tortillas, ready-to-bake or -fry, flour, refrigerated",
+  "usdaDataset": "SR Legacy",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA record: flour tortilla, refrigerated; 1 tortilla (10 inch) = 72 g. Free sugars null: no added-sugar split.",
+  "choose": {
+   "k": "bread",
+   "ask": "Which bread?",
+   "words": [
+    "bread",
+    "kruh",
+    "kruha"
+   ],
+   "opts": [
+    {
+     "k": "bread-white",
+     "chip": "White"
+    },
+    {
+     "k": "bread-wholemeal",
+     "chip": "Wholemeal"
+    },
+    {
+     "k": "bread-rye",
+     "chip": "Rye"
+    },
+    {
+     "k": "bread-french",
+     "chip": "Baguette"
+    },
+    {
+     "k": "pita-bread",
+     "chip": "Pita"
+    },
+    {
+     "k": "tortilla",
+     "chip": "Tortilla"
+    },
+    {
+     "k": "bread-white.roll",
+     "chip": "Roll"
     }
    ]
   }

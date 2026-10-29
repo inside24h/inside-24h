@@ -125,9 +125,10 @@ describe('the parser never silently changes what was typed (prelaunch QA 2026-10
     expect(read('lemon')).toBe(''); // not lemonade: the list still offers it, the person picks
   });
   it('words we have no food for are shown, as typed', () => {
-    expect(read('kava sa šlagom')).toBe('Espresso [30 ml]');
-    expect(leftOutNote('kava sa šlagom')).toBe('Not in our database yet: “šlagom” — left out.');
-    expect(leftOutNote('coffee with whipped cream')).toBe('Not in our database yet: “whipped cream” — left out.');
+    // round 2 (2026-10-29): coffee with whipped cream is now a food of its own (espresso + USDA whipped cream)
+    expect(read('kava sa šlagom')).toBe('Espresso with whipped cream [1 cup]');
+    expect(leftOutNote('kava sa šlagom')).toBeNull();
+    expect(leftOutNote('coffee with whipped cream')).toBeNull(); // round 2: an exact name of the new espresso variant
     expect(leftOutNote('pizza and something')).toBe('Not in our database yet: “something” — left out.');
     expect(leftOutNote('cola')).toBeNull();
     expect(leftOutNote('ćevapi s lukom')).toBeNull(); // onion is a food: it is counted

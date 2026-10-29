@@ -107,3 +107,32 @@ candy → Which sweets? (gummy candy first, chocolate, cookies, cake, ice cream)
 - GI of the new carbohydrate foods (pretzel, muffin, cinnamon roll, nectar, candy, cheese croissant, tea biscuits,
   wafers, potato salad) is left null, not guessed: not yet read from the Atkinson 2008/2021 supplementary tables
   (allow-list with this reason in variants.test.ts NO_GI). Pita bread has its GI (68, A1 row 295).
+
+## DONE in round 3 (2026-10-29, coordinator: GIs, the rest of the list, names and aliases)
+**GI filled from the tables** (rows read in Atkinson 2021 Suppl. Table 1, ISO method, and 2008 Suppl. Table A1; text in
+`giSource`, keys in build_fooddb.py GI_SUPP): soft pretzel 80 (Ditsch, Germany), pretzel sticks 84, muffin 50 (blueberry),
+cinnamon roll 66 (nearest: hot cross bun with dried fruit), gummy candy 76, tea biscuits 40 (Rich Tea UK), cream wafers 61
+(Tronky, hazelnut cream-filled), chocolate chip cookie 42, cheese croissant 56 (the croissant's value), rye roll 60 (rye
+breads mean), breaded chicken 46 (chicken nuggets, nearest), oat milk 69 (Vitasoy), cranberry juice drink 59, carrot
+juice 43, flour tortilla 30 (the kebab wrap's row).
+**Still null, with the reason in variants.test.ts NO_GI** (no test of the food in either edition): nectars (only a grape
+nectar was tested), potato salad, crepes (and with jam / chocolate spread), mulled wine and dark/wheat beer (wine and beer
+have no GI here), lactose-free milk, soy yogurt (only sweetened flavored ones tested), fish sticks, pickled beetroot.
+
+**New foods (13)**: Oat milk (Oatly EU label via Open Food Facts, level B; the USDA rice drink only carries water and
+density), Emmental cheese (USDA Swiss), Trappist cheese (USDA port de salut; "trapist" moved from gouda), Cream cheese,
+Brie cheese (+ Camembert), Cranberry juice drink, Carrot juice, Sea bass (orada/sea bream as proxy), Shrimp (škampi too),
+Fish sticks, Rocket salad (dressing builder), Pickled beetroot (cikla), Flour tortilla.
+**New variants (12)**: Crepes, Crepes with jam, Crepes with chocolate spread (our recipe from USDA flour, milk, egg, oil;
+"palačinke" moved from US pancakes to the crepe), Skyr (proxy: USDA nonfat Greek yogurt), Soy yogurt (USDA SILK plain),
+Lactose-free milk (proxy: 2% milk values), Mulled wine (our recipe: 200 ml red wine + 20 g sugar, all alcohol counted),
+Wheat beer (proxy), Americano and Espresso with whipped cream (recipes), Chicken thigh, Chicken wings, Roast veal.
+**Names and search**: squid → "Fried calamari", nectar → "Apricot nectar", cheeses without parentheses (deep links use the
+short name); misspellings and forms without diacritics added (zobeno mljeko, kajzerca, mufin, napolitanki, plasma keks,
+palacinke sa dzemom, kamember, linje, gluvajn …). Matching already ignores diacritics. "pohani" alone (also "pohani sir")
+and "oatly" (fuzzy-matched "oats") were removed.
+
+**Still not added**: hake as its own fish (no USDA record; oslić stays under cod), multivitamin and grapefruit juice
+(no GI and no shop-type record), iced coffee, flat white (= cappuccino), Sacher/Rapska/Bajadera, brownie, tortilla chips
+(the two corn-chip GI tests disagree, 42 vs 72), Smoki, protein bars, coleslaw/Caesar/Greek/shopska salads, sarma, gulaš,
+meatballs, pita pies, gluten-free bread, cedevita.
