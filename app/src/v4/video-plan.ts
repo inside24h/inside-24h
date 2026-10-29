@@ -341,7 +341,9 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
  *  minute (split into pages when long). A page's time counts only the words that are new on screen: a side whose
  *  chapter did not change since the last moment is not read again. Same length rules as the single video. */
 export interface CmpStopIn { min: number; a: string; b: string; titleA?: string; titleB?: string; linesA?: string[]; linesB?: string[] }
-export const CMP_PAGE = 40; // characters per side and page (2026-10-23 split screen: three short lines under each body)
+export const CMP_PAGE = 40;
+/** Longest time one card stays on one side of the comparison (round 8). */
+export const CMP_REPEAT_S = 6; // characters per side and page (2026-10-23 split screen: three short lines under each body)
 export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => number, fromU: (u: number) => number, fx: PlanFx = {}): Plan {
   const lim = LENGTH[cut];
   const fixed = INTRO_S[cut] + outroSeconds(cut, true) + END_HOLD_S;
@@ -351,7 +353,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
   if (!chosen.length) chosen = [{ min: 0, a: '', b: '' }];
   if (chosen[0].min !== 0) chosen.unshift({ ...chosen[0], min: 0 });
   const pagesOf = (list: CmpStopIn[]) => {
-    let pa = '', pb = '';
+    let pa = '', pb = '', ra = 0, rb = 0; // (round 8: seconds the same card has been on screen, per side)
     return list.map((s) => {
       // 2026-10-24 BEATS: each side shows its own short complete cards (video-beats.ts): one per moment in the
       // short cut, up to two in the long cut (the start: two in both)
@@ -359,9 +361,14 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
       const A = side(s.a, s.titleA, s.linesA), B = side(s.b, s.titleB, s.linesB);
       const n = Math.max(A.length, B.length, 1), out: { cap: string; capB: string; s: number }[] = [];
       for (let k = 0; k < n; k++) {
-        const ca = A[Math.min(k, A.length - 1)] ?? '', cb = B[Math.min(k, B.length - 1)] ?? '';
-        const fresh = (ca !== pa ? ca.length : 0) + (cb !== pb ? cb.length : 0);
-        out.push({ cap: ca, capB: cb, s: readChars(fresh, k === 0) });
+        let ca = A[Math.min(k, A.length - 1)] ?? '', cb = B[Math.min(k, B.length - 1)] ?? '';
+        const fresh = (ca !== pa ? ca.length : 0) + (cb !== pb ? cb.length : 0), s = readChars(fresh, k === 0);
+        // round 8 (critic: "We can't tell when you're safe to drive." stood ~15 s, next to "ALCOHOL GONE"): a card
+        // that would stay longer than CMP_REPEAT_S leaves; that side is quiet until it has something new
+        if (ca && ca === pa && ra + s > CMP_REPEAT_S) ca = '';
+        if (cb && cb === pb && rb + s > CMP_REPEAT_S) cb = '';
+        ra = ca && ca === pa ? ra + s : ca ? s : 0; rb = cb && cb === pb ? rb + s : cb ? s : 0;
+        out.push({ cap: ca, capB: cb, s });
         pa = ca; pb = cb;
       }
       return out;

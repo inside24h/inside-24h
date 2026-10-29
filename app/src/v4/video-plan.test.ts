@@ -3,7 +3,7 @@
 // as the app wrote them on 2026-10-22 (cola, water, espresso, 3 beers over 2 h, a whole pizza, kebab, a 3-item meal).
 import { describe, expect, it } from 'vitest';
 import { minutesFromU, uFromMinutes } from '../time';
-import { END_HOLD_S, FPS, LENGTH, mustCards, PEAK_BY_S, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_OK, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
+import { CMP_REPEAT_S, END_HOLD_S, FPS, LENGTH, mustCards, PEAK_BY_S, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_OK, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
 import { musicShape, HUSH_S } from './video-audio';
 import fixtures from './video-plan.fixtures.json';
 import { beatLines, BEAT_WORDS, DYNAMIC, goneRange, isCard, numberConflict, ruleCards } from './video-beats';
@@ -356,6 +356,30 @@ describe('round 7: the morning follows the range, cards name what is left, no te
       const p = planCompare(stops, 'long', uFromMinutes, minutesFromU, { peakMin: hit, verdict: true });
       const ans = p.cues.find((c) => c.kind === 'peak'), tease = p.cues.find((c) => c.kind === 'next' && c.data?.label === 'tease');
       if (ans && tease) expect(tease.t, `hit ${hit}`).toBeLessThan(ans.t);
+    }
+  });
+});
+
+// ROUND 8 (critique 2026-10-29 P1): no comparison card stays on one side for more than 6 s
+describe('round 8: comparison cards never linger', () => {
+  it('the same card stays on a side at most CMP_REPEAT_S (6 s), long and short', () => {
+    const beer = FIX['beer-3-over-2h'], cola = FIX.cola;
+    const at = (cs: StopIn[], m: number) => cs.filter((x) => x.min <= m).slice(-1)[0];
+    const stops = [0, 20, 90, 180, 360, 720, 1440].map((m) => ({ min: m, a: at(cola, m).text, b: 'We can’t tell when you’re safe to drive.', titleA: at(cola, m).title, titleB: 'Alcohol gone',
+      linesA: beatLines(at(cola, m)), linesB: ['We can’t tell when you’re safe to drive.'] }));
+    void beer;
+    for (const cut of ['long', 'short'] as const) {
+      const p = planCompare(stops, cut, uFromMinutes, minutesFromU, {});
+      // a card repeated over several pages (moments) adds up to at most CMP_REPEAT_S; one page alone may be longer
+      for (const key of ['text', 'textB'] as const) {
+        let run = 0, n = 0, prev = '';
+        for (const pg of p.pages) {
+          const c = pg[key] ?? '';
+          if (c && c === prev) { run += pg.s; n++; } else { run = c ? pg.s : 0; n = c ? 1 : 0; }
+          prev = c;
+          if (n >= 2) expect(run, `${cut} ${key}: ${c}`).toBeLessThanOrEqual(CMP_REPEAT_S + 0.05);
+        }
+      }
     }
   });
 });

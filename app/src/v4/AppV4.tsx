@@ -799,7 +799,8 @@ export default function AppV4() {
             const c = chap(x, at);
             const rest = lastCh === c ? lastLines.slice(seen) : [];
             seen = Math.min(lastLines.length, seen + perStop);
-            return { lines: rest.length ? rest : lastCh === c ? lastLines.slice(-1) : cards(x, c.min).slice(-1), title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
+            // (round 8: nothing new = this side is quiet, never the same card again under a later moment)
+            return { lines: rest.length ? rest : lastCh === c ? [''] : cards(x, c.min).slice(-1), title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
           });
         };
         // (the planner may leave moments out to fit: the words are then worked out again for the moments it kept, so
