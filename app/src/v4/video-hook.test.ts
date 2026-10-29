@@ -100,7 +100,8 @@ describe('round 5: plain numbers on the gauges', () => {
   it('blood sugar is said against your usual level, blood alcohol as BAC %, no mmol/L or ‰', () => {
     expect(sugarPlain(2.0)).toMatch(/^\+\d+–\d+ % over usual: a normal rise$/);
     expect(bacPlain(0.8)).toBe('BAC 0.05–0.12 % · may top US limit (0.08 %)'); // (only where the range reaches it)
-    expect(bacPlain(0.4)).toBe('BAC 0.024–0.060 % · may top EU limit (0.05 %)');
+    expect(bacPlain(0.4)).toBe('BAC 0.024–0.060 %'); // (round 7: one limit per video, the US one)
+    expect(bacPlain(1.2)).toBe('BAC 0.07–0.18 % · may top US limit (0.08 %)');
     expect(bacPlain(0.2)).toBe('BAC 0.012–0.030 %'); // (round 6: honest precision for one beer, never "0.01")
     const x = analyze(parseMeal('cola'), DEFAULT_PROFILE);
     for (const m of [20, 40, 75]) { const g = mainGauge(x.built, m, 0.2, 'mmol/L', true); if (g) expect(`${g.big} ${g.small}`).not.toMatch(/mmol|‰/); }

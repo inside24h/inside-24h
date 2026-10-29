@@ -74,3 +74,23 @@ describe('blood alcohol vs Mitchell 2014 (0.5 g/kg, fasted, 82.7 kg men)', () =>
     }
   });
 });
+
+// Round 7 (video critique 2026-10-25-b §3): ONE 500 ml beer (19.7 g), 70 kg man. Widmark/Mitchell extrapolation puts
+// the fasted peak at ≈ 0.24–0.28 g/L; this model gives 0.21 (fed 0.13). Raising beer F to 0.94 or ka to 2.0/h lifts
+// the single beer to 0.22–0.24 but also Mitchell's 0.5 g/kg beer to +8–13 % (outside the 5 % fit above); a
+// Michaelis–Menten elimination lifts the fed single beer to 0.19–0.21 (above Jones 0.13–0.18). With one dose-
+// independent structure the two cannot both hold, so the calibration stays on the measured data (Mitchell, A) and the
+// SHOWN range (−40 % / +50 %) must hold the extrapolated 0.22–0.30 g/L (alcohol.md A14).
+describe('one beer (500 ml, 19.7 g alcohol), 70 kg man', () => {
+  const man = { ...DEFAULT_PROFILE, sex: 'male' as const, weightKg: 70, heightCm: 175 };
+  const beer = (fed: boolean): Meal => { const g = 19.7, grams = (100 * g) / gPer100(5); return { grams, kcal: 7 * g, availCarbs: 0, fiber: 0, fat: 0, protein: 0, waterG: grams - g, caffeineMg: 0, alcoholG: g, gl: null, kind: 'liquid', alcoholKa: ALCOHOL_DRINKS.beer.ka, alcoholF: ALCOHOL_DRINKS.beer.F, fed }; };
+  it('fasted: the shown range holds the Widmark/Mitchell estimate of 0.22–0.30 g/L; the model value is 0.19–0.30', () => {
+    const pk = peakOf(beer(false), man).mgdl / 100, [lo, hi] = bacRange(pk);
+    expect(pk).toBeGreaterThanOrEqual(0.19); expect(pk).toBeLessThanOrEqual(0.30);
+    expect(lo).toBeLessThanOrEqual(0.22); expect(hi).toBeGreaterThanOrEqual(0.30);
+  });
+  it('fed: 0.11–0.20 g/L (Jones 1997 / Kechagias 1999: 0.13–0.18 at 0.30 g/kg after a meal)', () => {
+    const pk = peakOf(beer(true), man).mgdl / 100;
+    expect(pk).toBeGreaterThanOrEqual(0.11); expect(pk).toBeLessThanOrEqual(0.20);
+  });
+});

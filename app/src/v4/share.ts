@@ -1457,7 +1457,7 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   const sidesAB = [o.a, o.b], alcWon = ans ? !!sidesAB[ans.winner]?.alcohol : !!sidesAB[race.cue?.data?.side ?? 0]?.alcohol;
   void anyAlcohol;
   const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? commentLine(o.a.name, o.b.name)
-    : tease.age < 2.6 ? VIDEO_COPY.answerAt : alcWon && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
+    : tease.age < 2.6 && !(ans && dec.age >= 0) ? VIDEO_COPY.answerAt : alcWon && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
     : alcWon && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
   void sip;
   if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, S.rightLow - L, true, true); ctx.restore(); }

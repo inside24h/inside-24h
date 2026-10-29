@@ -228,10 +228,11 @@ function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKn
   const main = mainGauge(b, m, uFromMinutes(Math.min(1440, m)), unit, sugarKnown);
   // one number per thing (round 5, critic: "4.8 g sugar · Blood" next to "Blood sugar up"): no sugar where-gauge
   // while the blood sugar gauge is up
-  const w0 = whereGauge(b, m), where = w0 && main?.organ === 'pancreas' && /sugar/.test(w0.big) ? null : w0;
+  // (round 7: never a "g sugar" gauge in a video whose blood sugar curve is known, even in a dip or between peaks)
+  const w0 = whereGauge(b, m), where = w0 && (main?.organ === 'pancreas' || (sugarKnown && !!b.effects.glucoseMgDl)) && /sugar/.test(w0.big) ? null : w0;
   // the same number twice (blood alcohol in "Blood", caffeine in "Blood"): only the main gauge
   const num = (s: string) => /[\d.,–]+/.exec(s)?.[0] ?? s;
-  const same = !!main && !!where && ((/alcohol/.test(main.small) && where.big.includes('‰')) || num(where.big) === num(main.big));
+  const same = !!main && !!where && ((/alcohol|BAC/.test(main.small) && /‰|BAC/.test(where.big)) || num(where.big) === num(main.big));
   return [where && !same ? where : null, main].filter((g): g is NonNullable<typeof g> => !!g);
 }
 /** A pixel of a canvas of cw×ch drawn cover-cropped into a fw×fh frame (share.ts drawCover). */
@@ -780,23 +781,25 @@ export default function AppV4() {
         // chapter it is in; a moment with nothing new on either side is left out (the 24 h beat still ends the day)
         const perStop = shortVid ? 1 : 2;
         const sideCards = (x: Analysis, mins: number[]) => {
-          let prev = -1, seen = 0, lastLines: string[] = [];
+          let prev = -1, seen = 0, lastLines: string[] = [], lastCh: unknown = null;
           return mins.map((at) => {
             const fresh0 = x.built.story.chapters.filter((c) => c.min > prev && c.min <= at && (c.min === 0 || c.min >= 1));
             // the chapter of this moment first (what is true NOW), then the ones passed on the way; in a stomach race
             // the stomach chapter leads (it is the game's fact)
             const rank = (c: typeof fresh0[number]) => (gq?.kind === 'stomach' && /stomach/i.test(c.title) ? 0 : c === fresh0[fresh0.length - 1] ? 1 : 2);
-            const fresh = fresh0.map((c, i) => ({ c, i })).sort((p, q) => rank(p.c) - rank(q.c) || p.i - q.i).map((p) => p.c);
+            // round 7 (critic B2: a bedtime card showed at +24:00 under KIDNEYS): only the chapter of this moment (and,
+            // in a stomach race, the stomach chapter), so a card is never shown under another moment's title or time
+            const fresh = fresh0.map((c, i) => ({ c, i })).sort((p, q) => rank(p.c) - rank(q.c) || p.i - q.i).map((p) => p.c).filter((c) => rank(c) < 2);
             prev = at;
             if (fresh.length) {
               const lines = fresh.flatMap((c) => cards(x, c.min));
-              lastLines = lines; seen = Math.min(lines.length, perStop);
+              lastLines = lines; seen = Math.min(lines.length, perStop); lastCh = fresh0[fresh0.length - 1];
               return { lines, title: fresh[0].title, text: chapterText(fresh[0], fresh[0].min), isNew: true };
             }
-            const rest = lastLines.slice(seen);
-            seen = Math.min(lastLines.length, seen + perStop);
             const c = chap(x, at);
-            return { lines: rest.length ? rest : lastLines.slice(-1), title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
+            const rest = lastCh === c ? lastLines.slice(seen) : [];
+            seen = Math.min(lastLines.length, seen + perStop);
+            return { lines: rest.length ? rest : lastCh === c ? lastLines.slice(-1) : cards(x, c.min).slice(-1), title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
           });
         };
         // (the planner may leave moments out to fit: the words are then worked out again for the moments it kept, so

@@ -522,7 +522,9 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
   // the comparison's open loop at about half time: "Answer at 24 h." (§3.3)
   if (fx.compare && cut === 'long') {
     const st = cues.filter((c) => c.kind === 'stop' && c.t > tOut * 0.35 && c.t < tOut * 0.65).sort((x, y) => Math.abs(x.t - tOut * 0.5) - Math.abs(y.t - tOut * 0.5))[0];
-    if (st) cues.push({ t: st.t + 0.3, kind: 'next', data: { label: 'tease' } });
+    // (round 7, critic B4: "Answer at 24 h." came after "First out: Water." was shown): only before the answer
+    const ans = cues.find((c) => c.kind === 'peak');
+    if (st && !(ans && ans.t <= st.t + 0.3)) cues.push({ t: st.t + 0.3, kind: 'next', data: { label: 'tease' } });
   }
   // MICRO-BEATS (§2.3): no stretch of more than 3 s without something new on screen (camera turn, organ pulse,
   // gauge tick); never two within 2 s

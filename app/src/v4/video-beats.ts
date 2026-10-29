@@ -217,7 +217,8 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
       if (goneCard && /^(?:In a typical body like yours the alcohol is gone by now|Livers differ)/.test(s)) continue;
       // bedtime caffeine as a share of the dose ("About a fifth of it is still in you."; the mg are on the gauge)
       const left = /^About (\d+) mg of caffeine is (?:left|still) in you/.exec(s), fw = left && ctx.caffeineMg ? fractionWord(Number(left[1]) / ctx.caffeineMg) : null;
-      if (fw) { const c = `About ${fw} of it is still in you.`; push([words(c) <= BEAT_WORDS ? c : `About ${fw} is still in you.`]); continue; }
+      // (round 7, critic B2: "About a third is still in you." read as a third of the SUGAR: the card names it)
+      if (fw) { push([fw === 'almost all' ? 'Almost all the caffeine is still in you.' : `About ${fw} of the caffeine remains.`]); continue; }
       push(rule(s));
     }
     // the next morning with alcohol: the safety cards lead, together, with the time ("At 07:00, a breath test can be
@@ -243,6 +244,15 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
       const head = [...(first && isCard(first) ? [first] : lead ? [lead] : []), out[i]];
       const rest = out.filter((c, k) => k !== i && c !== lead && !(wake && first && /^Waking up at /.test(c)));
       out.splice(0, out.length, ...head, ...rest);
+      // round 7 (critic B1: "gone after about 4–14 h", then "At 07:00, the alcohol should be gone."): when the range's
+      // top end (the slowest liver, the heaviest reading) is after waking, the morning says so instead
+      if (wake && ctx.bacPeak && ctx.drinkAtMin !== undefined) {
+        const [hh, mm] = wake.split(':').map(Number), wakeH = ((((hh * 60 + mm - ctx.drinkAtMin) % 1440) + 1440) % 1440) / 60;
+        if (goneRange(ctx.bacPeak.g, ctx.bacPeak.min)[1] > wakeH) {
+          const keep = out.filter((c) => !/should be gone|hangover|^Don’t drive/.test(c));
+          out.splice(0, out.length, `At ${wake}, a breath test may be positive.`, 'Don’t drive.', ...keep);
+        }
+      }
     }
   }
   // (round 6: water is not "about as fast as water")

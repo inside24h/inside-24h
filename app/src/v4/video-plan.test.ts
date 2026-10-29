@@ -266,7 +266,7 @@ describe('round 5: every beat renders, payoffs, safety, no dead ends', () => {
     const own = p.pages.filter((x) => x.stop === bed.min);
     expect(own.length).toBeGreaterThan(0);
     expect(p.stops.filter((m) => m > Math.max(bed.min, 43) && m < 1440)).toEqual([]);
-    expect(bed.lines![0]).toMatch(/^About (?:almost all|a \w+|half|two thirds|three quarters) (?:of it )?is still in you\.$/);
+    expect(bed.lines![0]).toMatch(/^(?:About (?:a \w+|half|two thirds|three quarters) of the caffeine remains|Almost all the caffeine is still in you)\.$/);
   });
   it('long: the first impact lands by 15 s', () => {
     for (const [name, peak] of [['cola', 20], ['beer-3-over-2h', 129], ['espresso', 43]] as const) {
@@ -329,5 +329,33 @@ describe('round 6: honest alcohol, one number per thing', () => {
   });
   it('"Building blocks" is never in the video', () => {
     for (const cut of ['long', 'short'] as const) expect(plan(FIX['pizza-whole'], cut).pages.map((x) => x.text).join(' ')).not.toMatch(/Protein pieces|building blocks/i);
+  });
+});
+
+// ROUND 7 (third critique 2026-10-25-b)
+describe('round 7: the morning follows the range, cards name what is left, no tease after its answer', () => {
+  const morning = { min: 720, title: 'Next morning', text: '07:00, waking up. The alcohol should be gone, but a hangover can still make you drive worse, even at 0 ‰.' };
+  it('the morning line follows the "gone" range across drink times and amounts', () => {
+    for (const drinkAt of [17, 19, 21, 22].map((h) => h * 60)) for (const [g, pm] of [[0.2, 45], [0.5, 80], [0.8, 129], [1.2, 150]] as const) {
+      const lines = beatLines(morning, { drinkAtMin: drinkAt, bacPeak: { g, min: pm }, alcoholG: 60 });
+      const wakeH = ((7 * 60 - drinkAt + 1440) % 1440) / 60, [, hi] = goneRange(g, pm);
+      const all = lines.join(' ');
+      if (hi > wakeH) { expect(lines[0], `${drinkAt} ${g}`).toBe('At 07:00, a breath test may be positive.'); expect(all).not.toMatch(/should be gone/); }
+      else expect(all).toMatch(/should be gone/);
+      expect(all).toMatch(/drive/); // a driving warning in every case
+    }
+  });
+  it('every "still in you" card names the substance', () => {
+    for (const [name, cs] of Object.entries(FIX)) for (const c of cs) for (const card of beatLines(c, { name, caffeineMg: name === 'cola' ? 32 : 63, drinkAtMin: 1320 }))
+      if (/still in you|remains/i.test(card)) expect(card, card).toMatch(/caffeine|alcohol|fiber|sugar/i);
+  });
+  it('comparison: "Answer at 24 h." never comes after the answer', () => {
+    const ch = FIX.cola;
+    const stops = [0, 20, 66, 90, 360, 720, 1440].map((m) => { const c = ch.filter((x) => x.min <= m).slice(-1)[0]; return { min: m, a: c.text, b: c.text, titleA: c.title, titleB: c.title }; });
+    for (const hit of [20, 66, 360, 720]) {
+      const p = planCompare(stops, 'long', uFromMinutes, minutesFromU, { peakMin: hit, verdict: true });
+      const ans = p.cues.find((c) => c.kind === 'peak'), tease = p.cues.find((c) => c.kind === 'next' && c.data?.label === 'tease');
+      if (ans && tease) expect(tease.t, `hit ${hit}`).toBeLessThan(ans.t);
+    }
   });
 });

@@ -275,3 +275,40 @@ Backup: `backups/20261025-112241-video7/`. Ništa nije commitano (runda 5 = f7bc
 - `bacRange` jednog piva (0,01–0,03 %) je na donjem rubu Widmarka (critic očekuje 0,02–0,04 % natašte). Model za taj slučaj računa s hranom; podatke/model nisam mijenjao.
 - Na compare vodi kartica "Your small intestine absorbs it within minutes." se još ponavlja na 2 momenta (generički model vode ima malo poglavlja).
 - P2: donjih 25 % kadra, a naziv pizze na end cardu je duži od onog u hooku.
+
+---
+
+# Runda 7 (2026-10-29): treća kritika (video-critique-2026-10-25-b.md)
+
+Backup: `backups/20261025-153639-video8/`. Ništa nije commitano (runda 6 = a28ad82).
+
+1. **B1 jutro iz raspona.** Kad gornja granica raspona "gone" (`goneRange`, ista kao mjerač) padne nakon buđenja, jutro kaže "At 07:00, a breath test may be positive." / "Don't drive." umjesto "should be gone".
+   - Pivo 19:00 (4–14 h) sada daje breath test. Jedno pivo (1–4 h) i dalje kaže "should be gone" + "Don't drive after drinking.".
+   - Test: 4 vremena pića × 4 doze.
+2. **B2 "still in you".** Kartica imenuje tvar: "About a third of the caffeine remains." / "Almost all the caffeine is still in you.".
+   - U compareu svaka strana pokazuje samo poglavlje svog momenta (u utrci želuca i poglavlje želuca), pa nijedna kartica više ne stoji pod tuđim naslovom ili satom. Bedtime kartica više nije na +24:00.
+   - Test: svaka "still in you/remains" kartica u svih 7 slučajeva imenuje tvar.
+3. **B3 jedna jedinica i jedna granica.**
+   - BAC % svuda u videu; i where-mjerač ("alcohol ‰" postaje "BAC …%").
+   - Samo US granica (0.08 %), a EU anchor je uklonjen.
+   - Dupli BAC mjerač je skriven.
+4. **B4 teaser nakon odgovora.** "Answer at 24 h." više se ne planira ni ne crta nakon odgovora. Test za 4 trenutka odgovora.
+5. **Partials.**
+   - Gram-mjerači šećera se nikad ne prikazuju kad je krivulja šećera poznata (ni u dipu).
+   - +24:00: mrtvih zona nema ni u jednom od 16 videa (pojas tijela, prag 4, ≥ 3 s).
+6. **Kalibracija jednog piva:** NIJE promijenjena. Detalji su u `research/alcohol.md` A14.
+   - F 0,94 ili ka 2,0/h podižu jedno pivo na 0,22–0,24 g/L, ali Mitchellovo pivo tada odstupa +8,6 % odnosno +13 % (fit tolerancija je 5 %, a F je izmjeren kao 0,90 ± 0,02).
+   - Michaelis–Menten diže fed na 0,19–0,21 (Jones mjeri 0,13–0,18).
+   - U ovom modelu omjer jedno pivo / Mitchellovo pivo je fiksan (≈ 0,40).
+   - Novi test: natašte je model 0,19–0,30 g/L, a prikazani raspon (0,13–0,31) pokriva 0,22–0,30; fed je 0,11–0,20. Odluku ostavljam vlasniku.
+
+## Provjera runde 7
+- 16 videa → `C:\claudework\video-samples\2026-10-25-v7\`. Sva su 1080×1920, 30 fps, AAC, bez crnih frameova. Long traju 62,3–73,3 s, short 23,4–28,8 s.
+- Thumbnaili imaju cijeli hook.
+- Mrtvih zona: 0 (nijedna ≥ 3 s ni na end cardu).
+- Glasnoća: −14,1 do −14,3 LUFS, TP −1,4 do −2,1 dBTP, LRA 3,2–4,0 LU.
+- tsc je čist, vitest 694/694, oba builda prolaze (split zadnji). Line endings su očuvani.
+
+## Otvoreno
+- Kalibracija jednog piva natašte (vidi gore): treba odluka vlasnika ili novi izvor podataka.
+- Na compare espresso-pivo long beer strana 2–3 puta ponovi "We can't tell when you're safe to drive." (isto poglavlje, nema novog teksta).

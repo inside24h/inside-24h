@@ -94,11 +94,12 @@ export function sugarPct(g: number): string {
   const [lo, hi] = glucoseRangeText(g).replace('+', '').split('–').map(Number);
   return `+${Math.round((lo / USUAL_MMOL) * 100)}–${Math.round((hi / USUAL_MMOL) * 100)} %`;
 }
-export function bacPlain(gPerL: number): string {
+export function bacPlain(gPerL: number, range?: [number, number]): string {
   // round 6: honest precision (one beer: "0.012–0.030 %", never a rounded "0.01–0.03" that reads as zero), and an
   // anchor only where the range reaches it
-  const [lo, hi] = bacRange(gPerL).map((x) => x / 10), d = lo < 0.03 ? 3 : 2;
-  const anchor = lo >= 0.08 ? ' · over US limit (0.08 %)' : hi >= 0.08 ? ' · may top US limit (0.08 %)' : hi >= 0.05 ? ' · may top EU limit (0.05 %)' : '';
+  const [lo, hi] = (range ?? bacRange(gPerL)).map((x) => x / 10), d = lo < 0.03 ? 3 : 2;
+  // (round 7, critic B3: the anchor switched from US to EU mid-video: one limit, the US one, as the UI is US English)
+  const anchor = lo >= 0.08 ? ' · over US limit (0.08 %)' : hi >= 0.08 ? ' · may top US limit (0.08 %)' : '';
   return `BAC ${lo.toFixed(d)}–${hi.toFixed(d)} %${anchor}`;
 }
 /** Where words for the gauge (round 5: "146 ml · Blood" said nothing). */
@@ -114,7 +115,9 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
   if (!top || !b.route) return null;
   const v = top[1].amount;
   // everyday words: fructose and glucose are "sugar" on the video (one word anyone knows)
-  const big = (top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? b.route.unit}`).replace(/\b(?:fructose|glucose)\b/g, 'sugar');
+  const big = (top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? b.route.unit}`).replace(/\b(?:fructose|glucose)\b/g, 'sugar')
+    // (round 7: one unit in the video, BAC %, never ‰ next to it)
+    .replace(/alcohol ([\d.]+)–([\d.]+) ‰/, (_m, a: string, c: string) => bacPlain(0, [Number(a), Number(c)]).replace(/ · .*$/, ''));
   // the bladder number is the urine made in the last 3 h (routes.ts recent()); over a bladderful it says so
   // (critic: "857 ml in the bladder" is not possible: people pee before that)
   const small = top[0] === 'bladder' ? (v > 500 ? 'Made in 3 h: more than one pee' : 'Urine made in the last 3 h') : WHERE_SMALL[top[0]] ?? SEG_LABEL[top[0]];

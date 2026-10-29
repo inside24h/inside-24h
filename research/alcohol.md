@@ -189,3 +189,16 @@ One-compartment Widmark with first-order absorption and zero-order elimination (
 7. Primary papers for: coffee/caffeine and BAC, Penning 2010 hangover, WHO Europe 2026 pregnancy PDF, NIAAA page, Maughan lager ABV.
 8. Women Life-quality rule: Zhao reports women RR 1.22 for drinkers overall, but the intake band is not given in the abstract; breast-cancer risk (L11) is large relative risk but small absolute; decide with Opus whether to add a sex-specific penalty.
 9. Whether to show the J-shaped HDL/CHD story at all (Carr 2026 says unsettled).
+
+
+## A14 — One beer, fasted: calibration check (2026-10-29, video critique 2026-10-25-b §3)
+
+- **Question:** one 500 ml beer (19.7 g alcohol), 70 kg man, fasted. The model peak is **0.21 g/L** (fed 0.13). Widmark (C₀ 0.36 g/L minus elimination during absorption) and Mitchell 2014 scaled to this dose (Model B) give **≈ 0.24–0.28 g/L**.
+- **Tried (probe, vite-node), same model otherwise:**
+  - beer F 0.90 → **0.94**: single beer 0.224, but Mitchell 0.5 g/kg beer 54.6 mg/dl (**+8.6 %**; fit tolerance 5 %; F was *measured* 0.90 ± 0.02 in the same study).
+  - beer ka 1.6 → **2.0/h**: single beer 0.243, Mitchell 56.8 (**+13 %**), Tmax 53 vs 62 min.
+  - **Michaelis–Menten elimination** (Km 0.05–0.10 g/L, rate = β at 0.5 g/L): single beer 0.24–0.26, but the FED single beer rises to **0.19–0.21** (Jones/Kechagias measured 0.13–0.18), and Mitchell +6–8 %.
+- **Why they cannot both hold:** in this model the single-beer / Mitchell-beer peak ratio is fixed at ≈ 0.40 for any ka and F (elimination during absorption is linear in time). A higher small-dose peak needs a dose-dependent mechanism. The known one in the literature, gastric first-pass metabolism, works the other way: it is relatively larger at small doses. Model B itself is flagged above as "probably overestimates the peak" at small doses.
+- **Decision (C):** keep the fit to the measured data (Mitchell, A; Jones, A). The single-beer centre stays 0.21 g/L. The SHOWN range (−40 %/+50 %: **0.13–0.31 g/L = BAC 0.013–0.031 %**) holds the extrapolated 0.22–0.30 g/L, and the fed value stays inside Jones.
+- **Test:** `alcoholMitchell.test.ts`, "one beer". Fasted model 0.19–0.30 g/L with the range covering 0.22–0.30; fed 0.11–0.20.
+- **Open for the owner:** if a direct measurement of ~20 g beer fasted becomes available (e.g. a dose-response study with 0.25–0.3 g/kg beer), refit with a dose-dependent term.
