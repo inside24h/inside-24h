@@ -6327,6 +6327,8 @@
     "name": "Bread roll",
     "words": [
      "kifla",
+     "peciva",
+     "pecivo",
      "zemicka"
     ],
     "aliases": [
@@ -6334,6 +6336,8 @@
      "bun",
      "kifla",
      "kifle",
+     "peciva",
+     "pecivo",
      "roll",
      "zemicka",
      "zemička"
@@ -6381,7 +6385,32 @@
      }
     ],
     "range": null,
-    "overrides": null
+    "overrides": null,
+    "choose": {
+     "k": "pastry",
+     "ask": "Which roll or pastry?",
+     "words": [
+      "pastries",
+      "pastry",
+      "peciva",
+      "pecivo",
+      "pecivom"
+     ],
+     "opts": [
+      {
+       "k": "bread-white.roll",
+       "chip": "Roll"
+      },
+      {
+       "k": "croissant",
+       "chip": "Croissant"
+      },
+      {
+       "k": "doughnut",
+       "chip": "Doughnut"
+      }
+     ]
+    }
    }
   ],
   "choose": {
@@ -8927,7 +8956,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "snacks",
+   "ask": "Which snack?",
+   "words": [
+    "grickalica",
+    "grickalice",
+    "snack",
+    "snacks"
+   ],
+   "opts": [
+    {
+     "k": "potato-chips",
+     "chip": "Chips"
+    },
+    {
+     "k": "popcorn",
+     "chip": "Popcorn"
+    },
+    {
+     "k": "crackers",
+     "chip": "Crackers"
+    },
+    {
+     "k": "rice-cakes",
+     "chip": "Rice cakes"
+    }
+   ]
+  }
  },
  {
   "id": "pancake",
@@ -8983,6 +9040,7 @@
    "chicken",
    "chicken breast",
    "chicken breast (roasted)",
+   "meat",
    "pile",
    "pileca prsa",
    "pilece prsa",
@@ -9023,7 +9081,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "meat",
+   "ask": "Which meat?",
+   "words": [
+    "meat",
+    "mesa",
+    "meso",
+    "mesom"
+   ],
+   "opts": [
+    {
+     "k": "chicken-breast",
+     "chip": "Chicken"
+    },
+    {
+     "k": "beef-steak",
+     "chip": "Beef"
+    },
+    {
+     "k": "pork-chop",
+     "chip": "Pork"
+    },
+    {
+     "k": "lamb-roast",
+     "chip": "Lamb"
+    }
+   ]
+  }
  },
  {
   "id": "beef-steak",
@@ -9073,7 +9159,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "meat",
+   "ask": "Which meat?",
+   "words": [
+    "meat",
+    "mesa",
+    "meso",
+    "mesom"
+   ],
+   "opts": [
+    {
+     "k": "chicken-breast",
+     "chip": "Chicken"
+    },
+    {
+     "k": "beef-steak",
+     "chip": "Beef"
+    },
+    {
+     "k": "pork-chop",
+     "chip": "Pork"
+    },
+    {
+     "k": "lamb-roast",
+     "chip": "Lamb"
+    }
+   ]
+  }
  },
  {
   "id": "cevapi",
@@ -9186,6 +9300,8 @@
   "name": "Pork chop / loin (roasted)",
   "aliases": [
    "kotlet",
+   "mesa",
+   "meso",
    "pork",
    "pork chop",
    "pork chop / loin (roasted)",
@@ -9227,7 +9343,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "meat",
+   "ask": "Which meat?",
+   "words": [
+    "meat",
+    "mesa",
+    "meso",
+    "mesom"
+   ],
+   "opts": [
+    {
+     "k": "chicken-breast",
+     "chip": "Chicken"
+    },
+    {
+     "k": "beef-steak",
+     "chip": "Beef"
+    },
+    {
+     "k": "pork-chop",
+     "chip": "Pork"
+    },
+    {
+     "k": "lamb-roast",
+     "chip": "Lamb"
+    }
+   ]
+  }
  },
  {
   "id": "lamb-roast",
@@ -9273,7 +9417,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "meat",
+   "ask": "Which meat?",
+   "words": [
+    "meat",
+    "mesa",
+    "meso",
+    "mesom"
+   ],
+   "opts": [
+    {
+     "k": "chicken-breast",
+     "chip": "Chicken"
+    },
+    {
+     "k": "beef-steak",
+     "chip": "Beef"
+    },
+    {
+     "k": "pork-chop",
+     "chip": "Pork"
+    },
+    {
+     "k": "lamb-roast",
+     "chip": "Lamb"
+    }
+   ]
+  }
  },
  {
   "id": "tuna-canned",
@@ -10872,6 +11044,30 @@
     }
    ],
    "combinations": 16
+  },
+  "choose": {
+   "k": "salad",
+   "ask": "Which salad?",
+   "words": [
+    "salad",
+    "salata",
+    "salate",
+    "salatu"
+   ],
+   "opts": [
+    {
+     "k": "salad-lettuce",
+     "chip": "Green"
+    },
+    {
+     "k": "cabbage",
+     "chip": "Cabbage"
+    },
+    {
+     "k": "sauerkraut",
+     "chip": "Sauerkraut"
+    }
+   ]
   }
  },
  {
@@ -11186,6 +11382,30 @@
     }
    ],
    "combinations": 16
+  },
+  "choose": {
+   "k": "salad",
+   "ask": "Which salad?",
+   "words": [
+    "salad",
+    "salata",
+    "salate",
+    "salatu"
+   ],
+   "opts": [
+    {
+     "k": "salad-lettuce",
+     "chip": "Green"
+    },
+    {
+     "k": "cabbage",
+     "chip": "Cabbage"
+    },
+    {
+     "k": "sauerkraut",
+     "chip": "Sauerkraut"
+    }
+   ]
   }
  },
  {
@@ -11230,7 +11450,31 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "salad",
+   "ask": "Which salad?",
+   "words": [
+    "salad",
+    "salata",
+    "salate",
+    "salatu"
+   ],
+   "opts": [
+    {
+     "k": "salad-lettuce",
+     "chip": "Green"
+    },
+    {
+     "k": "cabbage",
+     "chip": "Cabbage"
+    },
+    {
+     "k": "sauerkraut",
+     "chip": "Sauerkraut"
+    }
+   ]
+  }
  },
  {
   "id": "tomato",
@@ -14295,7 +14539,9 @@
   "aliases": [
    "croissant",
    "kroasan",
-   "kroasani"
+   "kroasani",
+   "pastries",
+   "pastry"
   ],
   "kind": "solid",
   "serving": {
@@ -14330,7 +14576,32 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Contains added sugar in dough but USDA gives no split; null."
+  "notes": "Contains added sugar in dough but USDA gives no split; null.",
+  "choose": {
+   "k": "pastry",
+   "ask": "Which roll or pastry?",
+   "words": [
+    "pastries",
+    "pastry",
+    "peciva",
+    "pecivo",
+    "pecivom"
+   ],
+   "opts": [
+    {
+     "k": "bread-white.roll",
+     "chip": "Roll"
+    },
+    {
+     "k": "croissant",
+     "chip": "Croissant"
+    },
+    {
+     "k": "doughnut",
+     "chip": "Doughnut"
+    }
+   ]
+  }
  },
  {
   "id": "cake-sponge",
@@ -14663,7 +14934,32 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "pastry",
+   "ask": "Which roll or pastry?",
+   "words": [
+    "pastries",
+    "pastry",
+    "peciva",
+    "pecivo",
+    "pecivom"
+   ],
+   "opts": [
+    {
+     "k": "bread-white.roll",
+     "chip": "Roll"
+    },
+    {
+     "k": "croissant",
+     "chip": "Croissant"
+    },
+    {
+     "k": "doughnut",
+     "chip": "Doughnut"
+    }
+   ]
+  }
  },
  {
   "id": "honey",
@@ -14814,6 +15110,8 @@
    "grickalice",
    "potato chips",
    "potato chips (crisps)",
+   "snack",
+   "snacks",
    "čips"
   ],
   "kind": "solid",
@@ -14849,7 +15147,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "Free sugars none: plain salted crisps are potato, oil and salt (no added sugars), the same rule as fries."
+  "notes": "Free sugars none: plain salted crisps are potato, oil and salt (no added sugars), the same rule as fries.",
+  "choose": {
+   "k": "snacks",
+   "ask": "Which snack?",
+   "words": [
+    "grickalica",
+    "grickalice",
+    "snack",
+    "snacks"
+   ],
+   "opts": [
+    {
+     "k": "potato-chips",
+     "chip": "Chips"
+    },
+    {
+     "k": "popcorn",
+     "chip": "Popcorn"
+    },
+    {
+     "k": "crackers",
+     "chip": "Crackers"
+    },
+    {
+     "k": "rice-cakes",
+     "chip": "Rice cakes"
+    }
+   ]
+  }
  },
  {
   "id": "popcorn",
@@ -14893,7 +15219,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": ""
+  "notes": "",
+  "choose": {
+   "k": "snacks",
+   "ask": "Which snack?",
+   "words": [
+    "grickalica",
+    "grickalice",
+    "snack",
+    "snacks"
+   ],
+   "opts": [
+    {
+     "k": "potato-chips",
+     "chip": "Chips"
+    },
+    {
+     "k": "popcorn",
+     "chip": "Popcorn"
+    },
+    {
+     "k": "crackers",
+     "chip": "Crackers"
+    },
+    {
+     "k": "rice-cakes",
+     "chip": "Rice cakes"
+    }
+   ]
+  }
  },
  {
   "id": "rice-cakes",
@@ -14938,7 +15292,35 @@
   "usdaDataset": "SR Legacy",
   "recipe": null,
   "usdaProxy": false,
-  "notes": "GI is Table 1 'rice crackers/crisps' (87), a different product; shown as nearest class."
+  "notes": "GI is Table 1 'rice crackers/crisps' (87), a different product; shown as nearest class.",
+  "choose": {
+   "k": "snacks",
+   "ask": "Which snack?",
+   "words": [
+    "grickalica",
+    "grickalice",
+    "snack",
+    "snacks"
+   ],
+   "opts": [
+    {
+     "k": "potato-chips",
+     "chip": "Chips"
+    },
+    {
+     "k": "popcorn",
+     "chip": "Popcorn"
+    },
+    {
+     "k": "crackers",
+     "chip": "Crackers"
+    },
+    {
+     "k": "rice-cakes",
+     "chip": "Rice cakes"
+    }
+   ]
+  }
  },
  {
   "id": "hamburger",
@@ -15017,7 +15399,10 @@
        "gi": 66,
        "fdc": 170717,
        "food": "hamburger",
-       "words": [],
+       "words": [
+        "meat",
+        "mesom"
+       ],
        "aliases": [],
        "recipe": null,
        "src": [
@@ -15919,6 +16304,8 @@
        "food": null,
        "words": [
         "chicken",
+        "meat",
+        "mesom",
         "pileci",
         "piletinom"
        ],
@@ -16411,7 +16798,10 @@
        "gi": 75,
        "fdc": 170707,
        "food": "sandwich-ham",
-       "words": [],
+       "words": [
+        "meat",
+        "mesom"
+       ],
        "aliases": [],
        "recipe": null,
        "src": [

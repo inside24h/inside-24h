@@ -92,7 +92,7 @@ const GOLDEN: [string, [string, number][]][] = [
   ['maline', []], ['cockta', []], ['zobene pahuljice', []], ['oats', []], ['bijeli luk', []], ['bundeva', []],
   ['blitva', []], ['višnje', []], ['njoki', []], ['mljeveno meso', []],
   ['ovčji sir', []], ['marelice', []], ['smokve', []],
-  ['pecivo', []], ['leblebije', []],
+  ['leblebije', []], // 'pecivo' (owner 2026-10-29): now a roll that asks "Which roll or pastry?" (variants.test.ts)
   // 2026-10-18 (owner, VARIANTS-PLAN.md): these now have a food of their own (variant or builder), checked by kind
   // in variants.test.ts: pljeskavica (burger builder), kebab (builder), pureća šunka (turkey ham), goveđa juha (beef
   // noodle soup, closest record), macchiato (espresso + milk recipe). Data round 2 (2026-10-19): turska kava (filter

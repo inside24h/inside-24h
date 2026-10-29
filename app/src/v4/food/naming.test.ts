@@ -105,7 +105,8 @@ describe('search fixes found in the prelaunch QA', () => {
     expect(read('tuna sub')).toBe('Tuna sub [1 sandwich]');
     expect(read('cold-cut sub')).toBe('Cold-cut sub [1 sandwich]');
     expect(read('chicken')).toMatch(/^Chicken breast/); // one ingredient stays the plain food
-    expect(read('pecivo')).toBe(''); // ambiguous (roll or any pastry): stays not found, as decided in the 2026-10-17 audit
+    // ambiguous (roll or any pastry): not found in the 2026-10-17 audit; owner 2026-10-29: the roll, asking "Which roll or pastry?"
+    expect(read('pecivo')).toMatch(/^Bread roll \[1 roll\]$/);
   });
 });
 

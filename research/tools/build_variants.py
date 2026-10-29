@@ -361,17 +361,23 @@ def build_choosers(ctx):
             shared.setdefault(k, set()).add(e["id"])
     shared = {k: v for k, v in shared.items() if len(v) > 1}
     vkeys = {"%s.%s" % (b, v["v"]) for b, vs in S.VARS.items() for v in vs}
-    member = {}
+    member, vown = {}, {}
     for c in S.CHOOSE:
-        ids = set()
-        for k, chip in c["opts"]:
+        ids, owned = set(), set()
+        for k, chip, *flag in c["opts"]:
             if k not in ctx.by and k not in vkeys: fail("chooser %s: unknown option %s" % (c["k"], k))
             if len(chip) > 16 or HR.search(chip): fail("chooser %s: chip %r" % (c["k"], chip))
-            ids.add(k.split(".")[0])
+            # 2026-10-29: ("id.v", chip, "own") = this row belongs to that VARIANT (the roll: "Which roll or pastry?"),
+            # while its base food keeps its own row ("Which bread?", which may list the variant too)
+            if flag:
+                if flag != ["own"] or k not in vkeys: fail("chooser %s: %s %r (only a variant can be 'own')" % (c["k"], k, flag)); continue
+                if k in vown: fail("%s owns two choosers (%s, %s)" % (k, vown[k], c["k"]))
+                vown[k] = c["k"]; owned.add(k)
+            else: ids.add(k.split(".")[0])
         for i in ids:
             if i in member: fail("%s is in two choosers (%s, %s)" % (i, member[i], c["k"]))
             member[i] = c["k"]
-        c["_ids"] = ids
+        c["_ids"], c["_own"] = ids, owned
         c["_words"] = set(fold_words(B, c.get("words", [])))
     for w, ids in sorted(shared.items()):
         hit = [c for c in S.CHOOSE if ids <= c["_ids"]]
@@ -381,8 +387,9 @@ def build_choosers(ctx):
     out = {}
     for c in S.CHOOSE:
         if not c["_words"]: fail("chooser %s has no words" % c["k"])
-        grp = {"k": c["k"], "ask": c["ask"], "words": sorted(c["_words"]), "opts": [{"k": k, "chip": chip} for k, chip in c["opts"]]}
+        grp = {"k": c["k"], "ask": c["ask"], "words": sorted(c["_words"]), "opts": [{"k": o[0], "chip": o[1]} for o in c["opts"]]}
         for i in c["_ids"]: out[i] = grp
+        for k in c["_own"]: out[k] = grp
     return out
 
 
@@ -486,7 +493,10 @@ def attach(out, B):
         ctx.by[bid]["sizes"] = build_sizes(ctx, bid, sz)
     groups = build_choosers(ctx)
     for bid, grp in groups.items():
-        ctx.by[bid]["choose"] = grp
+        if "." in bid:  # a variant's own row (see build_choosers)
+            b, v = bid.split(".", 1)
+            next(x for x in ctx.by[b]["variants"] if x["v"] == v)["choose"] = grp
+        else: ctx.by[bid]["choose"] = grp
     check_aliases(ctx)
     bad = gate(out)
     nv = sum(len(e.get("variants") or []) for e in out)

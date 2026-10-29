@@ -49,6 +49,7 @@ def slim_variant(v):
          "color": v["color"], "proxy": v["usdaProxy"], "recipe": bool(v["recipe"]), "fdc": v["usdaFdcId"], "src": v["src"]}
     if v["serving"].get("assumed"): o["assumedServing"] = True
     if v.get("range"): o["range"] = v["range"]
+    if v.get("choose"): o["choose"] = v["choose"]  # 2026-10-29: a variant's own "Which ...?" row (the roll)
     return o
 
 

@@ -51,6 +51,63 @@ describe('search: builders, variants and add-ins stay ONE thing', () => {
   for (const [q, want] of GOLDEN) it(JSON.stringify(q), () => expect(key1(q)).toEqual(want));
 });
 
+// 2026-10-29: generic words ("pecivo", "meso", "salata", "grickalice") open a chooser of the database's own foods
+describe('generic words open a chooser of the foods the database has (2026-10-29)', () => {
+  const PASTRY = ['Roll', 'Croissant', 'Doughnut'], MEAT = ['Chicken', 'Beef', 'Pork', 'Lamb'];
+  const GEN: [string, string, string, string[]][] = [
+    ['pecivo', 'bread-white.roll', 'Which roll or pastry?', PASTRY],
+    ['2 peciva', 'bread-white.roll', 'Which roll or pastry?', PASTRY],
+    ['pastry', 'croissant', 'Which roll or pastry?', PASTRY],
+    ['meso', 'pork-chop', 'Which meat?', MEAT],
+    ['meat', 'chicken-breast', 'Which meat?', MEAT],
+    ['salata', 'salad-lettuce', 'Which salad?', ['Green', 'Cabbage', 'Sauerkraut']],
+    ['salad', 'salad-lettuce', 'Which salad?', ['Green', 'Cabbage', 'Sauerkraut']],
+    ['grickalice', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes']],
+    ['snacks', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes']],
+    ['riba', 'cod', 'Which fish?', ['White fish', 'Salmon', 'Sardines', 'Tuna']],
+    ['jogurt', 'yogurt-plain', 'Which yogurt?', ['Plain', 'Low-fat', 'Greek', 'Fruit']],
+  ];
+  for (const [q, key, ask, chips] of GEN) {
+    it(q, () => {
+      const [p, ...more] = parseMeal(q);
+      expect(more).toHaveLength(0);
+      expect(foodKey(p.food).split('~')[0]).toBe(key);
+      expect(p.ask).toBe(true);
+      const row = choiceRow(p.food)!;
+      expect(row.ask).toBe(ask);
+      expect(row.opts.map((o) => o.chip)).toEqual(chips);
+      expect(row.opts.filter((o) => o.on).map((o) => o.key)).toEqual([key]);
+    });
+  }
+  it('"2 peciva" counts two rolls', () => {
+    const [p] = parseMeal('2 peciva');
+    expect(p.grams).toBeCloseTo(2 * p.food.serving.grams, 0);
+  });
+  it('the roll is still in "Which bread?", and picking it there opens its own row', () => {
+    const [p] = parseMeal('kruh');
+    const roll = choiceRow(p.food)!.opts.find((o) => o.chip === 'Roll')!.food;
+    expect(foodKey(roll)).toBe('bread-white.roll');
+    expect(choiceRow(roll)!.ask).toBe('Which roll or pastry?');
+    expect(variantRow(roll)).toBeNull();
+    expect(choiceRow(FOOD_BY_ID['bread-white'])!.ask).toBe('Which bread?');
+  });
+  it('every pastry, meat, salad and snack option is a real food', () => {
+    for (const q of ['pecivo', 'meso', 'salata', 'grickalice']) for (const o of choiceRow(parseMeal(q)[0].food)!.opts) expect(foodFromKey(o.key), o.key).toBeDefined();
+  });
+  it('kinds with their own variants keep their row ("kolač", "pivo")', () => {
+    expect(choiceRow(parseMeal('kolač')[0].food)!.opts.length).toBeGreaterThan(1);
+    expect(choiceRow(parseMeal('pivo')[0].food)!.opts.length).toBeGreaterThan(1);
+  });
+  it('burek keeps its own fillings row', () => {
+    expect(choiceRow(parseMeal('burek')[0].food)!.ask).toBe('Which burek?');
+  });
+  it('"s mesom" after a hamburger, kebab or sub is its own meat, not a second piece', () => {
+    for (const q of ['hamburger s mesom', 'kebab s mesom', 'sendvič s mesom', 'kebab with meat']) expect(parseMeal(q), q).toHaveLength(1);
+    expect(foodKey(parseMeal('kebab s mesom')[0].food)).toBe(foodKey(parseMeal('kebab')[0].food));
+    expect(parseMeal('riža s mesom').map((p) => p.food.id)).toEqual(['rice-white', 'pork-chop']);
+  });
+});
+
 describe('"Which …?" choosers: a word that names several foods asks, and starts on the usual one', () => {
   const ASK: [string, string, string, string[]][] = [
     ['čaj', 'black-tea', 'Which tea?', ['Black', 'Green', 'Herbal', 'Iced']],
@@ -77,6 +134,8 @@ describe('"Which …?" choosers: a word that names several foods asks, and start
     });
   }
   it('a specific name does not ask ("zeleni čaj", "crno vino")', () => {
+    expect(parseMeal('kroasan')[0].ask).toBeUndefined();
+    expect(parseMeal('svinjski kotlet')[0].ask).toBeUndefined();
     expect(parseMeal('zeleni čaj')[0].ask).toBeUndefined();
     expect(parseMeal('crno vino')[0].ask).toBeUndefined();
   });

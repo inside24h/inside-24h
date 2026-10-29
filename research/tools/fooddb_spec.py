@@ -207,7 +207,7 @@ add("pancake", "Pancakes (US-style)", ["palačinke", "palacinke", "pancakes", "p
     note="PROXY for palačinke: a US fluffy pancake from recipe (baking powder, 4-inch); crêpes are thinner. Upper-bound rule (sugar in recipe).")
 
 # ---------------- MEAT / FISH ----------------
-add("chicken-breast", "Chicken breast (roasted)", ["piletina", "pileća prsa", "pilece prsa", "chicken breast", "chicken", "piletina prsa", "pile"], "solid",
+add("chicken-breast", "Chicken breast (roasted)", ["piletina", "pileća prsa", "pilece prsa", "chicken breast", "chicken", "piletina prsa", "pile", "meat"], "solid",
     "Chicken, broilers or fryers, breast, meat only, cooked, roasted", "#f0dcc0", "none", ('p', r'breast|half', "½ breast"))
 # audit 2026-10-17: serving was the USDA reference "3 oz" (85 g), not a steak. 200 g raw is our assumed restaurant
 # size; cooked weight from THIS record's USDA yield (1 lb raw with refuse → 306 g cooked, factor 0.675).
@@ -222,7 +222,7 @@ add("cevapi", "Ćevapi (grilled ground meat)", ["ćevapi (grilled minced meat)",
     ('g', 80, "5 pieces", "our assumption: 5 × 16 g cooked (see piece)"), proxy=True,
     piece=("piece", 16, "Sarajevo specification 10 pieces = 200-250 g raw (Wikipedia 'Ćevapi', ref. 38); × USDA raw→cooked factor 0.714"),
     note="PROXY: USDA has no ćevapi record. Ground beef 80/20 pan-broiled patty is the closest class (Sarajevo ćevapi are beef; Croatian ones often beef + pork or lamb). Sodium from EU ćevapčići labels (override).")
-add("pork-chop", "Pork chop / loin (roasted)", ["svinjetina", "svinjski kotlet", "kotlet", "pork", "svinjsko meso", "pork chop", "svinjski"], "solid",
+add("pork-chop", "Pork chop / loin (roasted)", ["svinjetina", "svinjski kotlet", "kotlet", "pork", "svinjsko meso", "pork chop", "svinjski", "meso", "mesa"], "solid",
     "Pork, fresh, loin, whole, separable lean and fat, cooked, roasted", "#d6a888", "none", ('p', r'chop|oz|slice', "1 chop"))
 add("lamb-roast", "Lamb (roasted)", ["janjetina", "janjeće", "janjece", "lamb", "janje"], "solid",
     174312, "#9a5a3a", "none", ('p', r'oz|cup|slice'))
@@ -404,7 +404,7 @@ add("ice-cream", "Ice cream (vanilla)", ["sladoled", "ice cream", "vanilla ice c
 # audit 2026-10-17: "biskvit" (= sponge cake in Croatian) removed from cookies
 add("biscuits", "Butter cookies", ["butter biscuits / cookies", "keksi", "cookies", "biscuits", "keks", "kolačići", "kolacici", "petit beurre"], "solid",
     "Cookies, butter, commercially prepared, enriched", "#e0b878", "upper", ('p', r'cookie|oz'))
-add("croissant", "Croissant", ["kroasan", "croissant", "kroasani"], "solid",
+add("croissant", "Croissant", ["kroasan", "croissant", "kroasani", "pastry", "pastries"], "solid",
     "Croissants, butter", "#e2b25e", "null", ('p', r'medium'), gi="t21_croissant", note="Contains added sugar in dough but USDA gives no split; null.")
 add("cake-sponge", "Sponge cake", ["torta", "kolač", "kolac", "biskvit torta", "cake", "sponge cake", "kolači"], "solid",
     "Cake, sponge, commercially prepared", "#f0d890", "upper", ('p', r'piece'), gi="a2_sponge")
@@ -417,7 +417,7 @@ add("sugar", "Sugar (white)", ["šećer", "secer", "sugar", "bijeli šećer", "k
     "Sugars, granulated", "#f8f8f4", "all", ('p', r'^tsp'), gi="sucrose")
 add("jam", "Jam / preserves", ["džem", "dzem", "marmelada", "jam", "preserves", "pekmez"], "semi",
     "Jams and preserves", "#a8283a", "all", ('p', r'tbsp'), gi="jam", note="GI is Table 1 'strawberry jam/jelly'.")
-add("potato-chips", "Potato chips", ["potato chips (crisps)", "čips", "cips", "chips", "crisps", "potato chips", "grickalice"], "solid",
+add("potato-chips", "Potato chips", ["potato chips (crisps)", "čips", "cips", "chips", "crisps", "potato chips", "grickalice", "snack", "snacks"], "solid",
     169677, "#e8c060", "none", ('p', r'oz|cup|10 chips'), gi="crisps",
     note="Free sugars none: plain salted crisps are potato, oil and salt (no added sugars), the same rule as fries.")
 add("popcorn", "Popcorn (air-popped)", ["kokice", "kokice zrnje", "popcorn"], "solid",
@@ -802,8 +802,8 @@ ask("cheese-cottage", "Which cottage cheese?", "Creamed")
 var("cheese-cottage", "lowfat", "Low-fat", "Low-fat cottage cheese", usda=172182, serving=('g', 105, "1 portion, 105 g", "our assumption: the same portion as the creamed cottage cheese"),
     words=["nemasni", "posni", "lowfat"], aliases=["nemasni svježi sir", "posni sir", "low-fat cottage cheese"], text="Low-fat cottage cheese: values from the USDA record for 2% milkfat cottage cheese.")
 ask("bread-white", "Which bread?", "Sliced")
-var("bread-white", "roll", "Roll", "Bread roll", usda=172793, serving=('p', r'hamburger', "1 roll"), gi="inherit", words=["kifla", "zemicka"],
-    aliases=["kifla", "kifle", "zemička", "zemicka", "bread roll", "roll", "bun"],
+var("bread-white", "roll", "Roll", "Bread roll", usda=172793, serving=('p', r'hamburger', "1 roll"), gi="inherit", words=["kifla", "zemicka", "pecivo", "peciva"],
+    aliases=["kifla", "kifle", "zemička", "zemicka", "bread roll", "roll", "bun", "pecivo", "peciva"],
     text="Bread roll: values from the USDA record for plain dinner rolls; 1 roll = 43 g (USDA size for a hamburger bun or large roll). A Croatian kifla is often bigger.")
 
 # ---------------- BUILDERS ("What's on it?") ----------------
@@ -898,7 +898,7 @@ SANDWICH_EXTRAS = lambda: [
 ]
 builder("hamburger", "What's on it?", [
     grp("type", "Burger", [
-        opt("hamburger", "Hamburger", "hamburger", "hamburger", on=True, level="A", src="Hamburger: USDA’s record for a McDonald’s hamburger, 95 g (with ketchup, pickle, onion and mustard)."),
+        opt("hamburger", "Hamburger", "hamburger", "hamburger", on=True, level="A", words=["mesom", "meat"], src="Hamburger: USDA’s record for a McDonald’s hamburger, 95 g (with ketchup, pickle, onion and mustard)."),
         opt("cheeseburger", "Cheeseburger", "cheeseburger", (170320, "null"), 119, level="A", aliases=["cheeseburger", "čizburger", "cizburger"],
             src="Cheeseburger: USDA’s record for a McDonald’s cheeseburger, 119 g.", **BGGI),
         opt("double", "Double", "double burger", (170720, "null"), 219, level="A", aliases=["big mac", "double burger", "dupli burger"],
@@ -930,7 +930,7 @@ builder("sandwich-ham", "What's on it?", [
     grp("type", "Sandwich", [
         # Data round 3: no whole sub was tested; the white roll carries nearly all the carbohydrate, so the subs count at
         # the white-bread GI (Table 1, 75). The base food "sandwich-ham" has the same key (the default needs no tap).
-        opt("sub", "Ham sub", "ham sub", "sandwich-ham", on=True, level="A", src="Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g.", **SUBGI),
+        opt("sub", "Ham sub", "ham sub", "sandwich-ham", on=True, level="A", words=["mesom", "meat"], src="Ham sub: USDA’s record for a 6-inch submarine sandwich with ham, lettuce and tomato on white bread, 184 g.", **SUBGI),
         opt("coldcut", "Cold-cut sub", "cold-cut sub", (170696, "null"), 196, level="A", aliases=["cold cut sandwich", "sendvič s narezom", "sendvic s narezom"],
             src="Cold-cut sub: USDA’s record for a 6-inch cold-cut submarine sandwich, 196 g.", **SUBGI),
         opt("tuna", "Tuna sub", "tuna sub", (170299, "null"), 237, level="A", aliases=["tuna sandwich", "sendvič s tunom", "sendvic s tunom", "sendvič sa tunjevinom"],
@@ -991,7 +991,7 @@ builder("kebab", "What's on it?", [
     # Result (default, 397 g): 192 kcal/100 g (Atwater), fat 8.8, protein 11.7 g/100 g: fat and protein inside the
     # study's mean ± SD; energy between the study's Atwater value (177) and its gross energy (226).
     grp("meat", "Meat", [
-        opt("chicken", "Chicken", "chicken", 173625, 150, rng=(60, 227), on=True, words=["piletinom", "pileci", "chicken"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DKM, url=DKMU,
+        opt("chicken", "Chicken", "chicken", 173625, 150, rng=(60, 227), on=True, words=["piletinom", "pileci", "chicken", "mesom", "meat"], aliases=["pileći kebab", "pileci kebab", "chicken kebab", "chicken doner"], cite=DKM, url=DKMU,
             src="Chicken: 150 g of meat (roasted chicken thigh with skin, USDA). Twenty döner kebabs bought and weighed in Italy averaged 402 g with 35–40% meat, about 150 g; a German TV test weighed 80–173 g of meat; USDA’s gyro uses 60 g. The study found skin in the döner meat and 8.6 g of fat per 100 g of kebab, which skinless thigh meat cannot reach, so we use thigh with skin."),
         opt("beef", "Beef/veal", "beef", 171797, 150, rng=(60, 227), words=["teletinom", "junetinom", "govedinom", "telecim", "beef"], aliases=["teleći kebab", "teleci kebab", "juneći kebab", "beef kebab", "beef doner"], cite=DKM, url=DKMU,
             src="Beef/veal: 150 g of meat; the closest USDA record is grilled ground beef 80/20 (German rules allow up to 60% minced meat in a döner). Weighed döner kebabs in Italy carried about 150 g of meat (35–40% of a 402 g kebab); measured portions run from 60 g (USDA gyro) to about 230 g."),
@@ -1056,6 +1056,10 @@ builder("burek", "What's in it?", [
 ], "Burek: cheese is a Croatian producer’s label; meat, spinach and potato are our recipes from USDA phyllo, filling and oil in the shares shown on Croatian and Bosnian labels. Real burek varies a lot (labels 247–316 kcal per 100 g).",
     ask="Which burek?", unit="piece", cite=BU, url=BUU)
 CHANGED_ON_PURPOSE["melon"] = "data round 2: giSource text says why row 1021 (65) wins over row 1022 (70); the GI value is unchanged"
+CHANGED_ON_PURPOSE["chicken-breast"] = "2026-10-29: alias 'meat' (opens 'Which meat?', chicken first in the US)"
+CHANGED_ON_PURPOSE["pork-chop"] = "2026-10-29: aliases 'meso', 'mesa' (open 'Which meat?', pork first in Croatia)"
+CHANGED_ON_PURPOSE["croissant"] = "2026-10-29: aliases 'pastry', 'pastries' (open 'Which roll or pastry?')"
+CHANGED_ON_PURPOSE["potato-chips"] = "2026-10-29: aliases 'snack', 'snacks' (open 'Which snack?')"
 CHANGED_ON_PURPOSE["bread-white"] = "alias 'tost' moved to the sandwich builder (Croatian 'tost' is a toasted ham-and-cheese sandwich)"
 CHANGED_ON_PURPOSE["burek"] = "aliases 'burek sa sirom', 'sirnica', 'sirna pita', 'mesni burek', 'burek s mesom' moved to the burek fillings (builder); data round 2: override text names the cheese filling and the per-100 g basis check"
 
@@ -1105,6 +1109,19 @@ chooser("pasta", "Which pasta?", [("pasta", "White"), ("pasta-wholewheat", "Whol
 chooser("potato", "Which potatoes?", [("potato-boiled", "Boiled"), ("potato-mashed", "Mashed"), ("fries", "Fries")], words=["krumpir", "potato", "potatoes", "krompir"])
 chooser("rice", "Which rice?", [("rice-white", "White"), ("rice-brown", "Brown")], words=["riža", "rice"])
 chooser("yogurt", "Which yogurt?", [("yogurt-plain", "Plain"), ("yogurt-lowfat", "Low-fat"), ("yogurt-greek", "Greek"), ("yogurt-fruit", "Fruit")], words=["jogurt", "yogurt", "yoghurt"])
+# 2026-10-29 (owner: a generic word offers its specific foods; research/improvements/chooser-gaps-2026-10-29.md lists
+# the common kinds the database does not have yet). "pecivo" is a roll first (audit 2026-10-17: a ~43-80 g roll,
+# not a croissant), so the roll VARIANT owns this row (third element "own") while it stays in "Which bread?" too.
+# Defaults: "meso" = pork (the meat Croatians eat most, FAO food balance sheets), "meat" = chicken (the US's most
+# eaten meat, USDA ERS); "snack(s)" = potato chips (as "grickalice" already was); "pastry" = croissant. Burek keeps
+# its own "Which burek?" (fillings) row. "s mesom" / "with meat" after a hamburger, kebab or sub is that food's own
+# (default) meat, not a second, separate piece of meat (words on the default option below).
+chooser("pastry", "Which roll or pastry?", [("bread-white.roll", "Roll", "own"), ("croissant", "Croissant"), ("doughnut", "Doughnut")],
+        words=["pecivo", "peciva", "pecivom", "pastry", "pastries"])
+chooser("meat", "Which meat?", [("chicken-breast", "Chicken"), ("beef-steak", "Beef"), ("pork-chop", "Pork"), ("lamb-roast", "Lamb")], words=["meso", "mesa", "mesom", "meat"])
+chooser("salad", "Which salad?", [("salad-lettuce", "Green"), ("cabbage", "Cabbage"), ("sauerkraut", "Sauerkraut")], words=["salata", "salatu", "salate", "salad"])
+chooser("snacks", "Which snack?", [("potato-chips", "Chips"), ("popcorn", "Popcorn"), ("crackers", "Crackers"), ("rice-cakes", "Rice cakes")],
+        words=["grickalice", "grickalica", "snack", "snacks"])
 chooser("nuts", "Which nuts?", [("almonds", "Almonds"), ("walnuts", "Walnuts"), ("hazelnuts", "Hazelnuts"), ("peanuts", "Peanuts")], words=["nuts", "orašasti plodovi"])
 
 

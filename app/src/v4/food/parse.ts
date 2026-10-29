@@ -20,6 +20,8 @@ export interface Variant {
   v: string; chip: string; name: string; words: string[]; aliases: string[]; kind: Food['kind']; serving: { label: string; grams: number };
   p: Per100; gi: number | null; color: string; proxy: boolean; recipe: boolean; fdc: number | null; src: FoodSource[];
   assumedServing?: boolean; range?: Record<string, [number, number]>;
+  /** a variant that a different "Which …?" row owns (2026-10-29: the roll is in "Which bread?" AND owns "Which roll or pastry?") */
+  choose?: Chooser;
 }
 /** Named amounts for "How much?": `mult` × the serving, or an absolute `ml` (beer 0.3 l). */
 export interface SizeOpt { k: string; label: string; mult?: number; ml?: number }
@@ -668,8 +670,10 @@ function removeWords(prev: Part, rest: string): Part | null {
   }
   return null;
 }
+/** The "Which …?" chooser this food shows: its variant's own (the roll) or the base food's. */
+export const chooserOf = (f: Food): Chooser | undefined => (f.v ? baseOf(f).variants?.find((x) => x.v === f.v)?.choose : undefined) ?? baseOf(f).choose;
 function withAsk(p: Part, rest: string): Part {
-  const c = baseOf(p.food).choose;
+  const c = chooserOf(p.food);
   return c && wordHit(rest, c.words) ? { ...p, ask: true } : p;
 }
 
@@ -679,23 +683,23 @@ export interface ChoiceRow { ask: string; opts: ChoiceOpt[] }
 const sameKind = (a: Food, b: Food) => baseOf(a).id === baseOf(b).id && (a.v ?? '') === (b.v ?? '');
 /** Row A: the "Which …?" row (the word's foods, else this food's variants, presets or main builder group). */
 export function choiceRow(f: Food): ChoiceRow | null {
-  const base = baseOf(f);
-  if (base.choose) {
-    const opts = base.choose.opts.map((o) => {
+  const base = baseOf(f), c = chooserOf(f);
+  if (c) {
+    const opts = c.opts.map((o) => {
       const food = foodFromKey(o.k)!;
-      return { key: o.k, chip: o.chip, food, on: sameKind(food, f) || (!food.v && baseOf(food).id === base.id && !base.choose!.opts.some((x) => x.k === `${base.id}.${f.v}`)) };
+      return { key: o.k, chip: o.chip, food, on: sameKind(food, f) || (!food.v && baseOf(food).id === base.id && !c.opts.some((x) => x.k === `${base.id}.${f.v}`)) };
     });
-    return { ask: base.choose.ask, opts };
+    return { ask: c.ask, opts };
   }
   return ownRow(f);
 }
 /** Row B: this food's own variants when Row A is the word's chooser and does not list them. */
 export function variantRow(f: Food): ChoiceRow | null {
-  const base = baseOf(f);
-  if (!base.choose) return null;
+  const base = baseOf(f), c = chooserOf(f);
+  if (!c) return null;
   const row = ownRow(f);
   if (!row) return null;
-  const listed = new Set(base.choose.opts.map((o) => o.k));
+  const listed = new Set(c.opts.map((o) => o.k));
   return row.opts.some((o) => !listed.has(o.key) && o.key !== base.id) ? row : null;
 }
 function ownRow(f: Food): ChoiceRow | null {
