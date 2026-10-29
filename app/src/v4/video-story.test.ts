@@ -8,14 +8,17 @@ import { parseMeal } from './food/parse';
 import { analyze, type Analysis } from './analyze';
 import { DEFAULT_PROFILE, type Profile } from '../science/profile';
 import { chapterText } from './stories';
-import { hookFor, hookForCompare } from './video-hook';
-import { CMP_REPEAT_S, FPS, LENGTH, READ, readSeconds, SURGE_CLEAR_S, type Plan, type PlanFx } from './video-plan';
+import { compareHookB, hookB, hookFor, hookForCompare, numbersIn, seedOf } from './video-hook';
+import { ALCOHOL_LINE, BANNED, captionsFor, DISCLAIMER, PLATFORM_CUT, PLATFORMS, SOURCES_LINE } from './video-caption';
+import { motifOf } from './video-audio';
+import { CMP_REPEAT_S, FPS, LENGTH, OUTRO_S, READ, readSeconds, SURGE_CLEAR_S, type Cut, type Plan, type PlanFx } from './video-plan';
+const CUTS: Cut[] = ['long', 'medium', 'short']; // (round 11: TikTok, Reels, Shorts)
 import { HIT_S, surgeLevel, vesselLine, VESSEL_BEND } from './video-fx';
 import { frameMoves, idleDrift } from './video-cam';
 import { numberConflict } from './video-beats';
 import { worstMoment } from './status';
 import { beatCtx, cmpName, plainLatin, comparePlan, gaugesAt, peakOf, surgeOf, shortName, singlePlan, singleStops } from './video-story';
-import { drawCmpFrame, drawFrame, logText, SAFE, SIZE, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
+import { COVER_BAND, drawCmpFrame, drawCoverFrame, drawFrame, logText, SAFE, SIZE, VIDEO_COPY, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
 
 type Food = { id: string; name: string; aliases?: string[] };
 const FOODS = db as unknown as Food[];
@@ -33,7 +36,7 @@ const textOk = (s: string | undefined, where: string, bad: string[]) => {
   if (CROATIAN.test(s)) bad.push(`${where}: Croatian? "${s}"`);
 };
 
-function singlePlanOf(x: Analysis, cut: 'long' | 'short', p: Profile = P) {
+function singlePlanOf(x: Analysis, cut: Cut, p: Profile = P) {
   const b = x.built, story = b.story, name = shortName(x.label);
   const stops = singleStops(story, beatCtx(name, b, p.drinkAtMin));
   const hook = hookFor({ name, chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
@@ -46,9 +49,13 @@ function singlePlanOf(x: Analysis, cut: 'long' | 'short', p: Profile = P) {
 }
 
 /** Checks every plan shares: readable, no lingering, the length, real words. */
-function checkPlan(plan: Plan, cut: 'long' | 'short', label: string, bad: string[], gaugeAt: (m: number) => string[]) {
+function checkPlan(plan: Plan, cut: Cut, label: string, bad: string[], gaugeAt: (m: number) => string[]) {
   const lim = LENGTH[cut];
   if (!(plan.seconds >= (cut === 'long' ? 61.5 : lim.min) && plan.seconds <= lim.max + 0.5)) bad.push(`${label}: length ${plan.seconds.toFixed(1)} s`);
+  if (cut === 'long' && !(plan.seconds >= 60.5)) bad.push(`${label}: a long cut under 60.5 s (owner: never)`);
+  // round 11 (research R1): the end card is short (≤ 2.5 s short, ≤ 4 s long) and the 24 h beat has words
+  if (plan.outroS > OUTRO_S[cut] + 1e-6 || plan.outroS > (cut === 'short' ? 2.5 : 4) + 1e-6) bad.push(`${label}: end card ${plan.outroS.toFixed(2)} s`);
+  if (!plan.frames.some((f) => f.celeb !== undefined)) bad.push(`${label}: no 24 h payoff beat`);
   if (plan.frames.length !== Math.round(plan.seconds * FPS)) bad.push(`${label}: frame count`);
   for (const key of ['text', 'textB'] as const) {
     let run = 0, prev = '';
@@ -97,6 +104,7 @@ function fxTiming(plan: Plan, label: string, bad: string[]) {
   for (const c of at('micro')) if (c.data?.v === 1) flashes.push(c.t);
   for (const c of surge) flashes.push(c.t + 0.15, c.t + 0.5);
   for (const c of [...at('peak'), ...at('verdict')]) flashes.push(c.t);
+  for (const c of at('day')) flashes.push(c.t); // (round 11: the "day done" ring)
   const hearts = at('heart');
   hearts.forEach((c, i) => { if (c.data?.v !== 1) return; const end = hearts.slice(i + 1).find((h) => h.data?.v === 0)?.t ?? outro; for (let t = c.t + 0.2; t < end; t += 1.1) flashes.push(t); });
   flashes.sort((a, b) => a - b);
@@ -151,7 +159,7 @@ describe('round 9: every food and drink in the database makes a correct video', 
   it('every database item has a model (parse → analyze)', () => {
     expect(ALL.filter((y) => !y.x).map((y) => y.f.id)).toEqual([]);
   });
-  for (const cut of ['long', 'short'] as const) {
+  for (const cut of CUTS) {
     it(`single · ${cut}: readable, the right length, real words, numbers agree with the gauges (${FOODS.length} items)`, () => {
       const bad: string[] = [];
       for (const { f, x } of ALL) {
@@ -171,7 +179,7 @@ describe('round 9: every food and drink in the database makes a correct video', 
   it('drinks at different times and amounts (beer over 2 h, 2 espressos, late cola): same rules', () => {
     const bad: string[] = [];
     const cases: [string, number, number][] = [['3 beers', 120, 17], ['3 beers', 120, 21], ['1 beer', 0, 19], ['2 glasses of wine', 60, 20], ['2 espressos', 0, 15], ['cola', 0, 21], ['energy drink', 0, 8], ['coffee', 0, 7]];
-    for (const [q, over, h] of cases) for (const cut of ['long', 'short'] as const) {
+    for (const [q, over, h] of cases) for (const cut of CUTS) {
       const p = { ...P, drinkAtMin: h * 60 }, x = run(q, over, p);
       if (!x) { bad.push(`${q}: no model`); continue; }
       const { plan, hook } = singlePlanOf(x, cut, p);
@@ -185,12 +193,12 @@ describe('round 9: every food and drink in the database makes a correct video', 
 const PAIRS: [string, string][] = [['espresso', 'beer'], ['cola', '330 ml of water'], ['pizza', 'kebab'], ['red wine', 'beer'], ['energy drink', 'coffee'],
   ['orange juice', 'cola'], ['apple', 'banana'], ['milk', 'water'], ['hamburger', 'salad'], ['beer', 'water'], ['croissant', 'oatmeal'], ['white rice', 'chocolate']];
 describe('round 9: comparison videos over a representative set of pairs', () => {
-  for (const cut of ['long', 'short'] as const) it(`compare · ${cut}: readable, no lingering card, alcohol never wins, text in the safe zone`, () => {
+  for (const cut of CUTS) it(`compare · ${cut}: readable, no lingering card, alcohol never wins, text in the safe zone`, () => {
     const bad: string[] = [];
     for (const [qa, qb] of PAIRS) {
       const a = run(qa), b = run(qb), label = `${qa} vs ${qb} ${cut}`;
       if (!a || !b) { bad.push(`${label}: no model`); continue; }
-      const cp = comparePlan(a, b, P, cut === 'short');
+      const cp = comparePlan(a, b, P, cut);
       checkPlan(cp.plan, cut, label, bad, (m) => [...gaugesAt(a.built, m, 'mmol/L', a.glucose !== undefined), ...gaugesAt(b.built, m, 'mmol/L', b.glucose !== undefined)].map((g) => `${g.big} ${g.small}`));
       textOk(cp.verdict, `${label} verdict`, bad);
       for (const x of [a, b]) if ((x.built.alcoholG ?? 0) > 1 && new RegExp(`^🏆\\s*${cmpName(x.label).split(' ')[0]}`, 'i').test(cp.verdict)) bad.push(`${label}: alcohol wins "${cp.verdict}"`);
@@ -293,5 +301,67 @@ describe('round 10b: a living end, organic vessels', () => {
     }
     const mid = lines.map((l) => l.at(l.len * 0.2).x);
     expect(Math.max(...mid) - Math.min(...mid)).toBeGreaterThan(15);
+  });
+});
+
+describe('round 11: platforms, two hooks, captions, cover, variety', () => {
+  const hooksOf = (x: Analysis) => { const { hook } = singlePlanOf(x, 'long'); const b = hookB({ name: shortName(x.label), chapters: x.built.story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid: /bite/i.test(x.built.story.chapters[0]?.title ?? '') }, hook); return [hook, b]; };
+  it('hook B (every food): another formula, only A\'s own numbers, short lines, a real question, no command to comment', () => {
+    const bad: string[] = [];
+    for (const { f, x } of ALL) {
+      if (!x) continue;
+      const [a, b] = hooksOf(x);
+      if (`${b.line1}` === `${a.line1}`) bad.push(`${f.id}: B = A`);
+      const nA: string[] = [...numbersIn(`${a.line1} ${a.line2}`)];
+      for (const n of numbersIn(`${b.line1} ${b.line2}`)) if (n !== '24' && !nA.includes(n)) bad.push(`${f.id}: B has ${n}`); // (24: the hours of the series itself)
+      for (const s of [b.line1, b.line2]) { textOk(s, `${f.id} hook B`, bad); if (s.split(/\s+/).length > 9) bad.push(`${f.id}: long "${s}"`); if (/comment/i.test(s)) bad.push(`${f.id}: "${s}"`); }
+      if (b.payoff !== a.payoff) bad.push(`${f.id}: B pays off elsewhere`);
+    }
+    expect(failed(bad)).toEqual([]);
+  });
+  it('the video never asks for a comment (Meta): the guess chip, the comparison hook', () => {
+    expect(VIDEO_COPY.guessChip).toBe('Guess before the answer.');
+    expect(hookForCompare('Cola', 'Water', true).line2).not.toMatch(/comment/i);
+    expect(compareHookB('Guess: which leaves your stomach first?', 'Cola', 'Water')).toBe('Cola or Water: which leaves your stomach first?');
+  });
+  it('captions (every food): search phrase first, ≤ 5 hashtags on Instagram, Shorts title ≤ 60, sources and disclaimer, comment ask only on TikTok', () => {
+    const bad: string[] = [];
+    for (const { f, x } of ALL) {
+      if (!x) continue;
+      const [a] = hooksOf(x), alc = (x.built.alcoholG ?? 0) > 1;
+      const c = captionsFor({ name: shortName(x.label), hook: a, alcohol: alc, caffeine: x.built.caffeine.doseMg >= 10 });
+      if (!c.reels.startsWith('What happens in your body after')) bad.push(`${f.id}: reels first line`);
+      if ((c.reels.match(/#\w+/g) ?? []).length > 5) bad.push(`${f.id}: > 5 hashtags`);
+      if (c.shorts.title.length > 60) bad.push(`${f.id}: title ${c.shorts.title.length}`);
+      for (const [k, s] of Object.entries({ tiktok: c.tiktok, reels: c.reels, facebook: c.facebook, shorts: c.shorts.description })) {
+        textOk(s, `${f.id} ${k}`, bad);
+        if (BANNED.test(s)) bad.push(`${f.id} ${k}: banned word`);
+        if (!s.includes(DISCLAIMER) || !s.includes(SOURCES_LINE)) bad.push(`${f.id} ${k}: no sources / disclaimer`);
+        if (alc && !s.includes(ALCOHOL_LINE)) bad.push(`${f.id} ${k}: no 18+ line`);
+        if (k !== 'tiktok' && /comment/i.test(s)) bad.push(`${f.id} ${k}: asks for comments`);
+      }
+      for (const n of numbersIn(`${a.line1} ${a.line2}`)) if (!c.tiktok.includes(n)) bad.push(`${f.id}: caption lost ${n}`);
+    }
+    expect(failed(bad)).toEqual([]);
+  });
+  it('each platform gets its cut: TikTok and Facebook long, Reels medium, Shorts short', () => {
+    expect(PLATFORMS.map((p) => PLATFORM_CUT[p])).toEqual(['long', 'medium', 'short', 'long']);
+    const x = run('cola')!;
+    for (const p of PLATFORMS) { const pl = singlePlanOf(x, PLATFORM_CUT[p]).plan, lim = LENGTH[PLATFORM_CUT[p]]; expect(pl.seconds).toBeGreaterThanOrEqual(lim.min); expect(pl.seconds).toBeLessThanOrEqual(lim.max + 0.5); }
+  });
+  it('the cover keeps the hook and the series tag in the grid-safe centre band', () => {
+    for (const hook of ['One can of cola: 9 teaspoons of sugar.\nWatch where it goes.', 'A whole pizza (1154 g): 2723 kcal.\nWhere is it 24 hours later?', 'Guess: which leaves your stomach first?']) {
+      const boxes = logText(() => drawCoverFrame(fakeCtx(0.56), 1080, 1920, null, hook));
+      expect(boxes.length).toBeGreaterThanOrEqual(2);
+      for (const b of boxes) { expect(b.x0).toBeGreaterThanOrEqual(COVER_BAND.left - 1); expect(b.x1).toBeLessThanOrEqual(COVER_BAND.right + 1); expect(b.y0).toBeGreaterThanOrEqual(COVER_BAND.top - 1); expect(b.y1).toBeLessThanOrEqual(COVER_BAND.bottom + 1); }
+      expect(boxes.some((b) => b.text === 'INSIDE 24H')).toBe(true);
+    }
+  });
+  it('variety (YouTube): the music motif, hook order and sway come from the food, the same on every export', () => {
+    const seeds = ALL.filter((y) => y.x).map((y) => seedOf(shortName(y.x!.label)));
+    expect(seedOf('One can of cola')).toBe(seedOf('One can of cola'));
+    const motifs = new Set(seeds.map((s) => JSON.stringify(motifOf(s))));
+    expect(motifs.size).toBeGreaterThanOrEqual(10);
+    expect(new Set(seeds.map((s) => s % 2)).size).toBe(2); // both hook formulas lead somewhere
   });
 });

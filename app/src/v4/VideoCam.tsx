@@ -7,7 +7,7 @@ import type { PerspectiveCamera } from 'three';
 import { cameraOf, poseOf, rigAt, stepRig, type Rig, type Shot } from './video-cam';
 
 /** What the recorder wants filmed next. `start` (set once) puts the camera there at once, before the first frame. */
-export interface ShotCue { shot: Shot; start?: Shot | null }
+export interface ShotCue { shot: Shot; start?: Shot | null; /** round 11: the food's variety seed (the sway) */ seed?: number }
 
 type Ctl = { enabled: boolean; target: { set: (x: number, y: number, z: number) => void } } | null;
 
@@ -24,7 +24,7 @@ export function VideoCam({ cue }: { cue: MutableRefObject<ShotCue | null> }) {
     if (c.start) { rig.current = rigAt(poseOf(c.start)); c.start = null; }
     const goal = poseOf(c.shot);
     rig.current = rig.current ? stepRig(rig.current, goal, Math.min(0.1, Math.max(0, dt))) : rigAt(goal);
-    const { pos, look } = cameraOf(rig.current, camera.fov);
+    const { pos, look } = cameraOf(rig.current, camera.fov, undefined, c.seed);
     camera.position.set(pos[0], pos[1], pos[2]);
     camera.lookAt(look[0], look[1], look[2]);
     camera.updateMatrixWorld();

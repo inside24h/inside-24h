@@ -10,8 +10,7 @@ import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
 import { bodyMotion, drawBloodFlow, drawBreath, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
-import { commentLine } from './video-hook';
-import { CMP_LIGHTS_FROM_S, CMP_LIGHTS_STEP_S, CMP_OUTRO_EXTRA_S, LIGHTS_FROM_S, LIGHTS_STEP_S, readChars, REWIND_S, TEASER_S } from './video-plan';
+import { CMP_OUTRO_EXTRA_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
 /** ALL wording of the end cards and calls to action, in one place, so the owner can change it (2026-10-24). Honest:
  *  no promise of new foods on a schedule. */
@@ -21,7 +20,10 @@ export const VIDEO_COPY = {
   ctaCompare: 'Did you guess right? 👇',
   ctaComparePick: 'Which one would you pick? 👇', // when the video asked no guess (no clear answer for this pair)
   follow: (handle: string) => (handle ? `Follow ${handle} for the next one` : 'Follow for the next one'),
-  guess2: 'Comment A or B before the end.',
+  guess2: 'Comment A or B before the end.', // (round 11: not in the video any more, Meta counts it as comment bait)
+  guessChip: 'Guess before the answer.', // round 11 (research R7): the question, without a command to comment
+  // round 11 (research R1): the end card's last line hands over to frame 0 (the loop)
+  loop: (solid?: boolean, compare?: boolean) => (compare ? '↻ Watch both again from the first sip.' : solid ? '↻ Now watch the first bite again.' : '↻ Now watch the first sip again.'),
   answerAt: 'Answer at 24 h.',
   fasterOut: 'Faster out ≠ better for you.', // the race with alcohol on one side (spec §4.1)
   raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime' },
@@ -96,7 +98,7 @@ export function pickMime(): { mime: string; ext: 'mp4' | 'webm' } | null {
  *  size) and `onSettled` (called after the warm-up frames, right before the first real frame). */
 export interface RecOpts { sound: boolean; onTick?: (f: number) => void; prepare?: () => Promise<void>; onSettled?: () => void;
   /** 2026-10-24: our music + effects, or effects only (the owner adds a trending song); and what the drink is like */
-  soundMode?: SoundMode; soundFx?: { fizzy?: boolean; solid?: boolean } }
+  soundMode?: SoundMode; soundFx?: { fizzy?: boolean; solid?: boolean; seed?: number } }
 type SoundIn = { seconds: number; cues: Plan['cues']; beatFrom: number; music: boolean; fizzy?: boolean; solid?: boolean };
 const soundOf = (plan: Plan, opts: RecOpts): SoundIn | null => (opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS, music: opts.soundMode !== 'sfx', ...opts.soundFx } : null);
 export async function record(source: HTMLCanvasElement, format: Format, overlay: () => Overlay, seek: (minute: number, fr?: VFrame) => void,
@@ -533,6 +535,33 @@ export function composeFrame(source: HTMLCanvasElement, format: Format, o: Overl
   // intro = exactly the video's first frame (the cover); outro = the end card fully in
   const fr: VFrame = { phase, m: 0, t: phase === 'intro' ? 2 : 0, cap: o.caption, capA: phase === 'main' ? 1 : 0, k: phase === 'outro' ? 0.5 : 0 }; // (t 2: the kinetic hook is complete on the cover)
   drawFrame(ctx, W, H, source, o, format, fr, null, null);
+  return c;
+}
+
+/** Round 11 (research R8): the grid-safe cover. Platforms crop the 9:16 cover to 1:1 or 3:4 on the profile grid, so
+ *  the hook (big) and a small "INSIDE 24H" series tag sit in the centre band (y 560-1360, x 90-990), over the body. */
+export const COVER_BAND = { top: 560, bottom: 1360, left: 90, right: 990 } as const;
+export function drawCoverFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: (CanvasImageSource & { width: number; height: number }) | null, hook: string) {
+  stageBg(ctx, W, H, H * 0.45);
+  if (src) drawCover(ctx, src, 0, 0, W, H);
+  const B = COVER_BAND, g = ctx.createLinearGradient(0, B.top - 80, 0, B.bottom + 80);
+  g.addColorStop(0, 'rgba(4,7,12,0)'); g.addColorStop(0.25, 'rgba(4,7,12,.62)'); g.addColorStop(0.75, 'rgba(4,7,12,.62)'); g.addColorStop(1, 'rgba(4,7,12,0)');
+  ctx.save(); ctx.fillStyle = g; ctx.fillRect(0, B.top - 80, W, B.bottom - B.top + 160);
+  const lines = hook.split('\n').map((s) => s.trim()).filter(Boolean), w = B.right - B.left;
+  const fits = lines.map((s) => fitWrap(ctx, s, w, 3, 96, 48, (px) => `400 ${px}px ${SERIF}`));
+  const px = Math.min(...fits.map((f) => f.px)), all = fits.flatMap((f) => f.lines), lh = px * 1.08;
+  const blockH = 64 + all.length * lh, y0 = Math.max(B.top, (B.top + B.bottom) / 2 - blockH / 2);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = `700 30px ${SANS}`; const tag = 'INSIDE 24H', tw = ctx.measureText(tag).width + 36;
+  ctx.fillStyle = 'rgba(92,211,255,.16)'; roundRect(ctx, W / 2 - tw / 2, y0, tw, 46, 23); ctx.fill();
+  ctx.fillStyle = ACCENT; text(ctx, tag, W / 2, y0 + 33);
+  ctx.fillStyle = '#ffffff'; ctx.font = `400 ${px}px ${SERIF}`; shade(ctx, true);
+  all.forEach((ln, i) => text(ctx, ln, W / 2, y0 + 64 + px * 0.9 + i * lh));
+  shade(ctx, false); ctx.restore(); ctx.textAlign = 'left';
+}
+export function composeCover(source: HTMLCanvasElement | null, hook: string): HTMLCanvasElement {
+  const [W, H] = SIZE.reel, c = document.createElement('canvas'); c.width = W; c.height = H;
+  drawCoverFrame(c.getContext('2d')!, W, H, source, hook);
   return c;
 }
 
@@ -1137,6 +1166,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   const hit = since(cues, 'stop', t);
   if (hit.cue && hit.cue.t > 1.2 && Math.abs(hit.cue.t - (peak.cue?.t ?? -9)) > 0.3) drawOrganHit(ctx, pinOf(o.focus) ?? tf(main?.at), hit.age, lighten(o.color ?? ACCENT));
   drawShockwave(ctx, tf(main?.at) ?? pinOf(o.focus), peak.age, LIGHT[main?.level ?? 1]);
+  drawDayDone(ctx, cues, t, [tf({ x: W / 2, y: H * 0.47 })]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
   if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.topBot, Lo.capTop); // V17 (round 9)
   scrims(ctx, W, H, Lo.topBot, Lo.capTop);
@@ -1201,10 +1231,45 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
       ctx.restore();
     }
   }
+  if (fr.celeb !== undefined && fr.phase === 'main') drawCeleb(ctx, Lo, o, fr, cues);
   if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; footer(ctx, W, H, format, u, plan?.stopsU); ctx.restore(); }
   if (fr.phase === 'outro') {
-    drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS);
+    drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= 2.6);
     if (first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
+  }
+}
+
+/** Round 11 (research R1): the 24 h payoff beat over the body: "AFTER 24 HOURS" and the day's lights, each coming on
+ *  with its blip (video-plan 'lights' cues), where the caption was. The body stays in frame. */
+function drawCeleb(ctx: CanvasRenderingContext2D, Lo: ReturnType<typeof layoutBody>, o: Overlay, fr: VFrame, cues: Plan['cues'] | undefined) {
+  const { S, L, RL, reel } = Lo, t = fr.t, items = o.summary.slice(0, 4);
+  const lc = (cues ?? []).filter((c) => c.kind === 'lights');
+  const a0 = smooth(((fr.celeb ?? 0) * 10 - 1.2) / 1.5); // after the last card has gone (0.25 s)
+  if (a0 <= 0.01) return;
+  ctx.save(); ctx.globalAlpha = a0; shade(ctx, true);
+  const r = reel ? 34 : 28, cy = S.bottom - (reel ? 86 : 72), cw = (RL - L) / Math.max(1, items.length);
+  ctx.textAlign = 'left'; ctx.fillStyle = ACCENT; ctx.font = `700 ${Lo.kickFs}px ${SANS}`; text(ctx, 'AFTER 24 HOURS', L, cy - r - 30);
+  items.forEach((l, i) => {
+    const cue = lc.find((c) => c.data?.v === i), k = cue ? smooth((t - cue.t) / 0.2) : 1;
+    if (k <= 0.01) return;
+    const cx = L + cw * i + cw / 2, pop = 1 + 0.18 * Math.sin(Math.PI * k);
+    ctx.save(); ctx.globalAlpha *= k;
+    ctx.fillStyle = lightCol(l); ctx.beginPath(); ctx.arc(cx, cy, r * pop, 0, Math.PI * 2); ctx.fill();
+    ctx.textAlign = 'center'; ctx.font = `${Math.round(r * 1.05)}px ${EMOJI}`; ctx.fillStyle = '#04070c'; ctx.fillText(l.icon, cx, cy + r * 0.38);
+    ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${reel ? 26 : 22}px ${SANS}`; text(ctx, fit(ctx, l.label.split(' & ')[0], cw - 8), cx, cy + r + (reel ? 34 : 28));
+    ctx.restore();
+  });
+  shade(ctx, false); ctx.restore(); ctx.textAlign = 'left';
+}
+/** Round 11: "day done": a wide ring out from the body (or each body) as the 24 h beat completes, with sparks when
+ *  the day was not about alcohol ('day' cue label 'bright'; 'calm' = a ring only: alcohol is never celebrated). */
+function drawDayDone(ctx: CanvasRenderingContext2D, cues: Plan['cues'] | undefined, t: number, at: ({ x: number; y: number } | null)[]) {
+  const d = since(cues, 'day', t);
+  if (!(d.age >= 0 && d.age < 0.9)) return;
+  for (const p of at) {
+    if (!p) continue;
+    drawShockwave(ctx, p, d.age, ACCENT);
+    if (d.cue?.data?.label === 'bright') drawSparks(ctx, p.x, p.y, d.age, '#9fe8ff');
   }
 }
 
@@ -1235,7 +1300,7 @@ function endDrift(ctx: CanvasRenderingContext2D, W: number, H: number, tt: numbe
 }
 /** End card over the body: what the day did (the lights come on one by one) and one line to comment on. The hook and
  *  the clock (+24:00) stay at the top; the body stays visible behind the glass. Wording: VIDEO_COPY. */
-function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overlay, alpha: number, format: Format, topBot: number, tt = 9) {
+function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overlay, alpha: number, format: Format, topBot: number, tt = 9, short = false) {
   if (alpha <= 0.001) return;
   const reel = format === 'reel', S = SAFE[format], L = S.left, RL = S.rightLow;
   ctx.save(); ctx.globalAlpha = alpha;
@@ -1251,13 +1316,13 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
   ctx.fillStyle = '#ffffff'; ctx.font = `400 ${t.px}px ${SERIF}`;
   t.lines.forEach((ln, i) => text(ctx, ln, L, y + 12 + t.px * 0.9 + i * t.px * 1.02));
   y += 12 + t.px * 0.9 + (t.lines.length - 1) * t.px * 1.02 + (reel ? 24 : 16);
-  const rows = Math.max(1, o.summary.length);
+  const rows = short ? 0 : Math.max(1, o.summary.length); // (round 11: the short end card is ≤ 2.5 s: the name, the question, the loop)
   const room = S.bottom - y - (reel ? 150 : 120);
   const rh = Math.max(reel ? 70 : 58, Math.min(reel ? 92 : 78, room / rows));
   o.summary.forEach((l, i) => {
     // each light comes on in turn (with its blip, video-plan 'lights' cues), a small pop
-    const k = smooth((tt - LIGHTS_FROM_S - i * LIGHTS_STEP_S) / 0.2);
-    if (k <= 0.01) return;
+    const k = 1; // (round 11: the lights came on in the 24 h beat, with the body in frame)
+    if (k <= 0.01 || short) return;
     const ry = y + i * rh, hh = rh - 10, pop = 1 + 0.08 * Math.sin(Math.PI * k);
     ctx.save(); ctx.globalAlpha *= k;
     ctx.translate(L + (RL - L) / 2, ry + hh / 2); ctx.scale(pop, pop); ctx.translate(-(L + (RL - L) / 2), -(ry + hh / 2));
@@ -1276,7 +1341,7 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
   cta.lines.forEach((ln, i) => text(ctx, ln, L, y + cta.px * 0.9 + i * cta.px * 1.16));
   y += cta.px * 0.9 + (cta.lines.length - 1) * cta.px * 1.16 + (reel ? 44 : 36);
   ctx.fillStyle = ACCENT; ctx.font = `600 ${reel ? 30 : 26}px ${SANS}`;
-  text(ctx, fit(ctx, VIDEO_COPY.follow(o.handle), RL - L), L, Math.min(y, S.bottom - 8));
+  text(ctx, fit(ctx, VIDEO_COPY.loop(o.solid), RL - L), L, Math.min(y, S.bottom - 8)); // (round 11: the loop, not "follow": the handle is at the top)
   ctx.restore(); ctx.textAlign = 'left';
 }
 
@@ -1365,6 +1430,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     if (sd.gauge && hit.cue && hit.cue.t > 1.2 && Math.abs(hit.cue.t - (peak.cue?.t ?? -9)) > 0.3) drawOrganHit(ctx, tf(sd.gauge.at), hit.age - k * 0.08, lighten(sd.color), 0.7);
     if (sd.gauge?.curve) drawShockwave(ctx, tf(sd.gauge.at), peak.age, LIGHT[sd.gauge.level]);
   });
+  drawDayDone(ctx, cues, t, [tf({ x: W / 4, y: H * 0.5 }), tf({ x: (3 * W) / 4, y: H * 0.5 })]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
   if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.headerBot, Lo.capTop); // V17 (round 9)
   scrims(ctx, W, H, Lo.headerBot - 70, Lo.capTop);
@@ -1435,6 +1501,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   }
   // the game (spec §3.3): the guess, the open loop, the race out of the stomach and the scoreboard (lower part)
   if (E.main > 0.001) drawSplitGame(ctx, W, H, o, fr, cues, Lo, E.main);
+  if (fr.celeb !== undefined && fr.phase === 'main') drawCelebSplit(ctx, W, o, fr, cues, Lo);
   // top line: brand, hook, clock
   if (E.top > 0.001) {
     ctx.save(); ctx.globalAlpha = E.top;
@@ -1485,7 +1552,7 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   // that is out first has alcohol (it read as "espresso is bad" after "First out: Espresso")
   const sidesAB = [o.a, o.b], alcWon = ans ? !!sidesAB[ans.winner]?.alcohol : !!sidesAB[race.cue?.data?.side ?? 0]?.alcohol;
   void anyAlcohol;
-  const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? commentLine(o.a.name, o.b.name)
+  const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? VIDEO_COPY.guessChip
     : tease.age < 2.6 && !(ans && dec.age >= 0) ? VIDEO_COPY.answerAt : alcWon && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut
     : alcWon && !ans && race.age < 3.2 && o.race ? VIDEO_COPY.fasterOut : '';
   void sip;
@@ -1579,7 +1646,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     text(ctx, fit(ctx, sg.lines[0] ?? '', cw - 40), x + 20, y + 134);
     const rows = shown(s) ?? [{ icon: '✓', label: 'All lights green', level: 0 as const, note: 'Nothing flagged all day' }];
     rows.forEach((l, j) => {
-      const k2 = smooth((tt - CMP_LIGHTS_FROM_S - (j * 2 + k) * CMP_LIGHTS_STEP_S) / 0.2); // L1, R1, L2, R2 … (after the verdict)
+      const k2 = 1; // (round 11: the lights and the verdict landed in the 24 h beat)
       if (k2 <= 0.01) return;
       const ry = y + 152 + j * RH;
       ctx.save(); ctx.globalAlpha *= k2;
@@ -1621,6 +1688,24 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
   const cy = Math.min(y + cta.px * 0.9, S.bottom - 46);
   text(ctx, cta.lines[0] ?? '', L, cy);
   ctx.fillStyle = ACCENT; ctx.font = `600 26px ${SANS}`;
-  text(ctx, fit(ctx, VIDEO_COPY.follow(o.handle), RL - L), L, Math.min(cy + 42, S.bottom - 4));
+  text(ctx, fit(ctx, VIDEO_COPY.loop(false, true), RL - L), L, Math.min(cy + 42, S.bottom - 4)); // (round 11: the loop)
   ctx.restore(); ctx.textAlign = 'left';
+}
+
+/** Round 11: the comparison's 24 h payoff beat: "AFTER 24 HOURS" and the verdict (verdictOf), centred where the
+ *  captions were, landing with the verdict impact; it stays on the end card below, so it is read for 4 s or more. */
+function drawCelebSplit(ctx: CanvasRenderingContext2D, W: number, o: CmpOverlay, fr: VFrame, cues: Plan['cues'] | undefined, Lo: ReturnType<typeof layoutSplit>) {
+  if (!o.verdict) return;
+  const vd = since(cues, 'verdict', fr.t), a0 = smooth(((fr.celeb ?? 0) * 10 - 1.2) / 1.5);
+  if (a0 <= 0.01) return;
+  const { S, L } = Lo, w = 2 * (S.rightLow - W / 2) - 20, cx = W / 2;
+  ctx.save(); ctx.globalAlpha = a0; shade(ctx, true); ctx.textAlign = 'center';
+  ctx.fillStyle = ACCENT; ctx.font = `700 28px ${SANS}`; text(ctx, 'AFTER 24 HOURS', cx, Lo.capTop + 28);
+  if (vd.age >= 0) {
+    const v = fitWrap(ctx, o.verdict, w, 2, 36, 26, (px) => `700 ${px}px ${SANS}`), sc = 1 + 0.2 * (1 - smooth(vd.age / 0.3)), cy = Lo.capTop + 40 + v.lines.length * v.px * 0.6;
+    ctx.globalAlpha *= smooth(vd.age / 0.15); ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.translate(-cx, -cy);
+    ctx.fillStyle = '#ffffff'; ctx.font = `700 ${v.px}px ${SANS}`;
+    v.lines.forEach((ln, i) => text(ctx, ln, cx, Lo.capTop + 36 + v.px * 0.95 + i * v.px * 1.18));
+  }
+  void L; shade(ctx, false); ctx.restore(); ctx.textAlign = 'left';
 }

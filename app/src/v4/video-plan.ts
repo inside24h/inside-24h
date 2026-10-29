@@ -91,7 +91,9 @@ export function splitPages(text: string, max: number = READ.pageChars): string[]
   return out;
 }
 
-export type Cut = 'long' | 'short';
+/** round 11: 'medium' = Instagram / Facebook Reels (45-55 s); 'long' = TikTok (62-75 s); 'short' = YouTube Shorts. */
+export type Cut = 'long' | 'medium' | 'short';
+export const isLongish = (cut: Cut) => cut !== 'short';
 /** One key moment of the day: the minute, the chapter title and its words at that minute. */
 /** `lines`: the moment's caption cards (video-beats.ts beatLines; computed from title + text when absent). */
 export interface StopIn { min: number; title: string; text: string; lines?: string[]; /** never left out (round 5) */ keep?: boolean }
@@ -115,6 +117,7 @@ export interface VFrame {
   k: number;          // 0..1 progress through the phase (intro / outro animation)
   // 2026-10-23 body-first: what the camera and the clock need
   stop?: number;      // the moment (minute) whose words are on screen; during a glide, the moment it glides to
+  /** round 11: 0..1 through the 24 h payoff beat ("AFTER 24 HOURS" and the lights, body in frame) */ celeb?: number;
   beat?: 'teaser' | 'rewind' | 'hook' | 'hold' | 'glide' | 'end'; // teaser = cold open, rewind = back to +0:00, hook = first sip, hold = at a moment, glide = to the next one, end = 24 h beat + end card
   from?: number;      // glide: the minute it started from (a long glide = a quiet stretch: the camera pulls back)
   u?: number;         // day position 0..1 (the app's clock axis)
@@ -128,7 +131,7 @@ export interface VFrame {
 /** One timeline for picture and sound (2026-10-24 creative spec §2.1): every effect and every sound effect is placed
  *  from these cues, so they always land on the same frame. */
 export type CueKind = 'start' | 'move' | 'stop' | 'page' | 'outro' | 'end'
-  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart' | 'surge';
+  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart' | 'surge' | 'day';
 export interface Cue { t: number; kind: CueKind; data?: { level?: 0 | 1 | 2; side?: 0 | 1; v?: number; label?: string } }
 export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number; peakT?: number }
 /** What the effects need from the model (all optional; the plan works without). */
@@ -152,14 +155,18 @@ export interface PlanFx {
    *  `max`; video-story `surgeOf`), and which one: the bloodstream surges on screen and in the sound, once, at the
    *  first second of that stretch that is clear of the sip, the riser and the impact. */
   surge?: { min: number; max: number; kind: SurgeKind; side?: 0 | 1 };
+  /** round 11: the 24 h "day done" beat is calm (no sparkle, no bright chord): alcohol is never celebrated */
+  calmDay?: boolean;
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
 /** Round 10: the surge keeps this far from the sip, the riser and the impact (seconds), so no two big events overlap. */
 export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
-export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.75, LIGHTS_STEP_S = 0.35, MICRO_GAP_S = 2.9;
+export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.3, LIGHTS_STEP_S = 0.25, MICRO_GAP_S = 2.9;
 /** Comparison end card: the verdict lands first (it is the answer to the guess, and must be read: + 1.5 s), then the
  *  lights come on, left and right in turn, faster. */
-export const CMP_OUTRO_EXTRA_S = 0.5, CMP_LIGHTS_FROM_S = 1.35, CMP_LIGHTS_STEP_S = 0.2; // (round 6: 7-8 s of end card was too long; fewer rows now)
+// (round 11, research R1: the lights and the verdict land in the 24 h beat, with the body in frame; the end card is
+// short, so the comparison adds nothing to it)
+export const CMP_OUTRO_EXTRA_S = 0, CMP_LIGHTS_FROM_S = 0.55, CMP_LIGHTS_STEP_S = 0.15;
 export const outroSeconds = (cut: Cut, compare = false) => OUTRO_S[cut] + (compare ? CMP_OUTRO_EXTRA_S : 0);
 export const TEASE_PREFIX = 'Coming up: ', TEASE_PREFIX2 = 'Still to come: ';
 /** "Coming up: the sugar dip." (≤ 5 words), from a chapter title. */
@@ -167,17 +174,22 @@ export const teaseCard = (title: string) => `${TEASE_PREFIX}${title.charAt(0).to
 
 /** Length targets. Long: TikTok/Facebook reward 60 s+ (we aim 62-75 s so encoders never round it under 61 s).
  *  Short: 15-30 s for Shorts / Reels experiments. */
-export const LENGTH = { long: { min: 62, max: 75 }, short: { min: 15, max: 30 } } as const;
+export const LENGTH = { long: { min: 62, max: 75 }, medium: { min: 45, max: 55 }, short: { min: 23, max: 30 } } as const; // (round 11: Shorts 23-30 s, research L2)
 /** Long cut: more words are added to moments only up to this length (the rest of the minute is the body, not text). */
 export const FILL_S = 68;
+/** round 11: the same for each longer cut (medium: Reels). */
+export const fillS = (cut: Cut) => (cut === 'medium' ? 51 : FILL_S);
 /** While a moment's caption is read, the day keeps running slowly towards the next moment (this share of the way on
  *  the day axis), so the drink keeps moving and the clock keeps ticking. The first sip runs further: the swallow. */
 export const DRIFT = 0.12, DRIFT_FIRST = 0.6;
 export const MOVE_S = 1.0;        // glide between two moments (eased)
 /** 2026-10-24: a glide over a long quiet stretch takes longer (up to 1.8 s), so hours never flash past. */
 export const moveS = (toU: (m: number) => number, from: number, to: number) => MOVE_S + 0.8 * Math.max(0, Math.min(1, (toU(to) - toU(from)) / 0.35));
-export const INTRO_S = { long: 3.0, short: 2.4 } as const; // big hook card (it then stays at the top as the headline)
-export const END_HOLD_S = 0.8;    // the "24 HOURS LATER" beat before the end card (body and stamp only; round 5: ≤ 0.8 s without words)
+export const INTRO_S = { long: 3.0, medium: 2.7, short: 2.4 } as const; // big hook card (it then stays at the top as the headline)
+/** The 24 h beat before the end card. Round 11 (research R1): the payoff beat with the body in frame: "AFTER 24
+ *  HOURS", the day's lights come on one by one (and the comparison's verdict lands), then a "day done" ring. */
+export const CELEB_S = { long: 2.2, medium: 2.0, short: 1.7 } as const;
+export const END_HOLD_S = CELEB_S.long; // (the longest)
 /** The glide to +24:00 names where it goes (a chip, so the end of the day is never a stretch without words). */
 export const DAY_END_TITLE = '24 hours later';
 /** Moments worth a "Coming up: …" (round 5, critic: "Coming up: building blocks." promised nothing). */
@@ -186,7 +198,8 @@ export const TEASE_OK = /peak|dip|crash|sleep|bed|gone|morning|24 hours|large in
 export const DULL = /^Building blocks$/i;
 /** The long cut's first impact by this second (round 5). */
 export const PEAK_BY_S = 15;
-export const OUTRO_S = { long: 6.5, short: 5.0 } as const;   // end card: summary + call to action (+ a loop back to the start)
+/** End card: summary + call to action + a loop back to the start. Round 11 (research R1): ≤ 4 s long, ≤ 2.5 s short. */
+export const OUTRO_S = { long: 4.0, medium: 3.0, short: 2.5 } as const;
 
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
@@ -225,7 +238,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const linesOf = (s: StopIn) => (s.lines?.length ? s.lines : beatLines(s));
   const glides = (list: StopIn[]) => list.reduce((a, s, i) => a + (i ? moveS(toU, list[i - 1].min, s.min) : 0), 0)
     + (list[list.length - 1].min < 1440 ? moveS(toU, list[list.length - 1].min, 1440) : 0);
-  const fixed = INTRO_S[cut] + OUTRO_S[cut] + END_HOLD_S; // intro, the 24 h beat, end card (the glides are counted apart)
+  const fixed = INTRO_S[cut] + OUTRO_S[cut] + CELEB_S[cut]; // intro, the 24 h beat, end card (the glides are counted apart)
   // the start says what it is and its first number; a moment with safety cards shows all of them (round 5)
   const firstNOf = (s: StopIn, i: number) => Math.max(i === 0 ? 2 : 1, mustOf(s));
   let chosen: StopIn[];
@@ -269,7 +282,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     pages = pagesFor();
   }
   // a later drop can free more room than needed: a left-out moment that now fits comes back
-  if (cut === 'long') {
+  if (isLongish(cut)) {
     for (const d of dropped.sort((a, b) => val(b) - val(a))) {
       const at = chosen.findIndex((c) => c.min > d.min), k = at < 0 ? chosen.length : at;
       const c2 = [...chosen.slice(0, k), d, ...chosen.slice(k)], s2 = [...sents.slice(0, k), linesOf(d), ...sents.slice(k)], u2 = [...used.slice(0, k), firstNOf(d, k), ...used.slice(k)];
@@ -284,9 +297,9 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   //    Before the peak each moment shows one card, and the quieter moments before it are left out (least telling
   //    first); the camera still travels the whole way in the glides.
   const peakIdx = () => (peakMin === undefined ? -1 : chosen.findIndex((c) => c.min === peakMin));
-  if (cut === 'long' && peakIdx() > 0) {
+  if (isLongish(cut) && peakIdx() > 0) {
     const by = fx.peakByS ?? PEAK_BY_S;
-    const tPeak = () => { let t = INTRO_S.long; for (let i = 0; i < peakIdx(); i++) t += stopS(pages[i]) + moveS(toU, chosen[i].min, chosen[i + 1].min); return t; };
+    const tPeak = () => { let t = INTRO_S[cut]; for (let i = 0; i < peakIdx(); i++) t += stopS(pages[i]) + moveS(toU, chosen[i].min, chosen[i + 1].min); return t; };
     // the start says its first card only (the hook already says what it is); then the quietest moments go
     if (tPeak() > by && used[0] > 1) { used[0] = 1; pages = pagesFor(); }
     for (let guard = 0; guard < 20 && tPeak() > by; guard++) {
@@ -303,20 +316,20 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // 2) long cut: room left → more cards of a moment, one at a time, always to the moment with the fewest so far
   //    (ties: the more telling one, then the later one), up to FILL_S (the rest of the minute is the body); never
   //    before the peak (round 5: the first impact stays early)
-  for (let guard = 0; cut === 'long' && guard < 100; guard++) {
+  for (let guard = 0; isLongish(cut) && guard < 100; guard++) {
     const order = chosen.map((_s, i) => i).filter((i) => used[i] < sents[i].length && (peakIdx() <= 0 || i >= peakIdx()))
       .sort((a, b) => pages[a].length - pages[b].length || val(chosen[b]) - val(chosen[a]) || chosen[b].min - chosen[a].min);
     let grew = false;
     for (const i of order) {
       used[i]++; const next = pagesFor();
-      if (total(next) > Math.min(lim.max, FILL_S)) { used[i]--; continue; }
+      if (total(next) > Math.min(lim.max, fillS(cut))) { used[i]--; continue; }
       pages = next; grew = true; break;
     }
     if (!grew) break;
   }
   // 3) long cut: one open loop at about half time (§2.4): "Coming up: the sugar dip." names a turn that is still to
   //    come (peak, dip, bedtime, next morning, gone), as a card of the moment then on screen
-  if (cut === 'long' && fx.tease !== false) {
+  if (isLongish(cut) && fx.tease !== false) {
     const starts: number[] = []; let t = INTRO_S[cut];
     chosen.forEach((c, i) => { if (i) t += moveS(toU, chosen[i - 1].min, c.min); starts.push(t); t += stopS(pages[i]); });
     const tot = total(pages);
@@ -332,11 +345,11 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // too short (few, short chapters): every card gets proportionally more time. Calmer, never repeated; the long
   // cut must reach its minimum (platforms count 60 s+), the short cut stretches at most 1.6×.
   // (round 5: in the long cut only the words from the peak on are stretched, so the first impact stays early)
-  const from = cut === 'long' ? Math.max(0, peakIdx()) : 0;
+  const from = isLongish(cut) ? Math.max(0, peakIdx()) : 0;
   const t0 = total(pages), reading = pages.slice(from).reduce((a, p) => a + stopS(p), 0);
   let want = lim.min + 0.3; // a little over, so frame rounding never lands under the minimum
   const lay = () => {
-    const stretch = t0 < want ? Math.min(cut === 'long' ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
+    const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
     return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, pages: pages[i].map((p, j) => ({ cap: p, s: readSeconds(p, j === 0) * (i >= from ? stretch : 1) })) })), cut, toU, fromU, { ...fx, teaserMin, peakMin });
   };
   let out = lay();
@@ -353,7 +366,7 @@ export const CMP_PAGE = 40;
 export const CMP_REPEAT_S = 6; // characters per side and page (2026-10-23 split screen: three short lines under each body)
 export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => number, fromU: (u: number) => number, fx: PlanFx = {}): Plan {
   const lim = LENGTH[cut];
-  const fixed = INTRO_S[cut] + outroSeconds(cut, true) + END_HOLD_S;
+  const fixed = INTRO_S[cut] + outroSeconds(cut, true) + CELEB_S[cut];
   const byMin = new Map<number, CmpStopIn>();
   for (const s of stopsIn) { const m = Math.max(0, Math.min(1440, s.min)); byMin.set(m, { ...s, min: m }); }
   let chosen = [...byMin.values()].sort((x, y) => x.min - y.min);
@@ -401,7 +414,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
     if (total(np) <= lim.max) pages = np; else chosen = keep;
   }
   const t0 = total(pages), reading = t0 - fixed - glides(chosen), want = lim.min + 0.3;
-  const stretch = t0 < want ? Math.min(cut === 'long' ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
+  const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
   return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.titleA, titleB: s.titleB, pages: pages[i].map((p) => ({ ...p, s: p.s * stretch })) })), cut, toU, fromU,
     { ...fx, compare: true, peakMin, teaserMin: fx.teaserMin ?? peakMin ?? chosen[Math.min(1, chosen.length - 1)].min });
 }
@@ -481,14 +494,19 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
     const g0 = glide(prevMin, 1440, { min: 1440, title: DAY_END_TITLE }); cues.push({ t: tNow(), kind: 'stop' });
     for (let i = g0; i < frames.length; i++) frames[i].stop = 1440;
   }
-  for (let k = 0, n = F(END_HOLD_S); k < n; k++) frames.push({ phase: 'main', m: 1440, t: tNow(), cap: last?.cap, capB: last?.capB, title: lastStop?.title, titleB: lastStop?.titleB, capA: 1, plateA: endsAtDay ? 1 : 0, k: 0, stop: endsAtDay ? lastStop.min : 1440, beat: 'end', pg: pg + 1 });
-  // end card: the lights come on one by one (§3.1), then (comparison) the verdict lands
+  // round 11 (research R1): the payoff beat at +24:00, body in frame: the last words leave for "AFTER 24 HOURS", the
+  // day's lights come on one by one (the comparison's verdict lands first), then a "day done" ring
+  const tCeleb = tNow(), nCeleb = F(CELEB_S[cut]);
+  for (let k = 0; k < nCeleb; k++) frames.push({ phase: 'main', m: 1440, t: tNow(), cap: k < F(0.25) ? last?.cap : undefined, capB: k < F(0.25) ? last?.capB : undefined, title: lastStop?.title, titleB: lastStop?.titleB, capA: k < F(0.25) ? 1 - k / F(0.25) : 0, plateA: 0, k: 0, stop: endsAtDay ? lastStop.min : 1440, beat: 'end', celeb: k / nCeleb, pg: pg + 1 });
+  if (fx.compare && fx.verdict) cues.push({ t: tCeleb + 0.3, kind: 'verdict', data: { label: fx.verdictTrophy ? 'trophy' : 'plain' } });
+  const lFrom = fx.compare ? CMP_LIGHTS_FROM_S : LIGHTS_FROM_S, lStep = fx.compare ? CMP_LIGHTS_STEP_S : LIGHTS_STEP_S;
+  const lights = fx.lights ?? [];
+  lights.forEach((level, i) => cues.push({ t: tCeleb + lFrom + i * lStep, kind: 'lights', data: { level, v: i, side: fx.compare ? ((i % 2) as 0 | 1) : undefined } }));
+  cues.push({ t: Math.min(tCeleb + lFrom + lights.length * lStep + 0.1, tCeleb + CELEB_S[cut] - 0.5), kind: 'day', data: { label: fx.calmDay ? 'calm' : 'bright' } });
+  // end card (short: ≤ 2.5 s; its last line hands over to the first frame: the loop)
   const tOut = tNow();
   cues.push({ t: tOut, kind: 'outro' });
   const nOut = F(outroSeconds(cut, !!fx.compare));
-  if (fx.compare && fx.verdict) cues.push({ t: tOut + LIGHTS_FROM_S, kind: 'verdict', data: { label: fx.verdictTrophy ? 'trophy' : 'plain' } });
-  const lFrom = fx.compare ? CMP_LIGHTS_FROM_S : LIGHTS_FROM_S, lStep = fx.compare ? CMP_LIGHTS_STEP_S : LIGHTS_STEP_S;
-  (fx.lights ?? []).forEach((level, i) => cues.push({ t: tOut + lFrom + i * lStep, kind: 'lights', data: { level, v: i, side: fx.compare ? ((i % 2) as 0 | 1) : undefined } }));
   for (let i = 0; i < nOut; i++) frames.push({ phase: 'outro', m: 1440, t: tNow(), capA: 0, k: i / nOut, stop: 1440, beat: 'end' });
   cues.push({ t: tNow(), kind: 'end' });
   // the clock: day position and speed of every frame
@@ -550,7 +568,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
     else if (riser && peak && frames.some((fr, i) => inWin(fr) && i / FPS >= riser.t - 0.5 && i / FPS <= peak.t)) cues.push({ t: riser.t, kind: 'surge', data: { label: sg.kind, side: sg.side, v: peak.t - riser.t } });
   }
   // the comparison's open loop at about half time: "Answer at 24 h." (§3.3)
-  if (fx.compare && cut === 'long') {
+  if (fx.compare && isLongish(cut)) {
     const st = cues.filter((c) => c.kind === 'stop' && c.t > tOut * 0.35 && c.t < tOut * 0.65).sort((x, y) => Math.abs(x.t - tOut * 0.5) - Math.abs(y.t - tOut * 0.5))[0];
     // (round 7, critic B4: "Answer at 24 h." came after "First out: Water." was shown): only before the answer
     const ans = cues.find((c) => c.kind === 'peak');

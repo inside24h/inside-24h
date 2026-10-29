@@ -79,10 +79,12 @@ export function stepRig(r: Rig, goal: Pose, dt: number, half = 0.55): Rig {
  * target sits in the open window between the words at the top and the caption at the bottom (0.07 = 134 px higher
  * on a 1920 px frame).
  */
-export function cameraOf(r: Rig, fovDeg = FOV, lift = 0.07): { pos: V3; look: V3 } {
+export function cameraOf(r: Rig, fovDeg = FOV, lift = 0.07, seed = 0): { pos: V3; look: V3 } {
   const [tx, ty, tz, viewH] = r.x;
   const d = distFor(viewH, fovDeg);
-  const yaw = 0.21 * Math.sin((2 * Math.PI * r.t) / 12), pitch = 0.07;
+  // (round 11, research R5: each food's sway starts its own way, from its variety seed)
+  const s = Math.abs(Math.floor(seed)), dir = s % 2 ? -1 : 1, ph = (s % 7) * 1.3;
+  const yaw = dir * 0.21 * Math.sin((2 * Math.PI * (r.t + ph)) / 12), pitch = 0.07;
   const look: V3 = [tx, ty - lift * viewH, tz];
   const pos: V3 = [look[0] + d * Math.sin(yaw) * Math.cos(pitch), look[1] + d * Math.sin(pitch), look[2] + d * Math.cos(yaw) * Math.cos(pitch)];
   return { pos, look };

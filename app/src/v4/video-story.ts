@@ -5,7 +5,7 @@ import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { beatLines, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
-import { planCompare, planVideo, SURGE_FROM, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
+import { planCompare, planVideo, SURGE_FROM, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
 import { mainGauge, whereGauge, type BuiltLike } from './video-body';
 import { worstMoment } from './status';
 import { verdictOf, type Analysis } from './analyze';
@@ -91,7 +91,9 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx): S
 export interface ComparePlan { plan: Plan; guess: Guess | null; race: { a: Float32Array; b: Float32Array } | null; fx: PlanFx; verdict: string }
 /** The comparison video's plan (2026-10-23 split screen; rounds 4-8): the guess, each side's cards per moment, the
  *  moments that say something new, and the plan for them. */
-export function comparePlan(a: Analysis, b: Analysis, profile: Profile, shortVid: boolean): ComparePlan {
+export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: boolean | Cut): ComparePlan {
+  // (round 11: a cut, or the old flag: true = short)
+  const cut: Cut = typeof cutIn === 'boolean' ? (cutIn ? 'short' : 'long') : cutIn, shortVid = cut === 'short';
   // each side's words at each moment (as on screen); planCompare sets the reading times and the length
   const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
   const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built, profile.drinkAtMin), factsFirst: true }); };
@@ -108,7 +110,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, shortVid
   const hit = gq ? Math.round(gq.decidedMin) : pk;
   // round 10: the bloodstream surge on the first side that has one (the same order as the peak: no alcohol first)
   const sg = ([...nonAlc, a, b].map((x) => { const s = surgeOf(x.built, x.glucose !== undefined); return s && { ...s, side: (x === a ? 0 : 1) as 0 | 1 }; })).find((x) => !!x);
-  const fx: PlanFx = { surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
+  const fx: PlanFx = { calmDay: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
     lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)
@@ -149,7 +151,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, shortVid
     const pick = <T,>(xs: T[]) => xs.filter((_x, i) => keepAt[i]);
     const SA = pick(sa), SB = pick(sb);
     return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines })),
-      shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
+      cut, uFromMinutes, minutesFromU, fx);
   };
   let used = cmpMins0, plan = build(used);
   for (let k = 0; k < 3; k++) { const kept = cmpMins0.filter((m) => plan.stops.includes(m)); if (kept.length === used.length) break; used = kept; plan = build(used); }
@@ -157,6 +159,6 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, shortVid
 }
 
 /** The single video's plan inputs (AppV4 reelPlan) from a model run. */
-export function singlePlan(stops: StopIn[], cut: 'long' | 'short', fx: PlanFx): Plan {
+export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx): Plan {
   return planVideo(stops, cut, uFromMinutes, minutesFromU, fx);
 }

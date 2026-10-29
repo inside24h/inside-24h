@@ -27,10 +27,13 @@ import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
-import { canEncode, captionOf, composeCmpFrame, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
+import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
 import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, comparePlan, gaugesAt, peakOf, plainLatin, shortName, singleStops, surgeOf } from './video-story';
-import { hookFor, hookForCompare } from './video-hook';
+import { compareHookB, hookB, hookFor, hookForCompare, seedOf, type HookIn } from './video-hook';
+import { captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Captions, type Platform } from './video-caption';
+/** Round 11 (research R2, R5): the two hooks of a video; which formula comes first rotates per food (its seed). */
+const hookPairOf = (h: HookIn, seed: number) => { const a = hookFor(h), b = hookB(h, a); return seed % 2 ? [b, a] : [a, b]; };
 import type { Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
@@ -338,7 +341,7 @@ export default function AppV4() {
     return () => clearTimeout(id);
   }, [started, personalized, nudge]);
   useEffect(() => { if (panel === 'body') markPersonal(); }, [panel, markPersonal]); // found "Your body" on their own
-  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string; pin?: string } | null>(null);
+  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string; pin?: string; captions?: Captions } | null>(null);
   const [handle, setHandle] = useState(() => { try { return localStorage.getItem('i24-handle') || '@inside24h'; } catch { return '@inside24h'; } });
   const recRef = useRef(false);
   const r3f = useRef<RootState | null>(null);
@@ -538,7 +541,13 @@ export default function AppV4() {
   })();
   const overlayRef = useRef<Overlay | null>(null);
   const reelStops = useRef<number[] | null>(null);
-  const [shortVid, setShortVid] = useState(false); // ≤ 30 s cut for Shorts / Reels (the full cut is 62-75 s)
+  // round 11 (research R3): the platform picks the cut: TikTok / Facebook 62-75 s, Instagram Reels 45-55 s, Shorts 23-30 s
+  const [platform, setPlatform] = useState<Platform>('tiktok');
+  const vidCut = PLATFORM_CUT[platform], shortVid = vidCut === 'short';
+  const setShortVid = (v: boolean) => setPlatform(v ? 'shorts' : 'tiktok'); // (the comparison's own length switch)
+  // round 11 (research R2): two hooks per video, A and B (which formula is A rotates per food: research R5)
+  const [hookVar, setHookVar] = useState<'A' | 'B'>('A');
+  const [copied, setCopied] = useState<string | null>(null);
   // our own soundtrack (video-audio.ts): music + effects, effects only (2026-10-24: add a trending song in the app), or none
   const [vidSound, setVidSound] = useState<'music' | 'sfx' | 'none'>('music');
   // 2026-10-23 body-first video: the camera's cue, the video frame being made, the comparison's cameras, and the
@@ -562,9 +571,9 @@ export default function AppV4() {
     const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
     if (!canvas || !overlayRef.current) return;
     if (r3f.current) r3f.current.gl.render(r3f.current.scene, r3f.current.camera);
-    const c = composeFrame(canvas, 'reel', overlayRef.current, 'intro');
+    const c = composeCover(canvas, overlayRef.current.hook); // (round 11: the hook in the grid-safe centre band, with the series tag)
     const blob = await new Promise<Blob | null>((r) => c.toBlob(r, 'image/png'));
-    if (blob) await saveFile(`${fileName}-cover.png`, blob);
+    if (blob) await saveFile(`${fileName}-cover${hookVar === 'B' ? '-hookB' : ''}.png`, blob);
   };
   // while recording, text belongs to the moment the video is heading to (no flicker during the glide)
   // (2026-10-23: the frame says which moment it belongs to; the day drifts on while a moment is read)
@@ -573,10 +582,13 @@ export default function AppV4() {
   const recChapter = story.chapters.reduce((acc, c) => (recStop + 1e-6 >= c.min ? c : acc), story.chapters[0]);
   // while the video is made: the organs at work light up, the rest dims (video-body.ts)
   const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null) : null;
-  const hookNow = hookFor({ name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
+  const hookIn = { name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
     alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
     pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
-    grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg });
+    grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg };
+  const vSeed = seedOf(shortName(videoName)), hookPair = hookPairOf(hookIn, vSeed);
+  const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
+  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, sugar: peakNow !== null, solid: /bite/i.test(story.chapters[0]?.title ?? '') });
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
@@ -622,12 +634,12 @@ export default function AppV4() {
     setMode('simple'); setSelected(null); setWholeBody(false); setFlightKey((k) => k + 1); setEvidence(null); setPanel(null);
     recRef.current = true; setU(0); setPlaying(false); setShare({ state: 'rec', format }); setRecPct(0);
     // body-first (2026-10-23): the 3D canvas takes the video's size and the video camera films the plan's shots
-    setRecBox(format); recFr.current = null; vcue.current = { shot: OPENING, start: OPENING };
+    setRecBox(format); recFr.current = null; vcue.current = { shot: OPENING, start: OPENING, seed: vSeed };
     const [FW, FH] = SIZE[format];
     // frame-exact encoder where available (smooth on any computer), screen recording as a fallback; both follow the
     // same plan (video-plan.ts: reading-speed captions, 62-75 s or ≤ 30 s)
     const plan = reelPlan(), opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
-      soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? '') }, onTick: (f: number) => setRecPct(f),
+      soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: (f: number) => setRecPct(f),
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; } };
     const cue = (fr?: VFrame) => {
@@ -656,7 +668,7 @@ export default function AppV4() {
       : record(canvas, format, pinned, (m, fr) => { recFr.current = fr ?? null; setU(uFromMinutes(m)); cue(fr); }, plan, opts);
     job
       .then(({ blob, ext, audio }) => setShare({ state: 'ready', format, blob, ext, url: URL.createObjectURL(blob),
-        caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`,
+        caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`, captions: captionsNow(),
         pin: pinnedIdea(),
         msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined }))
       .catch((e: Error) => setShare({ state: 'error', msg: e.message }))
@@ -705,7 +717,7 @@ export default function AppV4() {
     };
     const race = cmpRace.current;
     const gq = cmpGuess.current;
-    cmpOverlayRef.current = { hook: gq ? gq.question : hookForCompare(cmpName(cmpRec.a.label), cmpName(cmpRec.b.label), false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
+    cmpOverlayRef.current = { hook: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(cmpRec.a.label), cmpName(cmpRec.b.label)) : gq.question) : hookForCompare(cmpName(cmpRec.a.label), cmpName(cmpRec.b.label), false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
       answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
   }
   // the organ each body's current moment is about (the split-screen cameras frame both, the organs light up)
@@ -724,7 +736,7 @@ export default function AppV4() {
         flushSync(() => setCmpNever(true)); // bodies are loaded: from now on only the recorder draws frames
         // each side's words at each moment (as on screen); planCompare sets the reading times and the length
         // (round 9: the comparison's plan is built in video-story.ts, the same code the all-foods test runs)
-        const cp = comparePlan(a, b, profile, shortVid), gq = cp.guess, plan = cp.plan;
+        const cp = comparePlan(a, b, profile, vidCut), gq = cp.guess, plan = cp.plan;
         cmpGuess.current = gq; cmpRace.current = cp.race;
         cmpStops.current = plan.stops;
         if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ seconds: plan.seconds, stops: plan.stops, guess: gq && { kind: gq.kind, q: gq.question, a: `${gq.answer1} ${gq.answer2}`, at: gq.decidedMin }, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, `${p.text} | ${p.textB ?? ''}`]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
@@ -747,9 +759,10 @@ export default function AppV4() {
           flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r)));
           if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = splitShot(fr); void chapAt(a, st0); }
           const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
-        }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label) },
+        }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
           onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; } });
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
+          captions: captionsFor({ name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, hook: { line1: cmpOverlayRef.current?.hook ?? '', line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), compare: { a: cmpName(a.label), b: cmpName(b.label) } }),
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',
           msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
@@ -783,8 +796,8 @@ export default function AppV4() {
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = hookNow.payoff ? story.chapters.find((c) => c.title === hookNow.payoff)?.min : undefined;
     const fx: PlanFx = { peakMin: peakOf(built, peakNow !== null), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
-      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null) };
-    const plan = planVideo(stops, shortVid ? 'short' : 'long', uFromMinutes, minutesFromU, fx);
+      lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
+    const plan = planVideo(stops, vidCut, uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;
     if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
     return plan;
@@ -1109,7 +1122,7 @@ export default function AppV4() {
 
       {leftNote && !linkNote && <div className="linknote leftout" role="status">{leftNote}<button className="x" aria-label="Close" onClick={() => setLeftNote(null)}>×</button></div>}
       {linkNote && <div className="linknote" role="status">{linkNote}<button className="x" aria-label="Close" onClick={() => setLinkNote(null)}>×</button></div>}
-      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} onRight={setVsParts} />}
+      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} platform={platform} setPlatform={setPlatform} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
       {share?.state === 'rec' && <div className="recbadge" role="status">● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</div>}
       {share && share.state !== 'rec' && (
@@ -1124,10 +1137,13 @@ export default function AppV4() {
               <h2>Make a video</h2>
               <p className="note">The whole 24 hours: an opening question, a pause at each key moment, captions for silent viewing, the food or drink moving through the body, and a summary at the end.</p>
               <label className="handle">Name in the corner <small>(optional: @inside24h or your own handle)</small><input value={handle} placeholder="@yourname" onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
-              <div className="lenpick" role="group" aria-label="Length">Length:
-                <button aria-pressed={!shortVid} onClick={() => setShortVid(false)}>Full · over 1&nbsp;min</button>
-                <button aria-pressed={shortVid} onClick={() => setShortVid(true)}>Short · under 30&nbsp;s</button>
+              <div className="lenpick platpick" role="group" aria-label="Platform">Platform:
+                {PLATFORMS.map((p) => <button key={p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>{PLATFORM_LABEL[p]} · {PLATFORM_LENGTH[p]}</button>)}
               </div>
+              <div className="lenpick hookpick" role="group" aria-label="Opening line">Opening line:
+                {(['A', 'B'] as const).map((v, i) => <button key={v} aria-pressed={hookVar === v} onClick={() => setHookVar(v)}>{v}: “{hookPair[i].line1} {hookPair[i].line2}”</button>)}
+              </div>
+              <p className="note">Testing hooks: post A and B on different days (or as an Instagram Trial Reel), change one thing a week, and compare the first 3 seconds (“viewed vs. swiped away” on Shorts, 2–3 s hold on TikTok), average % watched, where the curve drops, and shares.</p>
               <div className="lenpick soundpick" role="group" aria-label="Sound">Sound:
                 <button aria-pressed={vidSound === 'music'} onClick={() => setVidSound('music')}>Our music</button>
                 <button aria-pressed={vidSound === 'sfx'} onClick={() => setVidSound('sfx')}>Sound effects only</button>
@@ -1146,11 +1162,17 @@ export default function AppV4() {
               <video src={share.url} autoPlay loop muted playsInline controls className={share.format === 'reel' ? 'v916' : 'v45'} />
               <p className="note">Suggested caption: “{share.caption ?? `${videoName}: what happens inside your body in 24 hours 👀 Which food should we test next? 👇 #Inside24h #health #nutrition`}”</p>
               {share.pin && <p className="note">Pinned comment idea: “{share.pin}”</p>}
+              {share.captions && <div className="captions">
+                {([['tiktok', 'TikTok caption', share.captions.tiktok], ['reels', 'Instagram caption', share.captions.reels], ['facebook', 'Facebook caption', share.captions.facebook],
+                  ['shorts-title', 'YouTube Shorts title', share.captions.shorts.title], ['shorts', 'YouTube Shorts description', share.captions.shorts.description]] as const).map(([k, label, txt]) => (
+                  <div key={k} className="captionrow"><b>{label}</b><pre>{txt}</pre>
+                    <button className="ghost" onClick={async () => { try { await navigator.clipboard.writeText(txt); setCopied(k); } catch { setCopied(null); } }}>{copied === k ? 'Copied ✓' : 'Copy'}</button></div>))}
+              </div>}
               {share.msg && <p className="note">{share.msg}</p>}
             </>)}
             <div className="nbtns">
               {share.state === 'ready' && <button className="primary" onClick={async () => {
-                const r = await saveFile(`${fileName}-${share.format === 'reel' ? 'reel' : 'feed'}.${share.ext}`, share.blob!);
+                const r = await saveFile(`${fileName}-${share.format === 'reel' ? platform : 'feed'}${hookVar === 'B' ? '-hookB' : ''}.${share.ext}`, share.blob!);
                 setShare({ ...share, msg: r === 'saved' ? 'Saved. Post it as a Reel, Story or TikTok.' : r === 'declined' ? 'Not saved.' : 'Saving files isn’t available here. Right-click the video and choose “Save video as…”.' });
               }}>Save video ({share.ext?.toUpperCase()}, {((share.blob?.size ?? 0) / 1e6).toFixed(1)} MB)</button>}
               {share.state === 'ready' && <button className="ghost" onClick={() => setShare({ state: 'choose' })}>Make another</button>}

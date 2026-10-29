@@ -438,3 +438,79 @@ Backup: `C:\claudework\inside-24h-backups\20261029-200558-video10b\`.
 - Uzorci u `C:\claudework\video-samples\2026-10-29-v10b\`: kebab-long, pizza-builder-long, cola-short, compare-cola-vs-water-short. Glasnoća −14,1 do −14,3 LUFS, TP −1,8/−1,9 dBTP, bez crnih frameova.
 - tsc je čist, vitest 772/772 (1 skip). Oba builda prolaze.
 - Site build nije commitan jer sadrži necommitane promjene baze hrane drugog agenta.
+
+---
+
+# Runda 11 (2026-10-29): preporuke iz `viral-research-2026-10-29.md`
+
+Backup: `C:\claudework\inside-24h-backups\20261029-201746-video11\` + git (HEAD prije runde = 0908dc8, zatim commitovi food-DB agenta).
+
+## Što je napravljeno
+1. **R1 kraj i petlja.**
+   - Novi 24 h beat s tijelom u kadru (long 2,2 s, medium 2,0 s, short 1,7 s). Zadnja kartica ode, dođe "AFTER 24 HOURS" i četiri lampice dana (krug, ikona, kratki naziv) se pale jedna po jedna uz blip. Na kraju je prsten "day done" i kratki arpeggio.
+   - Za alkohol je beat miran: samo prsten i jedno tiho zvono, bez iskri i durskog akorda. Alkohol se nikad ne slavi.
+   - Usporedba: presuda iz `verdictOf` sleti u tom beatu (s udarcem) i ostaje na end cardu, pa se čita više od 4 s.
+   - End card traje 4,0 s u longu, 3,0 s u mediumu i 2,5 s u shortu. U shortu ostaju samo naziv, pitanje i petlja.
+   - Zadnji red "↻ Now watch the first sip/bite again." prelazi u frame 0 (hook). Handle je i dalje gore.
+2. **R2 dva hooka.** `hookB` je drugi hook drugom formulom: prvo pitanje, onda činjenica iz A. Koristi samo A-ove brojeve. Primjeri:
+   - "Where does all that sugar go? / One can of cola: 9 teaspoons of sugar."
+   - "Does coffee send you to the toilet?"
+   - "Is it gone by the next morning?"
+   - Usporedba: "Cola or Water: which leaves your stomach first?"
+   - U share dijalogu je izbor "Opening line: A / B" s oba teksta. Datoteka dobiva sufiks `-hookB`.
+3. **R3 rez po platformi.** Novi `medium` rez (Instagram Reels, 45–55 s). Share dijalog i usporedba biraju platformu:
+   - TikTok 62–75 s;
+   - Instagram Reels 45–55 s;
+   - YouTube Shorts 23–30 s;
+   - Facebook Reels 62–75 s.
+4. **R6 opisi po platformi** (`video-caption.ts`), svaki s gumbom "Copy":
+   - Prvi red je fraza pretrage ("What happens in your body after one can of cola (24 hours)").
+   - TikTok ima 5 hashtagova i jedno pitanje za komentare.
+   - Instagram ima ≤ 5 hashtagova i ne traži komentar.
+   - Facebook je bez hashtagova.
+   - Shorts ima naslov ≤ 60 znakova, opis i 3 hashtaga.
+   - Svaki tekst ima disclaimer i izvore (USDA FoodData Central + studije u appu, "How we know"). Alkohol dobiva i "Educational simulation · 18+ · Don't drink and drive."
+   - Zabranjene riječi su testirane (cure, detox, burn it off, weight loss, best…).
+5. **R7 usklađenost.** U videu više nema "Comment: …". Chip i hook usporedbe kažu "Guess before the answer.", a riječ "comment" postoji samo u TikTok opisu.
+   - Zdravstveni tekst u videu nije mijenjan. Sve kartice dolaze iz postojećih poglavlja s izvorima, nema novih tvrdnji, a disclaimer je u svakom kadru.
+   - Sigurnosne kartice za alkohol ("Don't drive.", "On diabetes medicine? Watch for low sugar.") su upozorenja, ne savjet o liječenju.
+6. **R8 cover.** "Save cover image" sada crta hook velikim slovima u središnjem pojasu (y 560–1360, x 90–990), koji preživi crop 1:1 i 3:4. Uz hook je mala oznaka serije "INSIDE 24H" (test).
+7. **R5 raznolikost.** Iz imena hrane se računa seed (`seedOf`). Određuje:
+   - koji hook je A (rotacija formula);
+   - tonalitet i početak progresije glazbe (5 tonaliteta × 4 rotacije);
+   - boju whoosha;
+   - smjer i fazu njihanja kamere.
+   - Ista hrana uvijek daje isto.
+8. **R10 x-ray zaron nije dodan kao novi kadar.** Gutljaj već prati kameru usta → jednjak → želudac odmah nakon rewinda. Frame 0 ostaje teaser s cijelim hookom, kao i prije.
+9. **Glas: NE** (odluka vlasnika). Skripta za naraciju nije napravljena.
+
+## Duljine (odluka vlasnika + istraživanje)
+- **Long (TikTok, Facebook):** 62–75 s. Test zahtijeva ≥ 61,5 s za single i usporedbu, a izričito nikad < 60,5 s, na svih 178 namirnica i 12 parova.
+- **Reels:** 45–55 s. Podaci za Reels pokazuju vrh na 45–60 s, a replay se broji.
+- **Shorts:** 23–30 s (prije 15–30). Shorts publika gleda ~3× kraće. Ispod ~23 s naša priča (hook, gutljaj, vrh, isplata, 24 h) nema mjesta za čitanje, a iznad 30 s pada "viewed vs swiped". Kratki kraj (2,5 s) i petlja daju ponovno gledanje.
+
+## Vodič za vlasnika: A/B hook
+- Objavi A i B **različitih dana** (ili na Instagramu kao Trial Reel), uvijek isti video, mijenja se samo hook. **Jedna varijabla tjedno.**
+- Uspoređuj:
+  1. **prve 3 s**: Shorts "Viewed vs. swiped away", TikTok 2–3 s hold;
+  2. **avg % viewed** i gdje pada krivulja (prije vrhunca? na end cardu?);
+  3. **shares/sends po reachu**;
+  4. komentare.
+- Pobjednik je hook s boljim prvim 3 s **i** jednakim ili boljim avg % viewed. Nikad dva videa iste hrane i formata isti dan na istom kanalu.
+
+## Provjera runde 11
+- Uzorci kroz pravi UI u `C:\claudework\video-samples\2026-10-29-v11\`:
+  - kebab-tiktok-long (64,9 s)
+  - beer-3-over-2h-reels-medium (52,6 s)
+  - cola-shorts (27,2 s)
+  - espresso-shorts-hookB (25,8 s)
+  - compare-cola-vs-water-reels-medium (53,0 s)
+- Svi su 1080×1920, 30 fps, H.264 + AAC, bez grešaka u konzoli. Glasnoća −14,2/−14,3 LUFS, TP −1,5 do −1,8 dBTP.
+- Pregledani krajevi: lampice se pale uz tijelo, end card je kratak, a "↻" se pretapa u frame 0.
+- tsc je čist, vitest 822/822 (1 skip). Novi testovi:
+  - sweep za sva tri reza, dulje od 60,5 s, end card ≤ 2,5/4 s, 24 h beat postoji;
+  - hook B za svaku hranu;
+  - opisi za svaku hranu;
+  - cover u središnjem pojasu;
+  - raznolikost.
+- Oba builda prolaze. Site build je commitan, jer su promjene baze hrane commitane (14c8183).

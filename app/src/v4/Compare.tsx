@@ -7,6 +7,7 @@ import { analyze, sugarPeakText, verdictOf, type Analysis } from './analyze';
 import { SmartSearch } from './SmartSearch';
 import { parseMeal, type Part } from './food/parse';
 import { worstMoment } from './status';
+import { PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Platform } from './video-caption';
 
 const DOT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 const WORD = ['fine all day', 'mild stress', 'high stress'];
@@ -59,8 +60,9 @@ function SugarChart({ a, b, unit }: { a: Analysis; b: Analysis; unit: Profile['g
   );
 }
 
-export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, onRight, overMin = 0 }: {
+export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, platform, setPlatform, onRight, overMin = 0 }: {
   current: Part[]; profile: Profile; initial?: Part[]; onClose: () => void; onVideo?: (a: Analysis, b: Analysis) => void; short?: boolean; setShort?: (v: boolean) => void;
+  /** round 11: the platform (it picks the cut), as in the share dialog */ platform?: Platform; setPlatform?: (p: Platform) => void;
   onRight?: (right: Part[] | null) => void; // the partner goes into the link (#vs=…)
   /** "Over how long?" of the item on screen (minutes; 2026-10-19): kept while the left side is that item */ overMin?: number;
 }) {
@@ -87,7 +89,8 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
       <div className="cmpbody">
         {b ? (<>
           <div className="cmpactions">{onVideo && <>
-            {setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1&nbsp;min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30&nbsp;s</button></span>}
+            {setPlatform ? <span className="lenpick platpick">For: {PLATFORMS.filter((p) => p !== 'facebook').map((p) => <button key={p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>{PLATFORM_LABEL[p]} · {PLATFORM_LENGTH[p]}</button>)}</span>
+            : setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1&nbsp;min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30&nbsp;s</button></span>}
             <button className="primary" onClick={() => onVideo(a, b)}><span aria-hidden="true">🎬 </span>Make this a Reel (9:16)</button></>}</div>
           <div className="cmpverdict">{verdictOf(a, b, profile.glucoseUnit)}</div>
           <SugarChart a={a} b={b} unit={profile.glucoseUnit} />

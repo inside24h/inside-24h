@@ -79,11 +79,11 @@ describe('comparison game honesty', () => {
       expect(boxes.map((b) => b.text).join(' | ')).not.toContain(VIDEO_COPY.fasterOut);
     }
   });
-  it('round 5: the guess chip names the two drinks ("Comment: espresso or beer?"), never "A or B"', () => {
+  it('round 11 (was round 5): the guess chip asks for a guess, never a comment (Meta), never "A or B"', () => {
     const boxes = logText(() => drawCmpFrame(fake(), 1080, 1920, { width: 1080, height: 1920 } as HTMLCanvasElement, o,
       { phase: 'intro', m: 0, t: 1.5, capA: 0, k: 0.5, beat: 'hook' }, { stopsU: [0, 1], introS: 3, outroS: 8, cues: [] }, null));
     const all = boxes.map((b) => b.text).join(' ');
-    expect(all).toContain('Comment: espresso or beer?'); expect(all).not.toMatch(/\bA or B\b/);
+    expect(all).toContain('Guess before the answer.'); expect(all).not.toMatch(/\bA or B\b|comment/i);
   });
   it('round 5: frame 0 (the thumbnail) shows the WHOLE hook, both lines', () => {
     const ov: Overlay = { hook: 'One can of cola: 9 teaspoons of sugar.\nWatch where it goes.', title: 'One can of cola', sub: '', clock: '', step: '', caption: '', progress: 0, lights: [], summary: [], handle: '@inside24h' };

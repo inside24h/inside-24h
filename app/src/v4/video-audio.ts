@@ -172,7 +172,14 @@ export function playSoundtrack(buf: AudioBuffer): { track: MediaStreamTrack; sta
 // and seeded noise): no samples, no licences. `music: false` = "Sound effects only" (the owner adds a trending song).
 // =====================================================================================================================
 export type SoundMode = 'music' | 'sfx';
-export interface SoundOpts { music: boolean; fizzy?: boolean; solid?: boolean }
+export interface SoundOpts { music: boolean; fizzy?: boolean; solid?: boolean; /** round 11 (research R5): the food's variety seed (video-story seedOf) */ seed?: number }
+/** Round 11 (research R5, YouTube "repetitive content"): each food gets its own motif, deterministically: the key
+ *  (A minor, G minor, C minor, D minor, E minor), where the progression starts, and the whoosh's colour. */
+export const MOTIF_KEYS = [0, -2, 3, 5, -5] as const;
+export function motifOf(seed = 0): { tr: number; rot: number; whoosh: number } {
+  const s = Math.abs(Math.floor(seed));
+  return { tr: MOTIF_KEYS[s % MOTIF_KEYS.length], rot: Math.floor(s / 5) % CHORDS.length, whoosh: [1, 0.8, 1.25][Math.floor(s / 20) % 3] };
+}
 const BPM2 = 120, BEAT2 = 60 / BPM2, BAR2 = 4 * BEAT2, CHORD2_S = 2 * BAR2;
 /** RMS of the full mix that measures about −14 LUFS for this material (calibrated with ffmpeg ebur128, QA 2026-10-24). */
 export const TARGET_RMS2 = 0.17;
@@ -269,6 +276,7 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   const under = ctx.createBiquadFilter(); under.type = 'lowpass'; under.frequency.value = 18000; under.Q.value = 0.7;
   duck.connect(dyn); dyn.connect(under); under.connect(musicOut);
   const noise = noiseBuffer(ctx, 3, 7);
+  const mo = motifOf(o.seed), CH = CHORDS.map((_c, i) => CHORDS[(i + mo.rot) % CHORDS.length].map((n) => n + mo.tr));
   const at = (k: Cue['kind']) => cues.filter((c) => c.kind === k);
   const outro = at('outro')[0]?.t ?? seconds - 6;
   const sip = at('sip')[0]?.t ?? 1;
@@ -303,6 +311,7 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
     const padBus = ctx.createBiquadFilter(); padBus.type = 'lowpass'; padBus.frequency.value = 1300; padBus.Q.value = 0.5;
     const padGain = ctx.createGain(); padGain.gain.value = 0.045; padBus.connect(padGain); padGain.connect(duck);
     const chordAt = (t: number) => (t >= outro ? 0 : Math.floor(t / CHORD2_S) % CHORDS.length);
+    const CHORDS = CH; // (round 11: this food's motif)
     for (let t = 0; t < seconds;) {
       const c = chordAt(t), next = t >= outro ? seconds : Math.min(outro, (Math.floor(t / CHORD2_S) + 1) * CHORD2_S);
       CHORDS[c].forEach((n, i) => {
@@ -331,7 +340,7 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
       for (let e = 0; e < 2; e++) { const tt = t + (e * BEAT2) / 2; pluck(tt, midi(ch[1 + ((k * 2 + e) % (ch.length - 1))] + 24), 0.025, 'triangle', 0.22, e ? 0.4 : -0.4); }
     }
     // the resolving chord under the end card
-    const tO = outro; [69, 72, 76, 81].forEach((n, i) => pluck(tO + i * 0.12, midi(n), 0.05, 'sine', 1.6, (i - 1.5) * 0.25));
+    const tO = outro; [69, 72, 76, 81].forEach((n, i) => pluck(tO + i * 0.12, midi(n + mo.tr), 0.05, 'sine', 1.6, (i - 1.5) * 0.25));
     // ducking (a sidechain written from the cue list): −6 dB under each impact, −3 dB under the sip
     for (const t of [...peaks, ...verdicts]) { duck.gain.setValueAtTime(1, Math.max(0, t - 0.4)); duck.gain.linearRampToValueAtTime(0.5, t - 0.32); duck.gain.setValueAtTime(0.5, t); duck.gain.linearRampToValueAtTime(1, t + 0.45); }
     duck.gain.setValueAtTime(1, Math.max(0, sip - 0.05)); duck.gain.linearRampToValueAtTime(0.7, sip + 0.03); duck.gain.linearRampToValueAtTime(1, sip + 0.7);
@@ -381,7 +390,7 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
         }
         break;
       }
-      case 'move': nz(t, 0.95, 0.16, sfx, { type: 'bandpass', f: 350, f1: 2800, q: 1.4 }, 0, 0.55); // A7 whoosh
+      case 'move': nz(t, 0.95, 0.16, sfx, { type: 'bandpass', f: 350 * mo.whoosh, f1: 2800 * mo.whoosh, q: 1.4 }, 0, 0.55); // A7 whoosh (round 11: its colour per food)
         // round 9 (A7 reverse + V17): a long jump through the day (≥ 4 h) adds a soft falling air rush as the camera
         // pulls back and the speed lines run, panned slowly across
         if ((c.data?.v ?? 0) >= 240) { nz(t + 0.12, 1.15, 0.05, sfx, { type: 'bandpass', f: 2800, f1: 350, q: 0.8 }, -0.35, 0.45); nz(t + 0.3, 0.9, 0.03, sfx, { type: 'highpass', f: 4200 }, 0.35, 0.35); }
@@ -391,6 +400,11 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
         // round 10: the organ thump under the tick (the picture's organ hit), not on the impact (it has its own)
         if (!peaks.some((p) => Math.abs(p - t) < 0.3)) { osc('sine', 92, 52, t, 0.2, 0.2, sfx, 0, 0.004); nz(t, 0.03, 0.06, sfx, { type: 'lowpass', f: 320 }, 0, 0.002); }
       } break;
+      case 'day': { // round 11: the 24 h beat completes: a soft rising arpeggio (calm: one low bell, alcohol is never celebrated)
+        if (c.data?.label === 'calm') { osc('sine', midi(57), null, t, 1.2, 0.06, sfx); osc('sine', midi(69), null, t + 0.01, 0.9, 0.025, sfx); }
+        else { [69, 73, 76, 81, 85].forEach((n, i) => osc('sine', midi(n + 12), null, t + i * 0.05, 0.9, 0.04, sfx, (i - 2) * 0.25)); nz(t, 0.5, 0.025, sfx, { type: 'highpass', f: 7000 }, 0, 0.05); }
+        break;
+      }
       case 'surge': { // round 10: the bloodstream surge: an upward air swell and a soft low pulse, then a voice per substance
         // (riding the riser, `v` > 0: the riser is the swell, so only the substance's own voice, a little quieter)
         const ride = (c.data?.v ?? 0) > 0, vg = ride ? 0.7 : 1;

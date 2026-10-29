@@ -69,12 +69,43 @@ export function hookFor(h: HookIn): Hook {
 
 /** The comparison's hook: a guess the video answers (the race out of the stomach comes from the model). */
 export function hookForCompare(a: string, b: string, race: boolean): Hook {
-  if (race) return { line1: 'Guess: which leaves your stomach first?', line2: commentLine(a, b) };
+  if (race) return { line1: 'Guess: which leaves your stomach first?', line2: GUESS_LINE }; // (round 11: no "Comment: …" in the video)
   const vs = `${a} vs ${b}.`;
   return { line1: fit(vs) ? vs : 'Two drinks, one day.', line2: 'Watch both, then guess.' };
 }
 
-/** "Comment: cola or water?" (round 5, critic: "Comment A or B" while nothing on screen was called A or B). */
+/** Round 11 (research R7, Meta's comment-bait rule): the video asks for a guess, never for a comment. */
+export const GUESS_LINE = 'Guess before the answer.';
+
+/** Round 11 (research R2): the second hook, from another formula: the question first, the fact second (A leads
+ *  with the number). It only reuses A's own words and numbers, so it is as honest as A. */
+export function hookB(h: HookIn, a: Hook): Hook {
+  const morning = h.chapters.find((c) => c.title === 'Next morning');
+  const q = h.alcohol ? (a.payoff === 'Next morning' || morning ? 'Is it gone by the next morning?' : 'Where does the alcohol go?')
+    : /teaspoons of sugar/.test(a.line1) ? 'Where does all that sugar go?'
+      : /toilet/.test(a.line2) ? 'Does coffee send you to the toilet?'
+        : /bedtime/.test(a.line2) ? 'How much is left at bedtime?'
+          : h.caffeine ? 'Where does the caffeine go?'
+            : /\?$/.test(a.line2) ? a.line2
+              : 'What happens inside you in 24 hours?';
+  return { line1: q, line2: a.line1, ...(a.payoff ? { payoff: a.payoff } : {}) };
+}
+/** Round 11: the comparison's second hook: both names first, then the same question (still a guess). */
+export function compareHookB(question: string, a: string, b: string): string {
+  const rest = question.replace(/^Guess:\s*/i, '').replace(/^\w/, (c) => c.toLowerCase());
+  const tries = [`${a} or ${b}: ${rest}`, `${a} vs ${b}: guess first.`];
+  return tries.find((s) => words(s) <= 9) ?? tries[1];
+}
+/** Round 11 (research R5): a stable number per food (FNV-1a of its name), so its hook order, music motif and camera
+ *  sway are its own, and the same on every export. */
+export function seedOf(name: string): number {
+  let h = 2166136261;
+  for (const ch of name.toLowerCase()) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  return h;
+}
+
+/** "Comment: cola or water?" (round 5, critic: "Comment A or B" while nothing on screen was called A or B).
+ *  Round 11: only for the TikTok description (video-caption.ts), never in the video. */
 export const commentLine = (a: string, b: string) => `Comment: ${a.toLowerCase()} or ${b.toLowerCase()}?`;
 
 /** Numbers in a hook (for the honesty test: each must appear in the video's own chapters or name). */
