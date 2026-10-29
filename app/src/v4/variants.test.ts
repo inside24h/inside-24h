@@ -53,18 +53,19 @@ describe('search: builders, variants and add-ins stay ONE thing', () => {
 
 // 2026-10-29: generic words ("pecivo", "meso", "salata", "grickalice") open a chooser of the database's own foods
 describe('generic words open a chooser of the foods the database has (2026-10-29)', () => {
-  const PASTRY = ['Roll', 'Croissant', 'Doughnut'], MEAT = ['Chicken', 'Beef', 'Pork', 'Lamb'];
+  const PASTRY = ['Roll', 'Croissant', 'Doughnut', 'Pretzel', 'Muffin', 'Cinnamon roll'], MEAT = ['Chicken', 'Beef', 'Pork', 'Lamb', 'Turkey', 'Schnitzel', 'Ground'];
+  const SALAD = ['Green', 'Cabbage', 'Sauerkraut', 'Tomato', 'Cucumber', 'Potato'];
   const GEN: [string, string, string, string[]][] = [
     ['pecivo', 'bread-white.roll', 'Which roll or pastry?', PASTRY],
     ['2 peciva', 'bread-white.roll', 'Which roll or pastry?', PASTRY],
     ['pastry', 'croissant', 'Which roll or pastry?', PASTRY],
     ['meso', 'pork-chop', 'Which meat?', MEAT],
     ['meat', 'chicken-breast', 'Which meat?', MEAT],
-    ['salata', 'salad-lettuce', 'Which salad?', ['Green', 'Cabbage', 'Sauerkraut']],
-    ['salad', 'salad-lettuce', 'Which salad?', ['Green', 'Cabbage', 'Sauerkraut']],
+    ['salata', 'salad-lettuce', 'Which salad?', SALAD],
+    ['salad', 'salad-lettuce', 'Which salad?', SALAD],
     ['grickalice', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes']],
     ['snacks', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes']],
-    ['riba', 'cod', 'Which fish?', ['White fish', 'Salmon', 'Sardines', 'Tuna']],
+    ['riba', 'cod', 'Which fish?', ['White fish', 'Salmon', 'Sardines', 'Tuna', 'Mackerel', 'Squid']],
     ['jogurt', 'yogurt-plain', 'Which yogurt?', ['Plain', 'Low-fat', 'Greek', 'Fruit']],
   ];
   for (const [q, key, ask, chips] of GEN) {
@@ -88,7 +89,8 @@ describe('generic words open a chooser of the foods the database has (2026-10-29
     const roll = choiceRow(p.food)!.opts.find((o) => o.chip === 'Roll')!.food;
     expect(foodKey(roll)).toBe('bread-white.roll');
     expect(choiceRow(roll)!.ask).toBe('Which roll or pastry?');
-    expect(variantRow(roll)).toBeNull();
+    // 2026-10-29 round 2: the roll's second row now offers the other rolls (kaiser, wholemeal, rye)
+    expect(variantRow(roll)!.opts.map((o) => o.key)).toEqual(expect.arrayContaining(['bread-white.kaiser', 'bread-white.wholemeal-roll', 'bread-white.rye-roll']));
     expect(choiceRow(FOOD_BY_ID['bread-white'])!.ask).toBe('Which bread?');
   });
   it('every pastry, meat, salad and snack option is a real food', () => {
@@ -108,18 +110,94 @@ describe('generic words open a chooser of the foods the database has (2026-10-29
   });
 });
 
+// 2026-10-29 round 2 (owner: more detailed choices, one tap still enough): new foods and variants from
+// research/improvements/chooser-gaps-2026-10-29.md, and choosers for voće, povrće, namaz, slatkiši
+describe('more detailed choices (2026-10-29 round 2)', () => {
+  const NEW: [string, string, string][] = [
+    ['voće', 'apple', 'Which fruit?'], ['fruit', 'apple', 'Which fruit?'],
+    ['povrće', 'mixed-vegetables', 'Which vegetables?'], ['vegetables', 'mixed-vegetables', 'Which vegetables?'],
+    ['namaz', 'butter', 'Which spread?'], ['spread', 'butter', 'Which spread?'],
+    ['slatkiši', 'candy', 'Which sweets?'], ['sweets', 'candy', 'Which sweets?'],
+  ];
+  for (const [q, key, ask] of NEW) {
+    it(`"${q}" starts on ${key} and asks ${ask}`, () => {
+      const [p, ...more] = parseMeal(q);
+      expect(more).toHaveLength(0);
+      expect(foodKey(p.food).split('~')[0]).toBe(key);
+      expect(p.ask).toBe(true);
+      const row = choiceRow(p.food)!;
+      expect(row.ask).toBe(ask);
+      expect(row.opts.filter((o) => o.on).map((o) => o.key)).toEqual([key]);
+      for (const o of row.opts) expect(foodFromKey(o.key), o.key).toBeDefined();
+    });
+  }
+  const EXACT: [string, string][] = [
+    ['pecivo s makom', 'bread-white.kaiser'], ['kajzerica', 'bread-white.kaiser'], ['integralno pecivo', 'bread-white.wholemeal-roll'],
+    ['raženo pecivo', 'bread-white.rye-roll'], ['perec', 'pretzel'], ['slani štapići', 'pretzel.sticks'], ['kroasan s čokoladom', 'croissant.chocolate'],
+    ['kroasan sa sirom', 'croissant.cheese'], ['pita bread', 'pita-bread'], ['lepinja', 'pita-bread'], ['mafin', 'muffin'], ['pužić', 'cinnamon-roll'],
+    ['puretina', 'turkey-breast'], ['bečki odrezak', 'schnitzel'], ['pohana piletina', 'schnitzel.chicken'], ['mljeveno meso', 'ground-meat'],
+    ['miješano mljeveno meso', 'ground-meat.mixed'], ['skuša', 'mackerel'], ['lignje', 'squid'], ['salata od rajčice', 'tomato-salad'],
+    ['salata od krastavaca', 'cucumber-salad'], ['krumpir salata', 'potato-salad.oil'], ['tekući jogurt', 'yogurt-plain.drinkable'],
+    ['nektar', 'nectar'], ['nektar od breskve', 'nectar.peach'], ['pjenušac', 'white-wine.sparkling'], ['prosecco', 'white-wine.sparkling'],
+    ['tamno pivo', 'beer.dark'], ['palačinke s nutellom', 'pancake.nutella'], ['palačinke s džemom', 'pancake.jam'], ['plazma', 'biscuits.tea'],
+    ['napolitanke', 'biscuits.wafer'], ['bomboni', 'candy'], ['tvrdi bomboni', 'candy.hard'],
+  ];
+  for (const [q, key] of EXACT) {
+    it(`"${q}" is ${key}`, () => {
+      const parts = parseMeal(q);
+      expect(parts, q).toHaveLength(1);
+      expect(foodKey(parts[0].food).split('~')[0]).toBe(key);
+    });
+  }
+  it('a plain word is still one tap: pizza, kava, pivo, kruh, piletina, jabuka stay the same single food', () => {
+    for (const [q, id] of [['pizza', 'pizza'], ['kava', 'espresso'], ['pivo', 'beer'], ['kruh', 'bread-white'], ['piletina', 'chicken-breast'], ['jabuka', 'apple']]) {
+      const parts = parseMeal(q);
+      expect(parts, q).toHaveLength(1);
+      expect(parts[0].food.id, q).toBe(id);
+    }
+  });
+  it('"Which sweets?" lists chocolate, which keeps its own "Which chocolate?" row', () => {
+    const row = choiceRow(parseMeal('slatkiši')[0].food)!;
+    expect(row.opts.map((o) => o.chip)).toEqual(['Candy', 'Chocolate', 'Cookies', 'Cake', 'Ice cream']);
+    const choc = row.opts.find((o) => o.chip === 'Chocolate')!.food;
+    expect(choiceRow(choc)!.ask).toBe('Which chocolate?');
+  });
+  it('new variants sit in their food’s own row next to the chooser (wine, roll, cake)', () => {
+    expect(choiceRow(parseMeal('vino')[0].food)!.opts.map((o) => o.key)).toContain('white-wine.sparkling');
+    const kaiser = foodFromKey('bread-white.kaiser')!;
+    expect(choiceRow(kaiser)!.ask).toBe('Which bread?');
+    expect(variantRow(kaiser)!.opts.map((o) => o.key)).toEqual(expect.arrayContaining(['bread-white.kaiser', 'bread-white.wholemeal-roll', 'bread-white.rye-roll']));
+    expect(variantRow(FOOD_BY_ID['cake-sponge'])!.opts.length).toBeGreaterThan(1); // cake's own kinds, under "Which sweets?"
+  });
+  it('every new food and variant has values and a source, and the stand-ins say so (proxy)', () => {
+    const keys = ['pretzel', 'pita-bread', 'muffin', 'cinnamon-roll', 'turkey-breast', 'schnitzel', 'ground-meat', 'mackerel', 'squid', 'tomato-salad',
+      'cucumber-salad', 'potato-salad', 'nectar', 'candy', 'mixed-vegetables', 'bread-white.kaiser', 'croissant.chocolate', 'biscuits.tea',
+      'beer.dark', 'white-wine.sparkling', 'yogurt-plain.drinkable', 'ground-meat.mixed', 'potato-salad.oil', 'nectar.peach', 'candy.hard'];
+    for (const k of keys) {
+      const f = foodFromKey(k)!;
+      expect(f, k).toBeDefined();
+      expect(f.p.kcal, k).toBeGreaterThan(0);
+      expect(f.serving.grams, k).toBeGreaterThan(0);
+    }
+    for (const k of ['beer.dark', 'white-wine.sparkling', 'yogurt-plain.drinkable', 'biscuits.tea', 'schnitzel']) expect(foodFromKey(k)!.proxy, k).toBe(true);
+    // a stand-in has the values of the record it names
+    expect(foodFromKey('beer.dark')!.p.kcal).toBe(FOOD_BY_ID.beer.p.kcal);
+    expect(foodFromKey('white-wine.sparkling')!.p.kcal).toBe(FOOD_BY_ID['white-wine'].p.kcal);
+  });
+});
+
 describe('"Which …?" choosers: a word that names several foods asks, and starts on the usual one', () => {
   const ASK: [string, string, string, string[]][] = [
     ['čaj', 'black-tea', 'Which tea?', ['Black', 'Green', 'Herbal', 'Iced']],
     ['tea', 'black-tea', 'Which tea?', ['Black', 'Green', 'Herbal', 'Iced']],
     ['kava', 'espresso', 'Which coffee?', ['Espresso', 'Filter', 'Turkish', 'With milk', 'Cappuccino', 'Latte']],
     ['coffee', 'filter-coffee', 'Which coffee?', ['Espresso', 'Filter', 'Turkish', 'With milk', 'Cappuccino', 'Latte']],
-    ['sok', 'orange-juice', 'Which juice?', ['Orange', 'Apple', 'Tomato']],
-    ['juice', 'orange-juice', 'Which juice?', ['Orange', 'Apple', 'Tomato']],
+    ['sok', 'orange-juice', 'Which juice?', ['Orange', 'Apple', 'Tomato', 'Nectar']],
+    ['juice', 'orange-juice', 'Which juice?', ['Orange', 'Apple', 'Tomato', 'Nectar']],
     ['mlijeko', 'milk-whole', 'Which milk?', ['Whole', '2%', 'Skim']],
     ['sir', 'cheese-gouda', 'Which cheese?', ['Gouda', 'Cheddar', 'Mozzarella', 'Feta', 'Cottage', 'Parmesan']],
-    ['kruh', 'bread-white', 'Which bread?', ['White', 'Wholemeal', 'Rye', 'Baguette', 'Roll']],
-    ['vino', 'red-wine', 'Which wine?', ['Red', 'White', 'Rosé', 'Spritzer', 'With water', 'Dessert']],
+    ['kruh', 'bread-white', 'Which bread?', ['White', 'Wholemeal', 'Rye', 'Baguette', 'Pita', 'Roll']],
+    ['vino', 'red-wine', 'Which wine?', ['Red', 'White', 'Rosé', 'Spritzer', 'Sparkling', 'With water', 'Dessert']],
     ['kobasica', 'sausage', 'Which sausage?', ['Pork', 'Smoked', 'Bratwurst', 'Chicken', 'Hot dog']],
   ];
   for (const [q, id, ask, chips] of ASK) {
@@ -217,7 +295,7 @@ const EXEMPT = new Set([172237, 173468]); // vinegar (acetic acid energy), salt 
 describe('builders', () => {
   const builders = FOODS.filter((f) => f.builder);
   it('pizza, burger, sandwich, kebab, burek and both salads have a builder whose default is the database food', () => {
-    expect(builders.map((f) => f.id).sort()).toEqual(['burek', 'cabbage', 'hamburger', 'kebab', 'pizza', 'salad-lettuce', 'sandwich-ham']);
+    expect(builders.map((f) => f.id).sort()).toEqual(['burek', 'cabbage', 'cucumber-salad', 'hamburger', 'kebab', 'pizza', 'salad-lettuce', 'sandwich-ham', 'tomato-salad']);
     for (const f of builders) expect(deriveFood(f, { on: defaultSel(f.builder!) })).toBe(f);
   });
   it('every combination: energy matches the macros (Atwater ±15%)', () => {
@@ -432,6 +510,14 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     // 'kebab*' was here until 2026-10-20: tomato and onion (1–2 g carbohydrate, no tested GI) voided its GI under
     // CARB_MIN = 1 g. With CARB_MIN = 3 g every kebab has a GI (see "CARB_MIN = 3 g" below).
     'sandwich-ham_baguette': 'the baguette has no GI (see bread-french)',
+    // 2026-10-29 round 2 (new foods and variants)
+    'beer.dark': 'stand-in with the regular beer values: beer has no GI here (see beer)',
+    'pancake.jam': 'the pancake has no GI (see pancake)', 'pancake.nutella': 'the pancake has no GI (see pancake)',
+    'bread-white.rye-roll': 'rye breads differ by type (Atkinson 2021: 48 to 62); no rye roll tested',
+    'schnitzel.chicken': 'no breaded chicken tested',
+    'biscuits.tea': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed', 'biscuits.wafer': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed', 'croissant.cheese': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed',
+    'pretzel*': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed', 'muffin*': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed', 'cinnamon-roll*': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed', 'potato-salad': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed',
+    'nectar*': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed', 'candy*': 'not yet looked up in the Atkinson 2008/2021 tables (new food, 2026-10-29 round 2): left null, not guessed',
     'sandwich-ham_sub_ketchup': 'ketchup (4–5 g carbohydrate) has no tested GI and no whole sub was tested; on a burger it counts at the measured whole-burger GI, which included ketchup',
   };
   const reason = (key: string) => NO_GI[key] ?? NO_GI[`${key.split(/[._~]/)[0]}*`];

@@ -72,3 +72,38 @@ crêpes; the database has US-style pancakes only)
 - namaz / spread: butter, jam, honey, Nutella, peanut butter
 - slatkiši / sweets, desert / dessert: chocolate, cake, ice cream, cookies
 - piletina / chicken: only roasted breast exists (see Meat above)
+
+## DONE in round 2 (2026-10-29, owner: "more detailed choices, a plain word still one tap")
+Spec block "MORE DETAIL IN THE CHOOSERS" at the end of research/tools/fooddb_spec.py; tests in
+app/src/v4/variants.test.ts ("more detailed choices (2026-10-29 round 2)"). Every value is a USDA SR Legacy record or
+our recipe from USDA parts (level C); stand-ins are marked proxy (level B) and say which record they use.
+
+**New foods (15)**: Soft pretzel (+ Sticks), Pita bread (lepinja, somun), Muffin, Cinnamon roll (pužić), Turkey breast,
+Breaded schnitzel (veal record, proxy for pork; + Breaded chicken), Ground beef (+ Ground pork, Mixed 50/50 recipe),
+Mackerel, Squid (fried calamari), Tomato salad and Cucumber salad (with the dressing builder), Potato salad (mayonnaise,
+USDA; + Croatian oil-and-vinegar recipe, which "krumpir salata" opens), Fruit nectar (apricot; + Peach, Pear), Gummy
+candy (+ Hard candy), Mixed vegetables.
+
+**New variants on existing foods**: roll → Kaiser (poppy/sesame/seeded roll words), Wholemeal roll, Rye roll;
+croissant → Chocolate (our recipe: croissant + 10 g dark chocolate), Cheese; cookies → Tea biscuits (Marie record,
+Plazma type, proxy), Chocolate chip, Wafers (napolitanke); pancakes → with jam, with chocolate spread (recipes);
+beer → Dark (proxy: regular beer values); white wine → Sparkling (proxy: white table wine values); plain yogurt →
+Drinkable (proxy: plain whole-milk yogurt as 250 ml).
+
+**Rows extended**: Which roll or pastry? + Pretzel, Muffin, Cinnamon roll; Which bread? + Pita; Which meat? + Turkey,
+Schnitzel, Ground; Which salad? + Tomato, Cucumber, Potato; Which fish? + Mackerel, Squid; Which juice? + Nectar;
+Which wine? + Sparkling.
+
+**New choosers**: voće/fruit → Which fruit? (apple first; 10 fruits); povrće/vegetables → Which vegetables? (mixed
+first); namaz/spread → Which spread? (butter, jam, honey, chocolate spread, peanut butter, hummus); slatkiši/sweets/
+candy → Which sweets? (gummy candy first, chocolate, cookies, cake, ice cream). New chooser flag "see"
+(build_variants.py): chocolate is listed in "Which sweets?" but keeps its own "Which chocolate?" row.
+
+**Not done, and why**
+- voda/water chooser: tap and sparkling water are both ~0 kcal; a row on every glass of water is noise, not precision.
+- Oat milk, crêpe-style palačinke, a hake record of its own, sea bass/bream, Emmental/Trappist/cream cheese, skyr, plant
+  yogurt, multivitamin/cranberry/carrot juice, flat white/iced coffee, mulled wine, wheat beer, Sacher/Rapska: not in
+  this round (no SR Legacy record for several; the rest can follow the same pattern).
+- GI of the new carbohydrate foods (pretzel, muffin, cinnamon roll, nectar, candy, cheese croissant, tea biscuits,
+  wafers, potato salad) is left null, not guessed: not yet read from the Atkinson 2008/2021 supplementary tables
+  (allow-list with this reason in variants.test.ts NO_GI). Pita bread has its GI (68, A1 row 295).

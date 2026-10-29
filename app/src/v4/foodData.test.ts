@@ -90,7 +90,7 @@ const GOLDEN: [string, [string, number][]][] = [
   ['sendvič', [['sandwich-ham', 184]]],
   // must find NOTHING: these name foods we do not have (a wrong food would be worse)
   ['maline', []], ['cockta', []], ['zobene pahuljice', []], ['oats', []], ['bijeli luk', []], ['bundeva', []],
-  ['blitva', []], ['višnje', []], ['njoki', []], ['mljeveno meso', []],
+  ['blitva', []], ['višnje', []], ['njoki', []], // 'mljeveno meso': a food since 2026-10-29 round 2 (cooked ground beef, variants.test.ts)
   ['ovčji sir', []], ['marelice', []], ['smokve', []],
   ['leblebije', []], // 'pecivo' (owner 2026-10-29): now a roll that asks "Which roll or pastry?" (variants.test.ts)
   // 2026-10-18 (owner, VARIANTS-PLAN.md): these now have a food of their own (variant or builder), checked by kind
@@ -146,6 +146,7 @@ describe('aliases', () => {
 const ATWATER_EXCEPTIONS: Record<string, string> = {
   sauerkraut: 'USDA 19 kcal vs 16.2 by 4/9/4 (+17%): USDA specific factors for this vegetable',
   mushrooms: 'USDA 22 kcal vs 26.5 by 4/9/4 (−17%): USDA uses lower specific factors for mushrooms',
+  'mixed-vegetables': 'USDA 65 kcal vs 56.4 by 4/9/4 (+15.4%): USDA specific factors for the corn, peas and lima beans in the mix (2026-10-29)',
 };
 describe('energy vs macros (Atwater: 4 kcal/g available carbs and protein, 2 fiber, 9 fat, 7 alcohol)', () => {
   it('every food is within ±15%, or a documented exception', () => {

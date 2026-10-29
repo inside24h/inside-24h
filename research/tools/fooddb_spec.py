@@ -1085,22 +1085,22 @@ builder("cabbage", "Dressing?", dressing("cabbage", "Cabbage"), "Cabbage salad: 
 chooser("tea", "Which tea?", [("black-tea", "Black"), ("green-tea", "Green"), ("herbal-tea", "Herbal"), ("iced-tea", "Iced")], words=["čaj", "tea", "čaja", "čajem"])
 chooser("coffee", "Which coffee?", [("espresso", "Espresso"), ("filter-coffee", "Filter"), ("filter-coffee.turkish", "Turkish"), ("coffee-with-milk", "With milk"), ("cappuccino", "Cappuccino"), ("latte", "Latte")],
         words=["kava", "coffee", "kave", "kavu", "kafa", "crna kava"])
-chooser("juice", "Which juice?", [("orange-juice", "Orange"), ("apple-juice", "Apple"), ("tomato-juice", "Tomato")], words=["sok", "juice", "soka", "voćni sok"])
+chooser("juice", "Which juice?", [("orange-juice", "Orange"), ("apple-juice", "Apple"), ("tomato-juice", "Tomato"), ("nectar", "Nectar")], words=["sok", "juice", "soka", "voćni sok"])
 chooser("milk", "Which milk?", [("milk-whole", "Whole"), ("milk-semi-skimmed", "2%"), ("milk-skimmed", "Skim")], words=["mlijeko", "milk", "mlijeka", "mleko"])
 chooser("plant-milk", "Which plant milk?", [("soy-milk", "Soy"), ("almond-milk", "Almond"), ("rice-milk", "Rice")], words=["biljno mlijeko", "plant milk"])
 chooser("cheese", "Which cheese?", [("cheese-gouda", "Gouda"), ("cheese-cheddar", "Cheddar"), ("cheese-mozzarella", "Mozzarella"), ("cheese-feta", "Feta"),
         ("cheese-cottage", "Cottage"), ("cheese-parmesan", "Parmesan")], words=["sir", "cheese", "sira"])
-chooser("bread", "Which bread?", [("bread-white", "White"), ("bread-wholemeal", "Wholemeal"), ("bread-rye", "Rye"), ("bread-french", "Baguette"), ("bread-white.roll", "Roll")],
+chooser("bread", "Which bread?", [("bread-white", "White"), ("bread-wholemeal", "Wholemeal"), ("bread-rye", "Rye"), ("bread-french", "Baguette"), ("pita-bread", "Pita"), ("bread-white.roll", "Roll")],
         words=["kruh", "bread", "kruha"])
 chooser("wine", "Which wine?", [("red-wine", "Red"), ("white-wine", "White"), ("white-wine.rose", "Rosé"), ("white-wine.spritzer", "Spritzer"),
-        ("red-wine.bevanda", "With water"), ("red-wine.dessert", "Dessert")], words=["vino", "wine", "vina"])
+        ("white-wine.sparkling", "Sparkling"), ("red-wine.bevanda", "With water"), ("red-wine.dessert", "Dessert")], words=["vino", "wine", "vina"])
 chooser("sausage", "Which sausage?", [("sausage", "Pork"), ("sausage.smoked", "Smoked"), ("sausage.bratwurst", "Bratwurst"), ("sausage.chicken", "Chicken"),
         ("frankfurter", "Hot dog")], words=["kobasica", "kobasice", "sausage", "kobasicu"])
 chooser("soup", "Which soup?", [("vegetable-soup", "Vegetable"), ("chicken-soup", "Chicken"), ("tomato-soup", "Tomato"), ("bean-soup", "Bean stew")], words=["juha", "soup", "juhu"])
 chooser("beans", "Which beans?", [("beans-kidney", "Red"), ("beans-white", "White")], words=["grah", "beans"])
 chooser("chocolate", "Which chocolate?", [("chocolate-milk-bar", "Milk"), ("chocolate-dark", "Dark"), ("chocolate-milk-bar.white", "White")], words=["čokolada", "chocolate", "čokoladu"])
 chooser("cocoa", "Which cocoa?", [("chocolate-milk", "Cold"), ("hot-chocolate", "Hot")], words=["kakao"])
-chooser("fish", "Which fish?", [("cod", "White fish"), ("salmon", "Salmon"), ("sardines", "Sardines"), ("tuna-canned", "Tuna")], words=["riba", "fish", "ribu"])
+chooser("fish", "Which fish?", [("cod", "White fish"), ("salmon", "Salmon"), ("sardines", "Sardines"), ("tuna-canned", "Tuna"), ("mackerel", "Mackerel"), ("squid", "Squid")], words=["riba", "fish", "ribu"])
 chooser("cereal", "Which cereal?", [("cornflakes", "Cornflakes"), ("muesli", "Muesli")], words=["žitarice", "cereal"])
 chooser("dried-fruit", "Which dried fruit?", [("raisins", "Raisins"), ("dried-apricots", "Apricots"), ("dried-figs", "Figs"), ("dates", "Dates")], words=["dried fruit", "sušeno voće"])
 chooser("eggs", "Which eggs?", [("egg-boiled", "Boiled"), ("egg-fried", "Fried")], words=["jaja", "egg", "eggs"])
@@ -1116,12 +1116,172 @@ chooser("yogurt", "Which yogurt?", [("yogurt-plain", "Plain"), ("yogurt-lowfat",
 # eaten meat, USDA ERS); "snack(s)" = potato chips (as "grickalice" already was); "pastry" = croissant. Burek keeps
 # its own "Which burek?" (fillings) row. "s mesom" / "with meat" after a hamburger, kebab or sub is that food's own
 # (default) meat, not a second, separate piece of meat (words on the default option below).
-chooser("pastry", "Which roll or pastry?", [("bread-white.roll", "Roll", "own"), ("croissant", "Croissant"), ("doughnut", "Doughnut")],
+chooser("pastry", "Which roll or pastry?", [("bread-white.roll", "Roll", "own"), ("croissant", "Croissant"), ("doughnut", "Doughnut"), ("pretzel", "Pretzel"), ("muffin", "Muffin"), ("cinnamon-roll", "Cinnamon roll")],
         words=["pecivo", "peciva", "pecivom", "pastry", "pastries"])
-chooser("meat", "Which meat?", [("chicken-breast", "Chicken"), ("beef-steak", "Beef"), ("pork-chop", "Pork"), ("lamb-roast", "Lamb")], words=["meso", "mesa", "mesom", "meat"])
-chooser("salad", "Which salad?", [("salad-lettuce", "Green"), ("cabbage", "Cabbage"), ("sauerkraut", "Sauerkraut")], words=["salata", "salatu", "salate", "salad"])
+chooser("meat", "Which meat?", [("chicken-breast", "Chicken"), ("beef-steak", "Beef"), ("pork-chop", "Pork"), ("lamb-roast", "Lamb"), ("turkey-breast", "Turkey"), ("schnitzel", "Schnitzel"), ("ground-meat", "Ground")], words=["meso", "mesa", "mesom", "meat"])
+chooser("salad", "Which salad?", [("salad-lettuce", "Green"), ("cabbage", "Cabbage"), ("sauerkraut", "Sauerkraut"), ("tomato-salad", "Tomato"), ("cucumber-salad", "Cucumber"), ("potato-salad.oil", "Potato")], words=["salata", "salatu", "salate", "salad"])
 chooser("snacks", "Which snack?", [("potato-chips", "Chips"), ("popcorn", "Popcorn"), ("crackers", "Crackers"), ("rice-cakes", "Rice cakes")],
         words=["grickalice", "grickalica", "snack", "snacks"])
 chooser("nuts", "Which nuts?", [("almonds", "Almonds"), ("walnuts", "Walnuts"), ("hazelnuts", "Hazelnuts"), ("peanuts", "Peanuts")], words=["nuts", "orašasti plodovi"])
 
 
+
+
+# ======================= MORE DETAIL IN THE CHOOSERS (2026-10-29, round 2) =======================
+# Owner 2026-10-29: "make food choices more detailed so users can pick exactly what they ate; a plain word still works
+# with one tap". Fills research/improvements/chooser-gaps-2026-10-29.md. Every value is a USDA SR Legacy record
+# (checked with usda_sr.py) or OUR recipe from USDA parts with stated grams (level C). Where USDA has no record of
+# the kind, the variant is a PROXY (level B) and its text says which record stands in. Not added (no USDA SR Legacy
+# record): oat milk, crepe-style palacinke, hake as its own fish (oslic stays under cod / white fish).
+NEW_2026_10_29 = []
+def add2(id, *a, **k):
+    add(id, *a, **k); NEW_2026_10_29.append(id)
+
+# ---- bakery
+add2("pretzel", "Soft pretzel", ["perec", "pereci", "pereca", "pretzel", "soft pretzel", "slani perec"], "solid",
+     169064, "#a8642a", "null", ('p', r'^medium$', "1 pretzel"),
+     note="Free sugars null: dough with some sugar, USDA gives no added-sugar split (as bread).")
+add2("pita-bread", "Pita bread", ["pita bread", "pita kruh", "lepinja", "lepinje", "somun", "flatbread"], "solid",
+     174915, "#e8cf98", "null", ('p', r'large', "1 pita"), gi="a1_pita",
+     note="Also stands in for Balkan flatbreads (as in the pljeskavica recipe). The bare word for 'pita' is not an alias: in Croatian it means any pie.")
+add2("muffin", "Muffin", ["muffin", "mafin", "mafini", "muffins", "blueberry muffin", "mafin s borovnicama"], "solid",
+     172765, "#c88a5a", "upper", ('p', r'^medium$', "1 muffin"),
+     note="USDA record: commercial blueberry muffin. Upper-bound free sugars (as cakes).")
+add2("cinnamon-roll", "Cinnamon roll", ["pužić", "puzic", "pužići", "puž s grožđicama", "puz s grozdicama", "cimet rolica", "cinnamon roll", "cinnamon bun", "raisin roll"], "solid",
+     175034, "#c9874a", "upper", ('p', r'^roll', "1 roll"),
+     note="USDA record: cinnamon sweet roll with raisins, commercially prepared. Upper-bound free sugars.")
+# ---- meat, fish
+add2("turkey-breast", "Turkey breast (roasted)", ["puretina", "pureća prsa", "pureca prsa", "pureći file", "pureci file", "turkey breast", "roast turkey", "pureće meso"], "solid",
+     174516, "#ecd2b4", "none", ('p', r'oz', "1 portion, 85 g"))
+add2("schnitzel", "Breaded schnitzel", ["bečki odrezak", "becki odrezak", "pohani odrezak", "pohani", "šnicl", "snicl", "schnitzel", "wiener schnitzel", "breaded schnitzel", "pohana teletina", "pohana svinjetina", "bečki šnicl"], "solid",
+     173819, "#d9a050", "null", ('p', r'oz', "1 portion, 85 g"), proxy=True,
+     note="USDA record: veal leg, pan-fried, breaded (a Wiener schnitzel is veal). PROXY for the breaded pork cutlet common in Croatia: USDA has no breaded pork record. Free sugars null: breading has some sugar, no split.")
+add2("ground-meat", "Ground beef (cooked)", ["mljeveno meso", "mljevena govedina", "mljeveno goveđe meso", "ground beef", "ground meat", "minced meat", "mince", "faširano", "fasirano", "mljeveno"], "solid",
+     174034, "#8e4a30", "none", ('p', r'oz', "1 portion, 85 g"),
+     note="USDA record: ground beef 85% lean, crumbles, pan-browned (as in a Bolognese sauce). Cooked and unsalted: salt you add is not counted.")
+add2("mackerel", "Mackerel (cooked)", ["skuša", "skusa", "skuše", "skuse", "mackerel", "pečena skuša"], "solid",
+     175120, "#7a8a9a", "none", ('p', r'fillet', "1 fillet"),
+     note="USDA record: Atlantic mackerel (Scomber scombrus, the species caught in the Adriatic), cooked, dry heat.")
+add2("squid", "Squid (fried calamari)", ["lignje", "lignja", "pohane lignje", "pržene lignje", "przene lignje", "kalamari", "calamari", "squid", "fried calamari"], "solid",
+     171982, "#efd8b0", "none", ('p', r'oz', "1 portion, 85 g"),
+     note="USDA record: squid, mixed species, fried (floured). Grilled squid has less fat; USDA has no grilled record (raw only).")
+# ---- salads
+add2("tomato-salad", "Tomato salad", ["salata od rajčice", "salata od rajcice", "rajčica salata", "rajcica salata", "paradajz salata", "tomato salad"], "solid",
+     170457, "#d8402a", "none", ('p', r'medium whole', "1 bowl (1 tomato)"))
+add2("cucumber-salad", "Cucumber salad", ["salata od krastavaca", "krastavac salata", "krastavci salata", "cucumber salad"], "solid",
+     168409, "#a8cc88", "none", ('g', 150, "1 bowl, 150 g", "our assumption: half a cucumber (USDA 1 cucumber = 301 g)"))
+add2("potato-salad", "Potato salad (with mayonnaise)", ["potato salad", "krumpir salata s majonezom", "francuska salata", "potato salad with mayo"], "solid",
+     173343, "#e8d890", "null", ('p', r'cup', "1/2 cup"),
+     note="USDA record: potato salad with egg (mayonnaise dressing). The Croatian oil-and-vinegar kind is a variant (our recipe). Free sugars null: the dressing has added sugar, no split.")
+# ---- drinks
+add2("nectar", "Fruit nectar (apricot)", ["nektar", "voćni nektar", "vocni nektar", "nectar", "fruit nectar", "sok od marelice", "nektar od marelice", "apricot nectar", "juice drink"], "liquid",
+     171704, "#f2a64a", "all", ('ml', 250, r'fl oz'),
+     note="Nectars are 25-50% fruit with added sugar; WHO counts the sugars of fruit juice and added sugar as free sugars (all).")
+# ---- sweets, vegetables
+add2("candy", "Gummy candy", ["bomboni", "bombon", "bombone", "gumeni bomboni", "gumene bombone", "gumeni medvjedići", "gumeni medvjedici", "haribo", "gummy bears", "gummies", "candy", "sweets", "slatkiši", "slatkisi", "slatkiš"], "solid",
+     167989, "#e8506a", "all", ('p', r'gummy bears', "10 gummy bears"),
+     note="USDA record: gumdrops, starch jelly pieces (gummy bears portion). Candy sugars are all added (WHO free sugars).")
+add2("mixed-vegetables", "Mixed vegetables (boiled)", ["povrće", "povrce", "miješano povrće", "mijesano povrce", "kuhano povrće", "kuhano povrce", "vegetables", "veggies", "mixed vegetables", "mješavina povrća"], "solid",
+     170472, "#7aa84a", "none", ('p', r'^cup$', "1/2 cup"),
+     note="USDA record: mixed vegetables (corn, carrots, peas, green beans, lima beans), frozen, boiled, unsalted.")
+for _id in NEW_2026_10_29:
+    CHANGED_ON_PURPOSE[_id] = "2026-10-29 round 2: new food (owner: more detailed choices; chooser-gaps-2026-10-29.md)"
+CHANGED_ON_PURPOSE["apple"] = "2026-10-29 round 2: aliases 'voće', 'fruit' (open 'Which fruit?', apple first)"
+CHANGED_ON_PURPOSE["butter"] = "2026-10-29 round 2: aliases 'namaz', 'spread' (open 'Which spread?', butter first)"
+next(e for e in E if e["id"] == "apple")["aliases"].extend(["voće", "voce", "voća", "fruit", "fruits"])
+next(e for e in E if e["id"] == "butter")["aliases"].extend(["namaz", "spread"])
+
+builder("tomato-salad", "Dressing?", dressing("tomato-salad", "Tomatoes"), "Tomato salad: USDA raw tomato plus the dressing you pick, in USDA spoon portions.", ask="Dressing?", cite=DR, url=DRU)
+builder("cucumber-salad", "Dressing?", dressing("cucumber-salad", "Cucumber"), "Cucumber salad: USDA raw cucumber plus the dressing you pick, in USDA spoon portions.", ask="Dressing?", cite=DR, url=DRU)
+
+# ---- variants
+var("bread-white", "kaiser", "Kaiser", "Kaiser roll", usda=175031, serving=('p', r'^roll', "1 roll"), gi="inherit",
+    words=["kajzerica", "kaiser", "makom", "sezamom", "sjemenkama"],
+    aliases=["kajzerica", "kajzerice", "kaiser", "kaiser roll", "hard roll", "pecivo s makom", "pecivo sa sezamom", "pecivo sa sjemenkama",
+             "poppy seed roll", "sesame roll", "seeded roll", "kifla s makom", "kifla sa sezamom"],
+    text="Kaiser roll: values from the USDA record “Rolls, hard (includes kaiser)”, 1 roll = 57 g. Poppy or sesame seeds on top (about 1–2 g) are not counted separately.")
+var("bread-white", "wholemeal-roll", "Wholemeal roll", "Wholemeal roll", usda=172794, serving=('p', r'hamburger', "1 roll"), gi="wholemeal_bread",
+    words=["integralno", "integralna", "wholemeal"], aliases=["integralno pecivo", "integralna kifla", "wholemeal roll", "whole-wheat roll", "whole wheat roll"],
+    text="Wholemeal roll: values from the USDA record “Rolls, dinner, whole-wheat”; 1 roll = 43 g (USDA size for a hamburger roll).")
+var("bread-white", "rye-roll", "Rye roll", "Rye roll", usda=175029, serving=('p', r'^large', "1 roll"),
+    words=["razeno", "rye"], aliases=["raženo pecivo", "razeno pecivo", "rye roll"],
+    text="Rye roll: values from the USDA record “Rolls, dinner, rye”; 1 large roll = 43 g.")
+ask("croissant", "Which croissant?", "Butter")
+var("croissant", "chocolate", "Chocolate", "Chocolate croissant", recipe=[("croissant", 57), ("chocolate-dark", 10)],
+    serving=('g', None, "1 croissant", "our recipe"), words=["cokoladom", "cokoladni"],
+    aliases=["kroasan s čokoladom", "kroasan s cokoladom", "čokoladni kroasan", "cokoladni kroasan", "chocolate croissant", "pain au chocolat"],
+    text="Chocolate croissant is our recipe: a USDA butter croissant (57 g) with 10 g dark chocolate (two baking sticks of about 5 g, our estimate). USDA has no chocolate-croissant record; ones filled with chocolate cream differ.")
+var("croissant", "cheese", "Cheese", "Cheese croissant", usda=174989, serving=('p', r'medium'), words=["sirom", "sirni"],
+    aliases=["kroasan sa sirom", "sirni kroasan", "cheese croissant"], text="Cheese croissant: values from the USDA record “Croissants, cheese”, 1 medium = 57 g.")
+ask("pretzel", "Which pretzel?", "Soft")
+var("pretzel", "sticks", "Sticks", "Pretzel sticks", usda=167555, serving=('p', r'^oz$', "1 handful (1 oz)"), free="none",
+    words=["stapici", "sticks"], aliases=["štapići", "stapici", "slani štapići", "slani stapici", "pretzel sticks", "hard pretzels"],
+    text="Pretzel sticks: values from the USDA record for hard salted pretzels; 1 oz = 28 g, about a handful.")
+ask("biscuits", "Which cookies?", "Butter")
+var("biscuits", "tea", "Tea biscuits", "Tea biscuits", usda=171867, serving=('p', r'cookie', "5 biscuits"), proxy=True,
+    words=["cajni", "plazma", "marie"], aliases=["plazma", "plazma keks", "plazma keksi", "čajni keksi", "cajni keksi", "marie biscuit", "marie keks", "tea biscuits"],
+    text="Tea biscuits (Marie type): values from the USDA record “Cookies, Marie biscuit”, 5 biscuits = 28 g. Plazma itself has no USDA record; a Marie biscuit is the same kind of dry tea biscuit.")
+var("biscuits", "chocolate-chip", "Chocolate chip", "Chocolate chip cookie", usda=172716, serving=('p', r'average weight', "1 cookie"),
+    words=["chocolate chip"], aliases=["chocolate chip cookie", "chocolate chip cookies", "keks s komadićima čokolade", "keksi s komadicima cokolade"],
+    text="Chocolate chip cookie: values from the USDA record for commercial chocolate chip cookies; 1 cookie = 12 g (USDA average of brands).")
+var("biscuits", "wafer", "Wafers", "Cream wafers", usda=172736, serving=('p', r'^cookies$', "3 wafers"),
+    words=["napolitanke", "oblatne", "wafers"], aliases=["napolitanke", "napolitanka", "oblatne", "wafers", "cream wafers"],
+    text="Cream wafers: values from the USDA record “Cookies, sugar wafers with creme filling”, 3 wafers = 36 g.")
+ask("pancake", "With?", "Plain")
+var("pancake", "jam", "Jam", "Pancakes with jam", recipe=[("pancake", 76), ("jam", 20)], serving=('g', None, "2 pancakes", "our recipe"),
+    words=["dzemom", "marmeladom", "pekmezom"], aliases=["palačinke s džemom", "palacinke s dzemom", "palačinke s marmeladom", "palacinke s marmeladom", "pancakes with jam"],
+    text="Pancakes with jam is our recipe: 2 USDA pancakes (76 g) with 1 tablespoon of jam (20 g, USDA portion).")
+var("pancake", "nutella", "Chocolate spread", "Pancakes with chocolate spread", recipe=[("pancake", 76), ("nutella", 20)], serving=('g', None, "2 pancakes", "our recipe"),
+    words=["nutellom", "cokoladom"], aliases=["palačinke s nutellom", "palacinke s nutellom", "palačinke s čokoladom", "palacinke s cokoladom", "pancakes with nutella", "pancakes with chocolate"],
+    text="Pancakes with chocolate spread is our recipe: 2 USDA pancakes (76 g) with 20 g hazelnut chocolate spread (Nutella label values).")
+var("beer", "dark", "Dark", "Dark beer", usda=168746, proxy=True, words=["tamno", "dark", "stout", "porter"],
+    aliases=["tamno pivo", "crno pivo", "dark beer", "dark lager", "stout", "porter"],
+    text="Dark beer: USDA has no dark-beer record, so the values are those of the USDA record “Alcoholic beverage, beer, regular, all” (about 4.5% alcohol). Dark lagers are similar; strong stouts and porters have more alcohol (pick Strong).")
+var("white-wine", "sparkling", "Sparkling", "Sparkling wine", usda=174837, proxy=True, words=["pjenusac", "prosecco", "sampanjac", "sparkling"],
+    aliases=["pjenušac", "pjenusac", "prosecco", "šampanjac", "sampanjac", "champagne", "sparkling wine", "cava", "spumante"],
+    text="Sparkling wine: USDA has no sparkling-wine record, so the values are those of the USDA white table wine (about 11–12% alcohol). A brut is close; sweeter kinds (extra dry, demi-sec) have more sugar.")
+ask("yogurt-plain", "Which plain yogurt?", "Spoonable")
+var("yogurt-plain", "drinkable", "Drinkable", "Drinkable yogurt", usda=171284, serving=('ml', 250, r'^cup'), gi="inherit", proxy=True,
+    words=["tekuci", "drinkable"], aliases=["tekući jogurt", "tekuci jogurt", "jogurt za piće", "jogurt za pice", "drinkable yogurt", "drinking yogurt", "yogurt drink"],
+    text="Drinkable yogurt: USDA has no drinkable-yogurt record; the values are the USDA plain whole-milk yogurt (3.25% fat), poured as 250 ml. Croatian drinkable yogurts are plain yogurt of 2.8–3.2% fat in a thinner form.")
+ask("schnitzel", "Which schnitzel?", "Veal or pork")
+var("schnitzel", "chicken", "Chicken", "Breaded chicken", usda=173346, serving=('g', 85, "1 portion, 85 g", "our assumption: the same portion as the veal schnitzel (USDA 3 oz)"),
+    words=["pileci", "pilecim"], aliases=["pohana piletina", "pohani pileći odrezak", "pohani pileci odrezak", "chicken schnitzel", "breaded chicken", "pohana pileća prsa"],
+    text="Breaded chicken: values from the USDA record “Chicken tenders, breaded, frozen, prepared”. Home-made breaded chicken breast has more meat and less breading.")
+ask("ground-meat", "Which ground meat?", "Beef")
+var("ground-meat", "pork", "Pork", "Ground pork", usda=167903, words=["svinjsko"],
+    aliases=["mljevena svinjetina", "mljeveno svinjsko meso", "ground pork", "minced pork"],
+    text="Ground pork: values from the USDA record “Pork, fresh, ground, cooked”.")
+var("ground-meat", "mixed", "Mixed", "Ground beef and pork", recipe=[((174034, "none"), 42.5), ((167903, "none"), 42.5)],
+    serving=('g', None, "1 portion, 85 g", "our recipe"), words=["mijesano", "mjesano"],
+    aliases=["miješano mljeveno meso", "mijesano mljeveno meso", "mješano mljeveno meso", "mixed ground meat", "ground beef and pork"],
+    text="Ground beef and pork is our recipe: half USDA cooked ground beef (85% lean), half USDA cooked ground pork, the usual Croatian mix.")
+ask("potato-salad", "Which potato salad?", "Mayonnaise")
+var("potato-salad", "oil", "Oil and vinegar", "Croatian potato salad", recipe=[("potato-boiled", 150), ("onion", 20), ((171017, "none"), 10), ((172237, "none"), 10)],
+    serving=('g', None, "1 bowl", "our recipe"), words=["uljem", "octom"],
+    aliases=["krumpir salata", "krompir salata", "salata od krumpira", "croatian potato salad", "potato salad with oil"],
+    text="Croatian potato salad is our recipe: 150 g USDA boiled potato, 20 g onion, 10 g sunflower oil and 10 g vinegar (USDA parts; our amounts). Salt is not counted.")
+ask("nectar", "Which nectar?", "Apricot")
+var("nectar", "peach", "Peach", "Peach nectar", usda=168185, serving=('mlx', 250, 171704, r'fl oz'), words=["od breskve"],
+    aliases=["nektar od breskve", "sok od breskve", "peach nectar"],
+    text="Peach nectar: values from the USDA record “Peach nectar, canned”. Density from USDA apricot nectar (1 fl oz = 30.4 g): this record's only portion, 1 cup = 220 g, is below the density of water.")
+var("nectar", "pear", "Pear", "Pear nectar", usda=168186, serving=('ml', 250, r'fl oz'), words=["od kruske"],
+    aliases=["nektar od kruške", "nektar od kruske", "sok od kruške", "sok od kruske", "pear nectar"],
+    text="Pear nectar: values from the USDA record “Pear nectar, canned”.")
+ask("candy", "Which candy?", "Gummy")
+var("candy", "hard", "Hard candy", "Hard candy", usda=167990, serving=('p', r'^piece$', "1 piece"),
+    words=["tvrdi", "lizalica"], aliases=["tvrdi bomboni", "tvrdi bombon", "lizalica", "hard candy", "lollipop"],
+    text="Hard candy: values from the USDA record “Candies, hard”, 1 piece = 6 g.")
+
+# ---- choosers for the generic words (owner 2026-10-29: add them). Each food is in ONE row; "see" (third element)
+# lists a food that keeps its own row (chocolate keeps "Which chocolate?"): picking it moves to that row.
+chooser("fruit", "Which fruit?", [("apple", "Apple"), ("banana", "Banana"), ("orange", "Orange"), ("mandarin", "Mandarin"), ("grapes", "Grapes"),
+        ("strawberries", "Strawberries"), ("pear", "Pear"), ("peach", "Peach"), ("watermelon", "Watermelon"), ("cherries", "Cherries")],
+        words=["voće", "voca", "voćem", "voćka", "fruit", "fruits"])
+chooser("vegetables", "Which vegetables?", [("mixed-vegetables", "Mixed"), ("tomato", "Tomato"), ("cucumber", "Cucumber"), ("carrot", "Carrot"),
+        ("broccoli", "Broccoli"), ("pepper-red", "Bell pepper"), ("zucchini", "Zucchini"), ("spinach", "Spinach")],
+        words=["povrće", "povrca", "povrćem", "vegetables", "veggies", "vegetable"])
+chooser("spread", "Which spread?", [("butter", "Butter"), ("jam", "Jam"), ("honey", "Honey"), ("nutella", "Chocolate spread"), ("peanut-butter", "Peanut butter"),
+        ("hummus", "Hummus")], words=["namaz", "namaza", "namazom", "spread"])
+chooser("sweets", "Which sweets?", [("candy", "Candy"), ("chocolate-milk-bar", "Chocolate", "see"), ("biscuits", "Cookies"), ("cake-sponge", "Cake"),
+        ("ice-cream", "Ice cream")], words=["slatkiši", "slatkisa", "slatkiš", "sweets", "candy"])

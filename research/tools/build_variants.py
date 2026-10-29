@@ -369,6 +369,9 @@ def build_choosers(ctx):
             if len(chip) > 16 or HR.search(chip): fail("chooser %s: chip %r" % (c["k"], chip))
             # 2026-10-29: ("id.v", chip, "own") = this row belongs to that VARIANT (the roll: "Which roll or pastry?"),
             # while its base food keeps its own row ("Which bread?", which may list the variant too)
+            if flag == ["see"]:  # 2026-10-29 round 2: listed here, but the food keeps its own row (chocolate in "Which sweets?")
+                if k.split(".")[0] not in ctx.by: fail("chooser %s: %s 'see' needs a database food" % (c["k"], k))
+                continue
             if flag:
                 if flag != ["own"] or k not in vkeys: fail("chooser %s: %s %r (only a variant can be 'own')" % (c["k"], k, flag)); continue
                 if k in vown: fail("%s owns two choosers (%s, %s)" % (k, vown[k], c["k"]))
