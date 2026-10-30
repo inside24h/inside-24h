@@ -17,7 +17,7 @@ describe('verdictOf', () => {
       const p = P(h), a = an(e, p), b = an('beer', p);
       for (const v of [verdictOf(a, b), verdictOf(b, a)]) {
         expect(v).not.toMatch(/Beer (wins|is the lighter)/);
-        expect(v).toMatch(/Espresso wins: no alcohol|No clear winner: Beer brings alcohol; (3 espressos|Espresso) brings/);
+        expect(v).toMatch(/Espresso wins: no alcohol|3 espressos win: no alcohol|No clear winner: Beer brings alcohol; (3 espressos|Espresso) brings/); // (round 12: any alcohol weighs on the brain light)
       }
     }
     expect(verdictOf(an('espresso', P(16)), an('beer', P(16)))).toBe('🏆 Espresso wins: no alcohol, 213 fewer kcal.');

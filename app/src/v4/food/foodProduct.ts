@@ -6,7 +6,7 @@ import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesTo
 import { sleepAnchors } from '../../science/anchors';
 import { alcoholGE, simulateFood, type FoodSim, type Meal } from '../../science/foodSim';
 import { formatGlucose, formatGlucoseRise, type Profile } from '../../science/profile';
-import { bacRange, bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
+import { bacRangeText, GLUCOSE_SPREAD } from '../../science/ranges';
 import { FOOD_CLAIMS, foodSourceClaims } from '../../content/food';
 import { ESPRESSO } from '../../content/espresso';
 import { partsPhrase } from './naming';
@@ -16,7 +16,7 @@ import type { Built, ProductDef, WhereRow } from '../products';
 import type { Change, Chapter, Dir, LiquidMap, Story } from '../stories';
 import { macros, mixColor, type Macros, type Part } from './parse';
 import { canPace, isDrink as isDrinkFood, mealKind, paceLabel, toMeal } from './meal';
-import { alcoholClock, clockLabel, poisonRisk } from '../../science/alcoholClock';
+import { alcoholClock, alcoholTier, clockLabel, poisonRisk } from '../../science/alcoholClock';
 import { MEAL_CLAIMS } from '../../content/mealClaims';
 import { mealCaffeineNote, mealChapters, mealDrinkNote, mealStomachText, mealSugarNote } from './mealWords';
 import { foodRoute } from '../routes';
@@ -188,6 +188,9 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const mixed = !!(s.meal?.phases.drink && s.meal.phases.food);
   const g = (mgdl: number) => `${formatGlucose(mgdl, p.glucoseUnit)} ${p.glucoseUnit}`;
   const sugarTsp = r0(m.sugars / 4); // 1 teaspoon of sugar ≈ 4 g
+  // round 12 (critic P1-1): a starchy food says what its starch becomes, in the same teaspoons (4 g each): all its
+  // available carbohydrate is digested to glucose and reaches the blood over a few hours (SI10)
+  const starchTsp = !isDrink && meal.alcoholG <= 1 && m.availCarbs >= 20 && sugarTsp < 3 ? r0(m.availCarbs / 4) : 0;
   const bacPeak = peakOf(s.bac), bacPeakMin = s.bac.indexOf(bacPeak);
   const kcalR = inflow(s.kcalAbsorbed), emptyR = rate(s.stomachG), kidneyR = inflow(s.bladder);
   const colonIn = inflow(s.colonG[0]);
@@ -227,7 +230,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
         const alcNote = meal.alcoholG > 1 ? ' Some of the alcohol was already absorbed through your stomach wall.' : '';
         return steps.length
-          ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : 'These pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${alcNote}`
+          ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : 'These pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${starchTsp ? ` In all, about ${starchTsp} teaspoons of sugar reach your blood, over a few hours.` : ''}${alcNote}`
           : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.${alcNote}`;
       })() },
   ];
@@ -247,7 +250,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   if (meal.alcoholG > 1) {
     // a range, never one number or a "safe" time: Widmark estimates are off by 20–40% [AL3, alcohol.md W6]
     // the top of the range at the level of alcohol-poisoning deaths gets a danger sentence, not just "balance is worse" [AL9]
-    const drive = (b: number) => (poisonRisk(b) ? 'Dangerous: people have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).' : b >= 0.5 ? 'Reaction time and balance are worse. Don’t drive.' : b >= 0.2 ? (bacRange(b)[0] < 0.2 ? 'Attention may already be worse. Don’t drive.' : 'Attention is already worse. Don’t drive.') : 'Low, but not zero. Don’t drive.'); // [AL4] (round 9: "may" while the range starts under 0.2 ‰)
+    const drive = (b: number) => (poisonRisk(b) ? 'Dangerous: people have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).' : (({ balance: 'Reaction time and balance are worse. Don’t drive.', worse: 'Attention is already worse. Don’t drive.', may: 'Attention may already be worse. Don’t drive.' } as Record<string, string>)[alcoholTier(b)] ?? 'Low, but not zero. Don’t drive.')); // (round 12: one ladder for every drink, science/alcoholClock alcoholTier) // [AL4] (round 9: "may" while the range starts under 0.2 ‰)
     const fedNote = meal.fed ? ', lower than on an empty stomach' : '';
     // more than ≈ one drink: we assume it all at once; spread out, the peak is lower but the end about the same [AL14, C]
     // paced: what all at once would have given; all at once with several drinks: point at the control [AL14, AL16]

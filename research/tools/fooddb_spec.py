@@ -203,7 +203,7 @@ add("muesli", "Muesli", ["müsli", "musli", "muesli", "žitarice", "zitarice", "
 add("crackers", "Crackers (saltines)", ["krekeri", "slani keksi", "cracker", "crackers", "grisini"], "solid",
     "Crackers, saltines (includes oyster, soda, soup)", "#e4cf9a", "null", ('p', r'.'))
 add("pancake", "Pancakes (US-style)", ["pancakes", "pancake", "american pancakes", "američke palačinke", "americke palacinke"], "solid",
-    "Pancakes, plain, prepared from recipe", "#e9c98a", "upper", ('p', r'4" dia|medium|\d'), proxy=True,
+    "Pancakes, plain, prepared from recipe", "#e9c98a", "upper", ('p', r'4" dia|medium|\d'), proxy=True, gi="a1_pancakes",
     note="PROXY for palačinke: a US fluffy pancake from recipe (baking powder, 4-inch); crêpes are thinner. Upper-bound rule (sugar in recipe).")
 
 # ---------------- MEAT / FISH ----------------
@@ -389,7 +389,7 @@ add("peanut-butter", "Peanut butter", ["maslac od kikirikija", "peanut butter", 
 # audit 2026-10-17: USDA 168000 gives 28.4 g saturated fat (96% of the fat), which contradicts the Ferrero label
 # (10.6 g); the whole row now comes from the Ferrero label (override below). Serving: the label portion, 15 g.
 add("nutella", "Hazelnut chocolate spread", ["nutella", "krem namaz", "čokoladni namaz", "cokoladni namaz", "plazma namaz", "chocolate spread"], "semi",
-    168000, "#5a3220", "upper", ('g', 15, "1 portion (1 tbsp)", "label: Ferrero Nutella portion 15 g"),
+    168000, "#5a3220", "upper", ('g', 15, "1 portion (1 tbsp)", "label: Ferrero Nutella portion 15 g"), gi="a1_nutella",
     note="Upper-bound rule: sugar is the main ingredient, milk lactose is small.")
 
 # ---------------- SWEETS / SNACKS ----------------
@@ -1232,7 +1232,9 @@ ask("pancake", "Which pancakes?", "US-style")
 # 250 g flour, 500 ml milk, 2 eggs and a little oil for about 10 crêpes; 2 crêpes = 50 g flour, 103 g whole milk
 # (100 ml), 20 g egg, 6 g sunflower oil for the pan. Grams are batter: frying drives off some water, so 2 crêpes weigh
 # less on the plate, but what they contain is the same.
-CREPE2 = [((168894, "none"), 50), ("milk-whole", 103), ((171287, "none"), 20), ((171017, "none"), 6)]
+# (2026-10-30, video round 12: the flour in the batter carries the GI of tested homemade pancakes, the nearest tested
+# food; the crêpes' GI is then COMPUTED, carbohydrate-weighted with the milk and the filling: level C)
+CREPE2 = [((168894, "none", "a1_pancakes"), 50), ("milk-whole", 103), ((171287, "none"), 20), ((171017, "none"), 6)]
 CREPE_TXT = "2 crêpes from our home recipe (USDA flour 50 g, whole milk 100 ml, egg 20 g, sunflower oil 6 g; a common batter of 250 g flour, 500 ml milk and 2 eggs makes about 10)"
 var("pancake", "crepe", "Crepes", "Crepes", recipe=CREPE2, serving=('g', None, "2 crepes", "our recipe"),
     words=["tanke"], aliases=["palačinke", "palacinke", "palačinka", "palacinka", "palačinci", "palacinci", "palćinke", "crepes", "crêpes", "crepe", "thin pancakes"],
@@ -1244,6 +1246,8 @@ var("pancake", "nutella", "Chocolate crepes", "Crepes with chocolate spread", re
     words=["nutellom", "cokoladom", "linoladom"], aliases=["palačinke s nutellom", "palacinke s nutellom", "palačinke s čokoladom", "palacinke s cokoladom", "palacinke sa nutelom", "palačinke s linoladom", "crepes with nutella", "crepes with chocolate"],
     text="Crepes with chocolate spread is our recipe: " + CREPE_TXT + ", with 20 g hazelnut chocolate spread (Nutella label values).")
 CHANGED_ON_PURPOSE["pancake"] = "2026-10-29 round 2: aliases 'palačinke' moved to the new crepe variant (thin Croatian crêpes); the base stays US-style pancakes"
+CHANGED_ON_PURPOSE["nutella"] = "2026-10-30 video round 12: GI 29 from Atkinson 2008 A1 rows 1447-1449 (mean of three Nutella tests), so chocolate crepes get a computed GI"
+CHANGED_ON_PURPOSE["pancake"] += "; 2026-10-30 video round 12: GI 66, Atkinson 2008 A1 row 30 (homemade pancakes), the nearest tested food"
 CHANGED_ON_PURPOSE["cheese-gouda"] = "2026-10-29 round 2: alias 'trapist' moved to the new Trappist cheese (USDA port de salut)"
 var("beer", "dark", "Dark", "Dark beer", usda=168746, proxy=True, words=["tamno", "dark", "stout", "porter"],
     aliases=["tamno pivo", "crno pivo", "dark beer", "dark lager", "stout", "porter"],

@@ -96,7 +96,9 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
   }
   // 3) the bigger blood sugar rise (only when both have a measured curve, and the peaks differ clearly)
   const pk = sides.map((s) => { if (!s.sugar) return null; let mx = 0, at = 0; for (let m = 0; m < Math.min(N, s.sugar.length); m++) if (s.sugar[m] > mx) { mx = s.sugar[m]; at = m; } return { mx, at }; });
-  if (pk[0] && pk[1] && Math.abs(pk[0].mx - pk[1].mx) >= 0.5 && Math.abs(pk[0].mx - pk[1].mx) >= 0.3 * Math.max(pk[0].mx, pk[1].mx)) {
+  // (round 12, critic P1-2: hamburger vs cola, +1.7 vs +2.3 mmol/L, asked nothing; the verdict already names that
+  // difference: 0.5 mmol/L and a fifth of the bigger rise are clearly apart)
+  if (pk[0] && pk[1] && Math.abs(pk[0].mx - pk[1].mx) >= 0.5 && Math.abs(pk[0].mx - pk[1].mx) >= 0.2 * Math.max(pk[0].mx, pk[1].mx)) {
     const w = (pk[0].mx > pk[1].mx ? 0 : 1) as 0 | 1;
     const rel = (s: ArrayLike<number>, mx: number) => Float32Array.from({ length: N }, (_, m) => Math.max(0, Math.min(1, (s[m] ?? 0) / (mx || 1))));
     const top = Math.max(pk[0].mx, pk[1].mx);

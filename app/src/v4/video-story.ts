@@ -3,9 +3,9 @@
 import { minutesFromU, uFromMinutes } from '../time';
 import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
-import { beatLines, type BeatCtx } from './video-beats';
+import { beatLines, eventMin, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
-import { planCompare, planVideo, SURGE_FROM, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
+import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
 import { mainGauge, whereGauge, type BuiltLike } from './video-body';
 import { worstMoment } from './status';
 import { verdictOf, type Analysis } from './analyze';
@@ -44,6 +44,21 @@ export function peakOf(b: PeakIn, sugarKnown: boolean): number | undefined {
   return undefined;
 }
 
+/** Round 12 (critic P0-3: crepes had no climax at all): the video's climax. The model's peak (peakOf) when there is
+ *  one; else the story's most telling later moment, so every video has its impact and a clock that goes somewhere:
+ *  a peak, the blood fat high, a dip, the large intestine, bedtime, then the most telling moment left. */
+export const CLIMAX_TITLES = /peak|highest|Fat in your blood|dip|large intestine|Alcohol gone|Bedtime|Going to bed/i;
+export function climaxOf(b: PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[]): number | undefined {
+  const p = peakOf(b, sugarKnown);
+  if (p !== undefined) return p;
+  const later = chapters.filter((c) => c.min >= 5 && c.min < 1440 && !DULL.test(c.title.trim()));
+  const named = later.find((c) => CLIMAX_TITLES.test(c.title));
+  if (named) return named.min;
+  let best: (typeof later)[number] | undefined;
+  for (const c of later) if (!best || stopValue({ min: c.min, title: c.title, text: c.text ?? '' }) > stopValue({ min: best.min, title: best.title, text: best.text ?? '' })) best = c;
+  return best?.min;
+}
+
 /** Round 10: the bloodstream surge. The same substance as peakOf (alcohol, else a clear sugar rise, else caffeine),
  *  and the stretch of the day while its model level climbs from a quarter of its peak to the peak (the video picks
  *  the first free second in it). Picture and sound only
@@ -80,12 +95,26 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx): S
   // (round 9: a card is said once per video; "Fat takes a slower route, via the lymph." ended one moment and began
   // the next, 9 s in a row, for every fatty food)
   const seen = new Set<string>();
-  return story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => {
+  const base: StopIn[] = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => {
     const text = chapterText(c as never, c.min), all = beatLines({ min: c.min, title: c.title, text }, ctx);
     const fresh = all.filter((l) => !seen.has(l));
     for (const l of all) seen.add(l);
     return { min: c.min, title: c.title, text, lines: fresh.length ? fresh : all };
   });
+  // round 12 (critic P0-3): a card that speaks of a later minute ("Half has moved on after 116 minutes.") is said when
+  // the clock gets there, as its own moment under the same title (never while the clock still stands at +0:01)
+  const out: StopIn[] = [];
+  for (const s of base) {
+    const now = (s.lines ?? []).filter((l) => !tooEarly(l, s.min)), later = (s.lines ?? []).filter((l) => tooEarly(l, s.min));
+    out.push({ ...s, lines: now.length ? now : (s.lines ?? []).slice(0, 1) });
+    for (const l of now.length ? later : later.slice(1)) {
+      const at = Math.min(1439, Math.round(eventMin(l)!));
+      const near = out.find((x) => Math.abs(x.min - at) <= 5) ?? base.find((x) => Math.abs(x.min - at) <= 5 && x !== s);
+      if (near && out.includes(near)) near.lines = [...(near.lines ?? []), l];
+      else out.push({ min: at, title: s.title, text: l, lines: [l] });
+    }
+  }
+  return out.sort((a, b) => a.min - b.min);
 }
 
 export interface ComparePlan { plan: Plan; guess: Guess | null; race: { a: Float32Array; b: Float32Array } | null; fx: PlanFx; verdict: string }
@@ -114,7 +143,13 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)
-  const cmpMins0 = [...new Set([...(shortVid ? CMP_SHORT : CMP_STOPS), ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
+  // round 12 (critic P0-2: both sides said "peaks now" at +1:30, the singles peak at +0:43 / +0:48): each side's own
+  // peak moment (its story's peak chapter, as in its single video) is a moment of the comparison, kept by the planner;
+  // the regular moments within 8 minutes of a peak make room for it
+  const peaksOf = (x: Analysis) => x.built.story.chapters.filter((c) => c.min > 0 && /peak/i.test(c.title)).map((c) => c.min);
+  const sidePeaks = [...new Set([...peaksOf(a), ...peaksOf(b)])].filter((m) => m < 1440);
+  const base = (shortVid ? CMP_SHORT : CMP_STOPS).filter((m) => m === 0 || m >= 1440 || !sidePeaks.some((p) => Math.abs(p - m) <= 8));
+  const cmpMins0 = [...new Set([...base, ...sidePeaks, ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
   // round 6 (critic: water showed one card for 28 s, and the same kidney cards ran 13 s at +24:00): each side says
   // what is NEW since the last moment (every chapter passed on the way, in order), else the next cards of the
   // chapter it is in; a moment with nothing new on either side is left out (the 24 h beat still ends the day)
@@ -131,7 +166,8 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       const fresh = fresh0.map((c, i) => ({ c, i })).sort((p, q) => rank(p.c) - rank(q.c) || p.i - q.i).map((p) => p.c).filter((c) => rank(c) < 2);
       prev = at;
       if (fresh.length) {
-        const lines = fresh.flatMap((c) => cards(x, c.min));
+        // (round 12: a card that says "now" only under its own moment, never minutes later)
+        const lines = fresh.flatMap((c) => cards(x, c.min).filter((l) => !(/\bnow\b/i.test(l) && Math.abs(at - c.min) > Math.max(10, 0.15 * c.min)) && !tooEarly(l, at)));
         lastLines = lines; seen = Math.min(lines.length, perStop); lastCh = fresh0[fresh0.length - 1];
         return { lines, title: fresh[0].title, text: chapterText(fresh[0], fresh[0].min), isNew: true };
       }
@@ -150,7 +186,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     const mins = mins0.filter((_m, i) => keepAt[i]);
     const pick = <T,>(xs: T[]) => xs.filter((_x, i) => keepAt[i]);
     const SA = pick(sa), SB = pick(sb);
-    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines })),
+    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at) })),
       cut, uFromMinutes, minutesFromU, fx);
   };
   let used = cmpMins0, plan = build(used);

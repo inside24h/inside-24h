@@ -341,6 +341,20 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       const next = pages.map((p, k) => (k === i ? withIt : p));
       if (total(next) <= lim.max) pages = next;
     }
+    // round 12 (critic P1-3: the espresso answered its hook at 8 s and then had no open question for 54 s): when the
+    // hook's payoff comes in the first third, a second loop opens right there: "Coming up: bedtime." (another turn,
+    // later than the mid-video one, said as the payoff moment's last card)
+    const pi = payoffMin === undefined ? -1 : chosen.findIndex((c) => c.min === payoffMin);
+    const st2: number[] = []; let t2 = INTRO_S[cut];
+    chosen.forEach((c, k) => { if (k) t2 += moveS(toU, chosen[k - 1].min, c.min); st2.push(t2); t2 += stopS(pages[k]); });
+    if (pi >= 0 && st2[pi] / total(pages) < 0.33 && !pages[pi].some((p) => p.startsWith(TEASE_PREFIX))) {
+      const used2 = new Set(pages.flat().filter((p) => p.startsWith(TEASE_PREFIX)));
+      const turn2 = chosen.slice(pi + 1).reverse().find((c) => stopValue(c) >= 3 && TEASE_OK.test(c.title) && c.title.trim().split(/\s+/).length <= 3 && !used2.has(teaseCard(c.title.trim())));
+      if (turn2) {
+        const next = pages.map((p, k) => (k === pi ? [...p, teaseCard(turn2.title.trim())] : p));
+        if (total(next) <= lim.max) pages = next;
+      }
+    }
   }
   // too short (few, short chapters): every card gets proportionally more time. Calmer, never repeated; the long
   // cut must reach its minimum (platforms count 60 s+), the short cut stretches at most 1.6×.
@@ -360,7 +374,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
 /** Comparison video: both foods at the same minutes. Each side shows the first sentence of its chapter at that
  *  minute (split into pages when long). A page's time counts only the words that are new on screen: a side whose
  *  chapter did not change since the last moment is not read again. Same length rules as the single video. */
-export interface CmpStopIn { min: number; a: string; b: string; titleA?: string; titleB?: string; linesA?: string[]; linesB?: string[] }
+export interface CmpStopIn { min: number; a: string; b: string; titleA?: string; titleB?: string; linesA?: string[]; linesB?: string[]; /** round 12: a side's own peak: never left out */ keep?: boolean }
 export const CMP_PAGE = 40;
 /** Longest time one card stays on one side of the comparison (round 8). */
 export const CMP_REPEAT_S = 6; // characters per side and page (2026-10-23 split screen: three short lines under each body)
@@ -398,13 +412,15 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
     + (list[list.length - 1].min < 1440 ? moveS(toU, list[list.length - 1].min, 1440) : 0);
   const total = (pp: { s: number }[][]) => fixed + glides(chosen) + pp.reduce((acc, p) => acc + p.reduce((a, x) => a + x.s, 0), 0);
   const peakAt = fx.peakMin === undefined ? -1 : nearestStop(chosen.map((x) => x.min), fx.peakMin, toU), peakMin = peakAt >= 0 ? chosen[peakAt].min : undefined;
-  const value = (s: CmpStopIn) => stopValue({ min: s.min, title: '', text: s.a }) + stopValue({ min: s.min, title: '', text: s.b }) + (s.min === peakMin ? 10 : 0);
+  const value = (s: CmpStopIn) => stopValue({ min: s.min, title: '', text: s.a }) + stopValue({ min: s.min, title: '', text: s.b }) + (s.min === peakMin ? 10 : 0) + (s.keep ? 100 : 0);
   let pages = pagesOf(chosen);
   const dropped: CmpStopIn[] = [];
   while (total(pages) > lim.max && chosen.length > 2) {
     let drop = 1, best = Infinity;
     // (short cut: the last moment may go too, so the answer's moment always fits; the 24 h beat still closes the day)
-    for (let i = 1; i < chosen.length - (cut === 'short' ? 0 : 1); i++) { const v = value(chosen[i]) + (toU(chosen[i].min) - toU(chosen[i - 1].min)); if (v < best) { best = v; drop = i; } }
+    // (round 12: a side's own peak goes only when nothing else can)
+    const free = chosen.some((c, i) => i > 0 && i < chosen.length - (cut === 'short' ? 0 : 1) && !c.keep);
+    for (let i = 1; i < chosen.length - (cut === 'short' ? 0 : 1); i++) { if (free && chosen[i].keep) continue; const v = value(chosen[i]) + (toU(chosen[i].min) - toU(chosen[i - 1].min)); if (v < best) { best = v; drop = i; } }
     dropped.push(chosen[drop]); chosen = chosen.filter((_s, i) => i !== drop); pages = pagesOf(chosen);
   }
   for (const d of dropped.sort((x, y) => value(y) - value(x))) { // a left-out moment that fits again comes back
@@ -421,6 +437,9 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
 
 /** Lays out every frame: the hook, then for each moment a glide (the new caption fades in as it starts) and its
  *  caption pages for their reading time, the 24 h beat, the end card. Also the sound cues. */
+/** Round 12 (critics 10-29 P1-1, 10-30 P1-6: "We can't tell when you're safe to drive." under ALCOHOL GONE read as a
+ *  contradiction): that card's label is "After drinking". */
+const kicker = (title: string | undefined, cap: string | undefined) => (title && cap && /safe to drive/i.test(cap) && /gone/i.test(title) ? 'After drinking' : title);
 function layFrames(stops: { min: number; title?: string; titleB?: string; pages: { cap: string; capB?: string; s: number }[] }[], cut: Cut,
   toU: (m: number) => number, fromU: (u: number) => number, fx: PlanFx = {}): Plan {
   const frames: VFrame[] = [], cues: Cue[] = [], pageList: Page[] = [];
@@ -437,9 +456,13 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
     const s = stops[i], next = stops[i + 1]?.min ?? 1440;
     if (s.min >= 1440) return s.min;
     if (i === 0) return fromU(Math.min(toU(Math.min(next, 3)), toU(s.min) + DRIFT_FIRST * (toU(next) - toU(s.min))));
-    return fromU(toU(s.min) + DRIFT * (toU(next) - toU(s.min)));
+    // (round 12, critic P0-3: the clock must not stand still under the cards): at least one minute of the day per
+    // ~4.5 s of reading, never more than half the way to the next moment
+    const share = fromU(toU(s.min) + DRIFT * (toU(next) - toU(s.min)));
+    return Math.max(share, s.min + Math.min(0.5 * (next - s.min), holdN(i) / FPS / 4.5));
   };
-  const at = (i: number, k: number) => { const n = Math.max(1, holdN(i)); return fromU(toU(stops[i].min) + (toU(driftTo(i)) - toU(stops[i].min)) * Math.min(1, k / n)); };
+  // (round 12: even in minutes, so the clock ticks at an even pace while the cards are read)
+  const at = (i: number, k: number) => { const n = Math.max(1, holdN(i)); return stops[i].min + (driftTo(i) - stops[i].min) * Math.min(1, k / n); };
   cues.push({ t: 0, kind: 'start' });
   cues.push({ t: 0, kind: 'teaser' });
   for (let i = 0; i < nIntro; i++) {
@@ -481,7 +504,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
       if (tease) cues.push({ t: tNow(), kind: 'next', data: { label: 'tease' } });
       pageList.push({ stop: s.min, text: p.cap, textB: p.capB, s: n / FPS });
       pg++;
-      for (let f = 0; f < n; f++, k++) frames.push({ phase: 'main', m: at(i, k), t: tNow(), cap: p.cap, capB: p.capB, title: s.title, titleB: s.titleB, capA: Math.min(1, (f + 1) / F(READ.fade)), k: 0, stop: s.min, beat: 'hold', hk: k / Math.max(1, holdN(i)), pg: pg + Math.floor(f / PG_N), ...(tease ? { tease: true } : {}) });
+      for (let f = 0; f < n; f++, k++) frames.push({ phase: 'main', m: at(i, k), t: tNow(), cap: p.cap, capB: p.capB, title: kicker(s.title, p.cap), titleB: kicker(s.titleB, p.capB), capA: Math.min(1, (f + 1) / F(READ.fade)), k: 0, stop: s.min, beat: 'hold', hk: k / Math.max(1, holdN(i)), pg: pg + Math.floor(f / PG_N), ...(tease ? { tease: true } : {}) });
       pg += Math.floor((n - 1) / PG_N);
       prevPage = p;
     });

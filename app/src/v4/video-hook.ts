@@ -47,6 +47,13 @@ export function hookFor(h: HookIn): Hook {
   // ends up pays it off
   const where = h.chapters.find((c) => /burns about half of the fructose/.test(c.text) && c.min > 0);
   if (tsp && Number(tsp[2]) >= 3) return { line1: fit(`${cap(name)}: ${tsp[2]} teaspoons of sugar.`) ? `${cap(name)}: ${tsp[2]} teaspoons of sugar.` : `${tsp[2]} teaspoons of sugar.`, line2: 'Watch where it goes.', ...(where ? { payoff: where.title } : {}) };
+  // round 12 (critic P1-1: "1 kaiser roll. Watch where it goes." had no number): a starchy food leads with what its
+  // starch becomes, the teaspoons the small-intestine moment says (foodProduct: available carbohydrate / 4 g)
+  const st = h.chapters.map((c) => ({ c, m: /In all, about (\d+) teaspoons of sugar reach your blood/.exec(c.text) })).find((x) => x.m);
+  if (h.solid && st && !h.alcohol) {
+    const n = st.m![1], l1 = `${cap(name)}: about ${n} teaspoons of sugar.`;
+    return { line1: fit(l1) ? l1 : `About ${n} teaspoons of sugar.`, line2: 'Watch the starch become blood sugar.', payoff: st.c.title };
+  }
   if (h.caffeine) {
     // "still in you at bedtime" as the share the model says (critic: it promised a problem the end card then denied)
     const bed = h.chapters.find((c) => /^(Going to bed|Bedtime)$/.test(c.title) && /mg of caffeine is (?:still|left) in you/.test(c.text));

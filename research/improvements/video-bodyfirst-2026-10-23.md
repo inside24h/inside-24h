@@ -514,3 +514,79 @@ Backup: `C:\claudework\inside-24h-backups\20261029-201746-video11\` + git (HEAD 
   - cover u središnjem pojasu;
   - raznolikost.
 - Oba builda prolaze. Site build je commitan, jer su promjene baze hrane commitane (14c8183).
+
+---
+
+# Runda 12 (2026-10-30): popravci iz `video-critique-2026-10-30.md`
+
+Backup: `C:\claudework\inside-24h-backups\20261029-233333-video12\`. Sadrži `v4`, `science` i obje kopije fooddb.json. Git HEAD prije runde je 5f6c5c7.
+
+## P0
+1. **Alkohol: jedna ljestvica za sva pića** (`alcoholTier` u `science/alcoholClock.ts`, na vrijednost modela i njegov raspon). Pragovi:
+   - **danger:** vrh raspona je na razini trovanja;
+   - **balance:** ≥ 0,5 ‰;
+   - **worse:** cijeli raspon ≥ 0,2 ‰;
+   - **may:** raspon dosegne 0,2 ‰;
+   - **low:** ima alkohola (> 0,02 ‰).
+
+   Istu ljestvicu koriste lampica (app i video), mjerač, kartica poglavlja i end card.
+   - Bilo koji alkohol u krvi znači da je lampica mozga barem žuta.
+   - Vino 150 ml i pivo 500 ml na istoj razini sada se čitaju isto: "Focus may dip" i "Attention may already be worse."
+   - Na end cardu nota imenuje vrh ("Attention may be worse 41 min in").
+   - Verdict usporedbe više nije pomaknut: slatko piće ili piće koje odgađa san protiv alkohola je kompromis koji imenuje oba troška, a "3 espressos win" ima pravilan glagol.
+   - Modeli (farmakokinetika) nisu dirani.
+2. **Compare: vrh svake strane.**
+   - **Uzrok:** zajednički stop na +1:30 je pokazivao karticu poglavlja "peak" (espresso +0:43, pivo +0:48) 40 minuta prekasno. BAC/mg na +1:30 su bili točni za +1:30, jer model je isti (provjereno: isti vrh i vrijednost u 17 h i 19 h).
+   - **Popravak:**
+     - vrh svake strane je vlastiti stop koji planer čuva;
+     - obični stopovi unutar 8 min od vrha se izostavljaju;
+     - kartica s "now" ide samo uz svoj trenutak;
+     - "We can't tell when you're safe to drive." ima kicker "AFTER DRINKING".
+3. **Hrana bez GI, crepes.**
+   - **Podaci:** pipeline (`fooddb_spec.py`, `build_fooddb.py build`). Pancakes dobivaju GI 66 (Atkinson 2008 A1 row 30, homemade, the nearest tested food). Nutella dobiva GI 29 (A1 rows 1447–1449, mean of three). Za crepe se GI računa iz brašna u tijestu s GI palačinki, mlijeka i namaza: crepes 63, s džemom 59, s Nutellom 56. Pipeline to označava kao "COMPUTED (level C)" s izvorima. Allow-list u `variants.test.ts` je ažuriran.
+   - **Generator:**
+     - Svaki video ima vrhunac (`climaxOf`): vrh modela, inače najjači kasniji trenutak (blood fat, dip, large intestine…).
+     - Kartica koja govori o kasnijem vremenu ("Half has moved on after 116 minutes.") dobiva vlastiti trenutak kad sat dođe tamo.
+     - Sat teče barem 1 min po ~4,5 s čitanja (najviše pola puta do idućeg trenutka).
+
+## P1 i jeftini P2
+- **Škrobna hrana:** "1 kaiser roll: about 7 teaspoons of sugar. / Watch the starch become blood sugar." Broj je iskazan i u poglavlju ("In all, about 7 teaspoons of sugar reach your blood, over a few hours." = dostupni ugljikohidrati / 4 g).
+- **Hamburger vs cola:** sad ima igru "Guess: which raises your blood sugar more?" (prag 20 %). Presuda više nema trofej kad "pobjednik" ima više kcal: "Hamburger: a smaller blood sugar peak (…). Cola: 112 fewer kcal."
+- **Espresso:** kad hook dobije odgovor u prvoj trećini, odmah se otvara druga petlja ("Coming up: …").
+- **Hashtagovi:**
+  - #crepes, #cinnamonroll, #kaiserroll, #hamburger #fastfood;
+  - kofein je #caffeine;
+  - #inside24h je uvijek prisutan;
+  - Shorts naslov "What 2 crepes … do";
+  - opis se ne ponavlja.
+- **Ostali sitni popravci:**
+  - vino: granice US/EU stoje na svakom BAC mjeraču;
+  - red lampica u compareu (y ≈ 1560) je isključen;
+  - limiter je postavljen na −2 dBTP;
+  - "Sugar peak 43 min in";
+  - "Probably too little to affect most people's sleep."
+- **Nije napravljeno:**
+  - P2-5: veličina pizze ostaje podatak buildera;
+  - P2-6: u usporedbi je naziv već iznad tijela, pa kartica s brojevima ostaje prva;
+  - P2-8: donji dio kadra.
+
+## Testovi
+Novi blok "round 12" u sweepu:
+- svih **178 namirnica + 83 varijante** (long i short) imaju vrhunac, nijednu karticu prije njenog vremena i sat koji ne stoji pod karticama;
+- alkohol nikad nema zelenu lampicu mozga, a vino i pivo imaju istu oznaku;
+- vrhovi u usporedbi su stopovi u minuti singlea;
+- škrobni hook;
+- hashtagovi.
+
+vitest 827/827 (1 skip). tsc čist, oba builda prolaze.
+
+## Uzorci
+`C:\claudework\video-samples\2026-10-30-v12\`:
+- red-wine-tiktok-long
+- red-wine-shorts-hookB
+- crepes-chocolate-tiktok-long
+- compare-espresso-vs-beer-tiktok-long
+- kaiser-roll-shorts
+- compare-hamburger-vs-cola-tiktok-long
+
+Svi su 1080×1920, 30 fps, bez grešaka i crnih frameova. Glasnoća −14,1 do −14,3 LUFS, TP ≤ −1,7 dBTP. Long traje 62,4–74,6 s, short 29,3–29,6 s.

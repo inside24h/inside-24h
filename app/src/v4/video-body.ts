@@ -8,6 +8,7 @@
 // - the organs the drink is passing through stay bright, the rest of the body dims.
 import { at } from '../science/espressoSim';
 import { bacRange, glucoseRangeText } from '../science/ranges';
+import { alcoholTier, ANY_GL } from '../science/alcoholClock';
 import { minutesFromU } from '../time';
 import { SEG_LABEL, type Route, type SegId, type SegState } from '../scene/segments';
 
@@ -68,7 +69,8 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
   const bac = b.bac ? at(b.bac, mi) : 0;
   // plain words first, the number second (owner, 2026-10-24); the words are the app's own levels [AL4]:
   // from 0.2 ‰ attention is worse, from 0.5 ‰ reaction time and balance (typical value, the range is underneath)
-  if (bac >= 0.1) return { big: bac >= 0.5 ? 'Balance worse' : bac >= 0.2 ? (bacRange(bac)[0] < 0.2 ? 'Focus may dip' : 'Attention worse') /* (round 9: the range starts under 0.2 ‰) */ : 'Low, not zero', small: bacPlain(bac), level: bac >= 0.5 ? 2 : 1, organ: 'brain', curve: curveOf(b.bac!), u };
+  const tier = alcoholTier(bac); // (round 12: one ladder for every drink: beer and wine at the same level read the same)
+  if (bac >= 0.1) return { big: tier === 'balance' || tier === 'danger' ? 'Balance worse' : tier === 'worse' ? 'Attention worse' : tier === 'may' ? 'Focus may dip' : 'Low, not zero', small: bacPlain(bac), level: tier === 'balance' || tier === 'danger' ? 2 : 1, organ: 'brain', curve: curveOf(b.bac!), u };
   const gs = sugarKnown ? b.effects.glucoseMgDl : undefined;
   const g = gs ? at(gs, mi) / 18.016 : 0;
   if (gs && Math.abs(g) >= 0.5) {
@@ -100,7 +102,8 @@ export function bacPlain(gPerL: number, range?: [number, number]): string {
   const [lo, hi] = (range ?? bacRange(gPerL)).map((x) => x / 10), d = lo < 0.03 ? 3 : 2;
   // (round 7, critic B3: the anchor switched from US to EU mid-video: one limit, the US one, as the UI is US English)
   // (round 9, owner: both driving limits, the US 0.08 % and the EU 0.05 %, wherever the range reaches the lower one)
-  const anchor = lo >= 0.08 ? ' · Over US limit 0.08 % · Over EU limit 0.05 %' : hi >= 0.05 ? ' · US limit 0.08 % · EU limit 0.05 %' : '';
+  // (round 12, critic P1-5: wine at 0.012–0.029 % showed no limit at all, beer did): the limits on every BAC gauge
+  const anchor = lo >= 0.08 ? ' · Over US limit 0.08 % · Over EU limit 0.05 %' : ' · US limit 0.08 % · EU limit 0.05 %'; void hi;
   return `BAC ${lo.toFixed(d)}–${hi.toFixed(d)} %${anchor}`;
 }
 /** Where words for the gauge (round 5: "146 ml · Blood" said nothing). */
@@ -156,15 +159,20 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
     if (sugarUnknown) return 'Not tracked for this one';
     if (level === 0) return 'Steady all day';
     const g = b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
-    return g < 0 ? `Dips below normal ${t}` : level === 2 ? `Big sugar spike ${t}` : `Sugar up for a while ${t}`;
+    return g < 0 ? `Dips below normal ${t}` : level === 2 ? `Big sugar spike ${t}` : `Sugar peak ${t}`; // (round 12, critic P2-4: "Sugar up for a while" read badly)
   }
   if (key === 'heart') return level === 0 ? 'Normal all day' : level === 2 ? `Pulse clearly up ${t}` : `Pulse a little up ${t}`;
   if (key === 'water') return level === 0 ? 'Fine all day' : level === 2 ? `Short of water ${t}` : `A bit short of water ${t}`;
   if (level === 0) return 'Fine all day';
-  const bac = b.bac ? at(b.bac, mi) : 0, caf = b.caffeine.doseMg >= 1 ? at(b.caffeine.body, mi) : 0;
-  if (bac >= 0.5) return `Balance worse ${t}`;
-  if (bac >= 0.2) return bacRange(bac)[0] < 0.2 ? `Attention may be worse ${t}` : `Attention worse ${t}`; // (round 9)
-  if (bac > 0.02) return 'Lighter sleep that night';
+  // (round 12: with alcohol the light is yellow from the first minutes; the note names its peak, "… 41 min in", not "2 min in")
+  let pm = mi; if (b.bac) for (let k = 0; k <= Math.min(1440, b.bac.length - 1); k++) if (b.bac[k] > b.bac[pm]) pm = k;
+  const atPeak = !!b.bac && b.bac[pm] > ANY_GL, bac = b.bac ? at(b.bac, atPeak ? pm : mi) : 0, caf = b.caffeine.doseMg >= 1 ? at(b.caffeine.body, mi) : 0;
+  if (atPeak) t = inText(pm);
+  const tier = alcoholTier(bac); // (round 12: the same ladder as the gauge and the light)
+  if (tier === 'balance' || tier === 'danger') return `Balance worse ${t}`;
+  if (tier === 'worse') return `Attention worse ${t}`;
+  if (tier === 'may') return `Attention may be worse ${t}`;
+  if (tier === 'low') return `Alcohol in your blood ${t}`;
   if (caf >= 200) return level === 2 ? `Too much caffeine ${t}` : `A lot of caffeine ${t}`;
   return 'Sleep may be a little lighter';
 }

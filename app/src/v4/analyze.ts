@@ -79,6 +79,8 @@ export const sugarPeakText = (peakMmol: number | null, unit: Unit = 'mmol/L') =>
  * - both have alcohol: the one with less alcohol is "the lighter choice" (no trophy); same alcohol → a lower peak, else close.
  * - a winner is only named when we can say why in words; otherwise it is close.
  */
+/** "Espresso wins", "3 espressos win" (round 12: the verb agrees with a counted plural). */
+const winsOf = (label: string) => `${label} ${/^(?:[2-9]|\d{2,})\s/.test(label.trim()) ? 'win' : 'wins'}`;
 export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): string {
   const skip = a.sugarPeak === null || b.sugarPeak === null; // compare like with like
   const stressOf = (x: Analysis, key: System['key']) => {
@@ -126,8 +128,11 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
   if (!!alcA !== !!alcB) { // one side has alcohol
     const [n, d] = alcA ? [b, a] : [a, b];
     const sn = score(n), sd = score(d), cost = costs(n, d);
-    if (sn > sd && !near(sn, sd) && cost.length) return `No clear winner: ${d.label} brings alcohol; ${n.label} brings ${cost.slice(0, 2).join(' and ')}.`;
-    return `🏆 ${n.label} wins: ${['no alcohol', ...reasons(n, d)].slice(0, 2).join(', ')}.`;
+    // (round 12: any alcohol now weighs on the brain light, so the score alone would let a sugary or sleep-delaying
+    // drink "win"; a real cost of its own always makes it a trade-off that names both)
+    const ownCost = cost.some((c) => /blood sugar peak|delays your sleep/.test(c));
+    if (cost.length && ((sn > sd && !near(sn, sd)) || ownCost)) return `No clear winner: ${d.label} brings alcohol; ${n.label} brings ${cost.slice(0, 2).join(' and ')}.`;
+    return `🏆 ${winsOf(n.label)}: ${['no alcohol', ...reasons(n, d)].slice(0, 2).join(', ')}.`;
   }
   if (alcA && alcB) { // both have alcohol: the amount of alcohol decides first, never a trophy
     const lo = Math.min(alcA, alcB), hi = Math.max(alcA, alcB);
@@ -145,7 +150,10 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
   if (near(sa, sb)) return close;
   const [w, l] = sa < sb ? [a, b] : [b, a];
   const why = reasons(w, l);
-  return why.length ? `🏆 ${w.label} wins: ${why.slice(0, 2).join(', ')}.` : close; // never a winner we can't explain
+  // round 12 (critic P1-2: "Hamburger wins: a smaller blood sugar peak" next to 251 vs 139 kcal read as "the burger is
+  // healthier"): when the side with the better score has MORE kcal, no trophy: each side's own advantage, side by side
+  if (why.length && w.kcal - l.kcal >= 30 && !why.some((x) => /fewer kcal/.test(x))) return `${w.label}: ${why[0]}. ${l.label}: ${Math.round(w.kcal - l.kcal)} fewer kcal.`;
+  return why.length ? `🏆 ${winsOf(w.label)}: ${why.slice(0, 2).join(', ')}.` : close; // never a winner we can't explain
 }
 
 // Slower or lighter everyday swaps, by database id. Each is checked with the model before it is shown,

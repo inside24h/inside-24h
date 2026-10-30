@@ -1538,6 +1538,7 @@ export function lighten(hex: string): string {
  *  "Answer at 24 h." at about half time, NEXT chips, and in the lower part of the frame (the legs) the race out of the
  *  stomach with a scoreboard of the four lights for each body. The race finish is a neutral "✓ OUT": never a trophy,
  *  never green, and with alcohol on one side "Faster out ≠ better for you." The verdict is verdictOf's only. */
+const SCOREBOARD = false;
 function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: CmpOverlay, fr: VFrame, cues: Plan['cues'] | undefined, Lo: ReturnType<typeof layoutSplit>, alpha: number) {
   const { S, L, R } = Lo, t = fr.t;
   ctx.save(); ctx.globalAlpha = alpha;
@@ -1578,8 +1579,9 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
       if (p >= 1 && o.answer?.kind !== 'sugar') { ctx.fillStyle = '#e6edf5'; ctx.font = `700 24px ${SANS}`; ctx.textAlign = k ? 'right' : 'left'; text(ctx, '✓ OUT', k ? x1 : x0, y + bh + 34, true); ctx.textAlign = 'left'; }
     });
   }
-  // scoreboard: the four lights of each body, as they are now
-  [o.a, o.b].forEach((sd, k) => {
+  // scoreboard: the four lights of each body, as they are now. Round 12 (critic P2-1: at y ≈ 1560 it sat under the
+  // platforms' captions): off; the lights come on in the 24 h beat instead (round 11). Kept behind SCOREBOARD.
+  if (SCOREBOARD) [o.a, o.b].forEach((sd, k) => {
     const y = S.bottom + 250, x0 = k ? W / 2 + 24 : L, step = 62;
     sd.lights.slice(0, 4).forEach((l, i) => {
       const cx = x0 + 22 + i * step;

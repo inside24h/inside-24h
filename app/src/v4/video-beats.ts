@@ -84,6 +84,7 @@ const RULES: Rule[] = [
   [/^Livers differ/, () => ['Livers differ, so for some it takes longer.']],
   [/^Sleep, coffee, water or fresh air don’t speed it up/, () => ['Coffee or water don’t speed it up.']],
   [/^Spreading the drinks lowered the peak, not the end/, () => ['Spreading the drinks lowered the peak.', 'It is gone at about the same time.']],
+  [/^In all, about (\d+) teaspoons of sugar reach your blood/, (m) => [`About ${m[1]} teaspoons of sugar, from starch.`]], // (round 12)
   [/^This app can’t tell you when you’re safe to drive/, () => ['We can’t tell when you’re safe to drive.']],
   [/^A day later there is still alcohol in your blood/, () => ['After 24 h, alcohol is still in you.']],
   [/^Your liver works at a fixed speed, asleep or awake/, () => ['Your liver works at a fixed speed.', 'Coffee or water don’t speed it up.']],
@@ -273,6 +274,17 @@ export const ruleCards = (sentence: string) => { for (const [re, f] of RULES) { 
 
 /** Safety net (2026-10-24, owner review: "20 g fiber" on the gauge, "22.7 g of fiber" on the card): true when a card
  *  and a gauge on screen name the same thing (same unit and the same word after it) with different numbers. */
+/** Round 12 (critic P0-3: "Half has moved on after 116 minutes." while the clock stood at +0:01): the minute a card
+ *  says something happened ("after about 116 minutes", "by 4 hours"), or null. A forecast ("within 40 minutes") may be said early. Intervals ("one
+ *  drink every 40 minutes") and clock times are not events. */
+export function eventMin(card: string): number | null {
+  const m = /\b(?:after|by)\s+(?:about\s+)?(\d+(?:\.\d+)?)\s*(minutes?|min|hours?|h)\b/i.exec(card);
+  if (!m) return null;
+  return Number(m[1]) * (/^h/i.test(m[2]) ? 60 : 1);
+}
+/** A card is early when the clock is clearly before the moment it speaks of. */
+export const tooEarly = (card: string, clockMin: number) => { const t = eventMin(card); return t !== null && t > clockMin + Math.max(10, 0.15 * t); };
+
 export function numberConflict(card: string, gauges: readonly string[]): boolean {
   const facts = (s: string) => [...s.matchAll(/(\d+(?:[.,]\d+)?)\s*(mg|ml|g|kcal|%|‰)\s+(?:of\s+)?([a-z]+)/gi)].map((m) => ({ n: m[1].replace(',', '.'), key: `${m[2].toLowerCase()} ${m[3].toLowerCase()}` }));
   const a = facts(card);

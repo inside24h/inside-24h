@@ -101,6 +101,9 @@ GI_SUPP = {
  "t21_blueberries": (53, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 1092 (= Atkinson 2008 A1 row 965): Blueberries, wild (Canada), 53 ± 7, 10 subjects, bread reference; wild, not cultivated blueberries: the nearest tested food"),
  "t21_white_choc": (41, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1: Chocolate, white, mean of four studies 41 (rows 1598-1601, 34 to 44)"),
  "a1_choc_cake": (38, A1 + " row 4: Chocolate cake made from packet mix with chocolate frosting (Betty Crocker), 38 ± 3, 10 subjects, single test"),
+ # ---- 2026-10-30 (video round 12, critic P0-3: crepes had no sugar curve): rows read in A1 (dc08-1239_1.pdf, pdftotext -raw)
+ "a1_pancakes": (66, A1 + " rows 30-35: Pancakes, homemade (Fiji), 66 ± 9, 8 subjects; also prepared from shake mix 67 ± 5 and from wheat flour (China) 80 ± 4: the nearest tested food for a home flour-milk-egg batter (no crêpe was tested)"),
+ "a1_nutella": (29, A1 + " rows 1447-1449: Nutella, chocolate hazelnut spread (Ferrero Australia), 33 ± 4, 30 ± 4 and 25 ± 4, 10-12 subjects each, printed mean of three studies 29"),
  "a1_hot_choc_water": (51, A1 + " row 85: Complete Hot Chocolate mix made with hot water (Nestlé, Australia), 51 ± 3, 10 subjects, single test"),
 }
 # Data round 3: GI keys used only to override a builder option (opt(..., gi=KEY)); see build_variants.build_option.

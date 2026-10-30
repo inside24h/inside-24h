@@ -4,7 +4,7 @@
 // about 0.10–0.15 g/L/h fasted and 0.15–0.20 g/L/h after food (Jones 2010, PMID 20304569; claim AL2, A). Nothing in the
 // model (or in the sources read) makes it faster during sleep. The typical curve is the model's own; the "fast" and
 // "slow" livers re-run the same downslope at 0.20 and 0.10 g/L/h (C: same body water, only the liver speed changes).
-import { BAC_SPREAD_UP } from './ranges';
+import { BAC_SPREAD_UP, bacRange } from './ranges';
 
 /** Liver speeds most people fall inside, g/L (= ‰) per hour [AL2, Jones 2010]. */
 export const ELIM_RANGE = { fast: 0.20, slow: 0.10 } as const;
@@ -14,6 +14,19 @@ export const GONE_GL = 0.005;
  *  693 deaths; claim AL9). The warning shows when the TOP of our range (model × 1.5) reaches it. */
 export const POISON_GL = 2.2;
 export const poisonRisk = (modelGl: number) => modelGl * (1 + BAC_SPREAD_UP) >= POISON_GL;
+/** Round 12 (critic P0-1: 150 ml wine at 0.12-0.29 ‰ read "Fine all day" in green, 500 ml beer at 0.12-0.31 ‰ read
+ *  "Attention may be worse"): ONE ladder for every alcoholic drink, on the model value and its range [AL4]:
+ *  'danger' (top of the range at poisoning levels), 'balance' (≥ 0.5 ‰), 'worse' (the whole range ≥ 0.2 ‰), 'may'
+ *  (the range reaches 0.2 ‰), 'low' (any alcohol, > 0.02 ‰: not zero), 'none'. Any alcohol is at least yellow. */
+export type AlcoholTier = 'none' | 'low' | 'may' | 'worse' | 'balance' | 'danger';
+export const ATTENTION_GL = 0.2, BALANCE_GL = 0.5, ANY_GL = 0.02;
+export function alcoholTier(modelGl: number): AlcoholTier {
+  if (!(modelGl > ANY_GL)) return 'none';
+  if (poisonRisk(modelGl)) return 'danger';
+  if (modelGl >= BALANCE_GL) return 'balance';
+  const [lo, hi] = bacRange(modelGl);
+  return lo >= ATTENTION_GL ? 'worse' : hi >= ATTENTION_GL ? 'may' : 'low';
+}
 
 /** Clock time m minutes after the drink, with the day: "06:02 tomorrow", "13:03 the day after tomorrow"; further
  *  out only the hours ("about 59 h after the first sip"), never a wrong day name. */

@@ -110,7 +110,7 @@ export function sleepRiskAt(sim: Timeline, toBed: number, anchors: { none: numbe
 export function sleepSentence(risk: SleepRisk, extraLatencyMin: number): string {
   if (risk === 'delay') return `You may need about ${Math.max(1, Math.round(extraLatencyMin))} min longer to fall asleep.`;
   if (risk === 'sensitive') return 'Most people sleep normally with this much, but if caffeine affects you easily, you may sleep a little less or more lightly.';
-  return 'Too little to affect your sleep.';
+  return 'Probably too little to affect most people’s sleep.'; // (video round 12, critic P2-7: never a flat promise)
 }
 
 export interface Vitals {

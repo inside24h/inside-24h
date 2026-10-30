@@ -184,7 +184,7 @@ const BPM2 = 120, BEAT2 = 60 / BPM2, BAR2 = 4 * BEAT2, CHORD2_S = 2 * BAR2;
 /** RMS of the full mix that measures about −14 LUFS for this material (calibrated with ffmpeg ebur128, QA 2026-10-24). */
 export const TARGET_RMS2 = 0.17;
 /** Sample ceiling of the limiter: ≈ −1.9 dBFS, so the AAC true peak stays under −1 dBTP (round 5: denser impacts). */
-export const CEIL2 = 0.76;
+export const CEIL2 = 0.66; // (round 12, critic P2-2: −1.1/−1.2 dBTP after AAC left no room for the platforms' transcode; ≈ −2 dBTP now)
 
 /** Lookahead limiter (5 ms): the gain is lowered just BEFORE a loud hit instead of clipping it, then recovers. */
 export function limit(chs: Float32Array[], ceil: number, sr: number) {

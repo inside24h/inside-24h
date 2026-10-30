@@ -4,7 +4,7 @@
 import { at, type Timeline } from '../science/espressoSim';
 import { SLEEP_WINDOW_MIN, type Vitals } from '../science/daily';
 import { bacRangeText } from '../science/ranges';
-import { GONE_GL, poisonRisk } from '../science/alcoholClock';
+import { alcoholTier, GONE_GL, poisonRisk } from '../science/alcoholClock';
 import type { TipKey } from '../content/tips';
 
 export type Level = 0 | 1 | 2; // green, yellow, red
@@ -64,7 +64,8 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
     && (v.cautiousConc === undefined || at(caffeine.conc, m) > v.cautiousConc);
   const brain = fill((m) => {
     const a = alc(m);
-    const fromAlc: Level = a >= 0.5 ? 2 : a >= 0.2 ? 1 : 0;
+    // (round 12, critic P0-1: any alcohol in the blood is at least yellow, one ladder for every drink: alcoholTier)
+    const tier = alcoholTier(a), fromAlc: Level = tier === 'balance' || tier === 'danger' ? 2 : tier !== 'none' ? 1 : 0;
     // at night: yellow also for the cautious tier ('sensitive', or a delay under 5 min), so the light never says
     // "Fine" while the sleep answer says sensitive people may sleep less (wave 6; science/daily.ts sleepRiskOf)
     // The cautious tier is yellow only while the blood level is still above the cautious anchor (VS1), not until
@@ -119,14 +120,15 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
     },
     {
       key: 'brain', label: 'Brain & sleep', organ: 'brain', levels: brain,
-      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow from 0.2 ‰ (attention already worse), red from 0.5 ‰ (reaction time and balance; the EU driving limit, 0.05 %; the US limit is 0.08 % = 0.8 ‰); when the top of our range reaches 2.2 ‰ we add a danger warning (the lowest levels seen in deaths from alcohol poisoning). At night: yellow if caffeine delays your sleep by up to 20 minutes, while enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
+      rule: 'By day: green under 200 mg of caffeine in your body (EFSA: no safety concern as a single dose), yellow 200–400 mg, red over 400 mg. Alcohol: yellow while any alcohol is in your blood (not zero; from 0.2 ‰ attention is worse, and we say “may be” while our range only reaches it), red from 0.5 ‰ (reaction time and balance; the EU driving limit, 0.05 %; the US limit is 0.08 % = 0.8 ‰); when the top of our range reaches 2.2 ‰ we add a danger warning (the lowest levels seen in deaths from alcohol poisoning). At night: yellow if caffeine delays your sleep by up to 20 minutes, while enough is left that caffeine-sensitive people may sleep a little less, or if alcohol is still in your blood (even one drink makes the second half of the night lighter); red if caffeine delays sleep by more than 20 minutes or blood alcohol is 0.5 ‰ or more.',
       says: (l, m) => {
         const a = alc(m);
         // a range, never one number: Widmark estimates are off by 20–40% (alcohol.md W6)
         // the top of the range reaches the level seen in alcohol-poisoning deaths (≥ 2.2 ‰) [AL9]
         if (poisonRisk(a)) return `Blood alcohol about ${bacRangeText(a)}: dangerous. People have died of alcohol poisoning from about 2.2 ‰. If someone can’t be woken or breathes slowly, call the emergency number (112 in Europe).`;
         if (a >= 0.5) return `Blood alcohol about ${bacRangeText(a)}: reaction time and balance are worse. Don’t drive.`;
-        if (a >= 0.2) return `Blood alcohol about ${bacRangeText(a)}: your attention is already worse. Don’t drive.`;
+        if (alcoholTier(a) === 'worse') return `Blood alcohol about ${bacRangeText(a)}: your attention is already worse. Don’t drive.`;
+        if (alcoholTier(a) === 'may') return `Blood alcohol about ${bacRangeText(a)}: your attention may already be worse. Don’t drive.`;
         if (night(m) && a > 0.02) return 'Alcohol is still in your blood: you may fall asleep faster, but the second half of the night is often lighter and more broken.';
         if (a > 0.02) return `A little alcohol (about ${bacRangeText(a)}). Not zero: don’t drive.`;
         if (night(m) && (l > 0 || asleep(m))) return l === 0 ? 'Sleeping normally.' : v.extraLatencyMin >= 1 ? `Caffeine is delaying your sleep by about ${Math.max(1, Math.round(v.extraLatencyMin))} minutes.`
@@ -135,7 +137,9 @@ export function bodyStatus(caffeine: Timeline, v: Vitals, waterMl: number, bac?:
       },
       tip: (l, m) => (alc(m) > 0.02 ? 'alcohol' : l === 0 ? null : 'caffeine'),
       // the cautious caffeine tier at night is a "maybe" for sensitive people, not stress (wave 7)
-      soft: (m) => (night(m) && alc(m) <= 0.02 && cautiousNow(m) ? { word: 'maybe lighter sleep', tail: ' if caffeine affects you easily' } : undefined),
+      soft: (m) => (night(m) && alc(m) <= 0.02 && cautiousNow(m) ? { word: 'maybe lighter sleep', tail: ' if caffeine affects you easily' }
+        // (round 12: a little alcohol is yellow now; its span says what it is, not "mild stress")
+        : alcoholTier(alc(m)) === 'low' && !night(m) ? { word: 'a little alcohol in your blood', tail: ', not zero: don’t drive' } : undefined),
       // a little alcohol that never turns the light yellow is still not "no real effect": the driving answer says No
       calmNote: hasAlc ? (clock) => `a little alcohol in your blood ${clock(alcFrom)}–${alcTo >= N - 1 && bac && at(bac, N - 1) > GONE_GL ? 'past 24 h' : clock(alcTo + 1)}, not zero: don’t drive` : undefined,
     },

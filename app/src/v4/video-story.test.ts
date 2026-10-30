@@ -15,9 +15,10 @@ import { CMP_REPEAT_S, FPS, LENGTH, OUTRO_S, READ, readSeconds, SURGE_CLEAR_S, t
 const CUTS: Cut[] = ['long', 'medium', 'short']; // (round 11: TikTok, Reels, Shorts)
 import { HIT_S, surgeLevel, vesselLine, VESSEL_BEND } from './video-fx';
 import { frameMoves, idleDrift } from './video-cam';
-import { numberConflict } from './video-beats';
+import { numberConflict, tooEarly } from './video-beats';
+import { alcoholTier, ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
-import { beatCtx, cmpName, plainLatin, comparePlan, gaugesAt, peakOf, surgeOf, shortName, singlePlan, singleStops } from './video-story';
+import { beatCtx, cmpName, plainLatin, climaxOf, comparePlan, gaugesAt, peakOf, surgeOf, shortName, singlePlan, singleStops } from './video-story';
 import { COVER_BAND, drawCmpFrame, drawCoverFrame, drawFrame, logText, SAFE, SIZE, VIDEO_COPY, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
 
 type Food = { id: string; name: string; aliases?: string[] };
@@ -43,7 +44,7 @@ function singlePlanOf(x: Analysis, cut: Cut, p: Profile = P) {
     alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: b.energy.total,
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg });
   const payoff = hook.payoff ? story.chapters.find((c) => c.title === hook.payoff)?.min : undefined;
-  const fx: PlanFx = { peakMin: peakOf(b, x.glucose !== undefined), payoffMin: payoff, drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
+  const fx: PlanFx = { peakMin: climaxOf(b, x.glucose !== undefined, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }))), payoffMin: payoff, drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   return { plan: singlePlan(stops, cut, fx), hook, stops };
 }
@@ -363,5 +364,79 @@ describe('round 11: platforms, two hooks, captions, cover, variety', () => {
     const motifs = new Set(seeds.map((s) => JSON.stringify(motifOf(s))));
     expect(motifs.size).toBeGreaterThanOrEqual(10);
     expect(new Set(seeds.map((s) => s % 2)).size).toBe(2); // both hook formulas lead somewhere
+  });
+});
+
+describe('round 12: every item has a climax and a clock that keeps up; one alcohol ladder; compare peaks = singles', () => {
+  type V = { v: string; name: string };
+  const VARIANTS = (db as unknown as { id: string; variants?: V[] }[]).flatMap((f) => (f.variants ?? []).map((v) => ({ id: `${f.id}.${v.v}`, x: run(v.name) })));
+  const EVERY = [...ALL.map(({ f, x }) => ({ id: f.id, x })), ...VARIANTS];
+  it(`every database item and variant (${FOODS.length} + ${VARIANTS.length}): a real climax, no card before the clock reaches its time, the clock never stuck under cards`, () => {
+    const bad: string[] = [];
+    for (const { id, x } of EVERY) {
+      if (!x) { bad.push(`${id}: no model`); continue; }
+      for (const cut of ['long', 'short'] as const) {
+        const { plan } = singlePlanOf(x, cut);
+        if (!plan.cues.some((c) => c.kind === 'peak')) bad.push(`${id} ${cut}: no climax`);
+        const shownFrom = new Map<string, number>();
+        for (const f of plan.frames) if (f.cap && f.beat === 'hold' && !shownFrom.has(f.cap)) shownFrom.set(f.cap, f.m);
+        for (const [cap, m] of shownFrom) if (!/^(Coming up|Still to come)/.test(cap) && tooEarly(cap, m)) bad.push(`${id} ${cut}: "${cap}" at +${Math.round(m)} min`);
+        // (the clock may rest only where the next moment is under 10 min away, or at +24:00)
+        const gapAt = (st: number) => { const nx = plan.stops.find((s) => s > st + 1e-6); return nx === undefined ? 0 : nx - st; };
+        let run0 = 0, last = -1;
+        for (const f of plan.frames) {
+          const shown = f.phase === 'main' && f.beat === 'hold' && !!f.cap && (f.stop ?? 0) < 1440 && gapAt(f.stop ?? 0) >= 10, minute = Math.floor(f.m);
+          run0 = shown && minute === last ? run0 + 1 : 0; last = shown ? minute : -1;
+          if (run0 > 6 * FPS) { bad.push(`${id} ${cut}: clock stuck at +${minute} min under cards`); break; }
+        }
+      }
+    }
+    expect(failed(bad)).toEqual([]);
+  }, 120000);
+  it('any alcohol: the brain light is never green while it is in the blood, and beer and wine at the same level read the same', () => {
+    const bad: string[] = [];
+    for (const { id, x } of EVERY) {
+      if (!x || !((x.built.alcoholG ?? 0) > 1) || !x.built.bac || !Array.from(x.built.bac).some((v) => v > ANY_GL)) continue; // (alcohol-free beer never reaches the blood level that counts)
+      const brain = x.systems.find((s) => s.key === 'brain')!;
+      for (let m = 0; m < Math.min(1440, brain.levels.length); m += 5) if (x.built.bac[m] > ANY_GL && brain.levels[m] === 0) { bad.push(`${id}: green at +${m} min`); break; }
+      const w = x.systems.map((s) => s.levels[worstMoment(s)]);
+      if (w[x.systems.findIndex((s) => s.key === 'brain')] === 0) bad.push(`${id}: end card brain green`);
+    }
+    expect(failed(bad)).toEqual([]);
+    const beer = run('beer')!, wine = run('red wine')!;
+    const label = (x: Analysis) => { const b = x.built.bac!; let pm = 0; for (let m = 0; m < 1441; m++) if (b[m] > b[pm]) pm = m; return [alcoholTier(b[pm]), gaugesAt(x.built, pm, 'mmol/L', false).find((g) => g.curve)?.big]; };
+    expect(label(wine)).toEqual(label(beer));
+  });
+  it('compare: each side\'s peak moment is its own stop, at the minute of its single video, with its peak card there', () => {
+    const bad: string[] = [];
+    for (const [qa, qb] of [['espresso', 'beer'], ['cola', 'glass of water'], ['espresso', 'cola'], ['red wine', 'beer'], ['hamburger', 'cola']]) {
+      const a = run(qa)!, b = run(qb)!, cp = comparePlan(a, b, P, 'long');
+      for (const [x, key] of [[a, 'text'], [b, 'textB']] as const) {
+        for (const c of x.built.story.chapters.filter((ch) => ch.min > 0 && ch.min < 1440 && /peak/i.test(ch.title))) {
+          if (!cp.plan.stops.includes(c.min)) bad.push(`${qa} vs ${qb}: ${x.label} peak +${c.min} is not a stop (${cp.plan.stops.join(',')})`);
+          for (const pg of cp.plan.pages) if (/peaks now|highest now/i.test(pg[key] ?? '') && Math.abs(pg.stop - c.min) > 10) bad.push(`${qa} vs ${qb}: "${pg[key]}" at +${pg.stop}`);
+        }
+      }
+    }
+    expect(failed(bad)).toEqual([]);
+  });
+  it('a starchy food leads with its teaspoons, the number the video itself says (available carbohydrate / 4 g)', () => {
+    const x = run('kaiser roll')!, { hook } = singlePlanOf(x, 'short');
+    const n = /about (\d+) teaspoons of sugar/.exec(hook.line1)?.[1];
+    expect(n).toBeDefined();
+    const said = x.built.story.chapters.map((c) => chapterText(c, c.min)).join(' ');
+    expect(said).toContain(`In all, about ${n} teaspoons of sugar reach your blood`);
+  });
+  it('captions: hashtags name the item and its story, and #inside24h is always there', () => {
+    const tagsOf = (name: string, o: Partial<Parameters<typeof captionsFor>[0]> = {}) => captionsFor({ name, hook: { line1: 'A.', line2: 'B.' }, ...o });
+    expect(tagsOf('2 crepes with chocolate spread').tiktok).toMatch(/#crepes\b/);
+    expect(tagsOf('1 cinnamon roll').tiktok).toMatch(/#cinnamonroll\b/);
+    expect(tagsOf('1 hamburger, a small portion of french fries and 330 ml of cola').tiktok).toMatch(/#hamburger .*#fastfood/);
+    expect(tagsOf('One espresso', { caffeine: true }).tiktok).toMatch(/#caffeine/);
+    expect(tagsOf('One espresso', { caffeine: true }).tiktok).not.toMatch(/#bloodsugar/);
+    for (const c of [tagsOf('Cola vs Water', { compare: { a: 'Cola', b: 'Water' } }), tagsOf('One can of cola', { sugar: true })]) {
+      for (const s of [c.tiktok, c.reels, c.shorts.description]) expect(s).toMatch(/#inside24h/);
+    }
+    expect(tagsOf('2 crepes with chocolate spread').shorts.title).toMatch(/^What 2 crepes .* do inside/);
   });
 });

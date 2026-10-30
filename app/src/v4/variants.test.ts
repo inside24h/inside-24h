@@ -540,7 +540,9 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     'bread-french': 'baguette tests disagree (A1 57 vs healthy-subject rows 78–81), audit 2026-10-17; 2021 adds only a whole-grain baguette',
     'burek*': 'no burek or phyllo pie tested; the nearest tests disagree: filled fatayer pastry 78–80 (2021 Suppl. Table 2), puff pastry 47 and 56 (2021 Suppl. Table 1)',
     crackers: 'saltines not tested; other crackers 51–78',
-    pancake: 'US-style pancakes tested 46–102 depending on the recipe (A1 rows 30–35)',
+    // pancake: 'US-style pancakes tested 46–102 depending on the recipe (A1 rows 30–35)' until 2026-10-30. Video round 12
+    // (critic P0-3, crepes had no sugar curve): the homemade wheat-batter test, A1 row 30 (66 ± 9), is used as the nearest
+    // tested food; the crepes' GI is computed from it (flour) with milk and filling (level C). See fooddb_spec CREPE2.
     'bean-soup': 'no bean soup tested', 'bean-soup.sausage': 'no bean soup tested',
     'ice-cream.chocolate': 'only one low-fat chocolate ice cream brand was tested (A1 row 770)',
     'cake-sponge.cheesecake': 'no cheesecake tested', 'cake-sponge.strudel': 'no strudel tested', 'cake-sponge.cream': 'no cream cake tested',
@@ -550,8 +552,8 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     // 2026-10-29 round 2 (new foods and variants). Checked in Atkinson 2008 A1/A2 and 2021 Suppl. Tables 1-2; none tested:
     'beer.dark': 'stand-in with the regular beer values: beer has no GI here (see beer)',
     'beer.wheat': 'stand-in with the regular beer values: beer has no GI here (see beer)',
-    'pancake.crepe': 'no thin crepe tested (2021 lists only Emirati crepe breads, 76-77); the flour part has no GI of its own',
-    'pancake.jam': 'crepes have no GI (see pancake.crepe)', 'pancake.nutella': 'crepes have no GI (see pancake.crepe)',
+    // 'pancake.crepe', 'pancake.jam', 'pancake.nutella': no thin crepe tested (2021 lists only Emirati crepe breads, 76-77);
+    // since 2026-10-30 (video round 12) a COMPUTED GI: the batter flour at homemade pancakes' 66, milk, jam 49, Nutella 29.
     'red-wine.mulled': 'wine has no GI here, and no mulled wine was tested',
     'milk-whole.lactose-free': 'no lactose-free milk tested (its sugars are glucose and galactose, not lactose)',
     'yogurt-plain.soy': 'only flavored, sweetened soy yogurts were tested (2021 Suppl. Table 1)',
