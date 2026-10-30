@@ -26,7 +26,7 @@ export const VIDEO_COPY = {
   loop: (solid?: boolean, compare?: boolean) => (compare ? '↻ Watch both again from the first sip.' : solid ? '↻ Now watch the first bite again.' : '↻ Now watch the first sip again.'),
   answerAt: 'Answer at 24 h.',
   fasterOut: 'Faster out ≠ better for you.', // the race with alcohol on one side (spec §4.1)
-  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime' },
+  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime', alcohol: 'Blood alcohol' },
   smallPrint: 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0',
 } as const;
 /** The plan as the drawing needs it (the cues place every effect). */
@@ -314,7 +314,7 @@ export interface CmpSide { name: string; color: string; step: string; caption: s
   /** round 5: how much ("330 ml", "1 shot · 30 ml"), shown under the name */ serving?: string }
 export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean;
   /** 2026-10-24 game: the guess line, the race (0..1 per side); round 4: the answer, shown when it is decided */ guess?: boolean; race?: { a: number; b: number };
-  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar' | 'bedtime'; winner: 0 | 1 } }
+  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol'; winner: 0 | 1 } }
 
 /** Comparison Reel (9:16): both bodies side by side at the top, where the whole width is free of platform buttons;
  *  the two captions stacked below, inside the safe column. Timing from planCompare (video-plan.ts). */
@@ -1336,7 +1336,7 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
     ctx.restore();
   });
   y += rows * rh + (reel ? 18 : 12);
-  const cta = fitWrap(ctx, o.alcohol ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle, RL - L, 2, reel ? 46 : 38, 32, (px) => `700 ${px}px ${SANS}`);
+  const cta = fitWrap(ctx, o.alcohol || !o.solid ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle, RL - L, /* (round 13: a drink asks for the next drink) */ 2, reel ? 46 : 38, 32, (px) => `700 ${px}px ${SANS}`);
   ctx.fillStyle = '#ffffff'; ctx.font = `700 ${cta.px}px ${SANS}`;
   cta.lines.forEach((ln, i) => text(ctx, ln, L, y + cta.px * 0.9 + i * cta.px * 1.16));
   y += cta.px * 0.9 + (cta.lines.length - 1) * cta.px * 1.16 + (reel ? 44 : 36);
@@ -1477,9 +1477,12 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     // (round 9: the cards leave before the NEXT chip comes in, never two texts cross-fading in one place)
     ctx.save(); ctx.globalAlpha *= fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
     const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' ? '' : fr.capB ?? '']];
+    // (round 13, critic P1-3: wine vs beer showed the same sentence twice, side by side): one card across both columns
+    const same = !!caps[0][1].trim() && caps[0][1].trim() === caps[1][1].trim();
     sides.forEach((s, k) => {
-      const [x0, x1] = Lo.cols[k], w = x1 - x0;
-      const title = (caps[k][0] ?? '').trim(), cap = (caps[k][1] ?? '').trim();
+      if (same && k === 1) return;
+      const [x0, x1] = same ? [Lo.cols[0][0], Lo.cols[1][1]] : Lo.cols[k], w = x1 - x0;
+      const title = same ? `Both · ${(caps[0][0] ?? '').trim()}` : (caps[k][0] ?? '').trim(), cap = (caps[k][1] ?? '').trim();
       const titleOnly = !!cap && cap.replace(/\.$/, '').toLowerCase() === title.toLowerCase();
       shade(ctx, true);
       const c = balanced(ctx, fitWrap(ctx, cap, w, 3, Lo.capFs, 26, (px) => `600 ${px}px ${SANS}`), cap, w);
@@ -1568,7 +1571,7 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   }
   // lower part (below the captions; graphics, its small words are decoration): the race and the scoreboard
   if (o.race) {
-    const y = S.bottom + 150, bh = 20;
+    const y = S.bottom + 110, bh = 20; // (round 13, critic P2-1: 40 px higher, clear of the platforms' captions)
     ctx.fillStyle = '#9fb0c4'; ctx.font = `700 22px ${SANS}`; ctx.textAlign = 'center';
     text(ctx, VIDEO_COPY.raceLabel[o.answer?.kind ?? 'stomach'].toUpperCase(), W / 2, y - 14, true); ctx.textAlign = 'left';
     [o.a, o.b].forEach((sd, k) => {

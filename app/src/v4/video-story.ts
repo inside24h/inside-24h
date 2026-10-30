@@ -8,7 +8,8 @@ import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
 import { mainGauge, whereGauge, type BuiltLike } from './video-body';
 import { worstMoment } from './status';
-import { verdictOf, type Analysis } from './analyze';
+import { analyze, verdictOf, type Analysis } from './analyze';
+import { parseMeal } from './food/parse';
 import type { PinnedGauge } from './share';
 
 export const CMP_STOPS = [0, 20, 45, 90, 180, 360, 720, 1440]; // (round 6: the first minutes in one moment, so each side's stomach fact is never dropped with a short early stop)
@@ -58,6 +59,28 @@ export function climaxOf(b: PeakIn, sugarKnown: boolean, chapters: { min: number
   for (const c of later) if (!best || stopValue({ min: c.min, title: c.title, text: c.text ?? '' }) > stopValue({ min: best.min, title: best.title, text: best.text ?? '' })) best = c;
   return best?.min;
 }
+
+/** Round 13 (critic P1-5: oat milk had a generic hook, though its GI is 69 against cow's milk's ~30): surprising facts
+ *  the model itself shows, a drink against the thing people think it is like. Said only when the model's blood sugar
+ *  peak is clearly higher (≥ 0.5 mmol/L and ≥ 30 % more), for the same profile. */
+export const SURPRISE: [RegExp, string, string][] = [
+  [/\boat milk\b/i, 'glass of milk', 'cow’s milk'], [/\brice milk\b/i, 'glass of milk', 'cow’s milk'],
+  [/\borange juice\b/i, '1 orange', 'a whole orange'], [/\bapple juice\b/i, '1 apple', 'a whole apple'],
+];
+export function surpriseOf(label: string, sugarPeak: number | null, profile: Profile): { than: string } | undefined {
+  const hit = SURPRISE.find(([re]) => re.test(label));
+  if (!hit || sugarPeak === null) return undefined;
+  const parts = parseMeal(hit[1]); if (!parts.length) return undefined;
+  const ref = analyze(parts, profile);
+  if (ref.sugarPeak === null) return undefined;
+  return sugarPeak - ref.sugarPeak >= 0.5 && sugarPeak >= 1.3 * Math.max(0.01, ref.sugarPeak) ? { than: hit[2] } : undefined;
+}
+
+/** Round 13 (critic P0-2: salmon kept 3 cards for 40 s): a story-moment climax (no model peak) is not pulled to the
+ *  first 15 s, which would leave out every moment before it; it lands by CLIMAX_BY_S. */
+export const CLIMAX_BY_S = 40;
+export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[]) =>
+  ({ peakMin: climaxOf(b, sugarKnown, chapters), ...(peakOf(b, sugarKnown) === undefined ? { peakByS: CLIMAX_BY_S } : {}) });
 
 /** Round 10: the bloodstream surge. The same substance as peakOf (alcohol, else a clear sugar rise, else caffeine),
  *  and the stretch of the day while its model level climbs from a quarter of its peak to the peak (the video picks
@@ -120,6 +143,8 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx): S
 export interface ComparePlan { plan: Plan; guess: Guess | null; race: { a: Float32Array; b: Float32Array } | null; fx: PlanFx; verdict: string }
 /** The comparison video's plan (2026-10-23 split screen; rounds 4-8): the guess, each side's cards per moment, the
  *  moments that say something new, and the plan for them. */
+/** Round 13: the comparison's answer is revealed no earlier than this share of the video. */
+export const REVEAL_FROM = 0.55;
 export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: boolean | Cut): ComparePlan {
   // (round 11: a cut, or the old flag: true = short)
   const cut: Cut = typeof cutIn === 'boolean' ? (cutIn ? 'short' : 'long') : cutIn, shortVid = cut === 'short';
@@ -140,13 +165,14 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // round 10: the bloodstream surge on the first side that has one (the same order as the peak: no alcohol first)
   const sg = ([...nonAlc, a, b].map((x) => { const s = surgeOf(x.built, x.glucose !== undefined); return s && { ...s, side: (x === a ? 0 : 1) as 0 | 1 }; })).find((x) => !!x);
   const fx: PlanFx = { calmDay: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
-    lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' ? race ?? undefined : undefined,
+    lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' && gq.kind !== 'alcohol' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)
   // round 12 (critic P0-2: both sides said "peaks now" at +1:30, the singles peak at +0:43 / +0:48): each side's own
   // peak moment (its story's peak chapter, as in its single video) is a moment of the comparison, kept by the planner;
   // the regular moments within 8 minutes of a peak make room for it
-  const peaksOf = (x: Analysis) => x.built.story.chapters.filter((c) => c.min > 0 && /peak/i.test(c.title)).map((c) => c.min);
+  // (round 13, critic P1-3: wine vs beer skipped "Alcohol gone", the one moment that answers which clears first)
+  const peaksOf = (x: Analysis) => x.built.story.chapters.filter((c) => c.min > 0 && /peak|Alcohol gone/i.test(c.title)).map((c) => c.min);
   const sidePeaks = [...new Set([...peaksOf(a), ...peaksOf(b)])].filter((m) => m < 1440);
   const base = (shortVid ? CMP_SHORT : CMP_STOPS).filter((m) => m === 0 || m >= 1440 || !sidePeaks.some((p) => Math.abs(p - m) <= 8));
   const cmpMins0 = [...new Set([...base, ...sidePeaks, ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
@@ -191,6 +217,17 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   };
   let used = cmpMins0, plan = build(used);
   for (let k = 0; k < 3; k++) { const kept = cmpMins0.filter((m) => plan.stops.includes(m)); if (kept.length === used.length) break; used = kept; plan = build(used); }
+  // round 13 (critic P1-1: hamburger vs cola answered its question at 25 of 68 s, then nothing was open): the answer
+  // lands at REVEAL_FROM of the video or later, at the first moment after the race is decided (the bars show it on the way)
+  if (gq && hit !== undefined) {
+    const tOf = (m: number) => plan.frames.find((f) => f.stop === m && (f.beat === 'hold' || (f.beat === 'end' && f.phase === 'main')))?.t;
+    const pkT = plan.cues.find((c) => c.kind === 'peak')?.t;
+    if (pkT !== undefined && pkT < REVEAL_FROM * plan.seconds) {
+      // (the +24:00 moment counts too: the answer is then the day's payoff)
+      const later = plan.stops.filter((m) => m >= hit && (tOf(m) ?? 0) >= REVEAL_FROM * plan.seconds).sort((x, y) => x - y)[0];
+      if (later !== undefined) { fx.peakMin = later; plan = build(used); }
+    }
+  }
   return { plan, guess: gq, race, fx, verdict: verdictNow };
 }
 

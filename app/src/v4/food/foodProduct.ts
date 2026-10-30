@@ -98,7 +98,7 @@ export function makeFoodProduct(parts: Part[], id: string, overMin = 0): Product
           { amount: s.colonG[2], sites: [['colon_desc', 0.4], ['rectum', 0.6]], color },
         ],
       }],
-      effects: { hr: s.hr, glucoseMgDl: s.glucoseDeltaMgDl, bp: s.sbp, bpScale: meal.caffeineMg > 1 ? 1 : 0 },
+      effects: { hr: s.hr, glucoseMgDl: s.glucoseDeltaMgDl, bp: s.sbp, bpScale: meal.caffeineMg > 1 ? 1 : 0, tgMmol: s.tgDelta },
       where: [
         g('In the stomach', s.stomachG, 'caf', 'stomach', meal.grams),
         g('In the small intestine', s.intestineG, 'caf', 'jejunum', meal.grams),
@@ -179,6 +179,10 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const pc = s.pace;
   const roundWord = parts.length === 1 ? (isDrink ? 'drink' : 'serving') : 'round';
   const st50 = pc ? pc.doseT50 : s.t50;
+  // round 13 (critic P0-3: "half after 225 minutes" and a fixed "almost all by 4 hours" contradicted each other): when
+  // nine tenths have left, from the same stomach model; with rounds it is not said (each round has its own)
+  const st90 = (() => { if (pc) return null; let g0 = 0; for (let t = 0; t < s.stomachG.length; t++) g0 = Math.max(g0, s.stomachG[t]); if (!(g0 > 0)) return null; for (let t = 1; t < s.stomachG.length; t++) if (s.stomachG[t] <= 0.1 * g0 && s.stomachG[t - 1] > 0.1 * g0) return t; return null; })();
+  const allBy = st90 === null ? '' : st90 < 105 ? `, almost all of it by about ${Math.max(10, Math.round(st90 / 10) * 10)} minutes` : `, almost all of it by about ${Math.round(st90 / 60)} hours`;
   const paceLine = pc ? ` Spread over ${paceLabel(pc.overMin)}: ${pc.doses} ${roundWord}s, one about every ${Math.round(pc.everyMin)} minutes${parts.length > 1 ? ' (each round a share of everything)' : ''}.` : '';
   const toBed = minutesToBed(p);
   // had it at or after the usual bedtime: bed right after (wave 7: "at bedtime" too, else there was no bed chapter)
@@ -222,7 +226,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         ? `${pc ? `Each ${roundWord}: half of it` : 'Half of it'} leaves your stomach within about ${st50} minutes${meal.alcoholG / (pc?.doses ?? 1) > 1 && st50 >= 16
           ? (alcoholGE(meal.alcoholG, meal.alcoholKa).cls === 'spirits' ? ': alcohol slows the stomach a little (water would be gone in about 13)' : ': the alcohol and the rest of the drink slow the stomach down (water would be gone in about 13)')
           : (meal.kcal - 7 * meal.alcoholG) / (pc?.doses ?? 1) > 30 && st50 >= 16 ? ': calories slow the stomach down (water would be gone in about 13)' : ', about as fast as water'}.`
-        : `${pc ? `Each ${roundWord}: your` : 'Your'} stomach churns it into a paste and lets it out slowly: half has moved on after about ${st50} minutes, almost all of it by 4 hours.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
+        : `${pc ? `Each ${roundWord}: your` : 'Your'} stomach churns it into a paste and lets it out slowly: half has moved on after about ${st50} minutes${allBy}.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
     { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1', ...(meal.alcoholG > 1 ? ['AL17'] : []), ...(m.fat >= 3 ? ['SI11'] : [])],
       text: (() => {
         // fat goes by lymph, not straight to the liver (model review 2026-10-20: "these pass into your blood" said all of it did)

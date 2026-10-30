@@ -45,8 +45,9 @@ const extraTags = (name: string) => (/\b(burger|hamburger|cheeseburger|fries|piz
 const topicTag = (c: CaptionIn) => (c.alcohol ? 'alcohol' : c.sugar ? 'bloodsugar' : c.caffeine ? 'caffeine' : 'digestion');
 /** At most `max` hashtags, and #inside24h always among them (the series). */
 const tags = (list: string[], max: number) => { const own = [...new Set(list.filter((t) => t !== 'inside24h'))].slice(0, max - 1); return [...own, 'inside24h'].map((t) => `#${t}`).join(' '); };
-/** "What 2 crepes … do", "What a can of cola does" (round 12, critic P2-3). */
-const plural = (name: string) => /^(?:[2-9]|\d{2,})\s|×/.test(name.trim());
+/** Round 13 (critic P1-4: "What 500 ml of beer do"): counted things are plural ("2 crepes"), amounts are not
+ *  ("500 ml of beer", "3 × 500 ml of beer"). */
+export const pluralName = (name: string) => { const m = /^(\d+)\s+(\S+)/.exec(name.trim()); return !!m && Number(m[1]) >= 2 && !/^(ml|g|l|cl|oz|kg|×|x)$/i.test(m[2]); };
 
 export function captionsFor(c: CaptionIn): Captions {
   const cmp = c.compare;
@@ -63,7 +64,7 @@ export function captionsFor(c: CaptionIn): Captions {
   const reels = `${search}\n${hook}\n${foot}\n${tags([...food, topicTag(c), 'whathappensinyourbody'], 5)}`;
   const facebook = `${search}\n${hook}\n${foot}`;
   // YouTube Shorts: a title of at most 60 characters, a one-sentence description with the sources, 3 hashtags
-  const titles = [cmp ? `${subject}: inside your body in 24 h` : `What ${lower(c.name)} ${plural(c.name) ? 'do' : 'does'} inside you in 24 h`, `${subject}: inside your body in 24 h`, `${subject} in 24 hours`];
+  const titles = [cmp ? `${subject}: inside your body in 24 h` : `${c.name}: what ${pluralName(c.name) ? 'they do' : 'it does'} inside you in 24 h`, `${subject}: inside your body in 24 h`, `${subject} in 24 hours`];
   const title = titles.find((t) => t.length <= 60) ?? `${subject}`.slice(0, 60);
   const description = `${hook} Hour by hour, in a simulated typical body.\n${foot}\n${tags([...food, topicTag(c)], 3)}`;
   return { tiktok, reels, facebook, shorts: { title, description } };

@@ -4,7 +4,7 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
-export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime';
+export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol';
 export interface GuessSide {
   name: string;
   alcohol?: boolean;
@@ -13,6 +13,7 @@ export interface GuessSide {
   /** what is in the stomach per minute (0..1440), from the route model */ stomach?: ArrayLike<number> | null;
   /** caffeine (mg in the body) and blood alcohol (g/L) per minute */ caffeine?: ArrayLike<number> | null; bac?: ArrayLike<number> | null;
   /** blood sugar change per minute (mmol/L), when the food has a measured curve */ sugar?: ArrayLike<number> | null;
+  /** round 13: grams of alcohol */ alcoholG?: number;
 }
 export interface Guess {
   kind: GuessKind; question: string;
@@ -72,7 +73,9 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
   const bl = sides.map(blood);
   // (round 6, critic P0: "which leaves your blood first?" was won by the beer, with an unstated "under 10 mg" for
   // caffeine. With alcohol on a side the blood question is never asked; "still in you at bedtime" is, below)
-  if (!anyAlcohol && bl[0] && bl[1]) {
+  // (round 13, critic P1-3: red wine vs beer asked nothing): two alcoholic drinks race out of the blood too; the
+  // honesty card "Faster out ≠ better for you." goes with it (share.ts)
+  if ((!anyAlcohol || (a.alcohol && b.alcohol)) && bl[0] && bl[1]) {
     const t = bl.map((x) => x!.out ?? 1e9);
     if (Math.min(t[0], t[1]) < 1e9 && clearlyApart(Math.min(t[0], 1440), Math.min(t[1], 1440))) {
       const w = (t[0] < t[1] ? 0 : 1) as 0 | 1;
@@ -106,6 +109,16 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
       answer1: `Bigger rise: ${the(sides[w].name)}.`, answer2: 'Its blood sugar goes up more.',
       recap: `Answer: ${sides[w].name} raised blood sugar more.`, progress: [rel(a.sugar!, top), rel(b.sugar!, top)] };
   }
+  // 4) round 13 (critic P1-3: red wine vs beer asked nothing; they leave the blood about together): two alcoholic
+  // drinks, which brings more alcohol (the model's grams), answered at the later blood alcohol peak. Neutral: nobody wins
+  const ga = a.alcoholG ?? 0, gb = b.alcoholG ?? 0;
+  if (a.alcohol && b.alcohol && a.bac && b.bac && Math.abs(ga - gb) >= 2 && Math.abs(ga - gb) >= 0.12 * Math.max(ga, gb)) {
+    const w = (ga > gb ? 0 : 1) as 0 | 1, pkAt = (s: ArrayLike<number>) => { let k = 0; for (let m = 1; m < Math.min(N, s.length); m++) if (s[m] > s[k]) k = m; return k; };
+    const top = Math.max(...Array.from(a.bac), ...Array.from(b.bac)) || 1, rel = (s: ArrayLike<number>) => Float32Array.from({ length: N }, (_, m) => Math.max(0, Math.min(1, (s[m] ?? 0) / top)));
+    return { kind: 'alcohol', question: 'Guess: which brings more alcohol?', winner: w, decidedMin: Math.max(pkAt(a.bac), pkAt(b.bac)),
+      answer1: `More alcohol: ${the(sides[w].name)}.`, answer2: `${Math.round(w ? gb : ga)} g vs ${Math.round(w ? ga : gb)} g of alcohol.`,
+      recap: `Answer: ${sides[w].name} brought more alcohol.`, progress: [rel(a.bac), rel(b.bac)] };
+  }
   return null;
 }
 
@@ -117,7 +130,7 @@ export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | nu
     name: name ?? x.label, alcohol: (x.built.alcoholG ?? 0) > 1, amount: stomach ? Math.max(0, ...Array.from(stomach)) : undefined,
     stomach,
     caffeine: x.built.caffeine.doseMg >= 10 ? x.built.caffeine.body : null,
-    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null,
+    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0,
     sugar: x.glucose ? Float32Array.from({ length: N }, (_, m) => (x.glucose![m] ?? 0) / 18.016) : null,
   };
 }

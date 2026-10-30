@@ -34,8 +34,9 @@ const RULES: Rule[] = [
     m[1] ? `Each ${m[1]}: half leaves within ${m[2]} minutes.` : `Half leaves your stomach within ${m[2]} minutes.`,
     ...(/alcohol and the rest of the drink slow/.test(m[3]) ? ['The drink slows your stomach down.'] : /alcohol slows the stomach a little/.test(m[3]) ? ['Alcohol slows your stomach a little.']
       : /calories slow/.test(m[3]) ? ['Its calories slow your stomach down.'] : /as fast as water/.test(m[3]) ? ['About as fast as water.'] : [])]],
-  [/^(?:Each \w+: y|Y)our stomach churns it into a paste and lets it out slowly: half has moved on after about (\d+) minutes, almost all of it by (\d+) hours/, (m) => [
-    'Your stomach churns it into a paste.', `Half has moved on after ${m[1]} minutes.`, `Almost all has moved on by ${m[2]} hours.`]],
+  // (round 13: the "almost all" time comes from the model, in minutes or hours, and may be left out)
+  [/^(?:Each \w+: y|Y)our stomach churns it into a paste and lets it out slowly: half has moved on after about (\d+) minutes(?:, almost all of it by about (\d+) (minutes|hours))?/, (m) => [
+    'Your stomach churns it into a paste.', `Half has moved on after ${m[1]} minutes.`, ...(m[2] ? [`Almost all has moved on by ${m[2]} ${m[3]}.`] : [])]],
   [/^(?:Each round has t|T)wo speeds: (.+?) runs ahead along the stomach wall, half gone in about (\d+) minutes/, (m) => [
     'Your stomach works at two speeds.', ...(words(`${m[1]} runs ahead along the stomach wall.`) <= BEAT_WORDS ? [cap(`${m[1]} runs ahead along the stomach wall.`)] : ['The drink runs ahead along the wall.']), `Half of it is gone in ${m[2]} minutes.`]],
   [/^.+ (?:are|is) churned into a paste and let out slowly: half after about (\d+) minutes/, (m) => ['The food is churned into a paste.', `Half of it moves on after ${m[1]} minutes.`]],
@@ -258,6 +259,9 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
   }
   // (round 6: water is not "about as fast as water")
   if (/\bwater\b/i.test(ctx.name ?? '')) { const k = out.indexOf('About as fast as water.'); if (k >= 0) out.splice(k, 1); }
+  // (round 13, critic P1-6: "Starch and sugar turn into blood sugar." next to an alcoholic drink whose end card says
+  // blood sugar is not tracked): with alcohol, the small intestine's news is the alcohol
+  if (ctx.alcoholG) { const k = out.indexOf('Starch and sugar turn into blood sugar.'); if (k >= 0) out.splice(k, 1, 'Alcohol passes into your blood here.'); }
   return out.length ? out : [title];
 }
 function rule(sentence: string): string[] {

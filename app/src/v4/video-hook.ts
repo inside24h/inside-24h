@@ -11,6 +11,7 @@ export interface HookIn {
   pace?: { doses: number; round: string };
   /** round 5: the portion's weight (g), so a big number comes with its size ("A whole pizza (1154 g): 2723 kcal.") */ grams?: number;
   /** round 5: the caffeine dose (mg): "still in you at bedtime" is said as a share of it */ caffeineMg?: number;
+  /** round 13: a surprising comparison the model shows (video-story surpriseOf): "More blood sugar than cow's milk." */ surprise?: { than: string };
 }
 /** `payoff`: the title of the chapter that pays the hook off (round 5: it is in every cut, near the end of the short). */
 export interface Hook { line1: string; line2: string; payoff?: string }
@@ -32,10 +33,15 @@ export function hookFor(h: HookIn): Hook {
     if (wake) return { line1: `Still in your blood at ${wake}.`, line2: fit(beers) ? beers : 'Watch what alcohol does.', payoff: 'Next morning' };
     return { line1: fit(beers) ? beers : 'One drink, 24 hours.', line2: 'Watch what alcohol does.' };
   }
+  // round 13 (critic P1-5): a surprise the model shows leads (oat milk: more blood sugar than cow's milk)
+  if (h.surprise) { const pk = h.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title)); return { line1: `${cap(name)}.`, line2: `More blood sugar than ${h.surprise.than}.`, ...(pk ? { payoff: pk.title } : {}) }; }
   // food: its calories lead (a whole pizza is about its size, not its teaspoons)
   // round 5 (critic): a big number comes with the portion's size, and the promise is a question the 24 h moment answers
   const day = h.chapters.find((c) => /% has left your body so far/.test(c.text));
   const promise = day ? { line2: 'Where is it 24 hours later?', payoff: day.title } : { line2: 'Watch it for 24 hours.' };
+  // round 13 (critic P0-2c: salmon opened with "Watch it for 24 hours."): protein-led food leads with its protein
+  const prot = Number(/(\d+) g protein/.exec(first)?.[1] ?? 0), carbs = Number(/(\d+) g carbohydrate/.exec(first)?.[1] ?? 0);
+  if (h.solid && prot >= 20 && carbs < 15) { const l1 = `${cap(name)}: ${prot} g of protein.`; return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: 'Watch your body use it.' }; }
   if (h.solid) {
     const k = /(\d+) kcal/.exec(first)?.[1];
     const sized = h.grams && !/\d+\s*g\b/.test(name) && !/^\d/.test(name) ? `${cap(name)} (${Math.round(h.grams)} g): ${k} kcal.` : `${cap(name)}: ${k} kcal.`;
@@ -88,6 +94,8 @@ export const GUESS_LINE = 'Guess before the answer.';
  *  with the number). It only reuses A's own words and numbers, so it is as honest as A. */
 export function hookB(h: HookIn, a: Hook): Hook {
   const morning = h.chapters.find((c) => c.title === 'Next morning');
+  // (round 13: a surprise stays a surprise in B, as a question)
+  if (/^More blood sugar than /.test(a.line2)) return { line1: `${a.line2.replace(/\.$/, '?')}`, line2: a.line1, ...(a.payoff ? { payoff: a.payoff } : {}) };
   const q = h.alcohol ? (a.payoff === 'Next morning' || morning ? 'Is it gone by the next morning?' : 'Where does the alcohol go?')
     : /teaspoons of sugar/.test(a.line1) ? 'Where does all that sugar go?'
       : /toilet/.test(a.line2) ? 'Does coffee send you to the toilet?'

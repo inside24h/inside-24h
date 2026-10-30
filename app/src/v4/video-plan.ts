@@ -157,10 +157,17 @@ export interface PlanFx {
   surge?: { min: number; max: number; kind: SurgeKind; side?: 0 | 1 };
   /** round 11: the 24 h "day done" beat is calm (no sparkle, no bright chord): alcohol is never celebrated */
   calmDay?: boolean;
+  /** round 13: glides between moments take this many times their usual time (the planner fills a sparse story with the
+   *  journey, not with one card held for 12 s) */
+  glideK?: number;
+  /** the same for the glides before the impact (only while it still lands by PEAK_BY_S) */
+  glideK0?: number;
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
 /** Round 10: the surge keeps this far from the sip, the riser and the impact (seconds), so no two big events overlap. */
 export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
+/** Round 13: the longest a single card stays (unless its own reading time is longer), and how much slower a glide may get. */
+export const CARD_MAX_S = 6, GLIDE_K_MAX = 6;
 export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.3, LIGHTS_STEP_S = 0.25, MICRO_GAP_S = 2.9;
 /** Comparison end card: the verdict lands first (it is the answer to the guess, and must be read: + 1.5 s), then the
  *  lights come on, left and right in turn, faster. */
@@ -170,11 +177,19 @@ export const CMP_OUTRO_EXTRA_S = 0, CMP_LIGHTS_FROM_S = 0.55, CMP_LIGHTS_STEP_S 
 export const outroSeconds = (cut: Cut, compare = false) => OUTRO_S[cut] + (compare ? CMP_OUTRO_EXTRA_S : 0);
 export const TEASE_PREFIX = 'Coming up: ', TEASE_PREFIX2 = 'Still to come: ';
 /** "Coming up: the sugar dip." (≤ 5 words), from a chapter title. */
-export const teaseCard = (title: string) => `${TEASE_PREFIX}${title.charAt(0).toLowerCase()}${title.slice(1)}.`;
+/** Round 13 (critic P1-2: "Coming up: peak." meant nothing to most people): what the moment means for the viewer. */
+export const TEASE_HUMAN: [RegExp, string][] = [
+  [/sugar peak|blood sugar/i, 'when your blood sugar tops out'], [/alcohol peak/i, 'when the alcohol hits hardest'], [/peak/i, 'when it hits hardest'],
+  [/dip|crash/i, 'the sugar crash'], [/going to bed|bedtime/i, 'what is left at bedtime'], [/sleep/i, 'what it does to your sleep'],
+  [/morning/i, 'what is left the next morning'], [/gone/i, 'when it is finally gone'], [/large intestine/i, 'where the leftovers go'],
+  [/toilet/i, 'when it reaches the toilet'], [/24 hours/i, 'what is left after 24 hours'],
+];
+export const teaseCard = (title: string) => { const h = TEASE_HUMAN.find(([re]) => re.test(title)); return h ? `${TEASE_PREFIX}${h[1]}.` : `${TEASE_PREFIX}${title.charAt(0).toLowerCase()}${title.slice(1)}.`; };
 
 /** Length targets. Long: TikTok/Facebook reward 60 s+ (we aim 62-75 s so encoders never round it under 61 s).
  *  Short: 15-30 s for Shorts / Reels experiments. */
-export const LENGTH = { long: { min: 62, max: 75 }, medium: { min: 45, max: 55 }, short: { min: 23, max: 30 } } as const; // (round 11: Shorts 23-30 s, research L2)
+// (round 13, critic P2-4: 74.6 / 54.8 s sat on the platforms' edges; a frame more in the transcode must still fit)
+export const LENGTH = { long: { min: 62, max: 73 }, medium: { min: 45, max: 53 }, short: { min: 23, max: 29.5 } } as const; // (round 11: Shorts 23-30 s, research L2)
 /** Long cut: more words are added to moments only up to this length (the rest of the minute is the body, not text). */
 export const FILL_S = 68;
 /** round 11: the same for each longer cut (medium: Reels). */
@@ -364,7 +379,19 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   let want = lim.min + 0.3; // a little over, so frame rounding never lands under the minimum
   const lay = () => {
     const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
-    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, pages: pages[i].map((p, j) => ({ cap: p, s: readSeconds(p, j === 0) * (i >= from ? stretch : 1) })) })), cut, toU, fromU, { ...fx, teaserMin, peakMin });
+    // round 13 (critic P0-2: salmon held 3 cards for 12-15 s each): a card stays at most CARD_MAX_S (or its own reading
+    // time); the rest of the time goes to the journey between moments (slower glides: the day and the body move)
+    let lost = 0;
+    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0), w = r * (i >= from ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c; }));
+    // first the glides after the impact, then the ones before it (as long as the impact still lands by PEAK_BY_S)
+    const pi = Math.max(0, peakIdx()), gl = glides(chosen.slice(pi));
+    let preG = 0; for (let i = 1; i <= pi; i++) preG += moveS(toU, chosen[i - 1].min, chosen[i].min);
+    let tp = INTRO_S[cut]; for (let i = 0; i < pi; i++) tp += stopS(pages[i]); tp += preG;
+    const glideK = Math.min(GLIDE_K_MAX, 1 + lost / Math.max(0.1, gl)), rem = Math.max(0, lost - (glideK - 1) * gl);
+    const glideK0 = pi > 0 && preG > 0.1 ? Math.min(GLIDE_K_MAX, 1 + Math.min(rem, Math.max(0, (fx.peakByS ?? PEAK_BY_S) - 0.3 - tp)) / preG) : 1;
+    const back = Math.max(0, rem - (glideK0 - 1) * preG);
+    const nCards = secs.reduce((a, x) => a + x.length, 0);
+    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + back / Math.max(1, nCards) })) })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0 });
   };
   let out = lay();
   for (let k = 0; k < 3 && out.seconds < lim.min + 0.1 && t0 < want + 5; k++) { want += lim.min + 0.3 - out.seconds; out = lay(); }
@@ -386,12 +413,14 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
   let chosen = [...byMin.values()].sort((x, y) => x.min - y.min);
   if (!chosen.length) chosen = [{ min: 0, a: '', b: '' }];
   if (chosen[0].min !== 0) chosen.unshift({ ...chosen[0], min: 0 });
+  // (round 13: before a side's own peak or "gone" moment is left out, its moments say one card each)
+  const perMin = new Map<number, number>();
   const pagesOf = (list: CmpStopIn[]) => {
     let pa = '', pb = '', ra = 0, rb = 0; // (round 8: seconds the same card has been on screen, per side)
     return list.map((s) => {
       // 2026-10-24 BEATS: each side shows its own short complete cards (video-beats.ts): one per moment in the
       // short cut, up to two in the long cut (the start: two in both)
-      const side = (t: string, title: string | undefined, lines: string[] | undefined) => (lines?.length ? lines : beatLines({ min: s.min, title: title ?? '', text: t })).slice(0, cut === 'short' ? 1 : 2);
+      const side = (t: string, title: string | undefined, lines: string[] | undefined) => (lines?.length ? lines : beatLines({ min: s.min, title: title ?? '', text: t })).slice(0, Math.min(cut === 'short' ? 1 : 2, perMin.get(s.min) ?? 2));
       const A = side(s.a, s.titleA, s.linesA), B = side(s.b, s.titleB, s.linesB);
       const n = Math.max(A.length, B.length, 1), out: { cap: string; capB: string; s: number }[] = [];
       for (let k = 0; k < n; k++) {
@@ -420,6 +449,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
     // (short cut: the last moment may go too, so the answer's moment always fits; the 24 h beat still closes the day)
     // (round 12: a side's own peak goes only when nothing else can)
     const free = chosen.some((c, i) => i > 0 && i < chosen.length - (cut === 'short' ? 0 : 1) && !c.keep);
+    if (!free) { const two = chosen.slice(1).reverse().find((c) => (perMin.get(c.min) ?? 2) > 1); if (two) { perMin.set(two.min, 1); pages = pagesOf(chosen); continue; } }
     for (let i = 1; i < chosen.length - (cut === 'short' ? 0 : 1); i++) { if (free && chosen[i].keep) continue; const v = value(chosen[i]) + (toU(chosen[i].min) - toU(chosen[i - 1].min)); if (v < best) { best = v; drop = i; } }
     dropped.push(chosen[drop]); chosen = chosen.filter((_s, i) => i !== drop); pages = pagesOf(chosen);
   }
@@ -478,7 +508,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; pages:
   // moment ahead (an open loop, §2.4). Its own words appear only when it is reached, so a card never says "now"
   // before its time.
   const glide = (from: number, to: number, nextStop: { min: number; title?: string } | null) => {
-    const n = F(moveS(toU, from, to)), out = F(0.25);
+    const n = F(moveS(toU, from, to) * (from >= (fx.peakMin ?? 0) ? fx.glideK ?? 1 : fx.glideK0 ?? 1)), out = F(0.25); // (round 13: only after the impact, which stays early)
     const g0 = frames.length;
     cues.push({ t: tNow(), kind: 'move', data: { v: Math.round(to - from) } }); // (round 9: how much of the day this glide skips, for the sound)
     const chip = !!nextStop?.title && (n / FPS >= NEXT_MIN_S || nextStop.min >= 1440); // (the day's end is always named)

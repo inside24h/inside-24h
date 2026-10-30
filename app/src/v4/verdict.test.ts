@@ -28,11 +28,11 @@ describe('verdictOf', () => {
     expect(verdictOf(an('espresso', P(22)), an('beer', P(22)))).toBe('No clear winner: Beer brings alcohol; Espresso brings caffeine at bedtime.');
   });
 
-  it('two alcoholic drinks: less alcohol is "the lighter choice", never a trophy', () => {
+  it('two alcoholic drinks: the fact (less alcohol), never "the lighter choice" nor a trophy (round 13, critic P1-3)', () => {
     const p = P(16), beer = an('beer', p), wine = an('glass of red wine', p);
-    expect(verdictOf(beer, wine)).toBe('Red wine is the lighter choice: less alcohol (16 g vs 20 g), 89 fewer kcal.');
+    expect(verdictOf(beer, wine)).toBe('Less alcohol: Red wine (16 g vs 20 g).');
     expect(verdictOf(beer, an('beer', p))).toBe('It’s close: Beer and Beer bring about the same alcohol (about 20 g).');
-    expect(verdictOf(beer, an('2 beers', p))).toMatch(/^Beer is the lighter choice: less alcohol \(20 g vs 40 g\)/);
+    expect(verdictOf(beer, an('2 beers', p))).toBe('Less alcohol: Beer (20 g vs 40 g).');
   });
 
   it('everyday alcohol-free pairs keep their plain answers', () => {

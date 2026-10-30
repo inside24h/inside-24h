@@ -29,7 +29,7 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
-import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, climaxOf, comparePlan, gaugesAt, plainLatin, shortName, singleStops, surgeOf } from './video-story';
+import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, climaxFx, comparePlan, gaugesAt, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
 import { compareHookB, hookB, hookFor, hookForCompare, seedOf, type HookIn } from './video-hook';
 import { captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Captions, type Platform } from './video-caption';
 /** Round 11 (research R2, R5): the two hooks of a video; which formula comes first rotates per food (its seed). */
@@ -585,7 +585,8 @@ export default function AppV4() {
   const hookIn = { name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
     alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
     pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
-    grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg };
+    grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg,
+    surprise: productId === 'food' && foodParts.length === 1 ? surpriseOf(videoName, peakNow, profile) : undefined };
   const vSeed = seedOf(shortName(videoName)), hookPair = hookPairOf(hookIn, vSeed);
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
   const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, sugar: (peakNow ?? 0) >= 0.5, /* (round 12: the story's own signal: espresso is #caffeine, not #bloodsugar) */ solid: /bite/i.test(story.chapters[0]?.title ?? '') });
@@ -795,7 +796,7 @@ export default function AppV4() {
     const stops = singleStops(story, ctx); // (round 9: video-story.ts, the same code the all-foods test runs)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = hookNow.payoff ? story.chapters.find((c) => c.title === hookNow.payoff)?.min : undefined;
-    const fx: PlanFx = { peakMin: climaxOf(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }))), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
+    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }))), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
     const plan = planVideo(stops, vidCut, uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;

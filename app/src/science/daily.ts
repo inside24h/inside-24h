@@ -130,7 +130,7 @@ export interface Vitals {
 /** Body rhythm + the drink's effect. `sim` provides the caffeine-driven changes (BP) and caffeine left at bedtime. */
 /** Extra effects a product adds on top of its caffeine: per-minute deltas, and a factor on caffeine's BP effect
  *  (cola: sugar cancels caffeine's BP rise, cola.md H1 → 0). */
-export interface ProductEffects { hr?: Float64Array; glucoseMgDl?: Float64Array; bpScale?: number; bp?: Float64Array }
+export interface ProductEffects { hr?: Float64Array; glucoseMgDl?: Float64Array; bpScale?: number; bp?: Float64Array; /** video round 13: blood fat (triglycerides) change, mmol/L (foodSim tgDelta) */ tgMmol?: Float64Array }
 
 export function buildVitals(p: Profile, sim: Timeline, anchors: { none: number; full: number; cautious?: number }, withDrink = true, fx: ProductEffects = {}): Vitals {
   const n = sim.minutes + 1;

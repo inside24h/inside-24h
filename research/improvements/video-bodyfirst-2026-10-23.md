@@ -590,3 +590,65 @@ vitest 827/827 (1 skip). tsc čist, oba builda prolaze.
 - compare-hamburger-vs-cola-tiktok-long
 
 Svi su 1080×1920, 30 fps, bez grešaka i crnih frameova. Glasnoća −14,1 do −14,3 LUFS, TP ≤ −1,7 dBTP. Long traje 62,4–74,6 s, short 29,3–29,6 s.
+
+---
+
+# Runda 13 (2026-10-30): `video-critique-2026-10-30-b.md`
+
+Backup: `C:\claudework\inside-24h-backups\20261030-083338-video13\`. Git HEAD prije runde je d688ec7.
+
+## P0
+1. **End card "Sugar peak N min in"** je pokazivao minutu kad šećer prijeđe prag. Sada pokazuje minutu trenutka "Blood sugar peak" iz videa (isti izvor kao oznaka PEAK).
+   - Vremena na end cardu su točna do minute ("1 h 50 min in").
+   - Alkoholna nota imenuje vrh BAC i koristi riječi mjerača ("Focus may dip 41 min in"), pa stane i u uski compare end card.
+2. **Losos i sva masna/proteinska hrana:**
+   - Vrhunac iz poglavlja (bez vrha u modelu) više ne povlači pravilo "udarac do 15 s", koje je izbacivalo sve trenutke prije vrhunca. Takav vrhunac dolazi do 40 s.
+   - Kartica traje najviše ~6 s (`CARD_MAX_S`). Višak vremena ide u putovanje između trenutaka, najviše 6× sporije: prvo nakon udarca, zatim prije njega ako udarac i dalje stigne na vrijeme.
+   - Novi mjerač "Blood fat up / +0.3 mmol/L triglycerides" iz modela (`tgDelta`), na srcu.
+   - Hrana s puno proteina i malo ugljikohidrata ima hook "Half a fillet of salmon: 39 g of protein. / Watch your body use it."
+3. **"Almost all … by 4 hours"** više nije fiksni predložak. Vrijeme se računa iz istog modela želuca (90 % izašlo): pizza "by 7 hours", losos "by 3 hours". Uz runde se ne kaže.
+
+## P1
+- **Hamburger vs cola:** odgovor stiže u drugoj polovici videa (`REVEAL_FROM` 0,55) ili na +24:00. Trake do tada rastu bez imena.
+- **Teaseri su sada ljudskim riječima:**
+  - "Coming up: when it hits hardest.";
+  - "… what is left at bedtime.";
+  - "… the sugar crash."
+- **Red wine vs beer:**
+  - Hook je "Guess: which brings more alcohol?" (iz grama modela, neutralno). Kad dva alkoholna pića izlaze iz krvi jasno različito, pita se "which leaves your blood first?".
+  - "Alcohol gone" svake strane čuva se kao trenutak. Prije izbacivanja čuvanog trenutka, trenuci se skraćuju na jednu karticu.
+  - Ista kartica na obje strane prikazuje se jednom, preko obje kolone ("Both · …").
+  - Presuda je "Less alcohol: Red wine (16 g vs 20 g).", bez "lighter choice".
+- **Shorts naslovi:** "500 ml of beer: what it does inside you in 24 h", "2 crepes: what they do …". Množina vrijedi samo za brojene stvari (test na svim stavkama).
+- **Oat milk:** hook "250 ml of oat milk. / More blood sugar than cow's milk." (`surpriseOf`, provjereno modelom za isti profil: ≥ 0,5 mmol/L i ≥ 30 % više). Isto vrijedi za rice milk i juice vs whole fruit kad model to pokaže.
+- **Pića:** end card pita "Which drink should we test next?".
+- **Alkohol u tankom crijevu:** "Alcohol passes into your blood here." umjesto "Starch and sugar turn into blood sugar."
+
+## P2
+- Traka utrke je 40 px više.
+- Duljine imaju marginu: long 62–73 s, Reels 45–53 s, Shorts 23–29,5 s.
+
+## Testovi
+Novi blok "round 13", na 178 + 83 stavki i compare parovima:
+- minuta na end cardu = trenutak u videu (šećer i BAC);
+- nota ≤ 32 znaka;
+- nema "by 4 hours", a "almost all" je ≥ 1,3 × "half";
+- kartica ≤ 6 s (rijetka pića poput decafa do ~9 s);
+- mjerač na vrhuncu;
+- duljine;
+- reveal u drugoj polovici;
+- igra za alkohol vs alkohol;
+- gramatika naslova;
+- oat milk hook;
+- teaseri.
+
+vitest 835/835 (1 skip). tsc je čist, oba builda prolaze.
+
+## Uzorci
+`C:\claudework\video-samples\2026-10-30-v13\` (10):
+- meal, pizza, cola, crepes, salmon, espresso (TT);
+- cinnamon roll, red wine vs beer (Reels);
+- hamburger vs cola (TT);
+- oat milk (Shorts).
+
+Svi bez grešaka i crnih frameova. Glasnoća −14,1 do −14,3 LUFS, TP ≤ −1,8 dBTP.

@@ -3,7 +3,7 @@
 // as the app wrote them on 2026-10-22 (cola, water, espresso, 3 beers over 2 h, a whole pizza, kebab, a 3-item meal).
 import { describe, expect, it } from 'vitest';
 import { minutesFromU, uFromMinutes } from '../time';
-import { CMP_REPEAT_S, END_HOLD_S, FPS, LENGTH, mustCards, PEAK_BY_S, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_OK, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
+import { CMP_REPEAT_S, END_HOLD_S, FPS, LENGTH, mustCards, PEAK_BY_S, planCompare, planVideo, READ, readSeconds, RISER_S, sentences, splitPages, TEASE_HUMAN, TEASE_OK, TEASE_PREFIX, wordCount, type StopIn } from './video-plan';
 import { musicShape, HUSH_S } from './video-audio';
 import fixtures from './video-plan.fixtures.json';
 import { beatLines, BEAT_WORDS, DYNAMIC, goneRange, isCard, numberConflict, ruleCards } from './video-beats';
@@ -278,7 +278,7 @@ describe('round 5: every beat renders, payoffs, safety, no dead ends', () => {
   it('"Coming up: …" only names a turn worth waiting for', () => {
     for (const [name, chapters] of Object.entries(FIX)) {
       const t = plan(withLines(name, chapters), 'long').pages.find((x) => x.text.startsWith(TEASE_PREFIX));
-      if (t) expect(t.text, name).toMatch(TEASE_OK);
+      if (t) expect(TEASE_OK.test(t.text) || TEASE_HUMAN.some(([, h]) => t.text.includes(h)), `${name}: ${t.text}`).toBe(true); // (round 13: plain-words teasers)
       if (t) expect(t.text).not.toMatch(/building blocks/i);
     }
   });

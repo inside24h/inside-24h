@@ -23,7 +23,8 @@ export const SEG_FOCUS_V: Record<SegId, string> = {
 };
 
 export interface BuiltLike {
-  bac?: Float64Array; caffeine: { doseMg: number; body: Float64Array }; effects: { glucoseMgDl?: Float64Array }; route?: Route | null;
+  bac?: Float64Array; caffeine: { doseMg: number; body: Float64Array }; effects: { glucoseMgDl?: Float64Array; tgMmol?: Float64Array }; route?: Route | null;
+  /** round 13: the story, so a note names the minute of the moment the video shows */ story?: { chapters: { min: number; title: string }[] };
 }
 type Unit = 'mmol/L' | 'mg/dL';
 
@@ -64,6 +65,8 @@ const curveOf = (series: Float64Array, scale = 1) => Array.from({ length: SAMPLE
 
 /** The headline number at minute m (same choice and words as the app's video pop: alcohol, else a clear blood
  *  sugar change, else caffeine), pinned to the organ it acts on. */
+/** Round 13: blood fat shows on the gauge from this rise (mmol/L): what the "Fat in your blood" moment reports. */
+export const TG_GAUGE = 0.1;
 export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarKnown: boolean): Gauge | null {
   const mi = Math.max(0, Math.min(1440, m));
   const bac = b.bac ? at(b.bac, mi) : 0;
@@ -80,6 +83,10 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
   }
   const caf = b.caffeine.doseMg >= 10 ? at(b.caffeine.body, mi) : 0;
   if (caf >= 20) return { big: `${Math.round(caf)} mg caffeine`, small: 'still in your body', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
+  // round 13 (critic P0-2: salmon's climax, "Blood fat is highest around now", had no gauge): blood fat, the same
+  // model number the moment says ("roughly +0.3 mmol/L", foodSim tgDelta), pinned to the heart
+  const tgs = b.effects.tgMmol, tg = tgs ? at(tgs, mi) : 0;
+  if (tgs && tg >= TG_GAUGE) return { big: 'Blood fat up', small: `+${tg.toFixed(1)} mmol/L triglycerides`, level: 0, organ: 'heart', curve: curveOf(tgs), u };
   return null;
 }
 
@@ -159,7 +166,12 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
     if (sugarUnknown) return 'Not tracked for this one';
     if (level === 0) return 'Steady all day';
     const g = b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
-    return g < 0 ? `Dips below normal ${t}` : level === 2 ? `Big sugar spike ${t}` : `Sugar peak ${t}`; // (round 12, critic P2-4: "Sugar up for a while" read badly)
+    // (round 13, critic P0-1: "Sugar peak 13 min in" was the minute the rise crossed the line, the video's PEAK was at
+    // +0:20): the peak's own minute, the same argmax the "Blood sugar peak" moment uses (foodSim glucosePeakMin)
+    if (g < 0) return `Dips below normal ${t}`;
+    const gs = b.effects.glucoseMgDl!; let pk = 0; for (let k = 1; k <= Math.min(1440, gs.length - 1); k++) if (gs[k] > gs[pk]) pk = k;
+    const moment = b.story?.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title)); if (moment) pk = moment.min; // (the video's own PEAK moment)
+    return level === 2 ? `Big sugar spike ${inText(pk)}` : `Sugar peak ${inText(pk)}`;
   }
   if (key === 'heart') return level === 0 ? 'Normal all day' : level === 2 ? `Pulse clearly up ${t}` : `Pulse a little up ${t}`;
   if (key === 'water') return level === 0 ? 'Fine all day' : level === 2 ? `Short of water ${t}` : `A bit short of water ${t}`;
@@ -170,9 +182,10 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
   if (atPeak) t = inText(pm);
   const tier = alcoholTier(bac); // (round 12: the same ladder as the gauge and the light)
   if (tier === 'balance' || tier === 'danger') return `Balance worse ${t}`;
+  // (round 13: the gauge's own words, short enough for the comparison's narrow end card)
   if (tier === 'worse') return `Attention worse ${t}`;
-  if (tier === 'may') return `Attention may be worse ${t}`;
-  if (tier === 'low') return `Alcohol in your blood ${t}`;
+  if (tier === 'may') return `Focus may dip ${t}`;
+  if (tier === 'low') return `Alcohol in blood ${t}`;
   if (caf >= 200) return level === 2 ? `Too much caffeine ${t}` : `A lot of caffeine ${t}`;
   return 'Sleep may be a little lighter';
 }
@@ -181,7 +194,9 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
 export const plainSugar = (peak: number | null, _text?: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `${sugarPct(peak)}, ${peak >= 3 ? 'a big rise' : 'normal'}`);
 /** When in the day, in words: "13 min in", "1½ h in" (round 6: "+0:13" read like a code). */
 export function inText(m: number): string {
-  if (m < 55) return `${Math.max(1, Math.round(m))} min in`;
-  const h = Math.round(m / 30) / 2, w = Math.floor(h);
-  return `${w}${h - w >= 0.5 ? '½' : ''} h in`;
+  // (round 13: to the minute, as the video's clock and its moments say it: "1 h 50 min in", never a rounded "2 h")
+  const r = Math.max(1, Math.round(m));
+  if (r < 60) return `${r} min in`;
+  const h = Math.floor(r / 60), mm = r % 60;
+  return mm ? `${h} h ${mm} min in` : `${h} h in`;
 }
