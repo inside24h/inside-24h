@@ -1055,9 +1055,21 @@ function scrims(ctx: CanvasRenderingContext2D, W: number, H: number, topBot: num
   // behind the caption only (2026-10-24: below it the body shows again, under a light veil for the small print)
   const y0 = capTop - 90, y1 = Math.min(H, capTop + 330);
   const g2 = ctx.createLinearGradient(0, y0, 0, y1);
-  g2.addColorStop(0, 'rgba(4,7,12,0)'); g2.addColorStop(0.3, 'rgba(4,7,12,.55)'); g2.addColorStop(0.75, 'rgba(4,7,12,.5)'); g2.addColorStop(1, 'rgba(4,7,12,.22)');
+  // (round 14b, critic G-1: the bottom quarter read as cut off and dark): no veil below the caption block, the body
+  // shows there in full (no words ever go there: it is under the platforms' captions)
+  g2.addColorStop(0, 'rgba(4,7,12,0)'); g2.addColorStop(0.3, 'rgba(4,7,12,.55)'); g2.addColorStop(0.75, 'rgba(4,7,12,.5)'); g2.addColorStop(1, 'rgba(4,7,12,0)');
   ctx.fillStyle = g2; ctx.fillRect(0, y0, W, y1 - y0);
-  if (y1 < H) { ctx.fillStyle = 'rgba(4,7,12,.22)'; ctx.fillRect(0, y1, W, H - y1); }
+}
+
+/** Round 14b (critic G-1): the bottom quarter of the frame (under the platforms' captions, never any words) is lit
+ *  from below in the drink's colour, a slow breath (period 4 s, alpha 0.10-0.18), so the body there reads as part of
+ *  the picture, not as an empty dark band. Drawn under the words; a glow, never a flash. */
+export const FLOOR_FROM = 0.75;
+export function drawFloorGlow(ctx: CanvasRenderingContext2D, W: number, H: number, color: string, t: number) {
+  const y0 = H * FLOOR_FROM, a = 0.1 + 0.08 * (0.5 - 0.5 * Math.cos((2 * Math.PI * t) / 4));
+  const g = ctx.createRadialGradient(W / 2, H * 1.02, 10, W / 2, H * 1.02, H * 0.36);
+  g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(0, y0 - 80, W, H - y0 + 80); ctx.restore();
 }
 
 /** Small print and the day bar under the safe zone (fine if a platform covers them; the end card repeats the credit). */
@@ -1170,6 +1182,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   drawDayDone(ctx, cues, t, [tf({ x: W / 2, y: H * 0.47 })]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
   if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.topBot, Lo.capTop); // V17 (round 9)
+  drawFloorGlow(ctx, W, H, lighten(o.color ?? ACCENT), t); // (round 14b)
   scrims(ctx, W, H, Lo.topBot, Lo.capTop);
   drawNight(ctx, W, H, fr.night ?? 0, { x: R - 24, y: Lo.clockTop + Lo.clockH / 2 });
   drawSunrise(ctx, W, H, since(cues, 'night', t, (c) => c.data?.v === 0).age);
@@ -1443,6 +1456,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   drawDayDone(ctx, cues, t, [tf({ x: W / 4, y: H * 0.5 }), tf({ x: (3 * W) / 4, y: H * 0.5 })]);
   if (fr.beat === 'rewind') drawRewindLines(ctx, W, H, (t - TEASER_S) / REWIND_S);
   if (fr.beat === 'glide') drawSpeedLines(ctx, W, t, speedAlpha(fr.rate), Lo.headerBot, Lo.capTop); // V17 (round 9)
+  drawFloorGlow(ctx, W / 2, H, lighten(o.a.color), t); ctx.save(); ctx.translate(W / 2, 0); drawFloorGlow(ctx, W / 2, H, lighten(o.b.color), t + 2); ctx.restore(); // (round 14b: each body lit in its drink's colour)
   scrims(ctx, W, H, Lo.headerBot - 70, Lo.capTop);
   drawNight(ctx, W, H, fr.night ?? 0, { x: W / 2, y: Lo.headerBot + 30 });
   drawSunrise(ctx, W, H, since(cues, 'night', t, (c) => c.data?.v === 0).age);

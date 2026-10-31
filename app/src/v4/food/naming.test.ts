@@ -20,11 +20,11 @@ const firstCaption = (parts: Part[]) => makeFoodProduct(parts, 'food').build(DEF
 describe('amountPhrase', () => {
   it('builder pizza: whole and half read as a person would say them', () => {
     const cap = servingPart(preset('pizza', /capricciosa/i), 1);
-    expect(capFirst(amountPhrase(scale(cap, 8)))).toBe(`A whole pizza Capricciosa (${Math.round(cap.grams * 8)} g)`);
-    expect(amountPhrase(scale(cap, 4))).toBe(`half a pizza Capricciosa (${Math.round(cap.grams * 4)} g)`);
+    expect(capFirst(amountPhrase(scale(cap, 8)))).toBe(`A whole 14-inch pizza Capricciosa (${Math.round(cap.grams * 8)} g)`); // (round 14b: the size is said)
+    expect(amountPhrase(scale(cap, 4))).toBe(`half a 14-inch pizza Capricciosa (${Math.round(cap.grams * 4)} g)`);
     expect(amountPhrase(cap)).toBe('1 slice of pizza Capricciosa');
     expect(amountPhrase(scale(cap, 2))).toBe('2 slices of pizza Capricciosa');
-    expect(firstCaption([scale(cap, 8)])).toMatch(/^A whole pizza Capricciosa \(\d+ g\)\.$/);
+    expect(firstCaption([scale(cap, 8)])).toMatch(/^A whole 14-inch pizza Capricciosa \(\d+ g\)\.$/);
   });
 
   it('sandwiches, burgers and kebabs are counted by their own name', () => {

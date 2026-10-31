@@ -694,3 +694,10 @@ Backup: `C:\claudework\inside-24h-backups\20261030-201915-video14\`. Git HEAD pr
 - tsc je čist, vitest 842/842 (1 skip). Oba builda prolaze.
 - Uzorci u `C:\claudework\video-samples\2026-10-30-v14\` (9): decaf, salmon, beer ×1, crepes (TT); oat milk, wine hook B, cola vs water (Shorts); espresso vs beer (TT); wine vs beer (Reels).
 - Svi bez grešaka i crnih frameova. Glasnoća −14,2 do −14,5 LUFS, TP ≤ −1,8 dBTP.
+
+## Runda 14b (2026-10-31): zadnja dva P2
+Backup: `C:\claudework\inside-24h-backups\20261031-011203-video14b\`.
+- **PZ-1, veličina pizze:** cijela i pola pizze sada navode veličinu, svugdje u appu i u videu: "A whole 14-inch pizza (1154 g): 2723 kcal." Podaci se nisu mijenjali: USDA-ova 14-inčna pizza (853 g) plus odabrani dodaci.
+- **G-1, donja četvrtina kadra:** ispod bloka s titlom više nema tamnog vela, pa se tijelo tamo vidi cijelo. Uz to ga obasjava mekani "floor glow" u boji pića: dah od 4 s, alpha 0,10–0,18, nikad tekst ni bljesak. U singlu je jedan, u usporedbi po jedan za svako tijelo.
+- vitest 842/842. Oba builda prolaze.
+- Uzorci u `C:\claudework\video-samples\2026-10-31-v14b\`: pizza (TT), cola (Shorts), hamburger vs cola (TT).

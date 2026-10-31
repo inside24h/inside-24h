@@ -10,7 +10,8 @@ const PROPER_FIRST = new Set(['French', 'Greek', 'Turkish', 'Medica']);
 /** Named sizes ("How much?" chips): the words that go in front of the food. */
 const SIZE_WORD: Record<string, (n: string) => string> = {
   single: (n) => `a single ${n}`, double: (n) => `a double ${n}`, slice: (n) => `1 slice of ${n}`,
-  half: (n) => `half ${art(n)} ${n}`, whole: (n) => `a whole ${n}`, side: (n) => `a side portion of ${n}`, plate: (n) => `a plate of ${n}`,
+  // (video round 14b, critic PZ-1: "a whole pizza (1154 g)" read as a family pizza): the pizza says its size, 14-inch (USDA's chain pizza)
+  half: (n) => (/pizza/i.test(n) ? `half a 14-inch ${n}` : `half ${art(n)} ${n}`), whole: (n) => (/pizza/i.test(n) ? `a whole 14-inch ${n}` : `a whole ${n}`), side: (n) => `a side portion of ${n}`, plate: (n) => `a plate of ${n}`,
   small: (n) => `a small portion of ${n}`, medium: (n) => `a medium portion of ${n}`, large: (n) => `a large portion of ${n}`,
 };
 /** Amount words that only describe the size of the thing itself ("1 large" egg, "1 medium" carrot). */
