@@ -137,7 +137,7 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
   if (alcA && alcB) { // both have alcohol: the amount of alcohol decides first, never a trophy
     const lo = Math.min(alcA, alcB), hi = Math.max(alcA, alcB);
     // (round 13, critic P1-3: "Red wine is the lighter choice" read as a recommendation): the fact, never a "choice"
-    const lighter = (w: Analysis, _l: Analysis, first: string) => `${first.charAt(0).toUpperCase()}${first.slice(1).replace(/ \(/, `: ${w.label} (`)}${/\(/.test(first) ? '' : `: ${w.label}`}.`;
+    const lighter = (w: Analysis, _l: Analysis, first: string) => `${first.charAt(0).toUpperCase()}${first.slice(1).replace(/ \(/, `: ${w.label} (`)}${/\(/.test(first) ? '' : `: ${w.label}`}. Both: don’t drive.`; // (round 14, critic W-2: never a lone "less alcohol" that reads as a recommendation)
     if (hi - lo >= 3 && hi >= 1.2 * lo) {
       const [w, l] = alcA < alcB ? [a, b] : [b, a];
       const k = Math.round(hi / lo), hiG = Math.abs(hi / lo - k) < 0.03 ? k * Math.round(lo) : Math.round(hi); // 1 vs 2 beers: "20 g vs 40 g", not "vs 39 g"
@@ -145,7 +145,7 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
     }
     const pa = bacPeak(a), pb = bacPeak(b);
     if (Math.abs(pa - pb) >= 0.05) { const [w, l] = pa < pb ? [a, b] : [b, a]; return lighter(w, l, 'a lower blood alcohol peak'); }
-    return `It’s close: ${a.label} and ${b.label} bring about the same alcohol (about ${Math.round((alcA + alcB) / 2)} g).`;
+    return `It’s close: ${a.label} and ${b.label} bring about the same alcohol (about ${Math.round((alcA + alcB) / 2)} g). Both: don’t drive.`;
   }
   const sa = score(a), sb = score(b);
   if (near(sa, sb)) return close;

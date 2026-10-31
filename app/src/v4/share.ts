@@ -39,6 +39,7 @@ export interface Overlay {
   hook: string; title: string; sub: string; clock: string; step: string; caption: string;
   where?: string; color?: string; progress: number; lights: Light[];
   summary: (Light & { note: string })[]; handle: string;
+  /** round 14 (critic G-3): the end card's one big number: the main gauge at the climax, its words and its range */ hero?: { big: string; small: string };
   stamp?: string; // big 'X MIN LATER' line
   pop?: { big: string; small: string; level: 0 | 1 | 2 }; // headline number of this moment
   // 2026-10-23 body-first video
@@ -1316,6 +1317,15 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
   ctx.fillStyle = '#ffffff'; ctx.font = `400 ${t.px}px ${SERIF}`;
   t.lines.forEach((ln, i) => text(ctx, ln, L, y + 12 + t.px * 0.9 + i * t.px * 1.02));
   y += 12 + t.px * 0.9 + (t.lines.length - 1) * t.px * 1.02 + (reel ? 24 : 16);
+  // round 14 (critic G-3): one highlighted number above the lights, the climax as the gauge showed it
+  if (o.hero) {
+    const hb = fitWrap(ctx, o.hero.big, RL - L, 1, reel ? 40 : 34, 26, (px) => `800 ${px}px ${SANS}`);
+    ctx.fillStyle = '#ffd27a'; ctx.font = `800 ${hb.px}px ${SANS}`; text(ctx, hb.lines[0] ?? o.hero.big, L, y + hb.px * 0.9);
+    y += hb.px * 0.9 + 10;
+    const hs = fitWrap(ctx, o.hero.small, RL - L, 1, reel ? 26 : 22, 18, (px) => `600 ${px}px ${SANS}`);
+    ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${hs.px}px ${SANS}`; text(ctx, hs.lines[0] ?? o.hero.small, L, y + hs.px * 0.9);
+    y += hs.px * 0.9 + (reel ? 24 : 16);
+  }
   const rows = short ? 0 : Math.max(1, o.summary.length); // (round 11: the short end card is ≤ 2.5 s: the name, the question, the loop)
   const room = S.bottom - y - (reel ? 150 : 120);
   const rh = Math.max(reel ? 70 : 58, Math.min(reel ? 92 : 78, room / rows));
@@ -1554,7 +1564,9 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   const showAns = !!ans && dec.age >= 0 && dec.age < ansS;
   // round 5 (critic P0): "Faster out ≠ better for you." only ever frames the ALCOHOL side, i.e. only when the side
   // that is out first has alcohol (it read as "espresso is bad" after "First out: Espresso")
-  const sidesAB = [o.a, o.b], alcWon = ans ? !!sidesAB[ans.winner]?.alcohol : !!sidesAB[race.cue?.data?.side ?? 0]?.alcohol;
+  // (round 14, critic W-1: after "More alcohol: Beer." the chip had no race to refer to): only after a race out
+  const raceKind = !ans || ans.kind === 'stomach' || ans.kind === 'blood';
+  const sidesAB = [o.a, o.b], alcWon = raceKind && (ans ? !!sidesAB[ans.winner]?.alcohol : !!sidesAB[race.cue?.data?.side ?? 0]?.alcohol);
   void anyAlcohol;
   const chip = showAns ? '' : o.guess && fr.phase === 'intro' && fr.beat !== 'teaser' && fr.beat !== 'rewind' ? VIDEO_COPY.guessChip
     : tease.age < 2.6 && !(ans && dec.age >= 0) ? VIDEO_COPY.answerAt : alcWon && ans && dec.age >= ansS && dec.age < ansS + 3.2 ? VIDEO_COPY.fasterOut

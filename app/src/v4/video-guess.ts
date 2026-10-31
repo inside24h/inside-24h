@@ -52,7 +52,9 @@ const the = (n: string) => n;
 export function sameAmount(a: GuessSide, b: GuessSide): boolean {
   const amt = (s: GuessSide) => s.amount ?? (s.stomach ? Math.max(0, ...Array.from(s.stomach)) : NaN);
   const x = amt(a), y = amt(b);
-  return x > 0 && y > 0 && Math.abs(x - y) <= 0.1 * Math.max(x, y);
+  // (round 14, owner: a comparison states its typical servings on screen first, so servings within 30 % race fairly:
+  // a 250 ml glass of water vs a 330 ml can; 30 ml of espresso vs 500 ml of beer still never does)
+  return x > 0 && y > 0 && Math.abs(x - y) <= 0.3 * Math.max(x, y);
 }
 
 /** The clearest question for this pair, or null when the model does not separate them clearly. */

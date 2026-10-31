@@ -60,6 +60,24 @@ function SugarChart({ a, b, unit }: { a: Analysis; b: Analysis; unit: Profile['g
   );
 }
 
+/** Round 14 (owner): offer "Same amount" only for one item a side, no alcohol, the same kind (drink / food) and typical
+ *  servings within 2× (so the same amount is a fair, meaningful comparison). */
+export function sameAmountOffer(left: Part[], right: Part[] | null): boolean {
+  if (left.length !== 1 || !right || right.length !== 1) return false;
+  const x = left[0], y = right[0], alc = (q: Part) => (q.food.p.alcoholG ?? 0) > 0.5;
+  if (alc(x) || alc(y) || (x.food.kind === 'liquid') !== (y.food.kind === 'liquid')) return false;
+  const r = Math.max(x.grams, y.grams) / Math.max(1, Math.min(x.grams, y.grams));
+  return r <= 2 && Math.abs(x.grams - y.grams) > 0.05 * Math.max(x.grams, y.grams);
+}
+/** The right item at the left item's amount ("250 ml of cola"), or null. */
+export function sameAs(l: Part, r: Part): Part[] | null {
+  const unit = r.food.kind === 'liquid' ? 'ml' : 'g';
+  // (the left side's own amount as it says it, "250 ml", else its grams)
+  const said = (unit === 'ml' ? /(\d+(?:\.\d+)?)\s*ml\b/ : /(\d+(?:\.\d+)?)\s*g\b/).exec(l.amountLabel)?.[1];
+  const ps = parseMeal(`${said ?? Math.round(l.grams)} ${unit} of ${r.food.name.replace(/\s*\([^)]*\)/g, '')}`);
+  return ps.length === 1 && ps[0].food.id === r.food.id ? ps : null;
+}
+
 export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, platform, setPlatform, onRight, overMin = 0 }: {
   current: Part[]; profile: Profile; initial?: Part[]; onClose: () => void; onVideo?: (a: Analysis, b: Analysis) => void; short?: boolean; setShort?: (v: boolean) => void;
   /** round 11: the platform (it picks the cut), as in the share dialog */ platform?: Platform; setPlatform?: (p: Platform) => void;
@@ -72,7 +90,13 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
   const [right, setRight] = useState<Part[] | null>(initial?.length ? initial : null); // an unknown partner = none yet
   useEffect(() => { onRight?.(right); }, [right]); // eslint-disable-line react-hooks/exhaustive-deps
   const a = useMemo(() => analyze(left, profile, left === current ? overMin : 0), [left, profile, current, overMin]);
-  const b = useMemo(() => (right?.length ? analyze(right, profile) : null), [right, profile]);
+  // round 14 (owner): "Same amount" where it makes sense: one item a side, both without alcohol, the same kind (two
+  // drinks, or two foods), and typical servings within 2× of each other (cola vs juice yes; espresso vs cola, wine vs
+  // beer no). The right side then gets the left side's amount; the video says "Same amount: 250 ml each."
+  const [same, setSame] = useState(false);
+  const offerSame = sameAmountOffer(left, right);
+  const rightUsed = useMemo(() => (same && offerSame && right ? sameAs(left[0], right[0]) ?? right : right), [same, offerSame, left, right]);
+  const b = useMemo(() => (rightUsed?.length ? analyze(rightUsed, profile) : null), [rightUsed, profile]);
   const pick = ([l, r]: [string, string]) => { const pl = parseMeal(l), pr = parseMeal(r); if (pl.length) setLeft(pl); if (pr.length) setRight(pr); };
   return (
     <div className="cmpfull" role="dialog" aria-modal="true" aria-label="Compare two foods" ref={box}>
@@ -92,6 +116,9 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
             {setPlatform ? <span className="lenpick platpick">For: {PLATFORMS.filter((p) => p !== 'facebook').map((p) => <button key={p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>{PLATFORM_LABEL[p]} · {PLATFORM_LENGTH[p]}</button>)}</span>
             : setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1&nbsp;min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30&nbsp;s</button></span>}
             <button className="primary" onClick={() => onVideo(a, b)}><span aria-hidden="true">🎬 </span>Make this a Reel (9:16)</button></>}</div>
+          {offerSame && <div className="lenpick" role="group" aria-label="Amounts">Amounts:
+            <button aria-pressed={!same} onClick={() => setSame(false)}>A typical serving each</button>
+            <button aria-pressed={same} onClick={() => setSame(true)}>Same amount</button></div>}
           <div className="cmpverdict">{verdictOf(a, b, profile.glucoseUnit)}</div>
           <SugarChart a={a} b={b} unit={profile.glucoseUnit} />
           <div className="cmpcols"><Column a={a} k={0} unit={profile.glucoseUnit} /><Column a={b} k={1} unit={profile.glucoseUnit} /></div>

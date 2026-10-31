@@ -5,7 +5,7 @@ import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { beatLines, eventMin, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
-import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
+import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
 import { mainGauge, whereGauge, type BuiltLike } from './video-body';
 import { worstMoment } from './status';
 import { analyze, verdictOf, type Analysis } from './analyze';
@@ -67,13 +67,47 @@ export const SURPRISE: [RegExp, string, string][] = [
   [/\boat milk\b/i, 'glass of milk', 'cow’s milk'], [/\brice milk\b/i, 'glass of milk', 'cow’s milk'],
   [/\borange juice\b/i, '1 orange', 'a whole orange'], [/\bapple juice\b/i, '1 apple', 'a whole apple'],
 ];
-export function surpriseOf(label: string, sugarPeak: number | null, profile: Profile): { than: string } | undefined {
+export function surpriseOf(label: string, sugarPeak: number | null, profile: Profile): { than: string; ratio: number } | undefined {
   const hit = SURPRISE.find(([re]) => re.test(label));
   if (!hit || sugarPeak === null) return undefined;
   const parts = parseMeal(hit[1]); if (!parts.length) return undefined;
   const ref = analyze(parts, profile);
   if (ref.sugarPeak === null) return undefined;
-  return sugarPeak - ref.sugarPeak >= 0.5 && sugarPeak >= 1.3 * Math.max(0.01, ref.sugarPeak) ? { than: hit[2] } : undefined;
+  return sugarPeak - ref.sugarPeak >= 0.5 && sugarPeak >= 1.3 * Math.max(0.01, ref.sugarPeak) ? { than: hit[2], ratio: sugarPeak / Math.max(0.01, ref.sugarPeak) } : undefined;
+}
+
+/** Round 14 (critic DC-1: decaf had no story, two 10 s stretches without a word): decaf's own caffeine, from the
+ *  model, against the same serving of the regular drink, and the minute its (small) caffeine level peaks. */
+export function decafOf(label: string, b: { caffeine: { doseMg: number; body: Float64Array } }, profile: Profile): { mg: number; regularMg: number; min: number } | undefined {
+  if (!/\bdecaf/i.test(label) || !(b.caffeine.doseMg > 0)) return undefined;
+  const parts = parseMeal(label.replace(/\bdecaf(?:feinated)?\s*/i, '')); if (!parts.length) return undefined;
+  const reg = analyze(parts, profile).built.caffeine.doseMg;
+  if (!(reg > 10 * b.caffeine.doseMg)) return undefined;
+  let pk = 1; for (let m = 1; m <= Math.min(1440, b.caffeine.body.length - 1); m++) if (b.caffeine.body[m] > b.caffeine.body[pk]) pk = m;
+  return { mg: b.caffeine.doseMg, regularMg: reg, min: Math.max(5, Math.min(240, pk)) };
+}
+
+/** Round 14 (critic: every hook question is answered on screen): the hook's own moment (decaf's caffeine) joins the
+ *  story, and its answer card is said first at the payoff moment, which is then never left out. */
+export function applyHook(stops: StopIn[], hook: { payoff?: string; payoffMin?: number; answer?: string; lead?: string; extra?: { min: number; title: string; lines: string[] } }): StopIn[] {
+  let out = stops.map((s) => ({ ...s, lines: s.lines ? [...s.lines] : undefined }));
+  // the hook's number is said right after the name, on the first moment
+  const s0 = out[0];
+  if (hook.lead && s0) { const ls = (s0.lines ?? []).filter((l) => l !== hook.lead); s0.lines = [...ls.slice(0, 1), hook.lead, ...ls.slice(1)]; }
+  if (hook.extra) {
+    const near = out.find((s) => Math.abs(s.min - hook.extra!.min) <= 5 && s.min > 0);
+    if (near) near.lines = [...hook.extra.lines, ...(near.lines ?? []).filter((l) => !hook.extra!.lines.includes(l))];
+    else out = [...out, { min: hook.extra.min, title: hook.extra.title, text: hook.extra.lines.join(' '), lines: [...hook.extra.lines], keep: true }].sort((x, y) => x.min - y.min);
+  }
+  const at = payoffMinOf(out, hook);
+  const st = at === undefined ? undefined : out.find((s) => s.min === at) ?? out.find((s) => Math.abs(s.min - at) <= 5 && s.min > 0);
+  if (st) { st.keep = true; if (hook.answer) st.lines = [hook.answer, ...(st.lines ?? []).filter((l) => l !== hook.answer)]; }
+  return out;
+}
+/** The minute of the hook's payoff: its own moment, or the chapter it names. */
+export function payoffMinOf(stops: { min: number; title: string }[], hook: { payoff?: string; payoffMin?: number }): number | undefined {
+  if (hook.payoffMin !== undefined) return hook.payoffMin;
+  return hook.payoff ? stops.find((s) => s.title === hook.payoff)?.min : undefined;
 }
 
 /** Round 13 (critic P0-2: salmon kept 3 cards for 40 s): a story-moment climax (no model peak) is not pulled to the
@@ -118,11 +152,15 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx): S
   // (round 9: a card is said once per video; "Fat takes a slower route, via the lymph." ended one moment and began
   // the next, 9 s in a row, for every fatty food)
   const seen = new Set<string>();
+  // (round 14: the swallow, "Down the food pipe", adds its card to the first moment, used when there is room)
+  const pipe = story.chapters.find((c) => c.min > 0 && c.min < 1);
+  const pipeLines = pipe ? beatLines({ min: pipe.min, title: pipe.title, text: chapterText(pipe as never, pipe.min) }, ctx) : [];
   const base: StopIn[] = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => {
     const text = chapterText(c as never, c.min), all = beatLines({ min: c.min, title: c.title, text }, ctx);
     const fresh = all.filter((l) => !seen.has(l));
     for (const l of all) seen.add(l);
-    return { min: c.min, title: c.title, text, lines: fresh.length ? fresh : all };
+    const ls = fresh.length ? fresh : all;
+    return { min: c.min, title: c.title, text, lines: c.min === 0 ? [...ls, ...pipeLines.filter((l) => !ls.includes(l))] : ls };
   });
   // round 12 (critic P0-3): a card that speaks of a later minute ("Half has moved on after 116 minutes.") is said when
   // the clock gets there, as its own moment under the same title (never while the clock still stands at +0:01)
@@ -143,6 +181,13 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx): S
 export interface ComparePlan { plan: Plan; guess: Guess | null; race: { a: Float32Array; b: Float32Array } | null; fx: PlanFx; verdict: string }
 /** The comparison video's plan (2026-10-23 split screen; rounds 4-8): the guess, each side's cards per moment, the
  *  moments that say something new, and the plan for them. */
+/** Round 14 (owner decision): a comparison says its amounts early: "A typical serving each: 150 ml vs 500 ml." (or
+ *  "Same amount: 330 ml each."), from each side's serving text ("1 glass · 250 ml" → "250 ml"). */
+export function servingsCard(sa: string, sb: string): string {
+  const amt = (s: string) => /(\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl))\b/i.exec(s.split('·').pop() ?? s)?.[1] ?? s.trim();
+  const x = amt(sa), y = amt(sb);
+  return x === y ? `Same amount: ${x} each.` : `A typical serving each: ${x} vs ${y}.`;
+}
 /** Round 13: the comparison's answer is revealed no earlier than this share of the video. */
 export const REVEAL_FROM = 0.55;
 export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: boolean | Cut): ComparePlan {
@@ -208,11 +253,20 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // nothing a left-out moment would have said is lost; twice is enough)
   const build = (mins0: number[]) => {
     const sa = sideCards(a, mins0), sb = sideCards(b, mins0);
+    // round 14 (owner): the amounts, said once and early: a typical serving each (or the same amount)
+    if (sa[0] && sb[0]) { const card = servingsCard(a.serving, b.serving); sa[0].lines = [card, ...sa[0].lines]; sb[0].lines = [card, ...sb[0].lines]; }
     const keepAt = mins0.map((at, i) => i === 0 || at === hit || sa[i].isNew || sb[i].isNew);
     const mins = mins0.filter((_m, i) => keepAt[i]);
     const pick = <T,>(xs: T[]) => xs.filter((_x, i) => keepAt[i]);
     const SA = pick(sa), SB = pick(sb);
-    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at) })),
+    // (round 14, critic C13-1: the chip named the other side's chapter): the side with the news, in plain words
+    const human = (t: string) => TEASE_HUMAN.find(([re]) => re.test(t))?.[1] ?? t.charAt(0).toLowerCase() + t.slice(1);
+    const chipOf = (i: number) => {
+      const own = (x: Analysis) => peaksOf(x).includes(mins[i]);
+      const k = own(b) && !own(a) ? 1 : own(a) ? 0 : SB[i].isNew && !SA[i].isNew ? 1 : 0;
+      const x = k ? b : a; return `${cmpName(x.label)}: ${human(chap(x, mins[i]).title)}`; // (the moment's own chapter, what that side is at)
+    };
+    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at), chip: chipOf(i) })),
       cut, uFromMinutes, minutesFromU, fx);
   };
   let used = cmpMins0, plan = build(used);

@@ -30,9 +30,9 @@ describe('verdictOf', () => {
 
   it('two alcoholic drinks: the fact (less alcohol), never "the lighter choice" nor a trophy (round 13, critic P1-3)', () => {
     const p = P(16), beer = an('beer', p), wine = an('glass of red wine', p);
-    expect(verdictOf(beer, wine)).toBe('Less alcohol: Red wine (16 g vs 20 g).');
-    expect(verdictOf(beer, an('beer', p))).toBe('It’s close: Beer and Beer bring about the same alcohol (about 20 g).');
-    expect(verdictOf(beer, an('2 beers', p))).toBe('Less alcohol: Beer (20 g vs 40 g).');
+    expect(verdictOf(beer, wine)).toBe('Less alcohol: Red wine (16 g vs 20 g). Both: don’t drive.');
+    expect(verdictOf(beer, an('beer', p))).toBe('It’s close: Beer and Beer bring about the same alcohol (about 20 g). Both: don’t drive.');
+    expect(verdictOf(beer, an('2 beers', p))).toBe('Less alcohol: Beer (20 g vs 40 g). Both: don’t drive.');
   });
 
   it('everyday alcohol-free pairs keep their plain answers', () => {

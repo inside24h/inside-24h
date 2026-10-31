@@ -652,3 +652,45 @@ vitest 835/835 (1 skip). tsc je čist, oba builda prolaze.
 - oat milk (Shorts).
 
 Svi bez grešaka i crnih frameova. Glasnoća −14,1 do −14,3 LUFS, TP ≤ −1,8 dBTP.
+
+---
+
+# Runda 14 (2026-10-30/31): `video-critique-2026-10-30-c.md` i odluke vlasnika
+
+Backup: `C:\claudework\inside-24h-backups\20261030-201915-video14\`. Git HEAD prije runde je 7b34dd4.
+
+## Napravljeno
+- **Nikad > 4 s bez kartice** (`WORDLESS_MAX_S`), za sve stavke, varijante i compare parove (sweep test). Pravila koja to drže:
+  - glide traje najviše 3,6 s;
+  - rijetke priče (< 7 trenutaka) zadržavaju i tihe trenutke ("Building blocks" i karticu gutljaja);
+  - rano pravilo vrhunca ne izbacuje njihove trenutke;
+  - Shorts glide je 0,75× brži.
+- **Decaf (P0):**
+  - Hook je "Decaf filter coffee: is there still caffeine in it?" / "Is decaf really caffeine-free?".
+  - Odgovor ima vlastiti trenutak iz modela: "Yes, a little: about 3 mg." + "A regular cup has about 100 mg." (`decafOf`, regularna kava iste porcije).
+- **Svaki hook ima broj ili pitanje, svako pitanje ima odgovor u videu, a svaki broj iz hooka je na kartici** (sweep A i B za 178 + 83 stavki). Pritom:
+  - Hook nosi `answer` (kartica na trenutku isplate, uvijek zadržana) i `lead` (kartica s brojem odmah iza imena).
+  - Oat milk: "2× the blood sugar rise of cow's milk." + kartica "About 2× the rise of cow's milk."
+  - Jedno pivo ili vino: "How long does it stay in your blood?" s odgovorom "The alcohol is gone after about 1–4 h." B ima grame alkohola.
+  - Crepes: "4 teaspoons of sugar."
+  - Proteinska hrana ima karticu "39 g of protein.".
+  - Facts se čitaju iz izvornog teksta (prije su se dugi zagradni dijelovi rezali).
+- **Compare:**
+  - **Prvi trenutak navodi porcije:** "A typical serving each: 150 ml vs 500 ml." (ili "Same amount: 250 ml each."), kao jedna kartica preko obje kolone.
+  - **NEXT chip** imenuje stranu i njen trenutak ljudskim riječima ("Beer: when it is finally gone"). Test provjerava da strana taj trenutak stvarno ima.
+  - **"Faster out ≠ better"** se prikazuje samo nakon utrke van.
+  - **Alkoholna presuda** uvijek završava s "Both: don't drive.".
+  - **Cola vs voda (Shorts):** igra "Guess: which leaves your stomach first?". Porcije u granicama ±30 % su fer jer su navedene na ekranu.
+  - **Ista kartica s obje strane** čita se jednom; kratki compare s malo trenutaka pokazuje dvije kartice po trenutku.
+- **"Same amount"** u Compareu se nudi samo za jednu stavku po strani, bez alkohola, iste vrste (piće/hrana) i s tipičnim porcijama unutar 2×: cola vs juice da; vino vs pivo, espresso vs cola ne (`sameAmountOffer`, test).
+- **End card:** jedan istaknuti broj ("Blood sugar up · 20 min in" + raspon), isti kao mjerač na vrhuncu.
+- **Shorts traju 24–31,5 s.** Shorts sada mora stati i vrhunac i odgovor na hook.
+
+## Nije napravljeno
+- PZ-1: veličina pizze ostaje podatak buildera.
+- G-1: donji dio kadra (vlasnik je ranije odlučio).
+
+## Provjera
+- tsc je čist, vitest 842/842 (1 skip). Oba builda prolaze.
+- Uzorci u `C:\claudework\video-samples\2026-10-30-v14\` (9): decaf, salmon, beer ×1, crepes (TT); oat milk, wine hook B, cola vs water (Shorts); espresso vs beer (TT); wine vs beer (Reels).
+- Svi bez grešaka i crnih frameova. Glasnoća −14,2 do −14,5 LUFS, TP ≤ −1,8 dBTP.

@@ -28,8 +28,8 @@ describe('the comparison guess', () => {
       expect(g.recap).toContain([A, B][g.winner].name);
       const loser = 1 - g.winner;
       if (g.kind === 'stomach') {
-        // round 5: a fair race (the same amount, ±10 %)
-        expect(Math.abs(A.amount! - B.amount!)).toBeLessThanOrEqual(0.1 * Math.max(A.amount!, B.amount!));
+        // round 5: a fair race (about the same amount); round 14 (owner): ±30 %, the typical servings are said on screen first
+        expect(Math.abs(A.amount! - B.amount!)).toBeLessThanOrEqual(0.3 * Math.max(A.amount!, B.amount!));
         const t = [outAt(A.stomach), outAt(B.stomach)];
         expect(t[g.winner]).toBe(g.decidedMin);
         expect(t[g.winner]!).toBeLessThan(t[loser]!);
@@ -59,9 +59,9 @@ describe('the comparison guess', () => {
       expect(g?.kind ?? 'none', `${x}/${y} ${h}`).not.toBe('blood');
     }
   });
-  it('round 5: cola vs a glass (250 ml) is not a stomach race; cola vs 330 ml of water is, and water is out first', () => {
+  it('round 14 (owner: typical servings, said on screen): cola vs a glass (250 ml) is a stomach race too; so is cola vs 330 ml of water, and water is out first', () => {
     const c = analyze(parseMeal('cola'), DEFAULT_PROFILE);
-    expect(chooseGuess(guessSideOf(c), guessSideOf(analyze(parseMeal('glass of water'), DEFAULT_PROFILE)))?.kind).not.toBe('stomach');
+    expect(chooseGuess(guessSideOf(c), guessSideOf(analyze(parseMeal('glass of water'), DEFAULT_PROFILE)))?.kind).toBe('stomach');
     const g = chooseGuess(guessSideOf(c, 'Cola'), guessSideOf(analyze(parseMeal('330 ml of water'), DEFAULT_PROFILE), 'Water'))!;
     expect(g.kind).toBe('stomach'); expect(g.answer1).toBe('First out: Water.');
   });

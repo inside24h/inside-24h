@@ -186,10 +186,15 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
   const title = ch.title.trim();
   if (/^First (?:sip|bite)/i.test(title)) {
     // what it is, then its numbers (all fixed for the whole day)
-    const sugar = /(\d+) g (?:of )?sugar(?:[^.]*?about (\d+) teaspoons?)?/.exec(text), caf = /(\d+) mg of caffeine/.exec(text);
-    const alc = /(\d+) g (?:of )?alcohol/.exec(text), kcal = /(\d+) kcal/.exec(text);
+    // (round 14: from the chapter's own words, before long brackets are cut: "(27 g sugar, about 7 teaspoons)")
+    const raw = ch.text;
+    const sugar = /(\d+) g (?:of )?sugar(?:[^.]*?about (\d+) teaspoons?)?/.exec(raw), caf = /(\d+) mg of caffeine/.exec(raw);
+    const alc = /(\d+) g (?:of )?alcohol/.exec(raw), kcal = /(\d+) kcal/.exec(raw);
+    const prot = /(\d+) g protein/.exec(raw), carb = /(\d+) g carbohydrate/.exec(raw);
     const facts = [sugar && (sugar[2] ? `${sugar[1]} g of sugar: about ${sugar[2]} teaspoons.` : `${sugar[1]} g of sugar.`), caf && `${caf[1]} mg of caffeine.`,
-      alc && `${alc[1]} g of alcohol.`, kcal && !sugar && `${kcal[1]} kcal in total.`].filter((x): x is string => !!x);
+      alc && `${alc[1]} g of alcohol.`, kcal && !sugar && `${kcal[1]} kcal in total.`,
+      // (round 14: a protein-led food says its protein, the number its hook leads with)
+      prot && Number(prot[1]) >= 20 && Number(carb?.[1] ?? 0) < 15 && `${prot[1]} g of protein.`].filter((x): x is string => !!x);
     // (with pacing the name loses its "over 2 h": the next card explains it)
     if (ctx.factsFirst && facts.length) push(facts);
     if (ctx.name && (facts.length || ctx.pace)) push([end(cap(ctx.pace ? ctx.name.replace(/ over .+$/, '') : ctx.name))]);
