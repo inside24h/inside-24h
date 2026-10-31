@@ -4,7 +4,7 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
-export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG';
+export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG' | 'kcal';
 export interface GuessSide {
   name: string;
   alcohol?: boolean;
@@ -15,6 +15,7 @@ export interface GuessSide {
   /** blood sugar change per minute (mmol/L), when the food has a measured curve */ sugar?: ArrayLike<number> | null;
   /** round 13: grams of alcohol */ alcoholG?: number;
   /** round 15: grams of sugar */ sugarG?: number;
+  /** round 16: kcal */ kcal?: number;
 }
 export interface Guess {
   kind: GuessKind; question: string;
@@ -132,18 +133,30 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
       answer1: `More alcohol: ${the(sides[w].name)}.`, answer2: `${Math.round(w ? gb : ga)} g vs ${Math.round(w ? ga : gb)} g of alcohol.`,
       recap: `Answer: ${sides[w].name} brought more alcohol.`, progress: [rel(a.bac), rel(b.bac)] };
   }
-  return null;
+  // 5) round 16 (critic A-1: apple juice vs cola asked nothing): every comparison asks. When nothing above is clearly
+  // apart, the plainest honest question, and a near tie is said as one: "Almost the same." / "25 g vs 27 g of sugar."
+  const flat = Float32Array.from({ length: N }, () => 0);
+  const later = (s: ArrayLike<number> | null | undefined) => { if (!s) return 30; let k = 0; for (let m = 1; m < Math.min(N, s.length); m++) if (s[m] > s[k]) k = m; return k; };
+  const ask = (kind: GuessKind, question: string, x: number, y: number, unit: string, more: string, tieGap: number, at: number): Guess => {
+    const w = (x >= y ? 0 : 1) as 0 | 1, tie = Math.abs(x - y) < Math.max(tieGap, 0.1 * Math.max(x, y));
+    return { kind, question, winner: w, decidedMin: at,
+      answer1: tie ? 'Almost the same.' : `${more}: ${the(sides[w].name)}.`, answer2: `${Math.round(x)} ${unit} vs ${Math.round(y)} ${unit}.`,
+      recap: tie ? `Answer: ${sides[0].name} and ${sides[1].name}, almost the same.` : `Answer: ${sides[w].name}, ${more.toLowerCase()}.`, progress: [flat, flat] };
+  };
+  if (a.alcohol && b.alcohol) return ask('alcohol', 'Guess: which brings more alcohol?', ga, gb, 'g of alcohol', 'More alcohol', 2, Math.max(later(a.bac), later(b.bac)));
+  if (!anyAlcohol && sa >= 1 && sb >= 1) return ask('sugarG', 'Guess: which has more sugar?', sa, sb, 'g of sugar', 'More sugar', 3, Math.max(later(a.sugar), later(b.sugar)));
+  return ask('kcal', 'Guess: which has more calories?', a.kcal ?? 0, b.kcal ?? 0, 'kcal', 'More calories', 10, 60);
 }
 
 /** A side of the race from the app's analysis of one food or drink (Compare / analyze.ts). */
-export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; macros?: { sugars: number }; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
+export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; macros?: { sugars: number }; kcal?: number; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
   const r = x.built.route;
   const stomach = r ? Float32Array.from({ length: N }, (_, m) => r.segs(m).stomach?.amount ?? 0) : null;
   return {
     name: name ?? x.label, alcohol: (x.built.alcoholG ?? 0) > 1, amount: stomach ? Math.max(0, ...Array.from(stomach)) : undefined,
     stomach,
     caffeine: x.built.caffeine.doseMg >= 10 ? x.built.caffeine.body : null,
-    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0,
+    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0, kcal: x.kcal ?? 0,
     sugar: x.glucose ? Float32Array.from({ length: N }, (_, m) => (x.glucose![m] ?? 0) / 18.016) : null,
   };
 }

@@ -38,7 +38,7 @@ describe('the comparison guess', () => {
       }
       if (g.kind === 'blood') expect(g.decidedMin).toBeLessThan(1440);
       // the race bars end where the answer says: the winner's bar is full at the decided minute, the loser's not yet
-      if (g.kind !== 'sugar' && g.kind !== 'sugarG') { expect(g.progress[g.winner][g.decidedMin]).toBe(1); expect(g.progress[loser][g.decidedMin]).toBeLessThan(1); }
+      if (!['sugar', 'sugarG', 'kcal', 'alcohol'].includes(g.kind)) { expect(g.progress[g.winner][g.decidedMin]).toBe(1); expect(g.progress[loser][g.decidedMin]).toBeLessThan(1); }
       if (g.kind === 'sugarG') expect([A, B][g.winner].sugarG!).toBeGreaterThan([A, B][loser].sugarG!); // (round 15)
       expect(`${g.question} ${g.answer1} ${g.answer2} ${g.recap}`).not.toMatch(/\b(wins?|best|better|healthy)\b/i);
     });
@@ -68,12 +68,13 @@ describe('the comparison guess', () => {
   });
   it('round 5: unequal amounts never get the stomach question', () => {
     const flat = (t: number, v: number) => Float32Array.from({ length: 1441 }, (_, m) => (m < 1 ? 0 : m < t ? v : 0));
-    expect(chooseGuess({ name: 'A', stomach: flat(30, 30) }, { name: 'B', stomach: flat(90, 500) })).toBeNull();
+    expect(chooseGuess({ name: 'A', stomach: flat(30, 30) }, { name: 'B', stomach: flat(90, 500) })?.kind).not.toBe('stomach'); // (round 16: it asks something else)
     expect(chooseGuess({ name: 'A', stomach: flat(30, 330) }, { name: 'B', stomach: flat(90, 340) })?.kind).toBe('stomach');
   });
-  it('a near-tie is never asked', () => {
+  it('a near-tie is never a race; round 16: the plain question answers it honestly ("Almost the same.")', () => {
     const flat = (t: number) => Float32Array.from({ length: 1441 }, (_, m) => (m < 1 ? 0 : m < t ? 100 : 0));
-    expect(chooseGuess({ name: 'A', stomach: flat(60) }, { name: 'B', stomach: flat(66) })).toBeNull();
+    const g = chooseGuess({ name: 'A', stomach: flat(60), kcal: 100 }, { name: 'B', stomach: flat(66), kcal: 104 })!;
+    expect(g.kind).toBe('kcal'); expect(g.answer1).toBe('Almost the same.');
     expect(chooseGuess({ name: 'A', stomach: flat(30) }, { name: 'B', stomach: flat(90) })?.winner).toBe(0);
   });
   it('plain times', () => { expect(aboutTime(23)).toBe('about 25 min'); expect(aboutTime(95)).toBe('about 1½ h'); expect(aboutTime(180)).toBe('about 3 h'); });

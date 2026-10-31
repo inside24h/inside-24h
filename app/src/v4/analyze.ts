@@ -96,7 +96,11 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
   const caf = (x: Analysis) => x.built.caffeine.doseMg;
   const cafStress = (x: Analysis) => stressOf(x, 'brain') + stressOf(x, 'heart'); // only used when the other side has no alcohol
   const sugarOk = (x: Analysis, y: Analysis) => !skip && x.sugarPeak !== null && y.sugarPeak !== null;
-  const close = `It’s close: ${a.label} and ${b.label} affect your body about the same.`;
+  // (round 16, critic V-1: the same amount of each reads as its own sentence)
+  const amt = (s: string) => /(\d+(?:[.,]\d+)?\s*(?:ml|g))/i.exec(s.split('·').pop() ?? s)?.[1];
+  const sameAmt = !!amt(a.serving) && amt(a.serving) === amt(b.serving);
+  const pair = [a.label.toLowerCase(), b.label.toLowerCase()].sort(); // (in either order the same sentence)
+  const close = sameAmt ? `It’s close: the same ${amt(a.serving)} of ${pair[0]} and ${pair[1]} hits your body about the same.` : `It’s close: ${a.label} and ${b.label} affect your body about the same.`;
 
   /** why w is easier on the body than l, in words (alcohol aside) */
   const reasons = (w: Analysis, l: Analysis) => {

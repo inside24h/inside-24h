@@ -6,11 +6,12 @@ import { describe, expect, it } from 'vitest';
 import db from './food/fooddb.json';
 import { parseMeal } from './food/parse';
 import { analyze, verdictOf, type Analysis } from './analyze';
+import { hasStarch } from './food/foodProduct';
 import { sameAmountOffer, sameAs } from './Compare';
 import { DEFAULT_PROFILE, type Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { compareHookB, HOOK_NUMBER, hookB, hookFor, hookForCompare, numbersIn, seedOf } from './video-hook';
-import { ALCOHOL_LINE, BANNED, captionsFor, pluralName, DISCLAIMER, PLATFORM_CUT, PLATFORMS, SOURCES_LINE } from './video-caption';
+import { ALCOHOL_LINE, BANNED, captionsFor, foodTag, pluralName, DISCLAIMER, PLATFORM_CUT, PLATFORMS, SOURCES_LINE } from './video-caption';
 import { motifOf } from './video-audio';
 import { inText, plainNote, whereCard } from './video-body';
 import { CARD_MAX_S, CMP_REPEAT_S, TEASE_HUMAN, WORDLESS_MAX_S, FPS, LENGTH, OUTRO_S, READ, readSeconds, SURGE_CLEAR_S, teaseCard, type Cut, type Plan, type PlanFx } from './video-plan';
@@ -45,7 +46,7 @@ function singlePlanOf(x: Analysis, cut: Cut, p: Profile = P, v: 'A' | 'B' = 'A')
     alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: b.energy.total,
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p) };
   const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m) => whereCard(b, m)), hook);
+  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
   const payoff = payoffMinOf(stops, hook);
   const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hook), payoffMin: payoff, drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
@@ -664,7 +665,7 @@ describe('round 15: Shorts within 30 s, one minute for every peak, hooks name th
     for (const { id, x } of EVERY) {
       const { plan } = singlePlanOf(x, 'long'), pages = plan.pages.map((p) => p.text).join(' | ');
       const m = x.macros;
-      if (/Starch/.test(pages) && m.availCarbs - m.sugars < 2) bad.push(`${id}: a starch card with ${(m.availCarbs - m.sugars).toFixed(1)} g of starch`);
+      if (/Starch/.test(pages) && !hasStarch(m)) bad.push(`${id}: a starch card with ${(m.availCarbs - m.sugars).toFixed(1)} g of starch`);
       if (/Fiber goes on/.test(pages) && m.fiber < 2) bad.push(`${id}: a fiber card with ${m.fiber.toFixed(1)} g of fiber`);
     }
     expect(failed(bad)).toEqual([]);
@@ -680,5 +681,60 @@ describe('round 15: Shorts within 30 s, one minute for every peak, hooks name th
     const a = run('cola')!, b = run('330 ml of orange juice')!, cp = comparePlan(a, b, P, 'long');
     expect(cp.guess?.question).toBe('Guess: which has more sugar?');
     for (const f of cp.plan.frames) if (f.next) expect(f.next.title.length).toBeLessThanOrEqual(CHIP_MAX + 16);
+  });
+});
+
+describe('round 16: starch only with starch, every comparison asks, caffeine shown with its mg, specific hashtags', () => {
+  type V = { v: string; name: string };
+  const VARIANTS = (db as unknown as { id: string; variants?: V[] }[]).flatMap((f) => (f.variants ?? []).map((v) => ({ id: `${f.id}.${v.v}`, x: run(v.name) })));
+  const EVERY = [...ALL.map(({ f, x }) => ({ id: f.id, x })), ...VARIANTS].filter((y): y is { id: string; x: Analysis } => !!y.x);
+  const PAIRS: [string, string][] = [['cola', 'glass of water'], ['cola', '330 ml of orange juice'], ['apple juice', 'cola'], ['espresso', 'beer'], ['red wine', 'beer'],
+    ['hamburger', 'cola'], ['orange juice', 'cola'], ['water', 'sparkling water'], ['pizza', 'kebab'], ['espresso', 'energy drink'], ['oat milk', 'glass of milk']];
+  it('no "Starch" card unless the food has real starch (singles and both sides of comparisons)', () => {
+    const bad: string[] = [];
+    for (const { id, x } of EVERY) {
+      const pages = singlePlanOf(x, 'long').plan.pages.map((p) => p.text).join(' | ');
+      if (/Starch/.test(pages) && !hasStarch(x.macros)) bad.push(`${id}: a starch card`);
+    }
+    for (const [qa, qb] of PAIRS) {
+      const a = run(qa)!, b = run(qb)!, cp = comparePlan(a, b, P, 'long');
+      if (cp.plan.pages.some((p) => /Starch/.test(p.text)) && !hasStarch(a.macros)) bad.push(`${qa} (vs ${qb}): a starch card`);
+      if (cp.plan.pages.some((p) => /Starch/.test(p.textB ?? '')) && !hasStarch(b.macros)) bad.push(`${qb} (vs ${qa}): a starch card`);
+    }
+    expect(failed(bad)).toEqual([]);
+  });
+  it('every comparison, every cut, asks a guess and answers it (a near tie as "Almost the same.")', () => {
+    const bad: string[] = [];
+    for (const [qa, qb] of PAIRS) for (const cut of CUTS) {
+      const cp = comparePlan(run(qa)!, run(qb)!, P, cut);
+      if (!cp.guess) { bad.push(`${qa} vs ${qb} ${cut}: no guess`); continue; }
+      if (!cp.plan.cues.some((c) => c.kind === 'peak')) bad.push(`${qa} vs ${qb} ${cut}: no answer`);
+      if (/^Almost the same/.test(cp.guess.answer1) && !/\d+ .* vs \d+ /.test(cp.guess.answer2)) bad.push(`${qa} vs ${qb}: a tie without its numbers`);
+    }
+    expect(failed(bad)).toEqual([]);
+  });
+  it('20 mg of caffeine or more: a card with its mg, and a caffeine moment whose gauge shows caffeine', () => {
+    const bad: string[] = [];
+    for (const { id, x } of EVERY) {
+      if (!(x.built.caffeine.doseMg >= 20) || (x.built.alcoholG ?? 0) > 1) continue;
+      for (const cut of CUTS) {
+        const { plan } = singlePlanOf(x, cut);
+        if (!plan.pages.some((p) => /\d+ mg of caffeine/.test(p.text))) bad.push(`${id} ${cut}: caffeine never said`);
+        const cm = x.built.story.chapters.find((c) => c.min > 0 && /caffeine/i.test(c.title));
+        if (cm && cut !== 'short' && !plan.pages.some((p) => Math.abs(p.stop - cm.min) <= 5)) bad.push(`${id} ${cut}: no caffeine moment`);
+        if (cm && !gaugesAt(x.built, cm.min, 'mmol/L', x.glucose !== undefined, true).some((g) => /caffeine/.test(g.big))) bad.push(`${id}: no caffeine gauge at +${cm.min}`);
+      }
+    }
+    expect(failed(bad)).toEqual([]);
+  });
+  it('hashtags are specific: a two-word food is never only #drink, #juice, #tea …', () => {
+    const bad: string[] = [];
+    const GENERIC = new Set(['drink', 'drinks', 'food', 'juice', 'milk', 'tea', 'water', 'coffee', 'wine', 'roll', 'cake', 'bread', 'potato', 'cheese', 'yogurt', 'shake']);
+    for (const { id, x } of EVERY) {
+      const name = shortName(x.label), tag = foodTag(name);
+      const words = name.replace(/\s+over\s+.*$/i, '').replace(/\s+with\s+.*$/i, '').toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 3 && !['one', 'can', 'cup', 'glass', 'with', 'and', 'the', 'whole', 'half', 'small', 'large', 'medium', 'bottle', 'fillet', 'inch', 'slice', 'portion', 'toppings', 'plate', 'bowl', 'piece', 'pieces', 'side'].includes(w));
+      if (GENERIC.has(tag) && words.length >= 2) bad.push(`${id}: #${tag} for "${name}"`);
+    }
+    expect(failed(bad)).toEqual([]);
   });
 });

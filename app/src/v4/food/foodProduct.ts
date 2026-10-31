@@ -174,6 +174,9 @@ export function makeFoodProduct(parts: Part[], id: string, overMin = 0): Product
   return def;
 }
 
+/** Round 16: the food has real starch: at least 2 g and at least 30 % of its available carbohydrate (juice, cola: no). */
+export const hasStarch = (m: { availCarbs: number; sugars: number }) => m.availCarbs - m.sugars >= Math.max(2, 0.3 * m.availCarbs);
+
 function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string, isDrink: boolean, parts: Part[], once?: Float64Array): Story {
   // PACING: rounds spread over the evening (s.pace); `once` = blood alcohol had all at once, for the comparison
   const pc = s.pace;
@@ -231,7 +234,8 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
       text: (() => {
         // fat goes by lymph, not straight to the liver (model review 2026-10-20: "these pass into your blood" said all of it did)
         // (round 15, critic J-2: "Starch …" for orange juice): starch only when there is some; else the sugar itself
-        const steps = [m.availCarbs >= 2 && (m.availCarbs - m.sugars >= 2 ? 'starch and sugar become glucose' : 'the sugar passes into your blood'), m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
+        // (round 16, critic J-2: orange juice still said "Starch"): starch only when it is a real share of the carbohydrate
+        const steps = [m.availCarbs >= 2 && (hasStarch(m) ? 'starch and sugar become glucose' : 'the sugar passes into your blood'), m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
         const alcNote = meal.alcoholG > 1 ? ' Some of the alcohol was already absorbed through your stomach wall.' : '';
         return steps.length

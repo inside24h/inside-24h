@@ -19,7 +19,8 @@ export const CMP_SHORT = [0, 20, 90, 240, 720, 1440]; // 2026-10-24: the planner
  *  cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name. */
 /** Round 9: on screen in plain American spelling ("Ćevapi" → "Cevapi"). */
 export const plainLatin = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-export const shortName = (n: string) => { const s = plainLatin(n).replace(/\s*\([^)]*\)/g, ''); return s.split(/\s+/).length > 5 && / with /.test(s) ? s.slice(0, s.indexOf(' with ')) : s; };
+// (round 16, critic P2-PZ: "A whole 14-inch pizza (1154 g)" read heavy): a pizza with toppings says so
+export const shortName = (n: string) => { const s = plainLatin(n).replace(/\s*\([^)]*\)/g, ''); return s.split(/\s+/).length > 5 && / with /.test(s) ? `${s.slice(0, s.indexOf(' with '))}${/\bpizza\b/i.test(s) ? ' with toppings' : ''}` : s; };
 /** The comparison's name for a side (round 5): the amount moves to its own line ("330 ml of water" → "Water"). */
 export const cmpName = (label: string) => { const s = plainLatin(label).replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, ''); return s.charAt(0).toUpperCase() + s.slice(1); };
 
@@ -89,11 +90,20 @@ export function decafOf(label: string, b: { caffeine: { doseMg: number; body: Fl
 
 /** Round 14 (critic: every hook question is answered on screen): the hook's own moment (decaf's caffeine) joins the
  *  story, and its answer card is said first at the payoff moment, which is then never left out. */
-export function applyHook(stops: StopIn[], hook: { payoff?: string; payoffMin?: number; answer?: string; lead?: string; extra?: { min: number; title: string; lines: string[] } }): StopIn[] {
+export function applyHook(stops: StopIn[], hook: { payoff?: string; payoffMin?: number; answer?: string; lead?: string; extra?: { min: number; title: string; lines: string[] } }, caffeineMg = 0): StopIn[] {
   let out = stops.map((s) => ({ ...s, lines: s.lines ? [...s.lines] : undefined }));
-  // the hook's number is said right after the name, on the first moment
+  // the hook's number is said right after the name, on the first moment; round 16 (critic E-1: an energy drink never
+  // said its 80 mg): 20 mg of caffeine or more is said there too, in the same card when it fits ("…, 80 mg of caffeine.")
   const s0 = out[0];
-  if (hook.lead && s0) { const ls = (s0.lines ?? []).filter((l) => l !== hook.lead); s0.lines = [...ls.slice(0, 1), hook.lead, ...ls.slice(1)]; }
+  const had = caffeineMg >= 20 && s0 ? (s0.lines ?? []).find((l) => /\d+ mg of caffeine/.test(l)) : undefined; // (said already: kept, and shown early)
+  const caf = caffeineMg >= 20 && s0 && !had ? `${Math.round(caffeineMg)} mg of caffeine` : null;
+  let lead = hook.lead;
+  if (caf && lead) { const j = `${lead.replace(/\.$/, '').replace(/^(\d+) g of sugar: about (\d+) teaspoons$/, '$2 teaspoons of sugar')}, ${caf}.`; if (j.split(/\s+/).length <= 8) lead = j; }
+  if (s0) {
+    const ls = (s0.lines ?? []).filter((l) => l !== hook.lead && l !== lead && l !== had);
+    const add = [lead, had, caf && !(lead ?? '').includes(caf) ? `${caf.charAt(0).toUpperCase()}${caf.slice(1)}.` : null].filter((x): x is string => !!x);
+    if (add.length) { s0.lines = [...ls.slice(0, 1), ...add, ...ls.slice(1)]; s0.must = Math.min(s0.lines.length, 1 + add.length); }
+  }
   if (hook.extra) {
     const near = out.find((s) => Math.abs(s.min - hook.extra!.min) <= 5 && s.min > 0);
     if (near) near.lines = [...hook.extra.lines, ...(near.lines ?? []).filter((l) => !hook.extra!.lines.includes(l))];
@@ -143,8 +153,13 @@ export function surgeOf(b: PeakIn, sugarKnown: boolean): { min: number; max: num
 }
 
 /** Where the drink is + the number that matters, at minute m (where is left out when it says the same). */
-export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKnown: boolean): PinnedGauge[] {
+export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKnown: boolean, caffeineMoment = false): PinnedGauge[] {
   const main = mainGauge(b, m, uFromMinutes(Math.min(1440, m)), unit, sugarKnown);
+  // (round 16, critic E-1): at a caffeine moment of a sugary caffeinated drink the caffeine shows next to the sugar
+  if (caffeineMoment && main && !/caffeine/.test(main.big) && b.caffeine.doseMg >= 20) {
+    const caf = mainGauge({ ...b, bac: undefined, effects: {} }, m, uFromMinutes(Math.min(1440, m)), unit, false);
+    if (caf && /caffeine/.test(caf.big)) return [{ ...caf, curve: undefined }, main];
+  }
   // one number per thing (round 5, critic: "4.8 g sugar · Blood" next to "Blood sugar up"): no sugar where-gauge
   // while the blood sugar gauge is up
   // (round 7: never a "g sugar" gauge in a video whose blood sugar curve is known, even in a dip or between peaks)
@@ -189,6 +204,9 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
       else out.push({ min: at, title: s.title, text: l, lines: [l] });
     }
   }
+  // (round 16, critic E-1: an energy drink's caffeine was never shown): the caffeine moment is never left out
+  const cafStop = out.find((s) => s.min > 0 && /caffeine/i.test(s.title));
+  if (cafStop) cafStop.keep = true;
   return out.sort((a, b) => a.min - b.min);
 }
 
@@ -228,7 +246,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // round 10: the bloodstream surge on the first side that has one (the same order as the peak: no alcohol first)
   const sg = ([...nonAlc, a, b].map((x) => { const s = surgeOf(x.built, x.glucose !== undefined); return s && { ...s, side: (x === a ? 0 : 1) as 0 | 1 }; })).find((x) => !!x);
   const fx: PlanFx = { calmDay: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
-    lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' && gq.kind !== 'alcohol' && gq.kind !== 'sugarG' ? race ?? undefined : undefined,
+    lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' && gq.kind !== 'alcohol' && gq.kind !== 'sugarG' && gq.kind !== 'kcal' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)
   // round 12 (critic P0-2: both sides said "peaks now" at +1:30, the singles peak at +0:43 / +0:48): each side's own
@@ -296,7 +314,8 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   if (gq && hit !== undefined) {
     const tOf = (m: number) => plan.frames.find((f) => f.stop === m && (f.beat === 'hold' || (f.beat === 'end' && f.phase === 'main')))?.t;
     const pkT = plan.cues.find((c) => c.kind === 'peak')?.t;
-    if (pkT !== undefined && pkT < REVEAL_FROM * plan.seconds) {
+    // (round 16: also when the planner left the answer's own moment out: it then lands on a later one)
+    if (pkT === undefined || pkT < REVEAL_FROM * plan.seconds) {
       // (the +24:00 moment counts too: the answer is then the day's payoff)
       const later = plan.stops.filter((m) => m >= hit && (tOf(m) ?? 0) >= REVEAL_FROM * plan.seconds).sort((x, y) => x - y)[0];
       if (later !== undefined) { fx.peakMin = later; plan = build(used); }

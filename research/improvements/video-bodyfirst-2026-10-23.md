@@ -729,3 +729,12 @@ Backup: `C:\claudework\inside-24h-backups\20261031-014517-video15\`.
 - **Pizza 14" (P2-PZ)** je provjerena i nije mijenjana: USDA-ova cijela 14-inčna pizza ima 853 g, a dodaci su iz pizza-industry tablica (šunka 128–170 g, gljive 50–78 g, sir +50 g), pa je 1154 g u rasponu.
 - vitest 849/849 (1 skip). Oba builda prolaze.
 - Uzorci u `C:\claudework\video-samples\2026-10-31-v15\` (11). Shorts traju 24,5–29,3 s. Glasnoća −14,1 do −14,3 LUFS, TP ≤ −1,8 dBTP.
+
+## Runda 16 (2026-10-31) — kritika e (8f033e2, prosjek 9.8, 21/25 10/10)
+
+- **J-2 škrob:** pravi kriterij `hasStarch` (škrob = availCarbs − šećer ≥ 2 g i ≥ 30 % ugljikohidrata). Sok/cola više nikad ne dobiju „Starch and sugar…“; sweep test preko svih namirnica, varijanti i obje strane usporedbi.
+- **A-1 pogađanje u svakoj usporedbi:** ako nijedno pitanje nije jasno različito, uvijek pada na alkohol → šećer (g) → kcal; skoro izjednačeno = „Almost the same.“ + „25 g vs 27 g of sugar.“. Otkrivanje odgovora i kad planner izbaci moment odgovora. Test: svi parovi × sva tri reza.
+- **E-1 kofein:** ≥ 20 mg uvijek rečeno s mg na prvom momentu („7 teaspoons of sugar, 80 mg of caffeine.“, obavezna kartica `must`), kofeinski moment se ne izbacuje i pokazuje kofeinski gauge uz šećerni. Test preko svih stavki.
+- **E-2 hashtagovi:** #energydrink, #redwine, #blacktea, #coffeewithmilk… umjesto #drink/#wine/#tea; test.
+- **P2:** Same-amount presuda „It’s close: the same 330 ml of cola and orange juice hits your body about the same.“ (neovisno o redoslijedu). Pizza: zadana 14" s preljevima (1154 g, ~2700 kcal) je na gornjem rubu tipičnih lanaca (≈ 900–1100 g, 2200–2500 kcal) pa naslov sad iskreno kaže „a whole 14-inch pizza with toppings“.
+- Testovi 853/853 (+1 skip), oba builda OK. Uzorci: `C:\claudeworkideo-samples6-10-31-v16\` (4 videa, −14.1…−14.4 LUFS, peak ≤ −2.4 dBFS; Short 24.8 s, long 66.5/71.5 s, Reels 47.9 s).

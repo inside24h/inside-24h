@@ -194,7 +194,9 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
     const alc = /(\d+) g (?:of )?alcohol/.exec(raw), kcal = /(\d+) kcal/.exec(raw);
     const prot = /(\d+) g protein/.exec(raw), carb = /(\d+) g carbohydrate/.exec(raw);
     // (round 15, critic N-3: "about 1 teaspoons"): teaspoons only from 2 on, always in agreement (plural())
-    const facts = [sugar && (sugar[2] && Number(sugar[2]) >= 2 ? `${sugar[1]} g of sugar: about ${plural(Number(sugar[2]), 'teaspoon')}.` : `${sugar[1]} g of sugar.`), caf && `${caf[1]} mg of caffeine.`,
+    // (round 16, critic E-1: an energy drink never said its 80 mg): sugar and caffeine together, one card, said early
+    const both = sugar && caf && Number(caf[1]) >= 20 ? `${sugar[1]} g of sugar and ${caf[1]} mg of caffeine.` : null;
+    const facts = [both ?? (sugar && (sugar[2] && Number(sugar[2]) >= 2 ? `${sugar[1]} g of sugar: about ${plural(Number(sugar[2]), 'teaspoon')}.` : `${sugar[1]} g of sugar.`)), !both && caf && `${caf[1]} mg of caffeine.`,
       alc && `${alc[1]} g of alcohol.`, kcal && !sugar && `${kcal[1]} kcal in total.`,
       // (round 14: a protein-led food says its protein, the number its hook leads with)
       prot && Number(prot[1]) >= 20 && Number(carb?.[1] ?? 0) < 15 && `${prot[1]} g of protein.`].filter((x): x is string => !!x);

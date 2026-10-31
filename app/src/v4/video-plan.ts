@@ -96,7 +96,7 @@ export type Cut = 'long' | 'medium' | 'short';
 export const isLongish = (cut: Cut) => cut !== 'short';
 /** One key moment of the day: the minute, the chapter title and its words at that minute. */
 /** `lines`: the moment's caption cards (video-beats.ts beatLines; computed from title + text when absent). */
-export interface StopIn { min: number; title: string; text: string; lines?: string[]; /** never left out (round 5) */ keep?: boolean }
+export interface StopIn { min: number; title: string; text: string; lines?: string[]; /** never left out (round 5) */ keep?: boolean; /** round 16: its first cards that must be shown */ must?: number }
 /** Safety cards (round 5, critic P0): with alcohol, "a breath test can be positive" and "Don't drive." are shown in
  *  EVERY cut, together, and their moment is never left out. */
 export const SAFETY = /breath test|\bdrive\b/i;
@@ -252,7 +252,9 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const peakMin = peakAt >= 0 ? story[peakAt].min : undefined;
   const payAt = fx.payoffMin === undefined ? -1 : nearestStop(story.map((x) => x.min), fx.payoffMin, toU);
   const payoffMin = payAt >= 0 ? story[payAt].min : peakMin;
-  const mustOf = (x: StopIn) => mustCards(x.lines?.length ? x.lines : beatLines(x));
+  // (round 16: a moment may also name how many of its first cards it must show: the hook's number, the caffeine)
+  const mustOf = (x: StopIn) => Math.max(mustCards(x.lines?.length ? x.lines : beatLines(x)), x.must ?? 0);
+  const first1 = () => Math.max(1, mustOf(chosen[0]));
   const forced = (x: StopIn) => x.min === peakMin || x.min === payoffMin || !!x.keep || mustOf(x) > 0;
   const val = (x: StopIn) => stopValue(x) + (forced(x) ? 10 : 0);
   const teaserMin = fx.teaserMin ?? peakMin ?? story.slice(1).reduce((b, x) => (stopValue(x) > stopValue(b) ? x : b), story[Math.min(1, story.length - 1)]).min;
@@ -302,7 +304,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       if (v < bestV) { bestV = v; drop = i; }
     }
     // (round 5: before a peak, payoff or safety moment goes, the start says only its first card)
-    if (forced(chosen[drop]) && used[0] > 1) { used[0] = 1; pages = pagesFor(); continue; }
+    if (forced(chosen[drop]) && used[0] > first1()) { used[0] = first1(); pages = pagesFor(); continue; }
     // (round 14: then every moment says only the cards it must; and the hook's payoff goes last, after the peak)
     if (forced(chosen[drop])) {
       const k = used.findIndex((u, i) => i > 0 && u > Math.max(1, mustOf(chosen[i])));
@@ -333,12 +335,12 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     const by = sparse ? Math.max(30, fx.peakByS ?? PEAK_BY_S) : fx.peakByS ?? PEAK_BY_S; // (round 14: a sparse story keeps its few moments)
     const tPeak = () => { let t = INTRO_S[cut]; for (let i = 0; i < peakIdx(); i++) t += stopS(pages[i]) + moveS(toU, chosen[i].min, chosen[i + 1].min); return t; };
     // the start says its first card only (the hook already says what it is); then the quietest moments go
-    if (tPeak() > by && used[0] > 1) { used[0] = 1; pages = pagesFor(); }
+    if (tPeak() > by && used[0] > first1()) { used[0] = first1(); pages = pagesFor(); }
     for (let guard = 0; guard < 20 && tPeak() > by; guard++) {
       let drop = -1, bestV = Infinity;
       for (let i = 1; i < peakIdx(); i++) if (!forced(chosen[i]) && val(chosen[i]) < bestV) { bestV = val(chosen[i]); drop = i; }
       if (drop < 0) {
-        if (used[0] > 1) { used[0] = 1; pages = pagesFor(); continue; }
+        if (used[0] > first1()) { used[0] = first1(); pages = pagesFor(); continue; }
         break;
       }
       chosen = chosen.filter((_s, i) => i !== drop); sents = sents.filter((_s, i) => i !== drop); used = used.filter((_s, i) => i !== drop);
