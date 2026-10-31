@@ -38,7 +38,7 @@ import type { Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
 import { idleDrift, ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
-import { bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, type BuiltLike } from './video-body';
+import { bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, type BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
 import { SIZE, VIDEO_COPY, type PinnedGauge } from './share';
@@ -590,7 +590,7 @@ export default function AppV4() {
     decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined };
   const vSeed = seedOf(shortName(videoName)), hookPair = hookPairOf(hookIn, vSeed);
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
-  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, sugar: (peakNow ?? 0) >= 0.5, /* (round 12: the story's own signal: espresso is #caffeine, not #bloodsugar) */ solid: /bite/i.test(story.chapters[0]?.title ?? '') });
+  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10 || /\bdecaf/i.test(videoName), sugar: (peakNow ?? 0) >= 0.5, /* (round 12: the story's own signal: espresso is #caffeine, not #bloodsugar) */ solid: /bite/i.test(story.chapters[0]?.title ?? '') });
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
@@ -625,7 +625,7 @@ export default function AppV4() {
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     // round 14 (critic G-3): the end card's hero number, the main gauge at the video's climax (the same numbers)
     hero: (() => {
-      const cm = climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }))).peakMin;
+      const cm = climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow).peakMin;
       if (cm === undefined) return undefined;
       const g = gaugesAt(built, cm, profile.glucoseUnit, peakNow !== null).find((x) => x.curve);
       return g ? { big: `${g.big} · ${inText(cm)}`, small: g.small.split(' · ')[0] } : undefined;
@@ -801,10 +801,10 @@ export default function AppV4() {
   const reelPlan = (): Plan => {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
     const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin);
-    const stops = applyHook(singleStops(story, ctx), hookNow); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
+    const stops = applyHook(singleStops(story, ctx, (m) => whereCard(built, m)), hookNow); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = payoffMinOf(stops, hookNow);
-    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }))), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
+    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
     const plan = planVideo(stops, vidCut, uFromMinutes, minutesFromU, fx);
     reelStops.current = plan.stops;

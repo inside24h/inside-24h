@@ -26,7 +26,7 @@ export const VIDEO_COPY = {
   loop: (solid?: boolean, compare?: boolean) => (compare ? '↻ Watch both again from the first sip.' : solid ? '↻ Now watch the first bite again.' : '↻ Now watch the first sip again.'),
   answerAt: 'Answer at 24 h.',
   fasterOut: 'Faster out ≠ better for you.', // the race with alcohol on one side (spec §4.1)
-  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime', alcohol: 'Blood alcohol' },
+  raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime', alcohol: 'Blood alcohol', sugarG: 'Sugar in it' },
   smallPrint: 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0',
 } as const;
 /** The plan as the drawing needs it (the cues place every effect). */
@@ -315,7 +315,7 @@ export interface CmpSide { name: string; color: string; step: string; caption: s
   /** round 5: how much ("330 ml", "1 shot · 30 ml"), shown under the name */ serving?: string }
 export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean;
   /** 2026-10-24 game: the guess line, the race (0..1 per side); round 4: the answer, shown when it is decided */ guess?: boolean; race?: { a: number; b: number };
-  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol'; winner: 0 | 1 } }
+  answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG'; winner: 0 | 1 } }
 
 /** Comparison Reel (9:16): both bodies side by side at the top, where the whole width is free of platform buttons;
  *  the two captions stacked below, inside the safe column. Timing from planCompare (video-plan.ts). */

@@ -32,8 +32,9 @@ const STOP = new Set(['one', 'a', 'an', 'can', 'cup', 'glass', 'glasses', 'bottl
 /** The food's own hashtag word ("One can of cola" → "cola", "3 × 500 ml of beer over 2 h" → "beer"). Round 12 (critic
  *  P1-4: #spread, #roll, #cola for a meal): the first item of a meal, before any "with …", and a generic last word
  *  keeps its kind ("Cinnamon roll" → "cinnamonroll", "Crepes with chocolate spread" → "crepes"). */
-const GENERIC_LAST = new Set(['roll', 'rolls', 'cake', 'pie', 'bar', 'bread', 'juice', 'milk', 'tea', 'soup', 'salad', 'cream', 'water', 'wine', 'chips']);
+const GENERIC_LAST = new Set(['roll', 'rolls', 'cake', 'pie', 'bar', 'bread', 'juice', 'milk', 'tea', 'soup', 'salad', 'cream', 'water', 'wine', 'chips', 'potato', 'potatoes']); // (round 15: #sweetpotato)
 export function foodTag(name: string): string {
+  if (/\bdecaf/i.test(name)) return 'decaf'; // (round 15, critic T-1)
   const first = name.replace(/\s+over\s+.*$/i, '').replace(/\([^)]*\)/g, '').split(/,|\band\b|\bwith\b/i)[0];
   const w = first.toLowerCase().split(/[^a-z]+/).filter((x) => x && !STOP.has(x));
   if (!w.length) return 'food';

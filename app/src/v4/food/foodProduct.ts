@@ -201,7 +201,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const peakBloodCarb = peakOf(s.carbsInBlood), peakIns = peakOf(s.insulin), peakCaf = peakOf(s.caffeine.conc);
   const colonMax = Math.max(1e-9, ...s.colonG.map(peakOf));
   const cecumMin = s.colonG[0].indexOf(peakOf(s.colonG[0]));
-  const hasFibre = s.residueG >= 0.5;
+  const hasFibre = s.residueG >= 0.5 && m.fiber >= 2; // (round 15, critic J-2: "Fiber goes on undigested" for 1 g)
   const gl = m.gl;
   let dipMin = -1; { let lo = 0; for (let t = 0; t < 400; t++) { if (s.glucoseDeltaMgDl[t] < lo) { lo = s.glucoseDeltaMgDl[t]; dipMin = t; } } if (lo > -5) dipMin = -1; }
 
@@ -230,7 +230,8 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1', ...(meal.alcoholG > 1 ? ['AL17'] : []), ...(m.fat >= 3 ? ['SI11'] : [])],
       text: (() => {
         // fat goes by lymph, not straight to the liver (model review 2026-10-20: "these pass into your blood" said all of it did)
-        const steps = [m.availCarbs >= 2 && 'starch and sugar become glucose', m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
+        // (round 15, critic J-2: "Starch …" for orange juice): starch only when there is some; else the sugar itself
+        const steps = [m.availCarbs >= 2 && (m.availCarbs - m.sugars >= 2 ? 'starch and sugar become glucose' : 'the sugar passes into your blood'), m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
         const alcNote = meal.alcoholG > 1 ? ' Some of the alcohol was already absorbed through your stomach wall.' : '';
         return steps.length

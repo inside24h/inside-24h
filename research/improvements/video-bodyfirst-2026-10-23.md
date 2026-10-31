@@ -701,3 +701,31 @@ Backup: `C:\claudework\inside-24h-backups\20261031-011203-video14b\`.
 - **G-1, donja četvrtina kadra:** ispod bloka s titlom više nema tamnog vela, pa se tijelo tamo vidi cijelo. Uz to ga obasjava mekani "floor glow" u boji pića: dah od 4 s, alpha 0,10–0,18, nikad tekst ni bljesak. U singlu je jedan, u usporedbi po jedan za svako tijelo.
 - vitest 842/842. Oba builda prolaze.
 - Uzorci u `C:\claudework\video-samples\2026-10-31-v14b\`: pizza (TT), cola (Shorts), hamburger vs cola (TT).
+
+---
+
+# Runda 15 (2026-10-31): `video-critique-2026-10-31.md`
+
+Backup: `C:\claudework\inside-24h-backups\20261031-014517-video15\`.
+
+- **Shorts ≤ 30,0 s (koordinator).** Nastaje zbijanjem tempa, ne izbacivanjem odgovora: Shorts glide 0,55×, 24 h beat 1,4 s, end card 2,3 s. Test: sve stavke × hook A i B ≤ 30 s, a vrhunac i odgovor na pitanje su i dalje tu.
+- **Jedna minuta svugdje (N-1).** Šećerni vrhunac je trenutak "Blood sugar peak". Isti trenutak koriste udarac, mjerač, hero broj i lampica (cola: 20 min posvuda).
+- **Lampica = hero (N-2).** Kad mjerač pokazuje porast, lampica kaže "Normal rise, peak 1 h 2 min in", a ne "Steady all day". Test na svim stavkama.
+- **Hook uvijek imenuje hranu (H-1).** "2 crepes with chocolate spread: 4 teaspoons of sugar.", "1 medium sweet potato: about 6 teaspoons of sugar." Test na A i B.
+- **Gramatika (N-3).** Uveden je pomoćnik `plural()`. Žličice se navode tek od 2 ("6 g of sugar."). Gramatički test prolazi kroz sve kartice, hookove, opise i note lampica.
+- **Kartice prema hrani (J-2).** "Starch …" se pojavljuje samo uz ≥ 2 g škroba; inače "The sugar passes into your blood.". "Fiber goes on undigested" samo uz ≥ 2 g vlakana. Test pokriva sve stavke.
+- **Cola vs sok, isti volumen (J-1, J-3).** Igra "Guess: which has more sugar?" s odgovorom "35 g vs 29 g of sugar." Chipovi su kratki ("Cola: sugar peak", ≤ 34 znaka).
+- **Decaf (D-1 do D-3).**
+  - Vrhunac je trenutak kofeina, ne bubrezi.
+  - Mali dozi kofeina dodan je mjerač ("2 mg caffeine").
+  - Hero broj na end cardu je iz istog mjerača.
+  - Odgovor kaže broj koji mjerač pokazuje.
+- **Salmon i rijetke priče (SA-2).**
+  - Kartica traje najviše ~5 s.
+  - Kad rani udarac (15 s) ostavi premalo trenutaka, udarac smije doći kasnije, do 33 s.
+  - Rijetke priče dobivaju karticu "Most of it is in your … now." iz modela rute.
+  - Kartica "Down the food pipe" se više ne pojavljuje sama (bez točke).
+- **Hashtagovi (T-1):** #sweetpotato, #decaf #caffeine.
+- **Pizza 14" (P2-PZ)** je provjerena i nije mijenjana: USDA-ova cijela 14-inčna pizza ima 853 g, a dodaci su iz pizza-industry tablica (šunka 128–170 g, gljive 50–78 g, sir +50 g), pa je 1154 g u rasponu.
+- vitest 849/849 (1 skip). Oba builda prolaze.
+- Uzorci u `C:\claudework\video-samples\2026-10-31-v15\` (11). Shorts traju 24,5–29,3 s. Glasnoća −14,1 do −14,3 LUFS, TP ≤ −1,8 dBTP.

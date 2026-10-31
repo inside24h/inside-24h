@@ -162,16 +162,18 @@ export interface PlanFx {
   glideK?: number;
   /** the same for the glides before the impact (only while it still lands by PEAK_BY_S) */
   glideK0?: number;
+  /** round 15: how many times the planner has moved the impact later to keep cards short (internal) */
+  retry?: number;
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
 /** Round 10: the surge keeps this far from the sip, the riser and the impact (seconds), so no two big events overlap. */
 export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
 /** Round 13: the longest a single card stays (unless its own reading time is longer), and how much slower a glide may get. */
-export const CARD_MAX_S = 6, GLIDE_K_MAX = 6, GLIDE_MAX_S = 3.6;
+export const CARD_MAX_S = 5, GLIDE_K_MAX = 6, GLIDE_MAX_S = 3.8; // (round 15, critic SA-2: 6 s cards at 0.8 w/s read slow)
 /** Round 14 (critic DC-1, owner): never longer than this without a card on screen (the 24 h beat and the end card aside). */
 export const WORDLESS_MAX_S = 4;
 /** Round 14: the short cut's glides take this share of the usual time (room for the peak AND the hook's answer). */
-export const SHORT_GLIDE_K = 0.75;
+export const SHORT_GLIDE_K = 0.55;
 export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.3, LIGHTS_STEP_S = 0.25, MICRO_GAP_S = 2.9;
 /** Comparison end card: the verdict lands first (it is the answer to the guess, and must be read: + 1.5 s), then the
  *  lights come on, left and right in turn, faster. */
@@ -193,7 +195,7 @@ export const teaseCard = (title: string) => { const h = TEASE_HUMAN.find(([re]) 
 /** Length targets. Long: TikTok/Facebook reward 60 s+ (we aim 62-75 s so encoders never round it under 61 s).
  *  Short: 15-30 s for Shorts / Reels experiments. */
 // (round 13, critic P2-4: 74.6 / 54.8 s sat on the platforms' edges; a frame more in the transcode must still fit)
-export const LENGTH = { long: { min: 62, max: 73 }, medium: { min: 45, max: 53 }, short: { min: 24, max: 31.5 } } as const; // (round 14: Shorts never under 24 s, critic P2-T1; up to 31.5 s so the peak AND the hook's answer fit) // (round 11: Shorts 23-30 s, research L2)
+export const LENGTH = { long: { min: 62, max: 73 }, medium: { min: 45, max: 53 }, short: { min: 24, max: 30 } } as const; /* (round 15: back to 30 s, the coordinator's call: over 30 s hurts Shorts retention) */ // (round 14: Shorts never under 24 s, critic P2-T1; up to 31.5 s so the peak AND the hook's answer fit) // (round 11: Shorts 23-30 s, research L2)
 /** Long cut: more words are added to moments only up to this length (the rest of the minute is the body, not text). */
 export const FILL_S = 68;
 /** round 11: the same for each longer cut (medium: Reels). */
@@ -207,7 +209,7 @@ export const moveS = (toU: (m: number) => number, from: number, to: number) => M
 export const INTRO_S = { long: 3.0, medium: 2.7, short: 2.4 } as const; // big hook card (it then stays at the top as the headline)
 /** The 24 h beat before the end card. Round 11 (research R1): the payoff beat with the body in frame: "AFTER 24
  *  HOURS", the day's lights come on one by one (and the comparison's verdict lands), then a "day done" ring. */
-export const CELEB_S = { long: 2.2, medium: 2.0, short: 1.7 } as const;
+export const CELEB_S = { long: 2.2, medium: 2.0, short: 1.4 } as const;
 export const END_HOLD_S = CELEB_S.long; // (the longest)
 /** The glide to +24:00 names where it goes (a chip, so the end of the day is never a stretch without words). */
 export const DAY_END_TITLE = '24 hours later';
@@ -217,8 +219,10 @@ export const TEASE_OK = /peak|dip|crash|sleep|bed|gone|morning|24 hours|large in
 export const DULL = /^Building blocks$/i;
 /** The long cut's first impact by this second (round 5). */
 export const PEAK_BY_S = 15;
+/** Round 15: the latest the long cut's impact may move to keep every card short (a sparse story, critic SA-2). */
+export const PEAK_BY_MAX_S = 33;
 /** End card: summary + call to action + a loop back to the start. Round 11 (research R1): ≤ 4 s long, ≤ 2.5 s short. */
-export const OUTRO_S = { long: 4.0, medium: 3.0, short: 2.5 } as const;
+export const OUTRO_S = { long: 4.0, medium: 3.0, short: 2.3 } as const; // (round 15: short 2.3 s, so the climax and the hook's answer both fit in 30 s)
 
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
@@ -239,7 +243,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   for (const s of stopsIn) byMin.set(Math.max(0, Math.min(1440, s.min)), { ...s, min: Math.max(0, Math.min(1440, s.min)) });
   // round 6 (critic: "Building blocks / Protein pieces in your blood peak now." promised and showed nothing): left out
   // (round 14: a sparse story keeps them: a quiet moment is better than a long stretch without words)
-  const all0 = [...byMin.values()], sparse = all0.filter((s) => !DULL.test(s.title.trim())).length < 7;
+  const all0 = [...byMin.values()], sparse = all0.filter((s) => !DULL.test(s.title.trim())).length < 8;
   let stops = all0.filter((s) => sparse || !DULL.test(s.title.trim()) || s.min === 0).sort((a, b) => a.min - b.min);
   if (!stops.length || stops[0].min !== 0) stops.unshift({ min: 0, title: stops[0]?.title ?? '', text: stops[0]?.text ?? '' });
   const story = stops; // the 24 h beat is added after the last moment (stamp only, the caption stays)
@@ -345,7 +349,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   //    (ties: the more telling one, then the later one), up to FILL_S (the rest of the minute is the body); never
   //    before the peak (round 5: the first impact stays early)
   for (let guard = 0; isLongish(cut) && guard < 100; guard++) {
-    const order = chosen.map((_s, i) => i).filter((i) => used[i] < sents[i].length && (peakIdx() <= 0 || i >= peakIdx() || sparse))
+    const order = chosen.map((_s, i) => i).filter((i) => used[i] < sents[i].length && (peakIdx() <= 0 || i >= peakIdx() || sparse || (fx.peakByS ?? PEAK_BY_S) > PEAK_BY_S))
       .sort((a, b) => pages[a].length - pages[b].length || val(chosen[b]) - val(chosen[a]) || chosen[b].min - chosen[a].min);
     let grew = false;
     for (const i of order) {
@@ -408,11 +412,20 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     const useB = pi > 0 && preG > 0.1 ? Math.min(rem, roomB, Math.max(0, (fx.peakByS ?? PEAK_BY_S) - 0.3 - tp)) : 0;
     const glideK0 = pi > 0 && preG > 0.1 ? Math.min(GLIDE_K_MAX, 1 + useB / preG) : 1;
     const back = Math.max(0, rem - useB);
-    const nCards = secs.reduce((a, x) => a + x.length, 0);
-    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + back / Math.max(1, nCards) })) })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0 });
+    // (what is left goes to the cards from the impact on, so the impact stays early)
+    const nCards = secs.slice(from).reduce((a, x) => a + x.length, 0);
+    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + (i >= from ? back / Math.max(1, nCards) : 0) })) })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0 });
   };
   let out = lay();
   for (let k = 0; k < 3 && out.seconds < lim.min + 0.1 && t0 < want + 5; k++) { want += lim.min + 0.3 - out.seconds; out = lay(); }
+  // round 15 (critic SA-2: cards held 6-8 s): when the early impact left too few moments for the length, the impact
+  // may come a little later (up to PEAK_BY_MAX_S), so the moments before it come back and every card stays short
+  const longest = (pl: Plan) => Math.max(0, ...pl.pages.map((pg) => pg.s - readSeconds(pg.text, true)));
+  const by0 = fx.peakByS ?? PEAK_BY_S;
+  if (isLongish(cut) && (fx.retry ?? 0) < 3 && by0 < PEAK_BY_MAX_S && longest(out) > CARD_MAX_S - 2.4) {
+    const alt = planVideo(stopsIn, cut, toU, fromU, { ...fx, peakByS: Math.min(PEAK_BY_MAX_S, by0 + 6), retry: (fx.retry ?? 0) + 1 });
+    if (longest(alt) < longest(out) - 0.2) return alt;
+  }
   return out;
 }
 

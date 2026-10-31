@@ -73,7 +73,10 @@ export function hookFor(h: HookIn): Hook {
   // (round 6, critic: "Watch where it goes" was never paid off in the short): the moment that says where the sugar
   // ends up pays it off
   const where = h.chapters.find((c) => /burns about half of the fructose/.test(c.text) && c.min > 0);
-  const tspHook = (): Hook => ({ line1: fit(`${cap(name)}: ${tsp![2]} teaspoons of sugar.`) ? `${cap(name)}: ${tsp![2]} teaspoons of sugar.` : `${tsp![2]} teaspoons of sugar.`, line2: 'Watch where it goes.', ...(where ? { payoff: where.title } : {}), lead: `${tsp![1]} g of sugar: about ${tsp![2]} teaspoons.` });
+  // (round 15, critic H-1: "4 teaspoons of sugar." did not say crepes): the name, short if need be ("2 crepes")
+  const core = cap(name.replace(/ with .*$/i, ''));
+  const named = (rest: string, max = 9) => [`${cap(name)}: ${rest}`, `${core}: ${rest}`].find((x) => fit(x, max)) ?? `${core}: ${rest}`;
+  const tspHook = (): Hook => ({ line1: named(`${tsp![2]} teaspoons of sugar.`), line2: 'Watch where it goes.', ...(where ? { payoff: where.title } : {}), lead: `${tsp![1]} g of sugar: about ${tsp![2]} teaspoons.` });
   if (h.solid) {
     const k = /(\d+) kcal/.exec(first)?.[1];
     // round 14 (critic G-2: crepes "434 kcal. Watch it for 24 hours."): a sweet dish under 500 kcal leads with its sugar
@@ -86,8 +89,8 @@ export function hookFor(h: HookIn): Hook {
   // starch becomes, the teaspoons the small-intestine moment says (foodProduct: available carbohydrate / 4 g)
   const st = h.chapters.map((c) => ({ c, m: /In all, about (\d+) teaspoons of sugar reach your blood/.exec(c.text) })).find((x) => x.m);
   if (h.solid && st && !h.alcohol) {
-    const n = st.m![1], l1 = `${cap(name)}: about ${n} teaspoons of sugar.`;
-    return { line1: fit(l1) ? l1 : `About ${n} teaspoons of sugar.`, line2: 'Watch the starch become blood sugar.', payoff: st.c.title, answer: `About ${n} teaspoons of sugar, from starch.` };
+    const n = st.m![1];
+    return { line1: named(`about ${n} teaspoons of sugar.`), line2: 'Watch the starch become blood sugar.', payoff: st.c.title, answer: `About ${n} teaspoons of sugar, from starch.` };
   }
   if (h.caffeine) {
     // "still in you at bedtime" as the share the model says (critic: it promised a problem the end card then denied)

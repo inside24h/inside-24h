@@ -38,7 +38,8 @@ describe('the comparison guess', () => {
       }
       if (g.kind === 'blood') expect(g.decidedMin).toBeLessThan(1440);
       // the race bars end where the answer says: the winner's bar is full at the decided minute, the loser's not yet
-      if (g.kind !== 'sugar') { expect(g.progress[g.winner][g.decidedMin]).toBe(1); expect(g.progress[loser][g.decidedMin]).toBeLessThan(1); }
+      if (g.kind !== 'sugar' && g.kind !== 'sugarG') { expect(g.progress[g.winner][g.decidedMin]).toBe(1); expect(g.progress[loser][g.decidedMin]).toBeLessThan(1); }
+      if (g.kind === 'sugarG') expect([A, B][g.winner].sugarG!).toBeGreaterThan([A, B][loser].sugarG!); // (round 15)
       expect(`${g.question} ${g.answer1} ${g.answer2} ${g.recap}`).not.toMatch(/\b(wins?|best|better|healthy)\b/i);
     });
   }

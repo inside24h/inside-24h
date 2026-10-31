@@ -4,7 +4,7 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
-export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol';
+export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG';
 export interface GuessSide {
   name: string;
   alcohol?: boolean;
@@ -14,6 +14,7 @@ export interface GuessSide {
   /** caffeine (mg in the body) and blood alcohol (g/L) per minute */ caffeine?: ArrayLike<number> | null; bac?: ArrayLike<number> | null;
   /** blood sugar change per minute (mmol/L), when the food has a measured curve */ sugar?: ArrayLike<number> | null;
   /** round 13: grams of alcohol */ alcoholG?: number;
+  /** round 15: grams of sugar */ sugarG?: number;
 }
 export interface Guess {
   kind: GuessKind; question: string;
@@ -111,6 +112,16 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
       answer1: `Bigger rise: ${the(sides[w].name)}.`, answer2: 'Its blood sugar goes up more.',
       recap: `Answer: ${sides[w].name} raised blood sugar more.`, progress: [rel(a.sugar!, top), rel(b.sugar!, top)] };
   }
+  // 3b) round 15 (critic J-1: cola vs orange juice, the same amount, asked nothing): which has more sugar (the model's
+  // grams), answered at the later of the two sugar peaks; never with alcohol on a side
+  const sa = a.sugarG ?? 0, sb = b.sugarG ?? 0;
+  if (!anyAlcohol && sa >= 3 && sb >= 3 && Math.abs(sa - sb) >= 3 && Math.abs(sa - sb) >= 0.1 * Math.max(sa, sb)) {
+    const w = (sa > sb ? 0 : 1) as 0 | 1, top = (s: GuessSide) => { const c = s.sugar; if (!c) return 30; let k = 0; for (let m = 1; m < Math.min(N, c.length); m++) if (c[m] > c[k]) k = m; return k; };
+    const flat = Float32Array.from({ length: N }, () => 0);
+    return { kind: 'sugarG', question: 'Guess: which has more sugar?', winner: w, decidedMin: Math.max(top(a), top(b)),
+      answer1: `More sugar: ${the(sides[w].name)}.`, answer2: `${Math.round(w ? sb : sa)} g vs ${Math.round(w ? sa : sb)} g of sugar.`,
+      recap: `Answer: ${sides[w].name} had more sugar.`, progress: [flat, flat] };
+  }
   // 4) round 13 (critic P1-3: red wine vs beer asked nothing; they leave the blood about together): two alcoholic
   // drinks, which brings more alcohol (the model's grams), answered at the later blood alcohol peak. Neutral: nobody wins
   const ga = a.alcoholG ?? 0, gb = b.alcoholG ?? 0;
@@ -125,14 +136,14 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
 }
 
 /** A side of the race from the app's analysis of one food or drink (Compare / analyze.ts). */
-export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
+export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; macros?: { sugars: number }; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
   const r = x.built.route;
   const stomach = r ? Float32Array.from({ length: N }, (_, m) => r.segs(m).stomach?.amount ?? 0) : null;
   return {
     name: name ?? x.label, alcohol: (x.built.alcoholG ?? 0) > 1, amount: stomach ? Math.max(0, ...Array.from(stomach)) : undefined,
     stomach,
     caffeine: x.built.caffeine.doseMg >= 10 ? x.built.caffeine.body : null,
-    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0,
+    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0,
     sugar: x.glucose ? Float32Array.from({ length: N }, (_, m) => (x.glucose![m] ?? 0) / 18.016) : null,
   };
 }

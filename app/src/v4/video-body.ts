@@ -83,6 +83,9 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
   }
   const caf = b.caffeine.doseMg >= 10 ? at(b.caffeine.body, mi) : 0;
   if (caf >= 20) return { big: `${Math.round(caf)} mg caffeine`, small: 'still in your body', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
+  // (round 15, critic D-2: decaf said "watch your blood" and showed no caffeine): a small dose has its gauge too
+  const small = b.caffeine.doseMg >= 1 && b.caffeine.doseMg < 10 ? at(b.caffeine.body, mi) : 0;
+  if (small >= 0.5) return { big: `${Math.round(small)} mg caffeine`, small: 'in your body: a little', level: 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
   // round 13 (critic P0-2: salmon's climax, "Blood fat is highest around now", had no gauge): blood fat, the same
   // model number the moment says ("roughly +0.3 mmol/L", foodSim tgDelta), pinned to the heart
   const tgs = b.effects.tgMmol, tg = tgs ? at(tgs, mi) : 0;
@@ -135,6 +138,14 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
   return { big, small, level: 0, organ: SEG_FOCUS_V[top[0]] };
 }
 
+/** Round 15 (sparse stories, critic SA-2): where most of it is at minute m, as a card ("Most of it is in your small
+ *  intestine now."), from the same route model as the where-gauge; null for the bladder and unknown places. */
+export function whereCard(b: BuiltLike, m: number): string | null {
+  const top = presentAt(b, m).filter(([id]) => id !== 'swallow')[0];
+  const small = top ? WHERE_SMALL[top[0]] : undefined;
+  return small && /^In your /.test(small) ? `Most of it is ${small.charAt(0).toLowerCase()}${small.slice(1)} now.` : null;
+}
+
 /** Video colours (2026-10-24, owner review: the brain glowed white-blue): a calm violet tint for the brain, whose
  *  many overlapping parts add up to white in its usual pale colour. */
 export const VIDEO_PALETTE: Record<string, string> = { brain: '#6f5fd8' };
@@ -164,7 +175,9 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
   const mi = Math.max(0, Math.min(1440, m));
   if (key === 'energy') {
     if (sugarUnknown) return 'Not tracked for this one';
-    if (level === 0) return 'Steady all day';
+    // (round 15, critic N-2: the hero said "Blood sugar up" over a green "Steady all day"): a rise the gauge shows is
+    // named, as a normal one, at the same minute as the hero
+    if (level === 0) { const gs0 = b.effects.glucoseMgDl; if (gs0) { let pk0 = 0; for (let k = 1; k <= Math.min(1440, gs0.length - 1); k++) if (gs0[k] > gs0[pk0]) pk0 = k; const mo = b.story?.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title)); if (gs0[pk0] / 18.016 >= 0.5) return `Normal rise, peak ${inText(mo ? mo.min : pk0)}`; } return 'Steady all day'; }
     const g = b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
     // (round 13, critic P0-1: "Sugar peak 13 min in" was the minute the rise crossed the line, the video's PEAK was at
     // +0:20): the peak's own minute, the same argmax the "Blood sugar peak" moment uses (foodSim glucosePeakMin)

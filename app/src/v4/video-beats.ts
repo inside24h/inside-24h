@@ -14,6 +14,8 @@ import { ELIM_RANGE } from '../science/alcoholClock';
 
 /** Longest card, in words (numbers and "×" count as words). */
 export const BEAT_WORDS = 8;
+/** Round 15 (critic N-3): one way to count things in every generated line: "1 teaspoon", "2 teaspoons". */
+export const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 /** Values that follow the clock: only on the gauges. */
 export const DYNAMIC = /‰|mmol\/L|mg\/dL|\bmg of caffeine is (?:left|still)\b|\bg of fiber reach/;
@@ -191,7 +193,8 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
     const sugar = /(\d+) g (?:of )?sugar(?:[^.]*?about (\d+) teaspoons?)?/.exec(raw), caf = /(\d+) mg of caffeine/.exec(raw);
     const alc = /(\d+) g (?:of )?alcohol/.exec(raw), kcal = /(\d+) kcal/.exec(raw);
     const prot = /(\d+) g protein/.exec(raw), carb = /(\d+) g carbohydrate/.exec(raw);
-    const facts = [sugar && (sugar[2] ? `${sugar[1]} g of sugar: about ${sugar[2]} teaspoons.` : `${sugar[1]} g of sugar.`), caf && `${caf[1]} mg of caffeine.`,
+    // (round 15, critic N-3: "about 1 teaspoons"): teaspoons only from 2 on, always in agreement (plural())
+    const facts = [sugar && (sugar[2] && Number(sugar[2]) >= 2 ? `${sugar[1]} g of sugar: about ${plural(Number(sugar[2]), 'teaspoon')}.` : `${sugar[1]} g of sugar.`), caf && `${caf[1]} mg of caffeine.`,
       alc && `${alc[1]} g of alcohol.`, kcal && !sugar && `${kcal[1]} kcal in total.`,
       // (round 14: a protein-led food says its protein, the number its hook leads with)
       prot && Number(prot[1]) >= 20 && Number(carb?.[1] ?? 0) < 15 && `${prot[1]} g of protein.`].filter((x): x is string => !!x);

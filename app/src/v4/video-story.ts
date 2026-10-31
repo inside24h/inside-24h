@@ -84,7 +84,7 @@ export function decafOf(label: string, b: { caffeine: { doseMg: number; body: Fl
   const reg = analyze(parts, profile).built.caffeine.doseMg;
   if (!(reg > 10 * b.caffeine.doseMg)) return undefined;
   let pk = 1; for (let m = 1; m <= Math.min(1440, b.caffeine.body.length - 1); m++) if (b.caffeine.body[m] > b.caffeine.body[pk]) pk = m;
-  return { mg: b.caffeine.doseMg, regularMg: reg, min: Math.max(5, Math.min(240, pk)) };
+  return { mg: b.caffeine.body[pk], regularMg: reg, min: Math.max(5, Math.min(240, pk)) }; // (round 15: the gauge's own number)
 }
 
 /** Round 14 (critic: every hook question is answered on screen): the hook's own moment (decaf's caffeine) joins the
@@ -113,8 +113,17 @@ export function payoffMinOf(stops: { min: number; title: string }[], hook: { pay
 /** Round 13 (critic P0-2: salmon kept 3 cards for 40 s): a story-moment climax (no model peak) is not pulled to the
  *  first 15 s, which would leave out every moment before it; it lands by CLIMAX_BY_S. */
 export const CLIMAX_BY_S = 40;
-export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[]) =>
-  ({ peakMin: climaxOf(b, sugarKnown, chapters), ...(peakOf(b, sugarKnown) === undefined ? { peakByS: CLIMAX_BY_S } : {}) });
+export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[], hook?: { extra?: { min: number } }) => {
+  // (round 15, critic D-1: decaf's climax was the urine): the hook's own moment (decaf's caffeine) is the climax
+  if (hook?.extra) return { peakMin: hook.extra.min, peakByS: CLIMAX_BY_S };
+  // (round 15, critic N-1: cola's hero said 26 min, its lamp and its PEAK moment 20 min): a sugar climax is the
+  // "Blood sugar peak" moment itself, the one minute the video, the gauge, the lamp and the hero all use
+  const p = peakOf(b, sugarKnown), alc = (b.alcoholG ?? 0) > 1 && !!b.bac, sugarIsPeak = !alc && p !== undefined && p === peakOfSugar(b);
+  const sugarMoment = sugarIsPeak ? chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title))?.min : undefined;
+  return { peakMin: sugarMoment ?? climaxOf(b, sugarKnown, chapters), ...(p === undefined ? { peakByS: CLIMAX_BY_S } : {}) };
+};
+/** The minute of the sugar curve's top (for climaxFx, which then prefers the story's own moment). */
+const peakOfSugar = (b: PeakIn) => { const g = b.effects.glucoseMgDl; if (!g) return undefined; let k = 0; for (let i = 1; i <= Math.min(1440, g.length - 1); i++) if (g[i] > g[k]) k = i; return k; };
 
 /** Round 10: the bloodstream surge. The same substance as peakOf (alcohol, else a clear sugar rise, else caffeine),
  *  and the stretch of the day while its model level climbs from a quarter of its peak to the peak (the video picks
@@ -148,19 +157,24 @@ export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], 
 
 type ChapterLike = { min: number; title: string; text: string; live?: (m: number) => string; focus?: string | null };
 /** The single video's moments: every chapter's words at its own minute and its caption cards. */
-export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx): StopIn[] {
+export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, where?: (m: number) => string | null): StopIn[] {
   // (round 9: a card is said once per video; "Fat takes a slower route, via the lymph." ended one moment and began
   // the next, 9 s in a row, for every fatty food)
   const seen = new Set<string>();
   // (round 14: the swallow, "Down the food pipe", adds its card to the first moment, used when there is room)
   const pipe = story.chapters.find((c) => c.min > 0 && c.min < 1);
-  const pipeLines = pipe ? beatLines({ min: pipe.min, title: pipe.title, text: chapterText(pipe as never, pipe.min) }, ctx) : [];
+  // (round 15, critic P2-K: never its bare title "Down the food pipe" as a card, only a sentence)
+  const pipeLines = (pipe ? beatLines({ min: pipe.min, title: pipe.title, text: chapterText(pipe as never, pipe.min) }, ctx) : []).filter((l) => /[.!?]$/.test(l));
+  const sparse = story.chapters.filter((c) => c.min >= 1).length < 8;
   const base: StopIn[] = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => {
     const text = chapterText(c as never, c.min), all = beatLines({ min: c.min, title: c.title, text }, ctx);
     const fresh = all.filter((l) => !seen.has(l));
     for (const l of all) seen.add(l);
     const ls = fresh.length ? fresh : all;
-    return { min: c.min, title: c.title, text, lines: c.min === 0 ? [...ls, ...pipeLines.filter((l) => !ls.includes(l))] : ls };
+    // (round 15: a sparse story also says where most of it is, after its own cards, used only when there is room)
+    const w = sparse && c.min >= 1 && where ? where(c.min) : null;
+    const ls2 = w && !ls.includes(w) && !seen.has(w) ? (seen.add(w), [...ls, w]) : ls;
+    return { min: c.min, title: c.title, text, lines: c.min === 0 ? [...ls2, ...pipeLines.filter((l) => !ls2.includes(l))] : ls2 };
   });
   // round 12 (critic P0-3): a card that speaks of a later minute ("Half has moved on after 116 minutes.") is said when
   // the clock gets there, as its own moment under the same title (never while the clock still stands at +0:01)
@@ -188,6 +202,10 @@ export function servingsCard(sa: string, sb: string): string {
   const x = amt(sa), y = amt(sb);
   return x === y ? `Same amount: ${x} each.` : `A typical serving each: ${x} vs ${y}.`;
 }
+/** Round 15: a NEXT chip's words fit the chip ("NEXT · +0:20 · " + these, ≤ 900 px). */
+export const CHIP_MAX = 34;
+export const CHIP_SHORT: [RegExp, string][] = [[/sugar peak|blood sugar/i, 'sugar peak'], [/alcohol peak/i, 'alcohol peak'], [/peak/i, 'its peak'], [/dip|crash/i, 'sugar dip'],
+  [/going to bed|bedtime/i, 'bedtime'], [/morning/i, 'next morning'], [/gone/i, 'all gone'], [/large intestine/i, 'large intestine'], [/24 hours/i, '24 hours later']];
 /** Round 13: the comparison's answer is revealed no earlier than this share of the video. */
 export const REVEAL_FROM = 0.55;
 export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: boolean | Cut): ComparePlan {
@@ -210,7 +228,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // round 10: the bloodstream surge on the first side that has one (the same order as the peak: no alcohol first)
   const sg = ([...nonAlc, a, b].map((x) => { const s = surgeOf(x.built, x.glucose !== undefined); return s && { ...s, side: (x === a ? 0 : 1) as 0 | 1 }; })).find((x) => !!x);
   const fx: PlanFx = { calmDay: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
-    lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' && gq.kind !== 'alcohol' ? race ?? undefined : undefined,
+    lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' && gq.kind !== 'alcohol' && gq.kind !== 'sugarG' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)
   // round 12 (critic P0-2: both sides said "peaks now" at +1:30, the singles peak at +0:43 / +0:48): each side's own
@@ -264,7 +282,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     const chipOf = (i: number) => {
       const own = (x: Analysis) => peaksOf(x).includes(mins[i]);
       const k = own(b) && !own(a) ? 1 : own(a) ? 0 : SB[i].isNew && !SA[i].isNew ? 1 : 0;
-      const x = k ? b : a; return `${cmpName(x.label)}: ${human(chap(x, mins[i]).title)}`; // (the moment's own chapter, what that side is at)
+      const x = k ? b : a, t = chap(x, mins[i]).title, long = `${cmpName(x.label)}: ${human(t)}`; // (the moment's own chapter, what that side is at)
+      // (round 15, critic J-3: "Cola: when your blood sugar …" was cut off): the short plain words when the long ones do not fit
+      return long.length <= CHIP_MAX ? long : `${cmpName(x.label)}: ${CHIP_SHORT.find(([re]) => re.test(t))?.[1] ?? t.toLowerCase()}`;
     };
     return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at), chip: chipOf(i) })),
       cut, uFromMinutes, minutesFromU, fx);

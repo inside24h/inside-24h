@@ -226,7 +226,8 @@ describe('round 5: every beat renders, payoffs, safety, no dead ends', () => {
       }
       // the end of the day: at most END_HOLD_S of body without words after the clock reaches +24:00
       const iOut = p.frames.findIndex((f) => f.phase === 'outro'), i24 = p.frames.findIndex((f) => f.m >= 1440);
-      expect((iOut - i24) / FPS).toBeLessThanOrEqual(cut === 'long' && chapters.some((c) => c.min >= 1440) ? 99 : END_HOLD_S + 0.05);
+      // (round 15: any cut may end on the +24:00 moment when the story has one: it answers "Where is it 24 hours later?")
+      expect((iOut - i24) / FPS).toBeLessThanOrEqual(chapters.some((c) => c.min >= 1440) ? 99 : END_HOLD_S + 0.05);
       // the glide to +24:00 names where it goes (no stretch without words)
       const glide24 = p.frames.filter((f) => f.beat === 'glide' && f.stop === 1440);
       if (glide24.length) expect(glide24.every((f) => (f.plateA ?? 1) > 0.5 || !!f.next)).toBe(true);
