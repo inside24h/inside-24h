@@ -737,4 +737,4 @@ Backup: `C:\claudework\inside-24h-backups\20261031-014517-video15\`.
 - **E-1 kofein:** ≥ 20 mg uvijek rečeno s mg na prvom momentu („7 teaspoons of sugar, 80 mg of caffeine.“, obavezna kartica `must`), kofeinski moment se ne izbacuje i pokazuje kofeinski gauge uz šećerni. Test preko svih stavki.
 - **E-2 hashtagovi:** #energydrink, #redwine, #blacktea, #coffeewithmilk… umjesto #drink/#wine/#tea; test.
 - **P2:** Same-amount presuda „It’s close: the same 330 ml of cola and orange juice hits your body about the same.“ (neovisno o redoslijedu). Pizza: zadana 14" s preljevima (1154 g, ~2700 kcal) je na gornjem rubu tipičnih lanaca (≈ 900–1100 g, 2200–2500 kcal) pa naslov sad iskreno kaže „a whole 14-inch pizza with toppings“.
-- Testovi 853/853 (+1 skip), oba builda OK. Uzorci: `C:\claudeworkideo-samples6-10-31-v16\` (4 videa, −14.1…−14.4 LUFS, peak ≤ −2.4 dBFS; Short 24.8 s, long 66.5/71.5 s, Reels 47.9 s).
+- Testovi 853/853 (+1 skip), oba builda OK. Uzorci: `C:\claudework\video-samples\2026-10-31-v16\` (4 videa, −14.1…−14.4 LUFS, peak ≤ −2.4 dBFS; Short 24.8 s, long 66.5/71.5 s, Reels 47.9 s).
