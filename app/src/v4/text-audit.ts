@@ -233,6 +233,7 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${id} ${cut} ${v} voice`, text: i.text });
       for (const l of vo) res.issues.push(...lintText(l.text, `${id} ${cut} ${v} voice`, 'card'));
       if (v === 'A' && cut === 'long') res.dump.push(`    voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);
+      if (v === 'A' && cut === 'long') countScript(vo.map((l) => l.text), id);
     }
     if (!A.hero) res.issues.push({ cls: 'end card without a number', where: id, text: A.name });
     // round 18 (critique g): the story fits the food's class
@@ -257,6 +258,15 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
 }
 
 const lastTpl: { A: Map<string, string[]>; B: Map<string, string[]> } = { A: new Map(), B: new Map() };
+/** v19: the voiceover scripts (numbers taken out), counted over every video: no script on more than 10 % of them. */
+const scripts = new Map<string, string[]>();
+const countScript = (lines: string[], id: string) => { const k = lines.join(' | ').replace(/\d+(?:[.,]\d+)?/g, 'N'); scripts.set(k, [...(scripts.get(k) ?? []), id]); };
+export function scriptRepeats(res: AuditResult, max = 0.1) {
+  const n = [...scripts.values()].reduce((a, b) => a + b.length, 0);
+  const top = [...scripts.entries()].sort((p, q) => q[1].length - p[1].length).slice(0, 5);
+  res.dump.splice(0, 0, '', `=== voiceover scripts: ${scripts.size} different over ${n} videos, the most used`, ...top.map(([k, ids]) => `  ${ids.length}× ${k}`));
+  for (const [k, ids] of top) if (ids.length > max * n) res.issues.push({ cls: 'voiceover script overused', where: 'voice', text: `${ids.length}/${n}: ${k}` });
+}
 export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; same: boolean }[], res: AuditResult, p: Profile = AUDIT_PROFILE) {
   for (const pr of pairs) {
     res.dump.push('', `=== ${pr.id}`);
@@ -305,6 +315,7 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
       const nin = compareNarrIn(pr.a, pr.b, o.cp), vo = narrationFor(nin);
       for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${where} voice`, text: i.text });
       if (cut === 'long') res.dump.push(`  voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);
+      if (cut === 'long') countScript(vo.map((l) => l.text), pr.id);
       for (const [st, t] of tB) res.issues.push(...lintMoment(t, st, pr.b.built.story.chapters, `${where} B`));
     }
   }
@@ -322,5 +333,7 @@ export function runAudit(nPairs = 300): AuditResult {
     for (const [t, ids] of top) if (ids.length > 0.1 * items.length) res.issues.push({ cls: 'hook template overused', where: `hook ${v}`, text: `${ids.length}/${items.length}: ${t}` });
   }
   auditCompares(auditPairs(items, nPairs), res);
+  scriptRepeats(res);
+  scripts.clear();
   return res;
 }

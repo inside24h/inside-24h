@@ -62,7 +62,13 @@ export function speakable(s: string): string {
     .replace(/\s{2,}/g, ' ').trim();
 }
 
-const pick = <T,>(xs: readonly T[], seed: number, salt: number) => xs[Math.abs((seed >>> 0) + salt * 7919) % xs.length];
+/** One option per slot, from the video's seed; v19: each slot hashed on its own (with one shared index the slots moved
+ *  together and a pool of n lines made only n different scripts). */
+const pick = <T,>(xs: readonly T[], seed: number, salt: number) => {
+  let h = Math.imul((seed >>> 0) ^ Math.imul(salt + 1, 0x9e3779b1), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return xs[((h ^ (h >>> 16)) >>> 0) % xs.length];
+};
 
 /** The end card's number as one spoken line, longest first (the planner keeps the first that fits its slot); the
  *  numbers are exactly the hero's. Unknown shapes: none (the line falls back to a number-free one). */
@@ -70,38 +76,42 @@ export function heroLines(hero: { big: string; small: string } | undefined, alco
   if (!hero) return [];
   const { big, small } = hero, all = `${big} ${small}`;
   let m: RegExpExecArray | null;
-  if (/^Blood sugar up/.test(big) && (m = /\+?(\d+)–(\d+) %/.exec(small))) return [`At its peak, blood sugar was up ${m[1]}–${m[2]} %.`, `Blood sugar: up ${m[1]}–${m[2]} %.`, `Sugar: up ${m[1]}–${m[2]} %.`];
-  if (/^Blood fat up · \d+ h/.test(big)) return [`The fat was the slowest part.`];
-  if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body/.test(small)) return [`${m[1]} mg of caffeine, still in your body.`, `${m[1]} mg, still in you.`];
+  if (/^Blood sugar up/.test(big) && (m = /\+?(\d+)–(\d+) %/.exec(small))) return [`The peak? Blood sugar up ${m[1]}–${m[2]} %.`, `Blood sugar: up ${m[1]}–${m[2]} %.`, `Sugar: up ${m[1]}–${m[2]} %.`];
+  if (/^Blood fat up · \d+ h/.test(big)) return [`The slowest part? The fat.`, `The fat took longest.`];
+  if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body/.test(small)) return [`A day later? ${m[1]} mg of caffeine, still in you.`, `${m[1]} mg of caffeine, still in you.`, `${m[1]} mg, still in you.`];
   // alcohol: the BAC range is too long to say well ("zero point zero one one to …"): the safety line instead
   if (/BAC/.test(small) || alcohol) return ['Remember: never drink and drive.', 'Never drink and drive.'];
-  if ((m = /^(\d+) kcal$/.exec(big))) return [`That's ${m[1]} kcal in total.`, `${m[1]} kcal in total.`];
-  if ((m = /^(\d+) g$/.exec(big)) && /^(fat|protein|sugar)$/.test(small)) return [`That's ${m[1]} g of ${small} in total.`, `${m[1]} g of ${small}.`];
+  if ((m = /^(\d+) kcal$/.exec(big))) return [`The total? ${m[1]} kcal.`, `${m[1]} kcal in total.`];
+  if ((m = /^(\d+) g$/.exec(big)) && /^(fat|protein|sugar)$/.test(small)) return [`The total? ${m[1]} g of ${small}.`, `${m[1]} g of ${small}.`];
   void all; void alcohol;
   return [];
 }
 
+// v19 (owner: "even more viral"): punchier, curious lines: questions, "watch this", reveals. Bigger pools, so the
+// scripts differ from video to video (text-audit: no script on more than 10 % of the videos).
 const HOOKS = {
-  alcohol: ['Watch what this really does to your body.', "Here's what happens after you drink this."],
-  caffeine: ['Watch where all that caffeine goes.', "Here's what this does to you all day."],
-  solid: ['Watch what happens after the first bite.', "Here's where this food actually goes."],
-  drink: ['Watch where this drink goes inside you.', "Here's what this does to your body."],
-  compareGuess: ['Make your guess now.', 'Lock in your guess.'],
-  compare: ['Same day. Two very different stories.', 'Two bodies. Watch them closely.'],
+  alcohol: ['Watch what this really does to your body.', "Here's what happens after you drink this.", 'Where does the alcohol go? Watch.', 'Ever wonder where this goes? Watch.', 'Your body after this drink. Watch.', 'Follow every sip of this.', 'What does this do to you? Watch.', 'Watch your body handle this drink.'],
+  caffeine: ['Watch where all that caffeine goes.', "Here's what this does to you all day.", 'Where does the caffeine go? Watch.', 'How long does this last? Watch.', 'Ever wonder where this goes? Watch.', 'Watch this hit your body.', 'Follow every sip of this.', 'What does this really do? Watch.'],
+  solid: ['Watch what happens after the first bite.', "Here's where this food actually goes.", 'Where does this food go? Watch.', 'Ever wonder where this goes? Watch.', 'What does this do to you? Watch.', 'Follow this bite all the way.', 'Watch your body take this on.', 'One bite. Now watch closely.'],
+  drink: ['Watch where this drink goes inside you.', "Here's what this does to your body.", 'Where does this drink go? Watch.', 'Ever wonder where this goes? Watch.', 'What does this do to you? Watch.', 'Follow every sip of this.', 'Watch your body take this in.', 'One sip. Now watch closely.'],
+  compareGuess: ['Make your guess now.', 'Lock in your guess.', 'Which one? Guess now.', 'Pick one before the answer.', 'Guess now. No peeking.', 'Your guess? Lock it in.'],
+  compare: ['Same day. Two very different stories.', 'Two bodies. Watch them closely.', 'Which body has the harder day?', 'Two choices. Watch both closely.', 'Side by side. Spot the difference?', 'Same body. Two very different days.'],
 } as const;
-const TEASE = ['Stay with this one.', 'Keep watching.', 'Wait for it.'] as const;
+const TEASE = ['Stay with this one.', 'Keep watching.', 'Wait for it.', "Don't scroll yet.", 'The big part is coming.', "It's not over yet.", 'Watch what comes next.', 'Now watch this part.'] as const;
 const CLIMAX = {
-  sugar: ["And there's the sugar spike.", 'Here comes the sugar spike.'],
-  caffeine: ["Here's the caffeine peak.", 'Caffeine peaks right here.'],
-  alcohol: ['Blood alcohol peaks right here.', 'This is the alcohol peak.'],
-  fat: ["Here's where blood fat peaks.", 'Blood fat peaks right here.'],
-  other: ["Here's the big moment.", 'This is the big one.'],
-  compareGuess: ['There it is. Did you guess right?', 'Did you get it right?'],
-  compare: ["Here's the big difference.", "There's the difference."],
+  sugar: ["And there's the sugar spike.", 'Here comes the sugar spike.', 'See that? The sugar spike.', 'Boom. The sugar spike.', 'There it is: the sugar spike.'],
+  caffeine: ["Here's the caffeine peak.", 'Caffeine peaks right here.', 'See that? The caffeine peak.', 'Boom. Peak caffeine.', 'There it is: peak caffeine.'],
+  alcohol: ['Blood alcohol peaks right here.', 'This is the alcohol peak.', 'See that? Peak blood alcohol.', 'There it is: the alcohol peak.'],
+  fat: ["Here's where blood fat peaks.", 'Blood fat peaks right here.', 'See that? The blood fat peak.', 'There it is: peak blood fat.'],
+  other: ["Here's the big moment.", 'This is the big one.', 'See that? The big moment.', 'There it is: the big moment.'],
+  compareGuess: ['There it is. Did you guess right?', 'Did you get it right?', 'So, were you right?', 'Called it? Here it is.'],
+  compare: ["Here's the big difference.", "There's the difference.", 'See that? The big difference.', 'There it is: the difference.'],
 } as const;
-const DAY = ['One full day later.', 'Twenty-four hours later.', 'A day later.'] as const;
-const LOOP = { sip: ['From the first sip.', 'Back to the start.'], bite: ['From the first bite.', 'Back to the start.'] } as const;
+const DAY = ['One full day later.', 'Twenty-four hours later.', 'A day later.', 'Fast forward a full day.', 'And a whole day later?'] as const;
+const LOOP = { sip: ['From the first sip.', 'Back to the start.', 'Watch it again.', 'One more time?'], bite: ['From the first bite.', 'Back to the start.', 'Watch it again.', 'One more time?'] } as const;
 const ANSWER_FALLBACK = { single: ["That's one full day inside you.", 'One day, inside you.'], compare: ['Now you know the difference.', 'Now you know.'] } as const;
+/** v19: the most words a line may have in each slot (short and spoken: a viewer hears it once). */
+export const SLOT_WORDS: Record<NarrId, number> = { hook: 9, tease: 6, climax: 7, day: 6, answer: 10, loop: 5 };
 
 /** What the climax is about, from the hero (the same climax moment, video-story heroOf / climaxFx). */
 export function climaxKind(n: NarrIn): keyof typeof CLIMAX {
@@ -130,7 +140,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   };
   const add = (id: NarrId, t: number, until: number, options: readonly string[], source = '') => {
     const slot = clearSlot(t, until);
-    const text = options.find((x) => speakS(x) <= slot);
+    const text = options.find((x) => speakS(x) <= slot && wordsOf(x) <= SLOT_WORDS[id]);
     if (text) out.push({ id, t, slotS: slot, text, say: speakable(text), source });
   };
   // 1. the hook: after the hook frame's first half second, over the hook card and the first sip
@@ -195,6 +205,13 @@ export function lintNarration(lines: NarrLine[], n: NarrIn): NarrIssue[] {
     }
     if (/\b(sugar)\b/i.test(l.text) && n.hero && !/sugar/i.test(`${n.hero.big} ${n.hero.small}`) && l.id === 'climax') bad('narration contradicts the video', l.text);
     if (/undefined|NaN|\bnull\b|\$\{/.test(l.say)) bad('broken', l.say);
+    // v19: length per slot, and the grammar of a spoken line (a capital, an end mark, a question that is one)
+    if (wordsOf(l.text) > SLOT_WORDS[l.id]) bad('narration line too long for its kind', `${l.id}: ${l.text}`);
+    if (!/^[A-Z0-9]/.test(l.text) || !/[.?!]$/.test(l.text)) bad('narration grammar', l.text);
+    const q = l.text.split(/(?<=[.?!:])\s+/).find((x) => x.includes('?'));
+    if (q && !/^(Where|What|How|Which|Ever|Did|So|Called|And|The|A|Your|Same|Side|Spot|One|Two|See)\b/.test(q)) bad('narration grammar', `odd question: ${l.text}`);
+    if (/\s{2,}|\s[,.?!:]|\.\.|\?\.|[,:]$/.test(l.text)) bad('narration grammar', l.text);
+    if (/\b(\w+)\s+\1\b/i.test(l.text)) bad('narration grammar', `repeated word: ${l.text}`);
   }
   return out;
 }

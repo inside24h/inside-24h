@@ -195,9 +195,38 @@ export function duckCurve(spans: [number, number][], len: number, sr: number): F
 /** Round 11 (research R5, YouTube "repetitive content"): each food gets its own motif, deterministically: the key
  *  (A minor, G minor, C minor, D minor, E minor), where the progression starts, and the whoosh's colour. */
 export const MOTIF_KEYS = [0, -2, 3, 5, -5] as const;
-export function motifOf(seed = 0): { tr: number; rot: number; whoosh: number } {
+export function motifOf(seed = 0): { tr: number; rot: number; whoosh: number; mel: number[] } {
   const s = Math.abs(Math.floor(seed));
-  return { tr: MOTIF_KEYS[s % MOTIF_KEYS.length], rot: Math.floor(s / 5) % CHORDS.length, whoosh: [1, 0.8, 1.25][Math.floor(s / 20) % 3] };
+  return { tr: MOTIF_KEYS[s % MOTIF_KEYS.length], rot: Math.floor(s / 5) % CHORDS.length, whoosh: [1, 0.8, 1.25][Math.floor(s / 20) % 3], mel: melodyOf(s) };
+}
+/** v19: the food's own hook melody (deterministic from its seed): 8 eighth notes over one bar, each a chord tone
+ *  index (1-4, over the root) or a rest (-1); it starts on a note and has at least 5 notes. */
+export function melodyOf(seed = 0): number[] {
+  let h = (Math.abs(Math.floor(seed)) * 2654435761 + 97) >>> 0;
+  const rnd = () => { h = (Math.imul(h ^ (h >>> 15), 2246822519) + 3266489917) >>> 0; return h / 4294967296; };
+  const out: number[] = [];
+  for (let i = 0; i < 8; i++) out.push(i === 0 ? 1 + Math.floor(rnd() * 4) : rnd() < (i % 2 ? 0.35 : 0.15) ? -1 : 1 + Math.floor(rnd() * 4));
+  for (let i = 1; out.filter((x) => x >= 0).length < 5; i += 2) out[i] = 1 + (i % 4);
+  return out;
+}
+/** v19 (owner: "less sonically monotonous"): the music is arranged, not looped: intro (the cold open, pad and a hint
+ *  of the melody) → build (from the first sip: the groove adds a layer at a time) → drop (two bars of the full groove
+ *  and the melody on the climax hit) → breakdown (the beat drops out for two bars, then the groove comes back) →
+ *  outro (the end card: the pad and the melody's hint again, on the first chord, so the loop runs into the intro).
+ *  Pure (tested in video-plan.test.ts). */
+export type Section = 'intro' | 'build' | 'drop' | 'breakdown' | 'outro';
+export const DROP_BARS = 2, BREAK_BARS = 2;
+export function arrangement(cues: Cue[], seconds: number): { name: Section; t0: number; t1: number }[] {
+  const at = (k: Cue['kind']) => cues.filter((c) => c.kind === k).map((c) => c.t);
+  const outro = Math.min(seconds, at('outro')[0] ?? seconds - 6), sip = Math.min(outro, at('sip')[0] ?? 1);
+  const hit = [...at('peak'), ...at('verdict')].sort((a, b) => a - b).find((t) => t > sip && t < outro);
+  const out: { name: Section; t0: number; t1: number }[] = [];
+  const push = (name: Section, t0: number, t1: number) => { if (t1 > t0 + 1e-6) out.push({ name, t0, t1 }); };
+  push('intro', 0, sip);
+  if (hit !== undefined) { const d1 = Math.min(outro, hit + DROP_BARS * BAR2); push('build', sip, hit); push('drop', hit, d1); push('breakdown', d1, outro); }
+  else push('build', sip, outro);
+  push('outro', outro, seconds);
+  return out;
 }
 const BPM2 = 120, BEAT2 = 60 / BPM2, BAR2 = 4 * BEAT2, CHORD2_S = 2 * BAR2;
 /** RMS of the full mix that measures about −14 LUFS for this material (calibrated with ffmpeg ebur128, QA 2026-10-24). */
@@ -348,16 +377,45 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
     const kick = (t: number, v: number) => { osc('sine', 140, 46, t, 0.3, v, duck, 0, 0.005); };
     const hat = (t: number, v: number) => nz(t, 0.045, v, duck, { type: 'highpass', f: 7500 });
     const pluck = (t: number, f: number, v: number, type: OscillatorType, d: number, pan = 0) => osc(type, f, null, t, d, v, duck, pan, 0.008);
+    const clap = (t: number, v: number) => { nz(t, 0.11, v, duck, { type: 'bandpass', f: 1500, q: 0.9 }, 0, 0.002); nz(t + 0.012, 0.06, v * 0.6, duck, { type: 'highpass', f: 3500 }, 0, 0.002); };
+    // v19: the food's melody (motifOf mel), one bar of eighths from t, at level v; `dark` = muffled (intro, outro)
+    const melody = (t0: number, until: number, v: number, dark = false) => {
+      mo.mel.forEach((d, i) => {
+        const tt = t0 + (i * BEAT2) / 2; if (d < 0 || tt >= until - 0.05) return;
+        const ch = CHORDS[chordAt(tt)], n = ch[d % ch.length] + 12;
+        osc(dark ? 'sine' : 'triangle', midi(n), null, tt, dark ? 0.5 : 0.28, v, duck, (i % 2 ? 0.25 : -0.25), 0.006);
+        if (!dark) osc('sine', midi(n + 12), null, tt, 0.18, v * 0.35, duck, (i % 2 ? -0.3 : 0.3), 0.004);
+      });
+    };
+    const arr = arrangement(cues, seconds), secOf = (t: number) => arr.find((x) => t >= x.t0 - 1e-6 && t < x.t1) ?? arr[arr.length - 1];
     const drops = peaks.map((p) => [p, p + BAR2] as [number, number]);
+    const dropSec = arr.find((x) => x.name === 'drop');
+    if (dropSec) drops.push([dropSec.t0, dropSec.t1]);
     const first = Math.ceil(sip / BEAT2) * BEAT2;
     for (let t = first, k = Math.round(first / BEAT2); t < outro - 0.05; t += BEAT2, k++) {
       const inBar = k % 4, ch = CHORDS[chordAt(t)], night = inNight(t), drop = drops.some(([a, b]) => t >= a - 1e-6 && t < b);
-      if (drop) { kick(t, 0.5); pluck(t, midi(ch[0] - 12), 0.2, 'triangle', 0.35); continue; }
+      const sec = secOf(t), prog = (t - sec.t0) / Math.max(0.1, sec.t1 - sec.t0);
+      if (drop) {
+        kick(t, 0.5); pluck(t, midi(ch[0] - 12), 0.2, 'triangle', 0.35); pluck(t + BEAT2 / 2, midi(ch[0]), 0.08, 'triangle', 0.2);
+        if (inBar === 1 || inBar === 3) clap(t, 0.12);
+        hat(t + BEAT2 / 2, 0.06);
+        if (inBar === 0) melody(t, Math.min(outro, t + BAR2), 0.05);
+        continue;
+      }
       if (night) { if (inBar === 0) { kick(t, 0.3); pluck(t, midi(ch[0]), 0.12, 'triangle', 0.6); } continue; }
-      if (inBar === 0 || inBar === 2) { kick(t, inBar === 0 ? 0.42 : 0.3); pluck(t, midi(ch[0]), 0.15, 'triangle', 0.4); }
-      hat(t + BEAT2 / 2, 0.045);
-      for (let e = 0; e < 2; e++) { const tt = t + (e * BEAT2) / 2; pluck(tt, midi(ch[1 + ((k * 2 + e) % (ch.length - 1))] + 24), 0.025, 'triangle', 0.22, e ? 0.4 : -0.4); }
+      // the breakdown's first bars: no beat, the melody answered softly over the pad
+      if (sec.name === 'breakdown' && t - sec.t0 < BREAK_BARS * BAR2) { if (inBar === 0) { melody(t, Math.min(outro, t + BAR2), 0.03); pluck(t, midi(ch[0] - 12), 0.08, 'sine', 1.6); } continue; }
+      // the build: a layer at a time (kick and bass → off-beat hats → the arpeggio → claps on 2 and 4)
+      const build = sec.name === 'build';
+      if (inBar === 0 || (inBar === 2 && (!build || prog > 0.3))) { kick(t, inBar === 0 ? 0.42 : 0.3); pluck(t, midi(ch[0]), 0.15, 'triangle', 0.4); }
+      if (!build || prog > 0.2) hat(t + BEAT2 / 2, 0.045);
+      if (!build || prog > 0.45) for (let e = 0; e < 2; e++) { const tt = t + (e * BEAT2) / 2; pluck(tt, midi(ch[1 + ((k * 2 + e) % (ch.length - 1))] + 24), 0.025, 'triangle', 0.22, e ? 0.4 : -0.4); }
+      if (build && prog > 0.7 && (inBar === 1 || inBar === 3)) clap(t, 0.06 + 0.04 * prog);
+      if (!build && sec.name === 'breakdown' && (inBar === 1 || inBar === 3)) clap(t, 0.05);
     }
+    // the melody's hint in the intro (after the hook's first hit) and in the outro, alike: the loop's seam
+    { const it = arr.find((x) => x.name === 'intro'); if (it && it.t1 - it.t0 > 1.2) melody(Math.max(0.5, it.t1 - BAR2), it.t1, 0.022, true); }
+    { const ot = arr.find((x) => x.name === 'outro'); if (ot) for (let t = ot.t0 + 0.6; t < ot.t1 - 0.6; t += BAR2) melody(t, ot.t1 - 0.4, 0.022, true); }
     // the resolving chord under the end card
     const tO = outro; [69, 72, 76, 81].forEach((n, i) => pluck(tO + i * 0.12, midi(n + mo.tr), 0.05, 'sine', 1.6, (i - 1.5) * 0.25));
     // ducking (a sidechain written from the cue list): −6 dB under each impact, −3 dB under the sip

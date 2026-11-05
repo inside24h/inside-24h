@@ -6,6 +6,7 @@
 // every word stays inside the platform safe zone (SAFE below), our own soundtrack (video-audio.ts), brand fonts,
 // a hook frame as the first frame (= thumbnail) and an end card that loops back to it.
 import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
+import { captionTrack, pageAt, placeCaption, duplicateOnScreen, CAP_FS, CAP_LH, CAP_PAD, PIN_R, type CapLine, type CapPage, type Pt } from './video-captions';
 import { aacConfig, encodeSoundtrack, lastVoiceMix, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
@@ -101,8 +102,9 @@ export interface RecOpts { sound: boolean; onTick?: (f: number) => void; prepare
   /** 2026-10-24: our music + effects, or effects only (the owner adds a trending song); and what the drink is like */
   soundMode?: SoundMode; soundFx?: { fizzy?: boolean; solid?: boolean; seed?: number };
   /** 2026-11-05: the voiceover, made before the soundtrack (voice-tts.ts makeVoice); null or a failure: no voice */
-  voice?: () => Promise<{ data: Float32Array; spans: [number, number][] } | null> }
-type VoiceIn = { data: Float32Array; spans: [number, number][] };
+  voice?: () => Promise<VoiceIn | null> }
+/** The voiceover track (and, v19, its placed lines and pauses for the word-by-word captions). */
+type VoiceIn = { data: Float32Array; spans: [number, number][]; lines?: CapLine[]; pauses?: number[][] };
 type SoundIn = { seconds: number; cues: Plan['cues']; beatFrom: number; music: boolean; fizzy?: boolean; solid?: boolean; voice?: () => Promise<VoiceIn | null> };
 const soundOf = (plan: Plan, opts: RecOpts): SoundIn | null => (opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS, music: opts.soundMode !== 'sfx', ...opts.soundFx, voice: opts.voice } : null);
 /** The voiceover, or null on any failure (the video is then made exactly as without it). */
@@ -135,6 +137,7 @@ export async function record(source: HTMLCanvasElement, format: Format, overlay:
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   let first: HTMLCanvasElement | null = null;
+  const caps = captioner(voiced, W, H);
   return new Promise((resolve, reject) => {
     rec.onstop = () => resolve({ blob: new Blob(chunks, { type: fmt.mime.split(';')[0] }), ext: fmt.ext, audio: !!sound, voice: !!sound && !!voiced });
     rec.onerror = () => { sound?.stop(); reject(new Error('The recording failed. Please try again.')); };
@@ -145,14 +148,70 @@ export async function record(source: HTMLCanvasElement, format: Format, overlay:
       if (i >= plan.frames.length) { cancelAnimationFrame(raf); rec.stop(); sound?.stop(); stream.getTracks().forEach((s) => s.stop()); return; }
       const fr = plan.frames[i];
       seek(fr.m, fr);
-      drawFrame(ctx, W, H, source, overlay(), format, fr, plan, first);
-      if (!first) first = snapshot(out);
+      caps(ctx, i, () => { drawFrame(ctx, W, H, source, overlay(), format, fr, plan, first); if (!first) first = snapshot(out); });
       opts.onTick?.(i / plan.frames.length);
       raf = requestAnimationFrame(frame);
     };
     rec.start(250); sound?.start();
     raf = requestAnimationFrame(frame);
   });
+}
+/** v19: the body's focal organ(s) on the last frame drawn (the spoken-word captions keep clear of them). */
+let frameFocus: Pt[] = [];
+export const lastFrameFocus = () => frameFocus;
+/** v19: draws a frame, then the spoken-word caption of that moment over it (video-captions.ts): placed clear of every
+ *  word on the frame and of the focal organ, left out where the screen already says the same thing. */
+function captioner(v: VoiceIn | null, W: number, H: number) {
+  const pages = v?.lines?.length ? captionTrack(v.lines, v.pauses) : [];
+  const st: CapState = {};
+  return (ctx: CanvasRenderingContext2D, i: number, draw: () => void) => {
+    const pg = pages.length ? pageAt(pages, i / FPS) : null;
+    if (!pg) { draw(); return; }
+    const boxes = logText(draw);
+    drawCaption(ctx, W, H, pg, i / FPS, boxes, frameFocus, st);
+  };
+}
+export interface CapState { prefer?: number }
+const CAP_FONT = (px: number) => `700 ${px}px ${SANS}`;
+const CAP_HI = '#ffe14d';
+/** One caption page at time t (TikTok style: bold white words with a black edge, the word being said in yellow).
+ *  Returns where it went, or null when it was left out (no clear place, or the screen already says it). */
+export function drawCaption(ctx: CanvasRenderingContext2D, W: number, H: number, pg: CapPage, t: number, boxes: TextBox[], focus: Pt[], st: CapState = {}): { x: number; y: number; w: number; h: number } | null {
+  if (pg.line && duplicateOnScreen(pg.line, boxes)) return null;
+  const S = SAFE.reel;
+  ctx.save();
+  // the widest line fits the narrower column (clear of the platforms' buttons, whatever height it lands at)
+  let px = CAP_FS; ctx.font = CAP_FONT(px);
+  const maxW = 2 * (S.rightLow - W / 2) - 2 * CAP_PAD - 8;
+  const widest = Math.max(...pg.lines.map((l) => ctx.measureText(l.join(' ')).width));
+  if (widest > maxW) { px = Math.max(40, Math.floor((px * maxW) / widest)); ctx.font = CAP_FONT(px); }
+  const lh = (CAP_LH * px) / CAP_FS, widths = pg.lines.map((l) => ctx.measureText(l.join(' ')).width);
+  const at = placeCaption(widths, boxes, focus, W, H, S, st.prefer);
+  if (!at) { ctx.restore(); return null; }
+  st.prefer = at.f;
+  // a quick pop as the page comes in
+  const age = t - pg.t0, k = age < 0.09 ? 0.9 + 0.1 * (age / 0.09) : 1;
+  const cx = W / 2, cy = at.y + at.h / 2;
+  ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
+  const sp = ctx.measureText(' ').width;
+  let wi = 0;
+  pg.lines.forEach((ln, r) => {
+    const lw = ctx.measureText(ln.join(' ')).width;
+    let x = cx - lw / 2;
+    const y = at.y + CAP_PAD / 2 + r * lh + px * 0.92;
+    for (const word of ln) {
+      const cw = pg.words[wi++], on = !!cw && t >= cw.t0 && t < cw.t1, ww = ctx.measureText(word).width;
+      ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 3;
+      ctx.lineWidth = Math.max(6, px * 0.16); ctx.strokeStyle = '#000'; ctx.strokeText(word, x, y);
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = on ? CAP_HI : '#ffffff';
+      text(ctx, word, x, y);
+      x += ww + sp;
+    }
+  });
+  ctx.restore();
+  return at;
 }
 const snapshot = (c: HTMLCanvasElement) => { const s = document.createElement('canvas'); s.width = c.width; s.height = c.height; s.getContext('2d')!.drawImage(c, 0, 0); return s; };
 
@@ -210,8 +269,9 @@ async function encodeMp4(out: HTMLCanvasElement, count: number, draw: (i: number
   let failed: Error | null = null;
   const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { failed = e as Error; } });
   enc.configure(config);
+  const caps = captioner(voiced, W, H), cctx = out.getContext('2d')!;
   for (let i = 0; i < count; i++) {
-    draw(i);
+    caps(cctx, i, () => draw(i));
     const frame = new VideoFrame(out, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
     enc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
     frame.close();
@@ -1174,6 +1234,8 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   ctx.save(); ctx.translate(pivot.x + mo.dx, pivot.y + mo.dy); ctx.scale(mo.scale, mo.scale); ctx.translate(-pivot.x, -pivot.y);
   drawCover(ctx, src, 0, 0, W, H); ctx.restore();
   const pinOf = (k: string | null | undefined) => (k ? tf(o.pins?.[k] ?? null) : null);
+  // (the organ of the moment and the main number's organ; the other pinned organs with a smaller clearance)
+  frameFocus = [pinOf(o.focus), tf(main?.at), ...(o.gauges ?? []).filter((g) => g !== main).map((g) => { const p = tf(g.at); return p && { ...p, r: PIN_R }; })].filter((p): p is Pt => !!p && onFrame(p, W, 0, H));
   const micro = since(cues, 'micro', t);
   if (micro.cue?.data?.v === 1) drawGlowPulse(ctx, pinOf(o.focus) ?? tf(main?.at), micro.age, lighten(o.color ?? ACCENT));
   drawSplash(ctx, pinOf('tongue'), since(cues, 'sip', t).age, lighten(o.color ?? '#ffffff'));
@@ -1451,6 +1513,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   ctx.save(); ctx.translate(pv.x + mo.dx, pv.y + mo.dy); ctx.scale(mo.scale, mo.scale); ctx.translate(-pv.x, -pv.y);
   drawCover(ctx, src, 0, 0, W, H); ctx.restore();
   const sipAge = since(cues, 'sip', t).age, peak = since(cues, 'peak', t);
+  frameFocus = [o.a, o.b].map((sd) => tf(sd.gauge?.at ?? sd.pins?.stomach ?? null)).filter((p): p is Pt => !!p && onFrame(p, W, 0, H));
   [o.a, o.b].forEach((sd, k) => {
     drawSplash(ctx, tf(sd.pins?.tongue ?? null), sipAge - k * 0.12, lighten(sd.color), 11 + k);
     const sg = since(cues, 'surge', t);

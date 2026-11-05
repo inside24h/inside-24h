@@ -7,6 +7,7 @@
 // without the voice.
 import { OVERRUN_S, placeClips, type NarrLine } from './video-narration';
 import { SAMPLE_RATE } from './video-audio';
+import { pausesOf, type CapLine } from './video-captions';
 
 /** Exact versions (pinned): the engine's browser build and the model repo on the Hugging Face hub. */
 export const KOKORO_JS = 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js';
@@ -20,7 +21,9 @@ const LOAD_TIMEOUT_MS = 240_000, LINE_TIMEOUT_MS = 45_000;
 const READY_KEY = 'i24-voice-ready';
 
 export interface VoiceTrack { /** mono, SAMPLE_RATE, the video's length, already processed (EQ + compression) */ data: Float32Array;
-  /** where the voice speaks (s), for the music's ducking */ spans: [number, number][]; device: string; said: string[] }
+  /** where the voice speaks (s), for the music's ducking */ spans: [number, number][]; device: string; said: string[];
+  /** v19: the spoken lines as placed (for the word-by-word captions) and each clip's own pauses (s from its start) */
+  lines: CapLine[]; pauses: number[][] }
 export type VoiceProgress = (frac: number, stage: 'load' | 'speak') => void;
 
 type Raw = { audio: Float32Array; sampling_rate: number };
@@ -96,15 +99,16 @@ export async function makeVoice(lines: NarrLine[], seconds: number, onProgress?:
     const pres = ctx.createBiquadFilter(); pres.type = 'peaking'; pres.frequency.value = 3200; pres.Q.value = 0.9; pres.gain.value = 3;
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -22; comp.knee.value = 6; comp.ratio.value = 3; comp.attack.value = 0.005; comp.release.value = 0.12;
     hp.connect(mud); mud.connect(pres); pres.connect(comp); comp.connect(ctx.destination);
-    const spans: [number, number][] = [];
+    const spans: [number, number][] = [], capLines: CapLine[] = [], pauses: number[][] = [];
     for (const p of placed) {
       const c = clips[lines.indexOf(p.line)]!;
       const b = ctx.createBuffer(1, c.audio.length, c.sampling_rate); b.getChannelData(0).set(c.audio);
       const s = ctx.createBufferSource(); s.buffer = b; s.connect(hp); s.start(p.t);
       spans.push([p.t, p.t + p.dur]);
+      capLines.push({ text: p.line.text, t: p.t, dur: p.dur }); pauses.push(pausesOf(c.audio, c.sampling_rate));
     }
     const out = await ctx.startRendering();
-    return { data: out.getChannelData(0).slice(), spans, device, said: placed.map((p) => p.line.text) };
+    return { data: out.getChannelData(0).slice(), spans, device, said: placed.map((p) => p.line.text), lines: capLines, pauses };
   } catch {
     return null;
   }
