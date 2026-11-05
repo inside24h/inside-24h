@@ -434,7 +434,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
 /** Comparison video: both foods at the same minutes. Each side shows the first sentence of its chapter at that
  *  minute (split into pages when long). A page's time counts only the words that are new on screen: a side whose
  *  chapter did not change since the last moment is not read again. Same length rules as the single video. */
-export interface CmpStopIn { min: number; a: string; b: string; titleA?: string; titleB?: string; linesA?: string[]; linesB?: string[]; /** round 12: a side's own peak: never left out */ keep?: boolean;
+export interface CmpStopIn { min: number; a: string; b: string; titleA?: string; titleB?: string; linesA?: string[]; linesB?: string[]; /** round 12: a side's own peak: never left out */ keep?: boolean; /** round 18: the day's middle (goes last) */ mid?: boolean;
   /** round 14 (critic C13-1: "NEXT · Peak" before the beer's "Alcohol gone"): the NEXT chip, in plain words, for the side that has the news */ chip?: string }
 export const CMP_PAGE = 40;
 /** Longest time one card stays on one side of the comparison (round 8). */
@@ -478,7 +478,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
     + (list[list.length - 1].min < 1440 ? moveS(toU, list[list.length - 1].min, 1440) : 0)); // (round 14: as layFrames times them)
   const total = (pp: { s: number }[][]) => fixed + glides(chosen) + pp.reduce((acc, p) => acc + p.reduce((a, x) => a + x.s, 0), 0);
   const peakAt = fx.peakMin === undefined ? -1 : nearestStop(chosen.map((x) => x.min), fx.peakMin, toU), peakMin = peakAt >= 0 ? chosen[peakAt].min : undefined;
-  const value = (s: CmpStopIn) => stopValue({ min: s.min, title: '', text: s.a }) + stopValue({ min: s.min, title: '', text: s.b }) + (s.min === peakMin ? 10 : 0) + (s.keep ? 100 : 0);
+  const value = (s: CmpStopIn) => stopValue({ min: s.min, title: '', text: s.a }) + stopValue({ min: s.min, title: '', text: s.b }) + (s.min === peakMin ? 10 : 0) + (s.keep ? 100 : 0) + (s.mid ? 200 : 0);
   let pages = pagesOf(chosen);
   const dropped: CmpStopIn[] = [];
   while (total(pages) > lim.max && chosen.length > 2) {

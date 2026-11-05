@@ -6,6 +6,7 @@
 // it here. Typical servings (`assumedServing`), the Atkinson Supplementary-Table GI values and the label overrides
 // (cola EU can, Red Bull, Nutella …, each with its source in `src`) all live in research/tools/fooddb_spec.py now.
 // Beer has no GI on purpose (Atkinson A1 lists 66): alcohol changes how the liver handles glucose.
+import { estimatedGi } from './giEstimate';
 import raw from './fooddb.json';
 
 export interface Per100 {
@@ -58,6 +59,7 @@ export const FOOD_BY_ID: Record<string, Food> = Object.fromEntries(FOODS.map((f)
 export interface Part { food: Food; grams: number; amountLabel: string; assumed: boolean; ask?: boolean }
 export interface Macros {
   grams: number; kcal: number; carbs: number; availCarbs: number; sugars: number; fiber: number; fat: number; protein: number;
+  /** round 18 */ satFat: number; freeSugars: number;
   waterG: number; caffeineMg: number; alcoholG: number; sodiumMg: number;
   /** Glycaemic load = Σ GI × available carbs / 100 over the parts with a measured GI; null when none of the
    *  carbohydrate has one. `missingGi` names parts left out, so the real load is at least this. */
@@ -389,7 +391,10 @@ export function macros(parts: Part[]): Macros {
   for (const x of parts) {
     const c = (avail(x.food.p) * x.grams) / 100;
     if (c < 3) continue; // under 3 g of available carbs: no meaningful sugar response (an egg, cheese, meat)
-    if (x.food.gi === null) missingGi.push(x.food.name); else { glSum += (x.food.gi * c) / 100; knownCarbs += c; }
+    // round 18 (critic T-3): a GI never measured counts with its kind's typical GI (giEstimate.ts), named in missingGi
+    // (an alcoholic drink keeps its alcohol story, and under 10 g the rise is too small to tell: no estimate)
+    const est = x.food.gi === null && c >= 10 && (x.food.p.alcoholG ?? 0) < 0.6 ? estimatedGi(x.food).gi : null;
+    if (x.food.gi === null) { missingGi.push(x.food.name); if (est !== null) { glSum += (est * c) / 100; knownCarbs += c; } } else { glSum += (x.food.gi * c) / 100; knownCarbs += c; }
   }
   const gl = knownCarbs > 0 ? glSum : null;
   const availCarbs = sum(avail);
@@ -397,6 +402,7 @@ export function macros(parts: Part[]): Macros {
     grams: parts.reduce((s, x) => s + x.grams, 0), kcal: sum((p) => p.kcal), carbs: sum((p) => p.carbs), availCarbs, sugars: sum((p) => p.sugars),
     fiber: sum((p) => p.fiber), fat: sum((p) => p.fat), protein: sum((p) => p.protein), waterG: sum((p) => p.waterG),
     caffeineMg: sum((p) => p.caffeineMg), alcoholG: sum((p) => p.alcoholG), sodiumMg: sum((p) => p.sodiumMg),
+    satFat: sum((p) => p.satFat ?? 0), freeSugars: sum((p) => p.freeSugars ?? 0), // (round 18: the verdict's trophy rule)
     gl, gi: gl !== null && !missingGi.length && knownCarbs >= 1 ? Math.round((100 * gl) / knownCarbs) : null, missingGi,
   };
 }
@@ -481,7 +487,8 @@ function builderName(base: Food, sel: string[]): string {
   const prOne = b.presets.find((p) => chosen.every((c) => p.on.includes(c.k)));
   if (ones.length === 1 && ones[0].opts.length === 1) { noun = plainName(base); ref = defaultSel(b); }
   else if (ones.length > 1 && prOne) { noun = prOne.name; ref = prOne.on; }
-  else if (ones.length > 1) { noun = plainName(base); ref = defaultSel(b); }
+  // (round 18, critic T-6: a beef wrap was "1 kebab"): the choices that differ from the default name it, "beef wrap kebab"
+  else if (ones.length > 1) { const def = defaultSel(b), diff = chosen.filter((c) => !def.includes(c.k)).reverse().map((c) => c.name); noun = diff.length ? cap1(`${diff.join(' ')} ${plainName(base).split(' / ')[0].toLowerCase()}`) : plainName(base); ref = def; }
   else { noun = cap1(chosen[0].name); ref = defaultSel(b); }
   const added = anyOn(sel).filter((o) => !ref.includes(o.k)).map((o) => o.name);
   const removed = anyOn(ref).filter((o) => !sel.includes(o.k)).map((o) => o.name);

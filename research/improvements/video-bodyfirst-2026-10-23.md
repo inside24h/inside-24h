@@ -749,3 +749,22 @@ Backup: `C:\claudework\inside-24h-backups\20261031-014517-video15\`.
 - **G-5:** builder ime s dodacima („1 hamburger with bacon & extra patty“). **G-6:** „Coming up: the after-meal slump.“ **G-7:** end card uvijek ima broj (hook broj / kcal / bubrezi). **G-8:** „Brie“, „Cheddar“, „Cod“, „Kebab“ (i u compareu), #brie. **G-9:** žličice iz prikazanih grama.
 - **P2:** cola „Your body burns some sugar for energy.“; „The food is mostly in your …“ umjesto „Most of it“; u sugar/kcal/alkohol igri nijedna strana ne kaže broj prije odgovora; kartica imena u compareu bez ponovljene količine; servings kartica uvijek u ml/g.
 - Testovi 861/861 (+1 skip), oba builda OK. Uzorci (10): `C:\claudework\video-samples\2026-11-05-v17\` (−14,2…−14,5 LUFS, peak ≤ −2,4 dBFS; Shorts 29,0/29,5 s, TT 62,2–70,3 s, Reels 45,4–49,2 s).
+
+## Runda 18 (2026-11-05) — kritika g (9,5; neviđeni 9,1) i matrica kategorija
+
+- **Uzrok (generalizacija):** novi `category-matrix.test.ts` svrstava svaku stavku, varijantu, builder preset i nasumične builder kombinacije u klase (alkohol / bez alkohola, kofein / malo kofeina, šećer, škrob, mast, protein, bez izmjerenog GI, tekuće / kruto, builder, množina, recept). Za svaku klasu provjerava pravila priče: hero, kartice, hashtagove, vrijeme i presudu. Audit teksta dobio je nove klase: zamjenica bez imenice, ponavljanje hook predloška (> 10 % stavki), trofej za "treat", slaganje subjekta i glagola, alkohol kod bezalkoholnog, krivi hero, ugljikohidrati bez priče o šećeru, generičko ime, vremenska matematika, compare bez sredine i preduga oznaka porcije. Sve je na nuli.
+- **T-1:** ispod 0,6 g/100 g (≤ 0,5 % vol) nema alkoholne priče. Bezalkoholno pivo ima priču o šećeru i tagove #alcoholfreebeer i #bloodsugar. Šećer 8,05 g/100 g je USDA zapis za sladno piće.
+- **T-2:** trofej se dodjeljuje samo kad je strana bolja ili jednaka na svim metrikama (šećer, kcal, kofein, zasićene masti, protein, vlakna) i nije "treat". Inače se navode prednosti obje strane ("Banana: less saturated fat. Brie: no blood sugar peak.").
+- **T-3:** GI koji nije izmjeren uzima tipičnu vrijednost svoje vrste (Atkinson 2008, ≥ 10 g ugljikohidrata, ne za alkohol). Kartica to iskreno kaže. Hot chocolate ima šećernu priču i hero "Blood sugar up · 28 min in". Kofein < 10 mg nikad nije hero.
+- **T-4 / T-5 / T-6:** uvedena je množina u presudi ("Black olives win"). Kartice imaju vlastiti subjekt ("The fat joins your blood later.", "Protein keeps arriving for hours.", "The pieces pass into your blood."). Imena su sada: "Fruit yogurt", "Fried egg", "Mozzarella", "Skim milk", "Beef wrap kebab", "Green salad with olive oil", "Pizza with tuna, egg & onion", "Baguette sandwich with cheese, butter & tomato". Ista imena (video-names.ts) koriste se u videu, compareu i presudi (Cevapi, Brie, Jam).
+- **T-7 / T-8:** svaka formula hooka ima 2–3 varijante po hrani (seedOf), nijedan predložak nije na > 10 % stavki. Kofeinski hook sada kaže "Almost all of its caffeine is left at bedtime."
+- **P2:**
+  - "by about 1 h 40 min";
+  - "Most of the food has been absorbed now.";
+  - "a fast rise" za rast koji vrhuni ≤ 45 min;
+  - fragment hooka za alkohol sada nosi grame;
+  - pitanje o gramima šećera / kcal postavlja se samo kad je fer, a različite porcije se navode;
+  - oznaka porcije u compareu je samo "28 g";
+  - compare uvijek ima sredinu dana;
+  - #fastfood za pljeskavicu i ćevape, #protein kad vodi protein.
+- Testovi 862/862 (+1 skip), oba builda OK. Uzorci (11): `C:\claudework\video-samples\2026-11-05-v18\` (−14,1…−14,5 LUFS, peak ≤ −2,5 dBFS; Shorts 24,5–29,9 s, TT 62,3–67,1 s, Reels 49,4 s).

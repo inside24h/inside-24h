@@ -1,6 +1,7 @@
 // Turns whatever the person typed ("1 banana", "pizza and a beer") into a full product for the screen:
 // guided story, liquid in each organ, plain-language changes, organ cards and traffic lights.
 // Model: science/foodSim.ts (level C on top of published numbers); claims: content/food.ts.
+import { distinctName } from './naming';
 import { at } from '../../science/espressoSim';
 import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesToBed, sleepRiskAt, sleepSentence } from '../../science/daily';
 import { sleepAnchors } from '../../science/anchors';
@@ -43,14 +44,19 @@ function labelClaims(parts: Part[], field?: string): string[] {
 }
 
 export function describe(parts: Part[]): string {
-  return parts.map((p) => `${p.food.name.replace(/\s*\(.*\)$/, '')}`).join(' + ');
+  return parts.map((p) => distinctName(p.food.name)).join(' + '); // (round 18: "Fruit yogurt", "Fried egg", "Mozzarella")
 }
 
 /** `overMin` = "Over how long?" (PACING, 2026-10-19): 0 = all at once (the old model); else the servings are had as
  *  equal rounds spread over that many minutes (science/foodSim.ts paceStarts). */
+/** Round 18: alcohol per 100 g below this is "alcohol-free" (≤ 0.5 % vol, EU labelling). */
+export const ALCOHOL_FREE_MAX_G100 = 0.6;
 export function makeFoodProduct(parts: Part[], id: string, overMin = 0): ProductDef {
   const m = macros(parts);
-  const meal = toMeal(parts, m, overMin);
+  const meal0 = toMeal(parts, m, overMin);
+  // round 18 (critic T-1: alcohol-free beer said "The alcohol is gone after about 0 h" and got #alcohol): a drink under
+  // ~0.5 % vol (< 0.6 g per 100 g) is alcohol-free: no alcohol story, lamp or tag
+  const meal = parts.some((x) => (x.food.p.alcoholG ?? 0) >= ALCOHOL_FREE_MAX_G100) ? meal0 : { ...meal0, alcoholG: 0 };
   // paced alcohol: the same drinks all at once, to say what spreading changed (peak and end) and where the other
   // livers' downslope starts (alcoholClock pivot)
   const onceMeal = meal.pace && meal.alcoholG > 1 ? toMeal(parts, m) : null;
@@ -216,7 +222,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const what = partsPhrase(parts); // "1 hamburger, a small portion of french fries and 330 ml of cola"
   const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fiber` : ''}.`;
   const giLine = m.gi !== null && m.availCarbs >= 5 ? ` Glycemic index ${m.gi} (${m.gi >= 70 ? 'high' : m.gi >= 56 ? 'medium' : 'low'}).`
-    : m.missingGi.length && gl !== null ? ` The glycemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve leaves it out: the real rise is likely higher.`
+    : m.missingGi.length && gl !== null ? ` The glycemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve uses the typical value for similar foods.`
     : m.missingGi.length ? ' Its glycemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
     { min: 0, title: mixed ? 'First bite and sip' : isDrink || parts.every((x) => isDrinkFood(x.food)) ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', ...labelClaims(parts), 'DB2', 'DB3', ...(spiritsNoSugar ? ['AL15'] : [])], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}.${paceLine} ${macroLine}${giLine}${spiritsNoSugar ? ' No sugar: plain distilled spirits like this have none, so all the calories come from the alcohol (sweet liqueurs and honey brandy such as medica do have sugar).' : ''}` },
@@ -240,7 +246,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
         const alcNote = meal.alcoholG > 1 ? ' Some of the alcohol was already absorbed through your stomach wall.' : '';
         return steps.length
-          ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : 'These pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${starchTsp ? ` In all, about ${starchTsp} teaspoons of sugar reach your blood, over a few hours.` : ''}${alcNote}`
+          ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : steps.length === 1 && /passes into your blood/.test(String(steps[0])) ? '' : 'The pieces pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${starchTsp ? ` In all, about ${starchTsp} teaspoons of sugar reach your blood, over a few hours.` : ''}${alcNote}`
           : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.${alcNote}`;
       })() },
   ];

@@ -16,7 +16,7 @@ export const PLATFORM_LENGTH: Record<Platform, string> = { tiktok: '62–75 s', 
 export interface CaptionIn {
   /** the video's short name ("One can of cola") */ name: string;
   hook: { line1: string; line2: string };
-  alcohol?: boolean; caffeine?: boolean; sugar?: boolean; solid?: boolean;
+  alcohol?: boolean; caffeine?: boolean; sugar?: boolean; solid?: boolean; /** round 18: protein-led (meat, fish) */ protein?: boolean;
   /** a comparison: the two names ("Cola", "Water") */ compare?: { a: string; b: string };
 }
 export interface Captions { tiktok: string; reels: string; facebook: string; shorts: { title: string; description: string } }
@@ -32,24 +32,31 @@ const STOP = new Set(['one', 'a', 'an', 'can', 'cup', 'glass', 'glasses', 'bottl
 /** The food's own hashtag word ("One can of cola" → "cola", "3 × 500 ml of beer over 2 h" → "beer"). Round 12 (critic
  *  P1-4: #spread, #roll, #cola for a meal): the first item of a meal, before any "with …", and a generic last word
  *  keeps its kind ("Cinnamon roll" → "cinnamonroll", "Crepes with chocolate spread" → "crepes"). */
-const GENERIC_LAST = new Set(['roll', 'rolls', 'cake', 'pie', 'bar', 'bread', 'juice', 'milk', 'tea', 'soup', 'salad', 'cream', 'water', 'wine', 'chips', 'potato', 'potatoes', 'drink', 'drinks', 'coffee', 'shake', 'yogurt', 'cheese']); // (round 15: #sweetpotato; round 16: #energydrink)
+const GENERIC_LAST = new Set(['roll', 'rolls', 'cake', 'pie', 'bar', 'bread', 'juice', 'milk', 'tea', 'soup', 'salad', 'cream', 'water', 'wine', 'chips', 'potato', 'potatoes', 'drink', 'drinks', 'coffee', 'shake', 'yogurt', 'cheese', 'beer', 'chocolate']); // (round 18: #hotchocolate, #alcoholfreebeer) // (round 15: #sweetpotato; round 16: #energydrink)
 export function foodTag(name: string): string {
   if (/\bdecaf/i.test(name)) return 'decaf'; // (round 15, critic T-1)
   const first = name.replace(/\s+over\s+.*$/i, '').replace(/\([^)]*\)/g, '').split(/,|\band\b|\bwith\b/i)[0];
-  const w = first.toLowerCase().split(/[^a-z]+/).filter((x) => x && !STOP.has(x));
+  const w = first.toLowerCase().replace(/([a-z])-([a-z])/g, '$1$2').split(/[^a-z]+/).filter((x) => x && !STOP.has(x)); // ("alcohol-free" is one word)
   if (!w.length) return 'food';
   const last = w[w.length - 1];
   return (GENERIC_LAST.has(last) && w.length >= 2 && !/^(whole|plain)$/.test(w[w.length - 2]) /* (round 16: #redwine, #blacktea, #sparklingwine are what people search) */ ? w[w.length - 2] + last : last).replace(/[^a-z]/g, '') || 'food';
 }
 /** Fast food gets the tag people search for it by. */
-const extraTags = (name: string) => (/\b(burger|hamburger|cheeseburger|fries|pizza|kebab|hot dog|nuggets)\b/i.test(name) ? ['fastfood'] : []);
-const topicTag = (c: CaptionIn) => (c.alcohol ? 'alcohol' : c.sugar ? 'bloodsugar' : c.caffeine ? 'caffeine' : 'digestion');
+const extraTags = (name: string) => (/\b(burger|hamburger|cheeseburger|fries|pizza|kebab|hot dog|nuggets|pljeskavica|cevapi|burek)\b/i.test(name) ? ['fastfood'] : []); // (round 18, critic V-7)
+const topicTag = (c: CaptionIn) => (c.alcohol ? 'alcohol' : c.sugar ? 'bloodsugar' : c.caffeine ? 'caffeine' : c.protein ? 'protein' : 'digestion');
 /** At most `max` hashtags, and #inside24h always among them (the series). */
 const tags = (list: string[], max: number) => { const own = [...new Set(list.filter((t) => t !== 'inside24h'))].slice(0, max - 1); return [...own, 'inside24h'].map((t) => `#${t}`).join(' '); };
 /** Round 13 (critic P1-4: "What 500 ml of beer do"): counted things are plural ("2 crepes"), amounts are not
  *  ("500 ml of beer", "3 × 500 ml of beer"). */
 export const pluralName = (name: string) => { const m = /^(\d+)\s+(\S+)/.exec(name.trim()); return !!m && Number(m[1]) >= 2 && !/^(ml|g|l|cl|oz|kg|×|x)$/i.test(m[2]); };
 
+/** Round 18 (critic V-7: a pljeskavica was #bloodsugar): what the caption's topic is, from the food itself: blood sugar
+ *  only when its carbohydrate leads (≥ 35 % of kcal) and the curve rose; protein when protein leads (≥ 25 % of kcal). */
+export function captionFlags(x: { alcoholG?: number; caffeineMg: number; sugarPeak: number | null; decaf?: boolean; solid: boolean; macros?: { kcal: number; availCarbs: number; protein: number } }): Pick<CaptionIn, 'alcohol' | 'caffeine' | 'sugar' | 'solid' | 'protein'> {
+  const m = x.macros, k = Math.max(1, m?.kcal ?? 1);
+  return { alcohol: (x.alcoholG ?? 0) > 1, caffeine: x.caffeineMg >= 10 || !!x.decaf, solid: x.solid,
+    sugar: (x.sugarPeak ?? 0) >= 0.5 && (!m || 4 * m.availCarbs >= 0.35 * k), protein: !!m && 4 * m.protein >= 0.25 * k };
+}
 export function captionsFor(c: CaptionIn): Captions {
   const cmp = c.compare;
   const subject = cmp ? `${cmp.a} vs ${cmp.b}` : c.name;

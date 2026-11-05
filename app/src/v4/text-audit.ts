@@ -13,23 +13,30 @@ import { analyze, type Analysis } from './analyze';
 import { DEFAULT_PROFILE, type Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { compareHookB, HOOK_NUMBER, hookB, hookFor, hookForCompare, type Hook } from './video-hook';
-import { captionsFor, foodTag } from './video-caption';
+import { captionFlags, captionsFor, foodTag } from './video-caption';
+import { amountPhrase, capFirst, distinctName, sharedBaseName } from './food/naming';
+import { isTreat } from './analyze';
+import { isPluralName } from './video-names';
+import { ALCOHOL_FREE_MAX_G100, hasStarch } from './food/foodProduct';
 import { plainNote, inText, whereCard } from './video-body';
 import { FPS, readSeconds, type Cut, type Plan, type PlanFx, type StopIn } from './video-plan';
 import { BEAT_WORDS } from './video-beats';
 import { worstMoment } from './status';
 import { sameAmountOffer, sameAs } from './Compare';
-import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, decafOf, heroOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, type ComparePlan } from './video-story';
+/** AppV4 HOOK_OF: the curated products' own names. */
+const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
+import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, decafOf, heroOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, type ComparePlan } from './video-story';
 
 export const AUDIT_PROFILE: Profile = { ...DEFAULT_PROFILE, drinkAtMin: 22 * 60 };
 export const AUDIT_CUTS: Cut[] = ['long', 'medium', 'short'];
 const SYS = ['energy', 'heart', 'water', 'brain'] as const;
 
-export interface AuditItem { id: string; x: Analysis }
+export interface AuditItem { id: string; x: Analysis; /** the app's video name (AppV4 videoName) */ vname: string; parts: Part[] }
 /** Every database food, every variant, every builder preset and "everything on", each at one serving. */
 export function auditItems(p: Profile = AUDIT_PROFILE): AuditItem[] {
   const out: AuditItem[] = [];
-  const add = (id: string, parts: Part[]) => { if (parts.length) out.push({ id, x: analyze(parts, p) }); };
+  const add = (id: string, parts: Part[]) => { if (!parts.length) return; const x = analyze(parts, p); out.push({ id, x, parts, vname: parts.length === 1 && CURATED_NAME[parts[0].food.id] && Math.abs(parts[0].grams - parts[0].food.serving.grams) < 1 && !parts[0].food.base ? CURATED_NAME[parts[0].food.id] : parts.length === 1 ? capFirst(amountPhrase(parts[0])) : x.label }); };
+  let seed = 18; const rnd = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 2 ** 32; };
   type DbFood = { id: string; name: string; aliases?: string[]; variants?: { v: string; name: string }[] };
   for (const f0 of db as unknown as DbFood[]) {
     const parts = parseMeal(f0.name); add(f0.id, parts.length ? parts : parseMeal(f0.aliases?.[0] ?? f0.id));
@@ -40,6 +47,11 @@ export function auditItems(p: Profile = AUDIT_PROFILE): AuditItem[] {
       for (const pr of b.presets) add(`${f0.id}+${pr.k}`, [servingPart(deriveFood(f, { on: pr.on }), 1)]);
       const all = b.groups.flatMap((g) => (g.one ? g.opts.filter((o) => o.on).slice(0, 1) : g.opts)).map((o) => o.k);
       add(`${f0.id}+all`, [servingPart(deriveFood(f, { on: all }), 1)]);
+      // (round 18: custom toppings, sampled: one choice per single-choice group, a random handful of extras)
+      for (let k = 0; k < 4; k++) {
+        const on = b.groups.flatMap((g) => (g.one ? [g.opts[Math.floor(rnd() * g.opts.length)]] : g.opts.filter(() => rnd() < 0.4))).map((o) => o.k);
+        add(`${f0.id}+custom${k}(${on.join(',')})`, [servingPart(deriveFood(f, { on }), 1)]);
+      }
     }
   }
   return out;
@@ -47,8 +59,8 @@ export function auditItems(p: Profile = AUDIT_PROFILE): AuditItem[] {
 
 export interface SingleOut { hook: Hook; plan: Plan; stops: StopIn[]; payoff?: number; name: string; hero?: { big: string; small: string }; notes: string[]; caps: ReturnType<typeof captionsFor> }
 /** The single video exactly as AppV4 builds it (reelPlan, overlay, captions). */
-export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AUDIT_PROFILE): SingleOut {
-  const b = x.built, story = b.story, name = shortName(x.label);
+export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AUDIT_PROFILE, vname = x.label): SingleOut {
+  const b = x.built, story = b.story, name = shortName(vname);
   const chapters = story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
   const solid = /bite/i.test(story.chapters[0]?.title ?? '');
   const hin = { name, chapters, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid, kcal: b.energy.total, grams: x.macros.grams,
@@ -59,7 +71,7 @@ export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AU
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   const plan = singlePlan(stops, cut, fx), payoff = fx.payoffMin;
   const notes = x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return `${s.label}: ${plainNote(s.key as typeof SYS[number], l, w, b, inText(w), !!s.unknown)}`; });
-  const caps = captionsFor({ name, hook, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10 || /\bdecaf/i.test(x.label), sugar: (x.sugarPeak ?? 0) >= 0.5, solid });
+  const caps = captionsFor({ name, hook, ...captionFlags({ alcoholG: b.alcoholG, caffeineMg: b.caffeine.doseMg, decaf: /\bdecaf/i.test(x.label), sugarPeak: x.sugarPeak, solid, macros: x.macros }) });
   return { hook, plan, stops, payoff, name, hero: heroOf(b, x.glucose !== undefined, chapters, p.glucoseUnit, hook), notes, caps };
 }
 
@@ -149,6 +161,10 @@ export function lintText(s: string, where: string, kind: 'card' | 'hook' | 'verd
   if (kind === 'card' && w(s).length > BEAT_WORDS + 1) bad('card too long');
   if (kind === 'hook' && w(s).length > 10) bad('hook line too long');
   if (kind === 'verdict' && s.length > 120) bad('verdict too long');
+  // round 18 (critique g): time math, plural agreement, pronouns that lean on nothing
+  if (/\babout 0 h\b|\bafter 0 (?:h|min)|by (?:9\d|\d{3,}) minutes/.test(s)) bad('time math');
+  const won = /🏆 (.+?) (wins?):/.exec(s);
+  if (won && (won[2] === 'wins') === isPluralName(won[1])) bad('subject-verb agreement');
   return out;
 }
 
@@ -165,10 +181,11 @@ export interface AuditResult { issues: Issue[]; dump: string[] }
 const hm = (m: number) => `+${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`;
 
 export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = AUDIT_PROFILE) {
-  for (const { id, x } of items) {
+  const tplA = new Map<string, string[]>(), tplB = new Map<string, string[]>();
+  for (const { id, x, vname, parts } of items) {
     const chapters = x.built.story.chapters;
     const solid = /bite/i.test(chapters[0]?.title ?? '');
-    const all = (cut: Cut, v: 'A' | 'B') => auditSingle(x, cut, v, p);
+    const all = (cut: Cut, v: 'A' | 'B') => auditSingle(x, cut, v, p, vname);
     const A = all('long', 'A'), B = all('long', 'B');
     res.dump.push('', `=== ${id} · ${A.name}`);
     for (const [v, o] of [['A', A], ['B', B]] as const) {
@@ -180,6 +197,9 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       if (solid && /water go\?/.test(both)) res.issues.push({ cls: 'generic hook', where: `${id} hook ${v}`, text: both });
       if (/What happens to it in 24 hours\?/.test(both)) res.issues.push({ cls: 'generic hook', where: `${id} hook ${v}`, text: both });
       if (/Watch it for 24 hours\./.test(both) && !/\?/.test(both) && !/\d{3,} kcal/.test(both)) res.issues.push({ cls: 'generic hook', where: `${id} hook ${v}`, text: both });
+      // the hook template (numbers and the food's name taken out), counted over all items (round 18, critic T-7)
+      const tpl = both.replace(new RegExp(o.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), 'X').replace(/\d+(?:[.,]\d+)?/g, 'N');
+      const map = v === 'A' ? tplA : tplB; map.set(tpl, [...(map.get(tpl) ?? []), id]);
       const nw = nameWords(o.name);
       if (nw.length && !(x.built.alcoholG && x.built.pace) && !nw.some((n) => both.toLowerCase().includes(n))) res.issues.push({ cls: 'hook without the food', where: `${id} hook ${v}`, text: both });
     }
@@ -190,8 +210,12 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       if (v === 'A') res.dump.push(`  ${cut} (${o.plan.seconds.toFixed(1)} s):`);
       // a question is answered in every cut: its moment is in the video
       if (/\?/.test(`${o.hook.line1} ${o.hook.line2}`) && (o.payoff === undefined || !o.plan.stops.some((m) => Math.abs(m - o.payoff!) <= 1))) res.issues.push({ cls: 'question never answered', where: `${id} ${cut} ${v}`, text: `${o.hook.line1} ${o.hook.line2} (answer at ${o.payoff ?? 'none'})` });
+      let prevStop = -1;
       for (const pg of o.plan.pages) {
         if (!pg.text) continue;
+        // a card that starts with a pronoun leans on the card before it, at the same moment (round 18, critic T-5)
+        if (/^(It|They|These|Then|This|That)\b/.test(pg.text) && prevStop !== pg.stop) res.issues.push({ cls: 'pronoun without its noun', where: `${id} ${cut} ${v} ${hm(pg.stop)}`, text: pg.text });
+        prevStop = pg.stop;
         if (v === 'A') res.dump.push(`    ${hm(pg.stop).padEnd(7)} ${(titleAt.get(pg.stop) ?? '').toUpperCase().padEnd(26)} ${pg.text}`);
         res.issues.push(...lintText(pg.text, `${id} ${cut} ${v} ${hm(pg.stop)}`, 'card'));
         if (pg.s < readSeconds(pg.text) - 1 / FPS) res.issues.push({ cls: 'reading time', where: `${id} ${cut} ${v}`, text: `${pg.text} (${pg.s.toFixed(2)} s)` });
@@ -200,6 +224,16 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       for (const [st, t] of titleAt) res.issues.push(...lintMoment(t, st, chapters, `${id} ${cut} ${v}`));
     }
     if (!A.hero) res.issues.push({ cls: 'end card without a number', where: id, text: A.name });
+    // round 18 (critique g): the story fits the food's class
+    const alc100 = Math.max(0, ...parts.map((q) => q.food.p.alcoholG ?? 0)), alcoholic = (x.built.alcoholG ?? 0) > 1;
+    const allText = [A.hook.line1, A.hook.line2, B.hook.line1, B.hook.line2, ...A.plan.pages.map((q) => q.text), A.caps.tiktok].join(' | ');
+    if (alc100 < ALCOHOL_FREE_MAX_G100 && /\balcohol\b(?!-free)|hangover|#alcohol/i.test(allText.replace(/alcohol-?free/gi, ''))) res.issues.push({ cls: 'alcohol story for an alcohol-free item', where: id, text: (/[^|]*(?:alcohol|hangover)[^|]*/i.exec(allText.replace(/alcohol-?free/gi, ''))?.[0] ?? '').trim() });
+    if (A.hero && /caffeine/.test(A.hero.big) && x.built.caffeine.doseMg < 10) res.issues.push({ cls: 'wrong hero', where: id, text: `${A.hero.big} (${Math.round(x.built.caffeine.doseMg)} mg in it)` });
+    if (!alcoholic && x.macros.availCarbs >= 10 && x.glucose === undefined) res.issues.push({ cls: 'no sugar story for a carb food', where: id, text: `${Math.round(x.macros.availCarbs)} g of carbohydrate` });
+    if (!alcoholic && x.macros.sugars >= 15 && x.glucose !== undefined && A.hero && !/Blood sugar/.test(A.hero.big) && x.built.caffeine.doseMg < 100) res.issues.push({ cls: 'wrong hero', where: id, text: `${A.hero.big} for ${Math.round(x.macros.sugars)} g of sugar` });
+    if (!alcoholic && /Starch/.test(allText) && !hasStarch(x.macros)) res.issues.push({ cls: 'card that does not fit the food', where: id, text: 'a starch card' });
+    if (parts.length === 1 && sharedBaseName(parts[0].food.name) && !A.name.toLowerCase().includes(distinctName(parts[0].food.name).toLowerCase())) res.issues.push({ cls: 'generic name', where: id, text: `${A.name} (${parts[0].food.name})` });
+    if (parts.length === 1 && parts[0].food.base?.builder && parts[0].food.on && !/ with | without /.test(A.name) && A.name.toLowerCase().replace(/^\S+ /, '') === parts[0].food.base.name.replace(/\s*\(.*\)$/, '').split(' / ')[0].toLowerCase()) res.issues.push({ cls: 'generic name', where: id, text: `${A.name} for ${parts[0].food.name}` });
     res.dump.push(`  end card: ${A.name}${A.hero ? ` · hero ${A.hero.big} (${A.hero.small})` : ' · (no hero number)'}`);
     for (const n of A.notes) { res.dump.push(`    ${n}`); res.issues.push(...lintText(n.replace(/^[^:]+: /, ''), `${id} end note`, 'note')); }
     res.dump.push(`  YouTube title: ${A.caps.shorts.title}`, `  TikTok: ${A.caps.tiktok.split('\n')[0]}`, `  tags: ${(A.caps.tiktok.match(/#\w+/g) ?? []).join(' ')}`);
@@ -208,8 +242,10 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
     const tag = foodTag(A.name), words = nameWords(A.name.replace(/\s+with\s+.*$/i, ''));
     if (GENERIC_TAGS.has(tag) && words.length >= 2) res.issues.push({ cls: 'generic hashtag', where: id, text: `#${tag} for ${A.name}` });
   }
+  lastTpl.A = tplA; lastTpl.B = tplB;
 }
 
+const lastTpl: { A: Map<string, string[]>; B: Map<string, string[]> } = { A: new Map(), B: new Map() };
 export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; same: boolean }[], res: AuditResult, p: Profile = AUDIT_PROFILE) {
   for (const pr of pairs) {
     res.dump.push('', `=== ${pr.id}`);
@@ -221,11 +257,22 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
         res.dump.push(`  verdict: ${o.cp.verdict}`, `  title: ${o.caps.shorts.title}`, `  tags: ${(o.caps.tiktok.match(/#\w+/g) ?? []).join(' ')}`);
         res.issues.push(...lintText(o.cp.verdict, `${where} verdict`, 'verdict'), ...lintText(o.hook, `${where} hook`, 'hook'), ...lintText(o.hookB, `${where} hook B`, 'hook'), ...lintText(o.caps.shorts.title, `${where} title`, 'title'));
         if (g) for (const t of [g.answer1, g.answer2, g.recap]) res.issues.push(...lintText(t, `${where} answer`, 'answer'));
+        const champ = /^🏆 (.+?) wins?:/.exec(o.cp.verdict)?.[1];
+        const champX = champ === undefined ? undefined : [pr.a, pr.b].find((x) => x.label === champ);
+        if (champX && isTreat(champX)) res.issues.push({ cls: 'trophy for a treat', where, text: o.cp.verdict });
+        for (const x of [pr.a, pr.b]) if (servingAmount(x).length > 16) res.issues.push({ cls: 'serving label too long', where, text: servingAmount(x) });
         // one tie rule for all the verdict text: an answer that names a winner never sits next to "It's close"
         if (g && !/^Almost the same/.test(g.answer1) && /^It’s close/.test(o.cp.verdict)) res.issues.push({ cls: 'contradiction', where, text: `${g.recap} / ${o.cp.verdict}` });
         if (g && /^Almost the same/.test(g.answer1) && /^🏆/.test(o.cp.verdict) && new RegExp(g.kind === 'sugarG' ? 'sugar' : g.kind === 'kcal' ? 'kcal' : '^$').test(o.cp.verdict)) res.issues.push({ cls: 'contradiction', where, text: `${g.recap} / ${o.cp.verdict}` });
       }
       if (!g) res.issues.push({ cls: 'compare without a guess', where, text: o.hook });
+      if (!o.cp.plan.stops.some((m) => m >= 60 && m < 1440)) res.issues.push({ cls: 'compare without a middle', where, text: o.cp.plan.stops.join(', ') });
+      let prevA = -1, prevB = -1;
+      for (const pg of o.cp.plan.pages) {
+        if (pg.text && /^(It|They|These|Then|This|That)\b/.test(pg.text) && prevA !== pg.stop) res.issues.push({ cls: 'pronoun without its noun', where: `${where} A ${hm(pg.stop)}`, text: pg.text });
+        if (pg.textB && /^(It|They|These|Then|This|That)\b/.test(pg.textB) && prevB !== pg.stop) res.issues.push({ cls: 'pronoun without its noun', where: `${where} B ${hm(pg.stop)}`, text: pg.textB });
+        if (pg.text) prevA = pg.stop; if (pg.textB) prevB = pg.stop;
+      }
       const tA = new Map<number, string | undefined>(), tB = new Map<number, string | undefined>();
       for (const f of o.cp.plan.frames) if (f.stop !== undefined && f.beat === 'hold') { if (f.title && !tA.has(f.stop)) tA.set(f.stop, f.title); if (f.titleB && !tB.has(f.stop)) tB.set(f.stop, f.titleB); }
       if (cut === 'long') res.dump.push(`  long (${o.cp.plan.seconds.toFixed(1)} s):`);
@@ -250,6 +297,13 @@ export function runAudit(nPairs = 300): AuditResult {
   const res: AuditResult = { issues: [], dump: [] };
   const items = auditItems();
   auditSingles(items, res);
+  // (round 18, critic T-7) no hook template on more than 10 % of the items
+  res.dump.splice(0, 0, '', '=== hook templates (A / B), the most used');
+  for (const [v, m] of [['A', lastTpl.A], ['B', lastTpl.B]] as const) {
+    const top = [...m.entries()].sort((p, q) => q[1].length - p[1].length).slice(0, 8);
+    res.dump.splice(2, 0, ...top.map(([t, ids]) => `  ${v} ${ids.length}× ${t}`));
+    for (const [t, ids] of top) if (ids.length > 0.1 * items.length) res.issues.push({ cls: 'hook template overused', where: `hook ${v}`, text: `${ids.length}/${items.length}: ${t}` });
+  }
   auditCompares(auditPairs(items, nPairs), res);
   return res;
 }

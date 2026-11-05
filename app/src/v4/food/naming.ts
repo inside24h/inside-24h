@@ -3,7 +3,7 @@
 // "Share this moment" text. Before, the amount label was glued in front of the lower-cased name, which gave
 // "Whole · 1104 g pizza capricciosa.", "2 large egg", "1 cup, 70 ml turkish coffee" or "Kebab / doner (1 kebab)".
 // The amount labels themselves (UI chips, search) are unchanged; this only words them.
-import { baseOf, deriveFood, type Part } from './parse';
+import { baseOf, deriveFood, FOODS, type Part } from './parse';
 
 /** First words that are names and keep their capital in the middle of a sentence. */
 const PROPER_FIRST = new Set(['French', 'Greek', 'Turkish', 'Medica']);
@@ -25,9 +25,35 @@ const stem = (w: string) => w.toLowerCase().replace(/[^a-zćčđšž]/g, '').rep
 export function pluralOf(phrase: string): string {
   return phrase.replace(/(\S+)$/, (w) => (/^(tsp|tbsp|g|ml|l|dl|cl|cm|oz)$/.test(w) ? w : /(s|x|z|ch|sh)$/.test(w) ? `${w}es` : /[^aeiou]y$/.test(w) ? `${w.slice(0, -1)}ies` : /(potato|tomato)$/.test(w) ? `${w}es` : /i$/.test(w) ? w : `${w}s`));
 }
-/** The name as it reads inside a sentence: no "(…)" detail, the first of "A / B", a lower-case first word. */
+/** Round 18 (critic T-6: "Yogurt: 8 teaspoons of sugar." was the fruit yogurt): when several foods share a name
+ *  ("Milk", "Yogurt", "Cheese", "Egg", "Pasta"), the detail that tells them apart stays: "fruit yogurt", "skim milk",
+ *  "fried egg", "mozzarella", "whole-wheat pasta". A detail all of them share ("plain") or one that only says how it
+ *  is served ("cooked") is not a name. */
+const baseName = (n: string) => n.replace(/\s*\(.*\)$/, '').split(' / ')[0].trim();
+const SHARED: Map<string, string[][]> = (() => {
+  const m = new Map<string, string[][]>();
+  for (const f of FOODS) { const q = /\(([^)]*)\)$/.exec(f.name)?.[1]; const k = baseName(f.name).toLowerCase(); m.set(k, [...(m.get(k) ?? []), q ? q.split(/,\s*/) : []]); }
+  return new Map([...m].filter(([, v]) => v.length > 1));
+})();
+const NOT_A_NAME = /^(cooked|raw|regular|homemade|unsalted|plain)$/i;
+export function qualifiedName(name: string): string {
+  const base = baseName(name), sib = SHARED.get(base.toLowerCase()), q = /\(([^)]*)\)$/.exec(name)?.[1];
+  if (!sib || !q) return base;
+  const parts = q.split(/,\s*/).map((x) => x.trim());
+  const own = parts.find((x) => !NOT_A_NAME.test(x) && sib.filter((s) => s.includes(x)).length === 1) ?? parts.find((x) => !NOT_A_NAME.test(x) && x !== 'whole milk');
+  if (!own) return base;
+  if (/^cheese$/i.test(base)) return own.charAt(0).toUpperCase() + own.slice(1); // "Mozzarella"
+  const adj = own.replace(/^(\w+) (fat|milk)$/i, '$1-$2').replace(/,? ?reduced-fat$/i, ''); // "low fat" → "low-fat"
+  return `${adj.charAt(0).toUpperCase()}${adj.slice(1)} ${base.toLowerCase()}`;
+}
+/** Round 18: the shared name ("yogurt") when several foods have it, else null. */
+export const sharedBaseName = (name: string) => (SHARED.has(baseName(name).toLowerCase()) ? baseName(name).toLowerCase() : null);
+/** The food's own name for titles: "Fruit yogurt" when foods share a name, else the name without its "(…)". */
+export const distinctName = (name: string) => (SHARED.has(baseName(name).toLowerCase()) ? qualifiedName(name) : name.replace(/\s*\(.*\)$/, ''));
+/** The name as it reads inside a sentence: no "(…)" detail (but the one that tells it apart, round 18), the first of
+ *  "A / B", a lower-case first word. */
 export function nameInSentence(name: string): string {
-  const n = name.replace(/\s*\(.*\)$/, '').split(' / ')[0].trim();
+  const n = qualifiedName(name);
   const [first, ...rest] = n.split(' ');
   const keep = (PROPER_FIRST.has(first) && !(first === 'French' && rest[0] === 'fries')) || /[A-Z].*[A-Z]/.test(first); // "french fries" (AP style)
   return [keep ? first : first.toLowerCase(), ...rest].join(' ');

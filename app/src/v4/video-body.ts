@@ -79,7 +79,10 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
   if (gs && Math.abs(g) >= 0.5) {
     void unit; // (round 5: said against your usual level, the same in any unit)
     // round 6 (owner): a normal rise after a meal or a sweet drink is said calmly (calm colour), unless it is high
-    return { big: g >= 3 ? 'Blood sugar up a lot' : g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: sugarPlain(g), level: g >= 3 ? 2 : g > 0 ? 0 : g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
+    // (round 18, critic: every rise read "a normal rise"): a rise that tops out within 45 min is "a fast rise"
+    let pk = 0; for (let k = 1; k <= Math.min(240, gs.length - 1); k++) if (gs[k] > gs[pk]) pk = k;
+    const fast = pk <= 45 && gs[pk] / 18.016 >= 1.5;
+    return { big: g >= 3 ? 'Blood sugar up a lot' : g > 0 ? 'Blood sugar up' : 'Blood sugar dip', small: sugarPlain(g, fast), level: g >= 3 ? 2 : g > 0 ? 0 : g <= -1 ? 2 : 1, organ: 'pancreas', curve: curveOf(gs, 1 / 18.016), u };
   }
   const caf = b.caffeine.doseMg >= 10 ? at(b.caffeine.body, mi) : 0;
   if (caf >= 20) return { big: `${Math.round(caf)} mg caffeine`, small: 'still in your body', level: caf >= 200 ? 1 : 0, organ: 'brain', curve: curveOf(b.caffeine.body), u };
@@ -97,9 +100,9 @@ export function mainGauge(b: BuiltLike, m: number, u: number, unit: Unit, sugarK
  *  starts every curve at a usual 5.0 mmol/L), as a range of percent; blood alcohol as BAC in % (the usual English
  *  way, = ‰ ÷ 10), as a range. */
 export const USUAL_MMOL = 5.0;
-export function sugarPlain(g: number): string {
+export function sugarPlain(g: number, fast = false): string {
   if (g < 0) return g <= -1 ? 'clearly below usual' : 'a little below usual';
-  return `${sugarPct(g)} over usual: ${g >= 3 ? 'a big rise' : 'a normal rise'}`;
+  return `${sugarPct(g)} over usual: ${g >= 3 ? 'a big rise' : fast ? 'a fast rise' : 'a normal rise'}`;
 }
 /** "+26–62 %": the blood sugar rise as a range against the usual level (the same on the gauge and the end card). */
 export function sugarPct(g: number): string {
@@ -145,6 +148,8 @@ export function whereCard(b: BuiltLike, m: number): string | null {
   const small = top ? WHERE_SMALL[top[0]] : undefined;
   // (round 17, critic P2-CR: "It collects in your bladder." then "Most of it is in your blood now." read as urine): it says what
   const t0 = b.story?.chapters[0]?.title ?? '', what = /bite and sip/i.test(t0) ? 'the meal' : /bite/i.test(t0) ? 'the food' : 'the drink';
+  // (round 18, critic: "The food is mostly in your blood.": nutrients go into the blood, not the food)
+  if (top?.[0] === 'blood') return `Most of ${what} has been absorbed now.`;
   return small && /^In your /.test(small) ? `${what.charAt(0).toUpperCase()}${what.slice(1)} is mostly ${small.charAt(0).toLowerCase()}${small.slice(1)}.` : null;
 }
 

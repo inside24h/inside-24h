@@ -1,6 +1,7 @@
 // Compare verdicts (prelaunch QA 2026-10-23): "Espresso vs Beer → 🏆 Beer wins." must never happen again.
 // Alcohol never wins a trophy against an alcohol-free item; two alcoholic drinks are ranked by alcohol first;
 // a winner is only named with a reason; the sentence reads the same whichever side an item is on.
+import { cmpName } from './video-names';
 import { describe, expect, it } from 'vitest';
 import { FOODS, parseMeal, servingPart } from './food/parse';
 import { DEFAULT_PROFILE, type Profile } from '../science/profile';
@@ -9,7 +10,7 @@ import { analyze, verdictOf, type Analysis } from './analyze';
 const P = (h: number, o: Partial<Profile> = {}): Profile => ({ ...DEFAULT_PROFILE, drinkAtMin: h * 60, ...o });
 const an = (t: string, p: Profile) => { const ps = parseMeal(t); expect(ps.length, t).toBeGreaterThan(0); return analyze(ps, p); };
 const hasAlc = (x: Analysis) => (x.built.alcoholG ?? 0) > 1;
-const winnerOf = (v: string) => (v.startsWith('🏆 ') ? v.slice(3, v.indexOf(' wins')) : null);
+const winnerOf = (v: string) => (v.startsWith('🏆 ') ? v.slice(3).replace(/ wins?:.*$/, '') : null);
 
 describe('verdictOf', () => {
   it('espresso (1 or 3) never loses to a beer, at any time of day, on either side', () => {
@@ -24,7 +25,7 @@ describe('verdictOf', () => {
   });
 
   it('a sugary or late caffeinated drink against alcohol is a trade-off that names both costs', () => {
-    expect(verdictOf(an('rakija', P(16)), an('1 can of cola', P(16)))).toBe('No clear winner: Rakija / brandy brings alcohol; Cola brings a blood sugar peak.');
+    expect(verdictOf(an('rakija', P(16)), an('1 can of cola', P(16)))).toBe('No clear winner: Rakija brings alcohol; Cola brings a blood sugar peak.'); // (round 18: the video's own name)
     expect(verdictOf(an('espresso', P(22)), an('beer', P(22)))).toBe('No clear winner: Beer brings alcohol; Espresso brings caffeine at bedtime.');
   });
 
@@ -53,8 +54,8 @@ describe('verdictOf', () => {
       for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) {
         const a = xs[i], b = xs[j], v = verdictOf(a, b), w = winnerOf(v);
         if (w) {
-          expect(v, v).toMatch(/ wins: .+\.$/);
-          const win = w === a.name ? a : b;
+          expect(v, v).toMatch(/ wins?: .+\.$/);
+          const win = w === cmpName(a.label) || w === a.name ? a : b; // (round 18: the verdict says the video's name)
           if (hasAlc(a) !== hasAlc(b)) expect(hasAlc(win), v).toBe(false);
           expect(hasAlc(a) && hasAlc(b), v).toBe(false); // two alcoholic drinks never get a trophy
         }

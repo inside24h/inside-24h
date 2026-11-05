@@ -1,5 +1,6 @@
 // One place that turns "this food + this person + this city" into everything the screen needs to judge it:
 // the model run, vitals, traffic lights and quick answers. Used for the second item in Compare and for swaps.
+import { cmpName, isPluralName, lowerName, plainLatin } from './video-names';
 import { buildVitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { simulateHydration } from '../science/hydration';
@@ -82,7 +83,13 @@ export const sugarPeakText = (peakMmol: number | null, unit: Unit = 'mmol/L') =>
 /** "Espresso wins", "3 espressos win" (round 12: the verb agrees with a counted plural). */
 /** Round 17: a name inside a sentence ("orange juice"), unless an acronym or brand-like ("USDA", "McFlurry"). */
 const lowerIn = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
-const winsOf = (label: string) => `${label} ${/^(?:[2-9]|\d{2,})\s/.test(label.trim()) ? 'win' : 'wins'}`;
+const winsOf = (label: string) => `${label} ${isPluralName(label) ? 'win' : 'wins'}`; // (round 18, critic T-4: "Black olives win")
+/** Round 18 (critic T-2): a treat never gets a trophy: mostly added sugar, mostly (saturated) fat, fried or processed. */
+export function isTreat(x: Pick<Analysis, 'kcal' | 'macros' | 'label' | 'name'>): boolean {
+  const k = Math.max(1, x.kcal), mm = x.macros;
+  return 4 * mm.freeSugars >= 0.4 * k || (9 * mm.fat >= 0.7 * k && mm.satFat >= 0.3 * mm.fat) || mm.satFat >= 10
+    || /\b(chips|fries|crisps|salami|bacon|sausages?|frankfurter|hot dog|pepperoni|nuggets|candy|chocolate|nutella|cake|cookies?|donuts?|doughnuts?|ice cream|(?<!peanut |nut )butter|lard|cream|sugar|honey|jam|syrup|energy drink|cola|lemonade|soda)\b/i.test(`${x.label} ${x.name}`);
+}
 /** `guess`: the comparison video's question, when there is one: one tie rule for all its text (round 17, critic G-1:
  *  "Banana raised blood sugar more." next to "It's close: … about the same."). */
 export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess?: { tie: boolean } | null): string {
@@ -104,7 +111,7 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
   // of 250 ml of cola": the bare names, never the amount twice; names in a sentence are lower case)
   const amt = (s: string) => /(\d+(?:[.,]\d+)?\s*(?:ml|g))/i.exec(s.split('·').pop() ?? s)?.[1];
   const sameAmt = !!amt(a.serving) && amt(a.serving) === amt(b.serving);
-  const bare = (x: Analysis) => lowerIn(x.label.replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, ''));
+  const bare = (x: Analysis) => lowerName(cmpName(x.label)); // (round 18, critic V-5: "Cevapi" everywhere, lower case in a sentence)
   const pair = [bare(a), bare(b)].sort(); // (in either order the same sentence)
   // an answer that named a difference: the rest is about the same ("Apart from that, …")
   const lead = guess && !guess.tie ? 'Apart from that,' : 'It’s close:';
@@ -124,6 +131,24 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
     if (l.kcal - w.kcal >= 30) why.push(`${Math.round(l.kcal - w.kcal)} fewer kcal`);
     return why;
   };
+  /** Round 18: everything x does better than y (lower sugar peak, kcal, caffeine, saturated fat; more protein, fiber). */
+  const edges = (x: Analysis, y: Analysis) => {
+    const out: string[] = [];
+    if (sugarOk(x, y) && y.sugarPeak! - x.sugarPeak! >= 0.4) out.push(x.sugarPeak! < 0.3 ? 'no blood sugar peak' : `a smaller blood sugar peak (${sugarDeltaText(x.sugarPeak!, unit, false)} vs ${sugarDeltaText(y.sugarPeak!, unit)})`);
+    if (y.kcal - x.kcal >= 30 && y.kcal - x.kcal >= 0.1 * y.kcal) out.push(`${Math.round(y.kcal - x.kcal)} fewer kcal`);
+    // caffeine counts when it weighs on the body (brain / heart lights), as before: a morning espresso is fine
+    if (!alc(x) && !alc(y) && caf(y) - caf(x) >= 20 && cafStress(y) - cafStress(x) >= 10) {
+      if (y.sleepDelayMin >= 5 && x.sleepDelayMin <= y.sleepDelayMin - 3) out.push(caf(x) < 1 ? 'no caffeine to keep you awake' : 'less caffeine at bedtime');
+      else out.push(caf(x) < 1 ? 'no caffeine' : `less caffeine (${Math.round(caf(x))} vs ${Math.round(caf(y))} mg)`);
+    }
+    if (y.macros.satFat - x.macros.satFat >= 2 && y.macros.satFat >= 1.5 * x.macros.satFat) out.push('less saturated fat');
+    if (x.macros.protein - y.macros.protein >= 5 && x.macros.protein >= 1.5 * y.macros.protein) out.push('more protein');
+    if (x.macros.fiber - y.macros.fiber >= 3 && x.macros.fiber >= 1.5 * y.macros.fiber) out.push('more fiber');
+    return out;
+  };
+  /** Round 18: a treat never gets a trophy: mostly added sugar, mostly (saturated) fat, fried or processed meat. */
+  const treat = isTreat;
+
   /** what n costs the body that d does not (for a trade-off against an alcoholic d) */
   const costs = (n: Analysis, d: Analysis) => {
     const out: string[] = [];
@@ -136,6 +161,8 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
     return out;
   };
 
+  // round 18 (critic V-5 / G-8: "Brie cheese", "Jam / preserves", "Ćevapi" in the verdict): the video's own names
+  const nm = (x: Analysis) => (/^\d/.test(x.label) ? plainLatin(x.label) : cmpName(x.label));
   const alcA = alc(a), alcB = alc(b);
   if (!!alcA !== !!alcB) { // one side has alcohol
     const [n, d] = alcA ? [b, a] : [a, b];
@@ -143,13 +170,15 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
     // (round 12: any alcohol now weighs on the brain light, so the score alone would let a sugary or sleep-delaying
     // drink "win"; a real cost of its own always makes it a trade-off that names both)
     const ownCost = cost.some((c) => /blood sugar peak|delays your sleep/.test(c));
-    if (cost.length && ((sn > sd && !near(sn, sd)) || ownCost)) return `No clear winner: ${d.label} brings alcohol; ${n.label} brings ${cost.slice(0, 2).join(' and ')}.`;
-    return `🏆 ${winsOf(n.label)}: ${['no alcohol', ...reasons(n, d)].slice(0, 2).join(', ')}.`;
+    if (cost.length && ((sn > sd && !near(sn, sd)) || ownCost)) return `No clear winner: ${nm(d)} brings alcohol; ${nm(n)} brings ${cost.slice(0, 2).join(' and ')}.`;
+    // round 18 (critic T-2: "🏆 French fries wins: no alcohol"): a treat never gets a trophy, the facts side by side
+    if (treat(n)) return `${nm(n)}: no alcohol. ${nm(d)}: ${Math.round(alc(d))} g of alcohol.`;
+    return `🏆 ${winsOf(nm(n))}: ${['no alcohol', ...reasons(n, d)].slice(0, 2).join(', ')}.`;
   }
   if (alcA && alcB) { // both have alcohol: the amount of alcohol decides first, never a trophy
     const lo = Math.min(alcA, alcB), hi = Math.max(alcA, alcB);
     // (round 13, critic P1-3: "Red wine is the lighter choice" read as a recommendation): the fact, never a "choice"
-    const lighter = (w: Analysis, _l: Analysis, first: string) => `${first.charAt(0).toUpperCase()}${first.slice(1).replace(/ \(/, `: ${w.label} (`)}${/\(/.test(first) ? '' : `: ${w.label}`}. Both: don’t drive.`; // (round 14, critic W-2: never a lone "less alcohol" that reads as a recommendation)
+    const lighter = (w: Analysis, _l: Analysis, first: string) => `${first.charAt(0).toUpperCase()}${first.slice(1).replace(/ \(/, `: ${nm(w)} (`)}${/\(/.test(first) ? '' : `: ${nm(w)}`}. Both: don’t drive.`; // (round 14, critic W-2: never a lone "less alcohol" that reads as a recommendation)
     if (hi - lo >= 3 && hi >= 1.2 * lo) {
       const [w, l] = alcA < alcB ? [a, b] : [b, a];
       const k = Math.round(hi / lo), hiG = Math.abs(hi / lo - k) < 0.03 ? k * Math.round(lo) : Math.round(hi); // 1 vs 2 beers: "20 g vs 40 g", not "vs 39 g"
@@ -160,14 +189,17 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
     const two = bare(a) === bare(b) ? [lowerIn(a.label), lowerIn(b.label)].sort() : pair;
     return `${guess && !guess.tie ? 'Apart from that,' : 'It’s close:'} ${two[0]} and ${two[1]} bring about the same alcohol (about ${Math.round((alcA + alcB) / 2)} g). Both: don’t drive.`;
   }
-  const sa = score(a), sb = score(b);
-  if (near(sa, sb)) return close;
-  const [w, l] = sa < sb ? [a, b] : [b, a];
-  const why = reasons(w, l);
-  // round 12 (critic P1-2: "Hamburger wins: a smaller blood sugar peak" next to 251 vs 139 kcal read as "the burger is
-  // healthier"): when the side with the better score has MORE kcal, no trophy: each side's own advantage, side by side
-  if (why.length && w.kcal - l.kcal >= 30 && !why.some((x) => /fewer kcal/.test(x))) return `${w.label}: ${why[0]}. ${l.label}: ${Math.round(w.kcal - l.kcal)} fewer kcal.`;
-  return why.length ? `🏆 ${winsOf(w.label)}: ${why.slice(0, 2).join(', ')}.` : close; // never a winner we can't explain
+  // round 18 (critic T-2: "🏆 Sugar wins", "🏆 Butter wins", "🏆 Potato chips wins"): a trophy only when one side is
+  // better or equal on EVERY measure the video shows or the label knows (blood sugar, kcal, caffeine, saturated fat,
+  // protein, fiber) and is not a treat (mostly added sugar, mostly saturated fat, fried or processed); otherwise each
+  // side's own advantages, side by side (in name order, so the order of the pair never changes the sentence)
+  const advA = edges(a, b), advB = edges(b, a);
+  if (!advA.length && !advB.length) return close;
+  if (advA.length && !advB.length && !treat(a)) return `🏆 ${winsOf(nm(a))}: ${advA.slice(0, 2).join(', ')}.`;
+  if (advB.length && !advA.length && !treat(b)) return `🏆 ${winsOf(nm(b))}: ${advB.slice(0, 2).join(', ')}.`;
+  const sides = ([[a, advA], [b, advB]] as [Analysis, string[]][]).sort((p, q) => nm(p[0]).localeCompare(nm(q[0])));
+  const one = (x: Analysis, adv: string[]) => (adv.length ? `${nm(x)}: ${adv.slice(0, adv.length && sides.every(([, v]) => v.length) ? 1 : 2).join(', ')}.` : '');
+  return sides.map(([x, adv]) => one(x, adv)).filter(Boolean).join(' ');
 }
 
 // Slower or lighter everyday swaps, by database id. Each is checked with the model before it is shown,

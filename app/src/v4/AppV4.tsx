@@ -29,9 +29,9 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
-import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
+import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
 import { compareHookB, hookB, hookFor, hookForCompare, seedOf, type HookIn } from './video-hook';
-import { captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Captions, type Platform } from './video-caption';
+import { captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Captions, type Platform } from './video-caption';
 /** Round 11 (research R2, R5): the two hooks of a video; which formula comes first rotates per food (its seed). */
 const hookPairOf = (h: HookIn, seed: number) => { const a = hookFor(h), b = hookB(h, a); return seed % 2 ? [b, a] : [a, b]; };
 import type { Guess } from './video-guess';
@@ -590,7 +590,8 @@ export default function AppV4() {
     decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined };
   const vSeed = seedOf(shortName(videoName)), hookPair = hookPairOf(hookIn, vSeed);
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
-  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10 || /\bdecaf/i.test(videoName), sugar: (peakNow ?? 0) >= 0.5, /* (round 12: the story's own signal: espresso is #caffeine, not #bloodsugar) */ solid: /bite/i.test(story.chapters[0]?.title ?? '') });
+  // (round 12: the story's own signal: espresso is #caffeine; round 18: a pljeskavica is #protein, not #bloodsugar)
+  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, ...captionFlags({ alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, decaf: /\bdecaf/i.test(videoName), sugarPeak: peakNow, solid: /bite/i.test(story.chapters[0]?.title ?? ''), macros: productId === 'food' && foodParts.length ? macros(foodParts) : undefined }) });
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
@@ -716,7 +717,7 @@ export default function AppV4() {
         ...lifeOf(x.label, x.built, m, gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined)),
         summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)),
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, unknown: !!s.unknown, note: plainNote(s.key, l, w, x.built, inText(w), !!s.unknown) }; }) },
-        serving: x.serving,
+        serving: servingAmount(x), // (round 18, critic V-3: "28 g 23 whole ker…" was cut off: the amount only)
       };
     };
     const race = cmpRace.current;

@@ -17,27 +17,9 @@ export const CMP_SHORT = [0, 20, 90, 240, 720, 1440]; // 2026-10-24: the planner
 
 /** The video's short name: no grams in brackets; a long name keeps its first part ("A whole pizza with extra
  *  cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name. */
-/** Round 9: on screen in plain American spelling ("Ćevapi" → "Cevapi"). */
-export const plainLatin = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-// (round 16, critic P2-PZ: "A whole 14-inch pizza (1154 g)" read heavy): a pizza with toppings says so
-// round 17 (critic G-5: "1 hamburger: 538 kcal" for a burger with bacon and an extra patty): a builder's name keeps its
-// first add-ons when they fit ("1 hamburger with bacon & extra patty"); critic G-8 / G-4: "Brie cheese" is "Brie",
-// "Cod / white fish" is "Cod"
-const CHEESE_NAMED = /\b(brie|camembert|cheddar|gouda|edam|parmesan|emmental|emmentaler|mozzarella|feta|gorgonzola|halloumi|ricotta|mascarpone) cheese\b/i;
-export const shortName = (n: string) => {
-  const kind = /^Cheese \(([a-z]+)\)$/i.exec(plainLatin(n).trim())?.[1]; // "Cheese (cheddar)" is "Cheddar"
-  if (kind && CHEESE_NAMED.test(`${kind} cheese`)) return kind.charAt(0).toUpperCase() + kind.slice(1);
-  const s = plainLatin(n).replace(/\s*\([^)]*\)/g, '').replace(/\s+\/\s+[^,]*$/, '').replace(CHEESE_NAMED, '$1');
-  if (!(s.split(/\s+/).length > 5 && / with /.test(s))) return s;
-  const core = s.slice(0, s.indexOf(' with '));
-  if (/\bpizza\b/i.test(s)) return `${core} with toppings`;
-  const adds = s.slice(s.indexOf(' with ') + 6).split(/,\s*|\s+and\s+/).map((x) => x.trim()).filter(Boolean);
-  const two = `${core} with ${adds.slice(0, 2).join(' & ')}`, one = `${core} with ${adds[0]}`;
-  return [two, one].find((x) => x.replace(/^\d+\s+/, '').split(/\s+/).length <= 6) ?? core; // ("1 hamburger with bacon & extra patty")
-};
-/** The comparison's name for a side (round 5): the amount moves to its own line ("330 ml of water" → "Water"). */
-// (round 17: the same clean name as the single video, "Cod", "Brie", "Kebab", never "Cod / white fish")
-export const cmpName = (label: string) => { const s = shortName(plainLatin(label).replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, '')); return s.charAt(0).toUpperCase() + s.slice(1); };
+// round 18: the names live in video-names.ts (one source for the video, the comparison and its verdict)
+import { cmpName, plainLatin, shortName } from './video-names';
+export { cmpName, plainLatin, shortName };
 
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
 export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number): BeatCtx {
@@ -151,7 +133,8 @@ export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters: { min: number
  *  climax, with when ("+38 % · 45 min in"). */
 export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[], unit: Profile['glucoseUnit'], hook?: { extra?: { min: number }; lead?: string }): { big: string; small: string } | undefined {
   const cm = climaxFx(b, sugarKnown, chapters, hook).peakMin;
-  const g = cm === undefined ? undefined : gaugesAt(b, cm, unit, sugarKnown).find((x) => x.curve);
+  // (round 18, critic T-3: "2 mg caffeine · 8 h 33 min in" for hot chocolate): a few mg of caffeine is never the hero
+  const g = cm === undefined ? undefined : gaugesAt(b, cm, unit, sugarKnown).find((x) => x.curve && !(/caffeine/.test(x.big) && b.caffeine.doseMg < 10));
   if (g && cm !== undefined) return { big: `${g.big} · ${inText(cm)}`, small: g.small.split(' · ')[0] };
   // round 17 (critic G-7: brie and cod ended without a number): the hook's own number ("41 g · protein")
   const m = /^(\d+(?:[.,]\d+)?)\s*(g|mg|kcal)\b(?:\s+of)?\s*([^.:,]*)/.exec(hook?.lead ?? '');
@@ -329,6 +312,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   };
   // (the planner may leave moments out to fit: the words are then worked out again for the moments it kept, so
   // nothing a left-out moment would have said is lost; twice is enough)
+  let midForce: number | null = null;
   const build = (mins0: number[]) => {
     const sa = sideCards(a, mins0), sb = sideCards(b, mins0);
     // round 14 (owner): the amounts, said once and early: a typical serving each (or the same amount)
@@ -338,7 +322,17 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     const hide = gq?.kind === 'sugarG' ? /\d+ g of sugar|teaspoons? of sugar/ : gq?.kind === 'kcal' ? /\d+ kcal/ : gq?.kind === 'alcohol' ? /\d+ g of alcohol/ : null;
     const revealMin = fx.peakMin ?? hit ?? 0;
     if (hide) for (const side of [sa, sb]) side.forEach((c, i) => { if (mins0[i] < revealMin) { const ls = c.lines.filter((l) => !hide.test(l)); c.lines = ls.length ? ls : ['']; } });
+    let midKeep = -1;
     const keepAt = mins0.map((at, i) => i === 0 || at === hit || sa[i].isNew || sb[i].isNew);
+    // round 18 (critic V-3: almonds vs chips jumped from +0:31 to +24:00): the day always has a middle; when no moment
+    // between the first hour and +24:00 says something new, the first one after +1:30 says where each side is now
+    if (midForce !== null || !mins0.some((at, i) => keepAt[i] && at >= 60 && at < 1440)) {
+      const k = midForce !== null ? mins0.indexOf(midForce) : mins0.findIndex((at) => at >= 90 && at < 1440);
+      if (k >= 0) {
+        keepAt[k] = true; midKeep = mins0[k];
+        ([[sa, a], [sb, b]] as const).forEach(([side, x]) => { if (!side[k].lines.some((l) => l.trim())) { const w = whereCard(x.built, mins0[k]); side[k].lines = [w ?? '']; if (w) side[k].title = `${Math.round(mins0[k] / 60)} hours later`; } });
+      }
+    }
     const mins = mins0.filter((_m, i) => keepAt[i]);
     const pick = <T,>(xs: T[]) => xs.filter((_x, i) => keepAt[i]);
     const SA = pick(sa), SB = pick(sb);
@@ -351,23 +345,38 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       // (round 15, critic J-3: "Cola: when your blood sugar …" was cut off): the short plain words when the long ones do not fit
       return long.length <= CHIP_MAX ? long : `${cmpName(x.label)}: ${CHIP_SHORT.find(([re]) => re.test(t))?.[1] ?? t.toLowerCase()}`;
     };
-    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at), chip: chipOf(i) })),
+    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at) || at === midKeep, mid: at === midKeep, chip: chipOf(i) })),
       cut, uFromMinutes, minutesFromU, fx);
   };
   let used = cmpMins0, plan = build(used);
   for (let k = 0; k < 3; k++) { const kept = cmpMins0.filter((m) => plan.stops.includes(m)); if (kept.length === used.length) break; used = kept; plan = build(used); }
+  // (round 18: when the planner left out every middle moment to fit, one comes back, kept, saying where each side is)
+  const middle = () => {
+    if (plan.stops.some((m) => m >= 60 && m < 1440)) return;
+    const m = [...base, ...cmpMins0].filter((x) => x >= 90 && x < 1440).sort((x, y) => x - y)[0];
+    if (m !== undefined) { midForce = m; used = [...new Set([...used, m])].sort((x, y) => x - y); plan = build(used); }
+  };
+  middle();
   // round 13 (critic P1-1: hamburger vs cola answered its question at 25 of 68 s, then nothing was open): the answer
   // lands at REVEAL_FROM of the video or later, at the first moment after the race is decided (the bars show it on the way)
-  if (gq && hit !== undefined) {
-    const tOf = (m: number) => plan.frames.find((f) => f.stop === m && (f.beat === 'hold' || (f.beat === 'end' && f.phase === 'main')))?.t;
-    const pkT = plan.cues.find((c) => c.kind === 'peak')?.t;
-    // (round 16: also when the planner left the answer's own moment out: it then lands on a later one)
-    if (pkT === undefined || pkT < REVEAL_FROM * plan.seconds) {
-      // (the +24:00 moment counts too: the answer is then the day's payoff)
-      const later = plan.stops.filter((m) => m >= hit && (tOf(m) ?? 0) >= REVEAL_FROM * plan.seconds).sort((x, y) => x - y)[0];
-      if (later !== undefined) { fx.peakMin = later; plan = build(used); }
+  const reveal = () => {
+    if (gq && hit !== undefined) {
+      const tOf = (m: number) => plan.frames.find((f) => f.stop === m && (f.beat === 'hold' || (f.beat === 'end' && f.phase === 'main')))?.t;
+      const pkT = plan.cues.find((c) => c.kind === 'peak')?.t;
+      // (round 16: also when the planner left the answer's own moment out: it then lands on a later one)
+      if (pkT === undefined || pkT < REVEAL_FROM * plan.seconds) {
+        // (the +24:00 moment counts too: the answer is then the day's payoff)
+        // (round 18: on a moment that has words, else the answer has no frame to land on)
+        const said = (m: number) => plan.pages.some((pg) => pg.stop === m && !!(pg.text || pg.textB));
+        const cand = plan.stops.filter((m) => m >= hit && said(m));
+        const later = cand.filter((m) => (tOf(m) ?? 0) >= REVEAL_FROM * plan.seconds).sort((x, y) => x - y)[0] ?? cand.sort((x, y) => y - x)[0];
+        if (later !== undefined) { fx.peakMin = later; plan = build(used); }
+      }
     }
-  }
+  };
+  reveal();
+  middle(); // (and after the answer moved: the day keeps its middle)
+  reveal();
   return { plan, guess: gq, race, fx, verdict: verdictNow };
 }
 

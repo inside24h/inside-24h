@@ -38,7 +38,7 @@ const RULES: Rule[] = [
       : /calories slow/.test(m[3]) ? ['Its calories slow your stomach down.'] : /as fast as water/.test(m[3]) ? ['About as fast as water.'] : [])]],
   // (round 13: the "almost all" time comes from the model, in minutes or hours, and may be left out)
   [/^(?:Each \w+: y|Y)our stomach churns it into a paste and lets it out slowly: half has moved on after about (\d+) minutes(?:, almost all of it by about (\d+) (minutes|hours))?/, (m) => [
-    'Your stomach churns it into a paste.', `Half has moved on after ${m[1]} minutes.`, ...(m[2] ? [`Almost all has moved on by ${m[2]} ${m[3]}.`] : [])]],
+    'Your stomach churns it into a paste.', `Half has moved on after ${m[1]} minutes.`, ...(m[2] ? [`Almost all has moved on by ${m[3] === 'minutes' && Number(m[2]) >= 90 ? `about ${Math.floor(Number(m[2]) / 60)} h${Number(m[2]) % 60 >= 5 ? ` ${Math.round(Number(m[2]) % 60)} min` : ''}` : `${m[2]} ${m[3]}`}.`] : [])]], // (round 18: never "by 100 minutes")
   [/^(?:Each round has t|T)wo speeds: (.+?) runs ahead along the stomach wall, half gone in about (\d+) minutes/, (m) => [
     'Your stomach works at two speeds.', ...(words(`${m[1]} runs ahead along the stomach wall.`) <= BEAT_WORDS ? [cap(`${m[1]} runs ahead along the stomach wall.`)] : ['The drink runs ahead along the wall.']), `Half of it is gone in ${m[2]} minutes.`]],
   [/^.+ (?:are|is) churned into a paste and let out slowly: half after about (\d+) minutes/, (m) => ['The food is churned into a paste.', `Half of it moves on after ${m[1]} minutes.`]],
@@ -49,7 +49,7 @@ const RULES: Rule[] = [
   [/^Coffee also makes your stomach produce more acid/, () => ['Coffee also makes more stomach acid.']],
   // gut, blood, liver
   [/^In about 1 in 3 people coffee makes the lower bowel start moving within minutes/, () => ['Coffee sends 1 in 3 to the toilet.', 'Even before the caffeine kicks in.']],
-  [/^Your stomach wall and small intestine absorb the caffeine/, () => ['Your gut absorbs all of the caffeine.', 'It all passes into your blood.']],
+  [/^Your stomach wall and small intestine absorb the caffeine/, () => ['Your gut absorbs all of the caffeine.', 'All the caffeine passes into your blood.']],
   [/^In the first part of your small intestine the sugar is split into glucose and fructose/, () => ['Your gut splits the sugar in two.', 'Both parts reach your blood in minutes.']],
   [/^In the small intestine it is taken apart: (.+)$/, (m) => ['In the small intestine it is taken apart.',
     ...m[1].replace(/\.$/, '').split(/, /).map((x) => end(cap(plain(x.replace(/ from your gallbladder$/, ''))))).filter((x) => words(x) <= BEAT_WORDS)]],
@@ -65,11 +65,11 @@ const RULES: Rule[] = [
   [/^Your pancreas releases insulin to bring it back down/, () => ['Insulin brings your blood sugar back down.']],
   [/^Your blood sugar drops (?:just|a little) below where you started/, () => ['Your blood sugar dips below where it started.']],
   // caffeine
-  [/^(?:About )?(\d+) mg of caffeine reaches your brain and blocks the tiredness signal a little/, () => ['The caffeine reaches your brain.', 'It blocks the tiredness signal a little.']], // (round 9: no mg on the card, the gauge counts it),
-  [/^The caffeine reaches your brain and blocks the “I’m tired” signal a little/, () => ['The caffeine reaches your brain.', 'It blocks the “I’m tired” signal a little.']],
-  [/^(\d+) mg of caffeine in total, spread over (.+?): it builds up with each \w+ and is highest now/, (m) => [`${m[1]} mg of caffeine, spread over ${m[2]}.`, 'It builds up and is highest now.']],
-  [/^It reaches your brain and blocks the tiredness signal a little/, () => ['It reaches your brain.', 'It blocks the tiredness signal a little.']],
-  [/^Caffeine slips into your brain and blocks adenosine/, () => ['Caffeine slips into your brain.', 'It blocks your “I’m tired” signal.']],
+  [/^(?:About )?(\d+) mg of caffeine reaches your brain and blocks the tiredness signal a little/, () => ['The caffeine reaches your brain.', 'Caffeine blocks the tiredness signal a little.']], // (round 9: no mg on the card, the gauge counts it),
+  [/^The caffeine reaches your brain and blocks the “I’m tired” signal a little/, () => ['The caffeine reaches your brain.', 'Caffeine blocks the “I’m tired” signal.']],
+  [/^(\d+) mg of caffeine in total, spread over (.+?): it builds up with each \w+ and is highest now/, (m) => [`${m[1]} mg of caffeine, spread over ${m[2]}.`, 'The caffeine builds up and peaks now.']],
+  [/^It reaches your brain and blocks the tiredness signal a little/, () => ['The caffeine reaches your brain.', 'Caffeine blocks the tiredness signal a little.']],
+  [/^Caffeine slips into your brain and blocks adenosine/, () => ['Caffeine slips into your brain.', 'Caffeine blocks your “I’m tired” signal.']],
   [/^Caffeine in your blood is at its highest now/, () => ['Caffeine in your blood peaks now.']],
   [/^With food the caffeine arrives later/, () => ['With food the caffeine arrives later.']],
   [/^About \d+ mg of caffeine is (?:left|still) in you/, () => ['Some caffeine is still in you.']],
@@ -86,7 +86,7 @@ const RULES: Rule[] = [
   [/^In a typical body like yours the alcohol is gone by now, about ([\d.]+ h) after the first sip/, (m) => [`The alcohol is gone after about ${m[1]}.`]],
   [/^Livers differ/, () => ['Livers differ, so for some it takes longer.']],
   [/^Sleep, coffee, water or fresh air don’t speed it up/, () => ['Coffee or water don’t speed it up.']],
-  [/^Spreading the drinks lowered the peak, not the end/, () => ['Spreading the drinks lowered the peak.', 'It is gone at about the same time.']],
+  [/^Spreading the drinks lowered the peak, not the end/, () => ['Spreading the drinks lowered the peak.', 'The alcohol still leaves at the same time.']],
   [/^In all, about (\d+) teaspoons of sugar reach your blood/, (m) => [`About ${m[1]} teaspoons of sugar, from starch.`]], // (round 12)
   [/^This app can’t tell you when you’re safe to drive/, () => ['We can’t tell when you’re safe to drive.']],
   [/^A day later there is still alcohol in your blood/, () => ['After 24 h, alcohol is still in you.']],
@@ -98,19 +98,19 @@ const RULES: Rule[] = [
   [/^If you use insulin or diabetes tablets, watch for low blood sugar/, () => ['On diabetes medicine? Watch for low sugar.']],
   // water, kidneys
   [/^The first water reaches your blood within (\d+) minutes/, (m) => [`Water reaches your blood within ${m[1]} minutes.`]],
-  [/^In the gut it travels in small pockets/, () => ['It travels in small, teaspoon-sized pockets.']],
-  [/^It spreads through all the water in your body/, () => ['It spreads through all your body water.']],
+  [/^In the gut it travels in small pockets/, () => ['Your gut moves the water in small sips.']] /* (round 18, critic: "teaspoon-sized pockets") */,
+  [/^It spreads through all the water in your body/, () => ['The water spreads through your whole body.']],
   [/^Most of the glass is now collecting in your bladder/, () => ['Most of it collects in your bladder.']],
   [/^About (\d+) hours later the glass has passed through you/, () => ['The glass has passed through you.', 'Your body water is back in balance.']],
-  [/^The extra water \(?.*\)? is filtered by your kidneys into your bladder/, () => ['Your kidneys filter the extra water.', 'It collects in your bladder for hours.']],
+  [/^The extra water \(?.*\)? is filtered by your kidneys into your bladder/, () => ['Your kidneys filter the extra water.', 'The urine collects in your bladder for hours.']],
   [/^A beer does not make you lose more water than you drank/, () => ['You don’t lose more water than you drank.']],
-  [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['It hydrates like the same amount of water.']],
+  [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['Cola hydrates like the same amount of water.']],
   // meals
-  [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, (m) => ['Many people feel sleepy after a big meal.', `It comes about ${m[1]} hours later.`]],
+  [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, (m) => ['Many people feel sleepy after a big meal.', `The slump comes about ${m[1]} hours later.`]],
   // the protein arrives over hours; this moment is its peak (model review 2026-10-24: not "139 g reach your blood")
-  [/^The (\d+) g of protein arrive in your blood as amino acids/, () => ['Protein pieces in your blood peak now.', 'They keep arriving for hours.']],
+  [/^The (\d+) g of protein arrive in your blood as amino acids/, () => ['Protein pieces in your blood peak now.', 'Protein keeps arriving for hours.']],
   [/^Processing protein/, () => ['Processing it uses a quarter of its calories.']],
-  [/^The fat travels through your lymph into the blood/, () => ['Fat takes a slower route, via the lymph.', 'Then it joins your blood.']],
+  [/^The fat travels through your lymph into the blood/, () => ['Fat takes a slower route, via the lymph.', 'The fat joins your blood later.']],
   [/^Blood fat \(triglycerides\) is highest around now|^Blood fat is highest around now/, () => ['Blood fat is highest around now.']],
   // no amount: the gauge shows how much has arrived at this minute (the chapter's total would disagree with it)
   [/^What you can’t digest, ([\d.]+) g of fiber, reaches the start of your large intestine/, () => ['The fiber reaches your large intestine.']],

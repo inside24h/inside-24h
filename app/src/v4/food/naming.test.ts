@@ -49,7 +49,7 @@ describe('amountPhrase', () => {
   });
 
   it('counts, sizes and measures', () => {
-    expect(amountPhrase(scale(one('jaje'), 2))).toBe('2 large eggs');
+    expect(amountPhrase(scale(one('jaje'), 2))).toBe('2 large hard-boiled eggs'); // (round 18, critic T-6: the kind that tells eggs apart)
     expect(amountPhrase(scale(one('kifla'), 2))).toBe('2 bread rolls');
     expect(amountPhrase(scale(one('krumpir'), 2))).toBe('2 potatoes');
     expect(amountPhrase(one('cola'))).toBe('330 ml of cola');

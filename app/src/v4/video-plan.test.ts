@@ -315,14 +315,14 @@ describe('round 6: honest alcohol, one number per thing', () => {
   });
   it('the cola single never says "No extra urine." alone', () => {
     for (const c of FIX.cola.flatMap((x) => beatLines(x))) expect(c).not.toBe('No extra urine.');
-    expect(beatLines(FIX.cola.find((c) => c.title === 'Kidneys')!)).toEqual(['It hydrates like the same amount of water.']);
+    expect(beatLines(FIX.cola.find((c) => c.title === 'Kidneys')!)).toEqual(['Cola hydrates like the same amount of water.']); // (round 18: its own subject)
   });
   it('the blood sugar rise is the same range on the gauge and the end card, and a normal rise is said calmly', () => {
     const x = analyze(parseMeal('cola'), DEFAULT_PROFILE), g = x.built.effects.glucoseMgDl!;
     let pk = 0, at = 0; for (let m = 0; m < 600; m++) if (g[m] > g[at]) at = m; pk = g[at] / 18.016;
     const gauge = mainGauge(x.built, at, 0.2, 'mmol/L', true)!;
     expect(gauge.small).toContain(sugarPct(pk)); expect(plainSugar(pk)).toContain(sugarPct(pk));
-    if (pk < 3) { expect(gauge.level).toBe(0); expect(gauge.small).toMatch(/normal rise/); }
+    if (pk < 3) { expect(gauge.level).toBe(0); expect(gauge.small).toMatch(/normal rise|fast rise/); } // (round 18: a quick rise says so, still calm)
   });
   it('the 24 h moment: plain words and the normal range (14–58 h), not "29 hours" alone', () => {
     const c = beatLines(FIX['pizza-whole'].find((x) => x.min === 1440)!);

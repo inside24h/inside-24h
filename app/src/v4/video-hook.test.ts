@@ -39,12 +39,12 @@ describe('hooks', () => {
   });
   it('round 5: espresso says how much is still in you at bedtime, and that moment pays it off', () => {
     const k = hookFor({ ...cases[1][1], caffeineMg: 63 });
-    expect(k.line2).toBe('Most is still in you at bedtime.'.replace('Most', 'Almost all'));
+    expect(k.line2).toMatch(/^(Almost all of its caffeine (is left at|lasts until) bedtime|At bedtime, almost all of its caffeine remains)\.$/); // (round 18: rotating phrasings, "its caffeine")
     expect(k.payoff).toBe('Going to bed');
   });
   it('round 5: a big food number comes with its size; the 24 h moment answers the promise', () => {
     const k = hookFor({ ...cases[3][1], grams: 1104 });
-    expect(k.line1).toBe('A whole pizza (1104 g): 2572 kcal.'); expect(k.line2).toBe('Where is it 24 hours later?'); expect(k.payoff).toBe('24 hours later');
+    expect(k.line1).toBe('A whole pizza (1104 g): 2572 kcal.'); expect(k.line2).toMatch(/^(Where is it 24 hours later|What is left of it a day later|Where has it gone after a day)\?$/); expect(k.payoff).toBe('24 hours later'); // (round 18: rotating phrasings)
   });
   it('the comparison asks a question the race answers', () => {
     const k = hookForCompare('Espresso', 'Beer', true);

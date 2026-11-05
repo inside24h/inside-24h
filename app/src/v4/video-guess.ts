@@ -17,6 +17,7 @@ export interface GuessSide {
   /** blood sugar change per minute (mmol/L), when the food has a measured curve */ sugar?: ArrayLike<number> | null;
   /** round 13: grams of alcohol */ alcoholG?: number;
   /** round 15: grams of sugar */ sugarG?: number;
+  /** round 18: the portion, in g (or ml) and as said ("330 ml") */ grams?: number; portion?: string;
   /** round 16: kcal */ kcal?: number;
 }
 export interface Guess {
@@ -118,11 +119,16 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
   // 3b) round 15 (critic J-1: cola vs orange juice, the same amount, asked nothing): which has more sugar (the model's
   // grams), answered at the later of the two sugar peaks; never with alcohol on a side
   const sa = a.sugarG ?? 0, sb = b.sugarG ?? 0;
-  if (!anyAlcohol && sa >= 3 && sb >= 3 && Math.abs(sa - sb) >= 3 && Math.abs(sa - sb) >= 0.1 * Math.max(sa, sb)) {
+  // round 18 (critic: "More sugar: Cola. 35 g vs 22 g" for 330 ml vs 250 ml): a count of grams is only asked when the
+  // portions are about the same, or when the bigger total is also more per 100 g; different portions are said
+  const ga0 = a.grams ?? 0, gb0 = b.grams ?? 0, sameSize = !(ga0 > 0 && gb0 > 0) || Math.abs(ga0 - gb0) <= 0.1 * Math.max(ga0, gb0);
+  const fair = (x: number, y: number) => sameSize || (x - y) * (x / ga0 - y / gb0) > 0;
+  const sizes = !sameSize && a.portion && b.portion ? ` (${a.portion} vs ${b.portion})` : '';
+  if (!anyAlcohol && sa >= 3 && sb >= 3 && Math.abs(sa - sb) >= 3 && Math.abs(sa - sb) >= 0.1 * Math.max(sa, sb) && fair(sa, sb)) {
     const w = (sa > sb ? 0 : 1) as 0 | 1, top = (s: GuessSide) => { const c = s.sugar; if (!c) return 30; let k = 0; for (let m = 1; m < Math.min(N, c.length); m++) if (c[m] > c[k]) k = m; return k; };
     const flat = Float32Array.from({ length: N }, () => 0);
     return { kind: 'sugarG', question: 'Guess: which has more sugar?', winner: w, decidedMin: Math.max(top(a), top(b)),
-      answer1: `More sugar: ${the(sides[w].name)}.`, answer2: `${Math.round(w ? sb : sa)} g vs ${Math.round(w ? sa : sb)} g of sugar.`,
+      answer1: `More sugar: ${the(sides[w].name)}.`, answer2: `${Math.round(w ? sb : sa)} g vs ${Math.round(w ? sa : sb)} g of sugar${w ? sizes.replace(/\((.+) vs (.+)\)/, '($2 vs $1)') : sizes}.`,
       recap: `Answer: ${sides[w].name} had more sugar.`, progress: [flat, flat] };
   }
   // 4) round 13 (critic P1-3: red wine vs beer asked nothing; they leave the blood about together): two alcoholic
@@ -143,23 +149,23 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
     const w = (x >= y ? 0 : 1) as 0 | 1, tie = Math.abs(x - y) < Math.max(tieGap, 0.1 * Math.max(x, y));
     return { kind, question, winner: w, decidedMin: at,
       // (round 17: "25 g vs 27 g of sugar.", never "25 g of sugar vs 27 g of sugar."; no capital mid-sentence)
-      answer1: tie ? 'Almost the same.' : `${more}: ${the(sides[w].name)}.`, answer2: `${Math.round(x)} ${unit.split(' ')[0]} vs ${Math.round(y)} ${unit}.`,
+      answer1: tie ? 'Almost the same.' : `${more}: ${the(sides[w].name)}.`, answer2: `${Math.round(x)} ${unit.split(' ')[0]} vs ${Math.round(y)} ${unit}${kind === 'alcohol' ? '' : sizes}.`,
       recap: tie ? `Answer: ${sides[0].name} and ${lowerName(sides[1].name)}, almost the same.` : `Answer: ${sides[w].name}, ${more.toLowerCase()}.`, progress: [flat, flat] };
   };
   if (a.alcohol && b.alcohol) return ask('alcohol', 'Guess: which brings more alcohol?', ga, gb, 'g of alcohol', 'More alcohol', 2, Math.max(later(a.bac), later(b.bac)));
-  if (!anyAlcohol && sa >= 1 && sb >= 1) return ask('sugarG', 'Guess: which has more sugar?', sa, sb, 'g of sugar', 'More sugar', 3, Math.max(later(a.sugar), later(b.sugar)));
+  if (!anyAlcohol && sa >= 1 && sb >= 1 && fair(sa, sb)) return ask('sugarG', 'Guess: which has more sugar?', sa, sb, 'g of sugar', 'More sugar', 3, Math.max(later(a.sugar), later(b.sugar)));
   return ask('kcal', 'Guess: which has more calories?', a.kcal ?? 0, b.kcal ?? 0, 'kcal', 'More calories', 10, 60);
 }
 
 /** A side of the race from the app's analysis of one food or drink (Compare / analyze.ts). */
-export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; macros?: { sugars: number }; kcal?: number; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
+export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | null; macros?: { sugars: number; grams?: number }; kcal?: number; serving?: string; built: { route?: { segs: (m: number) => Partial<Record<string, { amount: number }>> } | null; caffeine: { doseMg: number; body: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number } }, name?: string): GuessSide {
   const r = x.built.route;
   const stomach = r ? Float32Array.from({ length: N }, (_, m) => r.segs(m).stomach?.amount ?? 0) : null;
   return {
     name: name ?? x.label, alcohol: (x.built.alcoholG ?? 0) > 1, amount: stomach ? Math.max(0, ...Array.from(stomach)) : undefined,
     stomach,
     caffeine: x.built.caffeine.doseMg >= 10 ? x.built.caffeine.body : null,
-    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0, kcal: x.kcal ?? 0,
+    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0, kcal: x.kcal ?? 0, grams: x.macros?.grams, portion: x.serving ? /(\d+(?:[.,]\d+)?\s*(?:ml|g))\b/i.exec(x.serving.split('·').pop() ?? x.serving)?.[1] : undefined,
     sugar: x.glucose ? Float32Array.from({ length: N }, (_, m) => (x.glucose![m] ?? 0) / 18.016) : null,
   };
 }

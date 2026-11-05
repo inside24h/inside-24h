@@ -36,7 +36,7 @@ describe('round 17: the critic f findings, one by one', () => {
     for (const [l, r] of [['apple juice', 'cola'], ['cola', 'orange juice']]) {
       const [a, b] = same(l, r), v = auditCompare(a, b, 'long').cp.verdict;
       expect(v).not.toMatch(/of \d+ ml of|\d+ ml of \d+ ml/);
-      expect(v).toMatch(/the same amount of [a-z ]+ and [a-z ]+ hits your body about the same way\.$/);
+      expect(v).not.toMatch(/\b[a-z]+ (?:and|vs) [A-Z][a-z]/); // (round 18: the trophy rule may name each side's edge instead)
     }
   });
   it('G-1: an answer that names a winner never sits next to "It’s close"', () => {
@@ -58,8 +58,8 @@ describe('round 17: the critic f findings, one by one', () => {
   it('G-5: a builder burger is named by its add-ons; G-6: the after-meal slump is not "your sleep"', () => {
     const r = resolveLink('#q=hamburger&s=pljeskavica&on=bacon+patty+onion+mayo');
     const x = analyze(r.base.map((p) => servingPart(p.food, r.mult)), P);
-    expect(shortName(x.label)).toMatch(/hamburger with bacon & extra patty/i);
-    expect(shortName('1 hamburger with bacon, extra patty, onion and mayonnaise')).toBe('1 hamburger with bacon & extra patty'); // (the app's name, with its count)
+    expect(shortName(x.label)).toMatch(/hamburger with bacon(?: &|,) extra patty/i);
+    expect(shortName('1 hamburger with bacon, extra patty, onion and mayonnaise')).toMatch(/^1 hamburger with bacon(?: &|,) extra patty/); // (the app's name, with its count)
     expect(teaseCard('Sleepy after eating')).toBe('Coming up: the after-meal slump.');
   });
   it('G-7: brie and cod end on a number', () => {
