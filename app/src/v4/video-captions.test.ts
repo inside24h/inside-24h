@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
 import { narrationFor, placeClips, wordsOf } from './video-narration';
 import { captionPages, captionTrack, duplicateOnScreen, pausesOf, wordTimes, CAP_MAX_CHARS, CAP_MAX_WORDS, FOCUS_R, PAGE_MIN_S, type CapLine, type CapPage } from './video-captions';
-import { drawCaption, drawCmpFrame, drawFrame, lastFrameFocus, logText, SAFE, type CapState, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
+import { drawCaption, drawCmpFrame, drawFrame, lastFrameFocus, logText, SAFE, swallowing, SWALLOW_R, type CapState, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
 import { arrangement, melodyOf, motifOf } from './video-audio';
 import { gaugesAt, cmpName, plainLatin } from './video-story';
 import { FPS, type Plan } from './video-plan';
@@ -59,6 +59,7 @@ function checkPage(pg: CapPage, frame: (t: number) => void, where: string, T: Ta
     if (duplicateOnScreen(pg.line ?? '', boxes)) T.bad.push(`${where}: caption repeats the screen "${pg.line}"`);
   }
 }
+const lastSwallow = (f: { r?: number }[]) => f.filter((p) => p.r === SWALLOW_R).length;
 const frameAt = (plan: Plan, t: number) => plan.frames[Math.max(0, Math.min(plan.frames.length - 1, Math.round(t * FPS)))];
 const linesOf = (nin: Parameters<typeof narrationFor>[0]): CapLine[] => {
   const lines = narrationFor(nin);
@@ -104,8 +105,10 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
         const fr = frameAt(plan, t), m = Math.min(1440, fr.m), stop = fr.stop ?? m, ch = st0.chapters.reduce((a, c) => (stop + 1e-6 >= c.min ? c : a), st0.chapters[0]);
         const ov: Overlay = { hook: `${o.hook.line1}\n${o.hook.line2}`, title: plainLatin(x.label.replace(/\s*\([^)]*\)/g, '')), sub: 'Man, 35 · 178 cm · 80 kg', clock: '22:00', step: ch.title, caption: fr.cap ?? '',
           progress: fr.u ?? 0, lights: lightsAt(x, m), handle: '@inside24h', hero: o.hero, gauges: gaugesAt(x.built, m, 'mmol/L', x.glucose !== undefined).map((g, j) => ({ ...g, at: { x: fx + (j % 2 ? 60 : -40), y: fy - 140 * j } })),
-          summary: lightsAt(x, m).map((l) => ({ ...l, note: 'Mild stress at 23:28' })), alcohol: (x.built.alcoholG ?? 0) > 1, solid, pins: { stomach: { x: fx, y: fy } }, focus: 'stomach' };
+          summary: lightsAt(x, m).map((l) => ({ ...l, note: 'Mild stress at 23:28' })), alcohol: (x.built.alcoholG ?? 0) > 1, solid, pins: { tongue: { x: 540, y: 470 }, esophagus: { x: 545, y: 760 }, stomach: { x: fx, y: fy } }, focus: 'stomach' };
         drawFrame(fakeCtx(0.56), W, H, SRC, ov, 'reel', fr, plan, null);
+        // v19b: while the bite goes down, the whole mouth → food pipe → stomach path is kept clear (checkPage checks it)
+        if (swallowing(fr) && lastSwallow(lastFrameFocus()) < 6) T.bad.push(`${it2.id} t=${t.toFixed(2)}: the swallow path is not kept clear`);
       };
       const st: CapState = {};
       caps.forEach((pg, i) => checkPage(pg, frame, `${it2.id} page ${i}`, T, st));
@@ -130,8 +133,9 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
         const fr = frameAt(plan, t), m = Math.min(1440, fr.m), stop = fr.stop ?? m, g = cp.guess;
         const ov = { hook: o.hook, guess: !!g, clock: '22:00', progress: fr.u ?? 0, handle: '@inside24h', stamp: 'LATER', verdict: cp.verdict,
           answer: g ? { a1: g.answer1, a2: g.answer2, recap: g.recap, kind: g.kind, winner: g.winner } : undefined,
-          a: side(pr.a, m, stop, fr.cap, 270), b: side(pr.b, m, stop, fr.capB, 810) } as CmpOverlay;
+          a: { ...side(pr.a, m, stop, fr.cap, 270), pins: { tongue: { x: 270, y: 470 }, esophagus: { x: 272, y: 760 }, stomach: { x: 290, y: 1000 } } }, b: { ...side(pr.b, m, stop, fr.capB, 810), pins: { tongue: { x: 810, y: 470 }, esophagus: { x: 812, y: 760 }, stomach: { x: 830, y: 1000 } } } } as CmpOverlay;
         drawCmpFrame(fakeCtx(0.56), W, H, SRC, ov, fr, plan, null);
+        if (swallowing(fr) && lastSwallow(lastFrameFocus()) < 12) T.bad.push(`${pr.id} t=${t.toFixed(2)}: the swallow paths are not kept clear`);
       };
       const st: CapState = {};
       caps.forEach((pg, i) => checkPage(pg, frame, `${pr.id} page ${i}`, T, st));

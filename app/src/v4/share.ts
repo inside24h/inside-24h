@@ -156,6 +156,20 @@ export async function record(source: HTMLCanvasElement, format: Format, overlay:
     raf = requestAnimationFrame(frame);
   });
 }
+/** v19b: the cold open and the first minutes follow the bite or sip from the mouth down the food pipe: captions keep
+ *  clear of that whole path (mouth → esophagus → stomach), as points every ~60 px with SWALLOW_R clearance. */
+export const SWALLOW_R = 70, SWALLOW_MIN = 5;
+export const swallowing = (fr: { phase?: string; m: number; stop?: number }) => fr.phase === 'intro' || (fr.stop ?? fr.m) < SWALLOW_MIN;
+export function swallowPath(...pts: (Pt | null)[]): Pt[] {
+  const ps = pts.filter((p): p is Pt => !!p), out: Pt[] = [];
+  ps.forEach((p, i) => {
+    out.push({ x: p.x, y: p.y, r: SWALLOW_R });
+    const q = ps[i + 1]; if (!q) return;
+    const n = Math.ceil(Math.hypot(q.x - p.x, q.y - p.y) / 60);
+    for (let k = 1; k < n; k++) out.push({ x: p.x + ((q.x - p.x) * k) / n, y: p.y + ((q.y - p.y) * k) / n, r: SWALLOW_R });
+  });
+  return out;
+}
 /** v19: the body's focal organ(s) on the last frame drawn (the spoken-word captions keep clear of them). */
 let frameFocus: Pt[] = [];
 export const lastFrameFocus = () => frameFocus;
@@ -1235,7 +1249,8 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   drawCover(ctx, src, 0, 0, W, H); ctx.restore();
   const pinOf = (k: string | null | undefined) => (k ? tf(o.pins?.[k] ?? null) : null);
   // (the organ of the moment and the main number's organ; the other pinned organs with a smaller clearance)
-  frameFocus = [pinOf(o.focus), tf(main?.at), ...(o.gauges ?? []).filter((g) => g !== main).map((g) => { const p = tf(g.at); return p && { ...p, r: PIN_R }; })].filter((p): p is Pt => !!p && onFrame(p, W, 0, H));
+  frameFocus = [pinOf(o.focus), tf(main?.at), ...(o.gauges ?? []).filter((g) => g !== main).map((g) => { const p = tf(g.at); return p && { ...p, r: PIN_R }; }),
+    ...(swallowing(fr) ? swallowPath(pinOf('tongue'), pinOf('esophagus'), pinOf('stomach')) : [])].filter((p): p is Pt => !!p && onFrame(p, W, 0, H));
   const micro = since(cues, 'micro', t);
   if (micro.cue?.data?.v === 1) drawGlowPulse(ctx, pinOf(o.focus) ?? tf(main?.at), micro.age, lighten(o.color ?? ACCENT));
   drawSplash(ctx, pinOf('tongue'), since(cues, 'sip', t).age, lighten(o.color ?? '#ffffff'));
@@ -1513,7 +1528,8 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   ctx.save(); ctx.translate(pv.x + mo.dx, pv.y + mo.dy); ctx.scale(mo.scale, mo.scale); ctx.translate(-pv.x, -pv.y);
   drawCover(ctx, src, 0, 0, W, H); ctx.restore();
   const sipAge = since(cues, 'sip', t).age, peak = since(cues, 'peak', t);
-  frameFocus = [o.a, o.b].map((sd) => tf(sd.gauge?.at ?? sd.pins?.stomach ?? null)).filter((p): p is Pt => !!p && onFrame(p, W, 0, H));
+  frameFocus = [...[o.a, o.b].map((sd) => tf(sd.gauge?.at ?? sd.pins?.stomach ?? null)),
+    ...(swallowing(fr) ? [o.a, o.b].flatMap((sd) => swallowPath(tf(sd.pins?.tongue ?? null), tf(sd.pins?.esophagus ?? null), tf(sd.pins?.stomach ?? null))) : [])].filter((p): p is Pt => !!p && onFrame(p, W, 0, H));
   [o.a, o.b].forEach((sd, k) => {
     drawSplash(ctx, tf(sd.pins?.tongue ?? null), sipAge - k * 0.12, lighten(sd.color), 11 + k);
     const sg = since(cues, 'surge', t);
