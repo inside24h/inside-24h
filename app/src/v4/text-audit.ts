@@ -25,7 +25,7 @@ import { worstMoment } from './status';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
 const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
-import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, decafOf, heroOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, type ComparePlan } from './video-story';
+import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, decafOf, heroOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
 
 export const AUDIT_PROFILE: Profile = { ...DEFAULT_PROFILE, drinkAtMin: 22 * 60 };
 export const AUDIT_CUTS: Cut[] = ['long', 'medium', 'short'];
@@ -266,6 +266,9 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
         if (g && /^Almost the same/.test(g.answer1) && /^🏆/.test(o.cp.verdict) && new RegExp(g.kind === 'sugarG' ? 'sugar' : g.kind === 'kcal' ? 'kcal' : '^$').test(o.cp.verdict)) res.issues.push({ cls: 'contradiction', where, text: `${g.recap} / ${o.cp.verdict}` });
       }
       if (!g) res.issues.push({ cls: 'compare without a guess', where, text: o.hook });
+      // round 18b: the answer is revealed at 55 % of the video or later (REVEAL_FROM), in every cut
+      const pkT = o.cp.plan.cues.find((c) => c.kind === 'peak')?.t;
+      if (g && (pkT === undefined || pkT < REVEAL_FROM * o.cp.plan.seconds - 1 / FPS)) res.issues.push({ cls: 'answer revealed too early', where, text: `${pkT === undefined ? 'no answer' : (pkT / o.cp.plan.seconds * 100).toFixed(0) + ' %'} (${o.cp.plan.stops.join(', ')})` });
       if (!o.cp.plan.stops.some((m) => m >= 60 && m < 1440)) res.issues.push({ cls: 'compare without a middle', where, text: o.cp.plan.stops.join(', ') });
       let prevA = -1, prevB = -1;
       for (const pg of o.cp.plan.pages) {

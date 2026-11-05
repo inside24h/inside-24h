@@ -369,7 +369,8 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
         // (round 18: on a moment that has words, else the answer has no frame to land on)
         const said = (m: number) => plan.pages.some((pg) => pg.stop === m && !!(pg.text || pg.textB));
         const cand = plan.stops.filter((m) => m >= hit && said(m));
-        const later = cand.filter((m) => (tOf(m) ?? 0) >= REVEAL_FROM * plan.seconds).sort((x, y) => x - y)[0] ?? cand.sort((x, y) => y - x)[0];
+        const later = cand.filter((m) => (tOf(m) ?? 0) >= REVEAL_FROM * plan.seconds).sort((x, y) => x - y)[0] ?? cand.sort((x, y) => y - x)[0]
+          ?? plan.stops.filter((m) => m > 0 && said(m)).sort((x, y) => y - x)[0]; // (round 18b: the last moment with words, never no answer)
         if (later !== undefined) { fx.peakMin = later; plan = build(used); }
       }
     }
@@ -377,6 +378,20 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   reveal();
   middle(); // (and after the answer moved: the day keeps its middle)
   reveal();
+  // round 18b (the short comparisons answered at 51-54 %): when the answer's moment starts a little before REVEAL_FROM,
+  // the answer waits on that moment until REVEAL_FROM (its words are still on screen); never earlier
+  {
+    const want = REVEAL_FROM * plan.seconds + 1 / 30;
+    const pi = plan.cues.findIndex((c) => c.kind === 'peak');
+    const pk = pi >= 0 ? plan.cues[pi] : undefined;
+    if (pk && pk.t < want) {
+      const f = plan.frames.find((x) => x.t >= want);
+      if (f && f.phase === 'main' && (f.beat === 'hold' || f.beat === 'end') && f.stop === pk.data?.v) {
+        const dt = want - pk.t;
+        plan = { ...plan, cues: plan.cues.map((c) => (c === pk || (c.kind === 'riser' && Math.abs(c.t - (pk.t - 1.6)) < 1.7 && c.t <= pk.t) ? { ...c, t: c.t + dt } : c)).sort((x, y) => x.t - y.t), peakT: want };
+      }
+    }
+  }
   return { plan, guess: gq, race, fx, verdict: verdictNow };
 }
 
