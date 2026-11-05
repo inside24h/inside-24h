@@ -22,6 +22,8 @@ import { plainNote, inText, whereCard } from './video-body';
 import { FPS, readSeconds, type Cut, type Plan, type PlanFx, type StopIn } from './video-plan';
 import { BEAT_WORDS } from './video-beats';
 import { worstMoment } from './status';
+import { lintNarration, narrationFor, type NarrIn } from './video-narration';
+import { seedOf } from './video-hook';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
 const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
@@ -177,6 +179,10 @@ export function lintMoment(title: string | undefined, stop: number, chapters: { 
   return [];
 }
 
+/** 2026-11-05: the voiceover input exactly as AppV4 builds it (single and comparison). */
+export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero });
+export const compareNarrIn = (a: Analysis, b: Analysis, cp: ComparePlan): NarrIn => ({ plan: cp.plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((y) => (y.built.alcoholG ?? 0) > 1), guess: !!cp.guess });
+
 export interface AuditResult { issues: Issue[]; dump: string[] }
 const hm = (m: number) => `+${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`;
 
@@ -222,6 +228,11 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
         if (/^Coming up: .*\bsleep\b/.test(pg.text) && !chapters.some((c) => /bed|^Sleep\b|night/i.test(c.title))) res.issues.push({ cls: 'teaser promises the wrong thing', where: `${id} ${cut}`, text: pg.text });
       }
       for (const [st, t] of titleAt) res.issues.push(...lintMoment(t, st, chapters, `${id} ${cut} ${v}`));
+      // 2026-11-05: the voiceover script of this cut (video-narration.ts), as the app builds it
+      const nin = singleNarrIn(x, o, solid), vo = narrationFor(nin);
+      for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${id} ${cut} ${v} voice`, text: i.text });
+      for (const l of vo) res.issues.push(...lintText(l.text, `${id} ${cut} ${v} voice`, 'card'));
+      if (v === 'A' && cut === 'long') res.dump.push(`    voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);
     }
     if (!A.hero) res.issues.push({ cls: 'end card without a number', where: id, text: A.name });
     // round 18 (critique g): the story fits the food's class
@@ -291,6 +302,9 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
         if (early) res.issues.push({ cls: 'answer said before the reveal', where, text: `${early.cap ?? ''} || ${early.capB ?? ''}` });
       }
       for (const [st, t] of tA) res.issues.push(...lintMoment(t, st, pr.a.built.story.chapters, `${where} A`));
+      const nin = compareNarrIn(pr.a, pr.b, o.cp), vo = narrationFor(nin);
+      for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${where} voice`, text: i.text });
+      if (cut === 'long') res.dump.push(`  voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);
       for (const [st, t] of tB) res.issues.push(...lintMoment(t, st, pr.b.built.story.chapters, `${where} B`));
     }
   }

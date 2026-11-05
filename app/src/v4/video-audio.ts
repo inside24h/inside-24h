@@ -172,7 +172,26 @@ export function playSoundtrack(buf: AudioBuffer): { track: MediaStreamTrack; sta
 // and seeded noise): no samples, no licences. `music: false` = "Sound effects only" (the owner adds a trending song).
 // =====================================================================================================================
 export type SoundMode = 'music' | 'sfx';
-export interface SoundOpts { music: boolean; fizzy?: boolean; solid?: boolean; /** round 11 (research R5): the food's variety seed (video-story seedOf) */ seed?: number }
+export interface SoundOpts { music: boolean; fizzy?: boolean; solid?: boolean; /** round 11 (research R5): the food's variety seed (video-story seedOf) */ seed?: number;
+  /** 2026-11-05: the voiceover (voice-tts.ts), mono at SAMPLE_RATE on the video's timeline, and where it speaks */ voice?: { data: Float32Array; spans: [number, number][] } | null }
+/** Voiceover mix: the music ducks this much under the voice (the effects keep their punch), and the voice sits this
+ *  much over the whole bed's level where it speaks. */
+/** QA: the last voiceover mix's voice-to-music and voice-to-effects ratios where the voice speaks. */
+export let lastVoiceMix: { voiceOverMusicDb: number; voiceOverSfxDb: number } | null = null;
+export const VOICE_DUCK_DB = -9, VOICE_OVER_DB = 4, DUCK_ATTACK_S = 0.12, DUCK_RELEASE_S = 0.35;
+/** The music's gain over time under a voice: 1, ramping to VOICE_DUCK_DB just before each span and back after it. */
+export function duckCurve(spans: [number, number][], len: number, sr: number): Float32Array {
+  const g = new Float32Array(len).fill(1), lo = Math.pow(10, VOICE_DUCK_DB / 20), a = DUCK_ATTACK_S * sr, r = DUCK_RELEASE_S * sr;
+  for (const [t0, t1] of spans) {
+    const s0 = Math.round(t0 * sr), s1 = Math.round(t1 * sr);
+    for (let i = Math.max(0, Math.floor(s0 - a)); i < Math.min(len, Math.ceil(s1 + r)); i++) {
+      const k = i < s0 ? (s0 - i) / a : i > s1 ? (i - s1) / r : 0; // 0 = fully ducked
+      const v = lo + (1 - lo) * Math.min(1, k * k * (3 - 2 * k));
+      if (v < g[i]) g[i] = v;
+    }
+  }
+  return g;
+}
 /** Round 11 (research R5, YouTube "repetitive content"): each food gets its own motif, deterministically: the key
  *  (A minor, G minor, C minor, D minor, E minor), where the progression starts, and the whoosh's colour. */
 export const MOTIF_KEYS = [0, -2, 3, 5, -5] as const;
@@ -482,6 +501,23 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   const m0 = buf.getChannelData(0), m1 = buf.getChannelData(1), s0 = buf.getChannelData(2), s1 = buf.getChannelData(3);
   const out = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
   const L = out.getChannelData(0), R = out.getChannelData(1);
+  // 2026-11-05 voiceover: the music ducks under it (−9 dB), the voice sits VOICE_OVER_DB over the bed where it speaks
+  const vo = o.voice && o.voice.spans.length ? o.voice : null;
+  const dk = vo ? duckCurve(vo.spans, len, sr) : null;
+  let vg = 0;
+  if (vo) {
+    let bed = 0, vs = 0, n = 0;
+    for (const [t0, t1] of vo.spans) for (let i = Math.max(0, Math.round(t0 * sr)); i < Math.min(len, Math.round(t1 * sr)); i++) { const l = m0[i] + s0[i], r = m1[i] + s1[i]; bed += (l * l + r * r) / 2; vs += vo.data[i] * vo.data[i]; n++; }
+    const bedR = Math.sqrt(bed / Math.max(1, n)), vR = Math.sqrt(vs / Math.max(1, n));
+    vg = vR > 1e-6 ? (Math.max(bedR, 0.02) * Math.pow(10, VOICE_OVER_DB / 20)) / vR : 0;
+  }
+  const mus = (i: number) => (dk ? dk[i] : 1), voi = (i: number) => (vo && i < vo.data.length ? vo.data[i] * vg : 0);
+  if (vo) { // QA numbers: voice vs ducked music vs effects where the voice speaks (dB, RMS)
+    let a = 0, b = 0, c = 0;
+    for (const [t0, t1] of vo.spans) for (let i = Math.max(0, Math.round(t0 * sr)); i < Math.min(len, Math.round(t1 * sr)); i++) { const v = voi(i), d = mus(i); a += v * v; b += ((m0[i] * d) ** 2 + (m1[i] * d) ** 2) / 2; c += (s0[i] ** 2 + s1[i] ** 2) / 2; }
+    const db = (x: number) => Math.round(10 * Math.log10(Math.max(1e-12, x)) * 10) / 10;
+    lastVoiceMix = { voiceOverMusicDb: db(a / Math.max(1e-12, b)), voiceOverSfxDb: db(a / Math.max(1e-12, c)) };
+  }
   let sum = 0;
   for (let i = 0; i < len; i++) { const l = m0[i] + s0[i], r = m1[i] + s1[i]; sum += l * l + r * r; }
   const rms = Math.sqrt(sum / Math.max(1, 2 * len)) || 1e-6;
@@ -490,13 +526,13 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   // their level, they are not pushed to −14 LUFS)
   let gain = TARGET_RMS2 / rms;
   for (let k = 0; k < 2; k++) {
-    for (let i = 0; i < len; i++) { L[i] = (m0[i] + s0[i]) * gain; R[i] = (m1[i] + s1[i]) * gain; }
+    for (let i = 0; i < len; i++) { const v = voi(i), d = mus(i); L[i] = (m0[i] * d + s0[i] + v) * gain; R[i] = (m1[i] * d + s1[i] + v) * gain; }
     limit([L, R], CEIL2, sr);
     const I = lufs(L, R, sr);
     if (isFinite(I)) gain *= Math.pow(10, (LUFS_TARGET - I) / 20);
   }
   if (!o.music) gain = Math.min(gain, 6);
-  for (let i = 0; i < len; i++) { L[i] = ((o.music ? m0[i] : 0) + s0[i]) * gain; R[i] = ((o.music ? m1[i] : 0) + s1[i]) * gain; }
+  for (let i = 0; i < len; i++) { const v = voi(i), d = mus(i); L[i] = ((o.music ? m0[i] * d : 0) + s0[i] + v) * gain; R[i] = ((o.music ? m1[i] * d : 0) + s1[i] + v) * gain; }
   limit([L, R], CEIL2, sr);
   const fade = Math.round(0.3 * sr);
   for (let i = len - fade; i < len; i++) { const k = (len - i) / fade; L[i] *= k; R[i] *= k; }

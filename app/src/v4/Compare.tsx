@@ -1,5 +1,6 @@
 // Compare two foods side by side for the same person — full screen, both sides chosen freely, popular pairs in
 // one tap. Shows both sugar curves on one chart, the day's traffic lights and the quick answers.
+import { VoicePick } from './VoicePick';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useModal } from './a11y';
 import type { Profile } from '../science/profile';
@@ -78,10 +79,11 @@ export function sameAs(l: Part, r: Part): Part[] | null {
   return ps.length === 1 && ps[0].food.id === r.food.id ? ps : null;
 }
 
-export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, platform, setPlatform, onRight, overMin = 0 }: {
+export function Compare({ current, profile, initial, onClose, onVideo, short, setShort, platform, setPlatform, onRight, overMin = 0, voice, setVoice }: {
   current: Part[]; profile: Profile; initial?: Part[]; onClose: () => void; onVideo?: (a: Analysis, b: Analysis) => void; short?: boolean; setShort?: (v: boolean) => void;
   /** round 11: the platform (it picks the cut), as in the share dialog */ platform?: Platform; setPlatform?: (p: Platform) => void;
   onRight?: (right: Part[] | null) => void; // the partner goes into the link (#vs=…)
+  /** 2026-11-05: the voiceover toggle, as in the share dialog */ voice?: boolean; setVoice?: (v: boolean) => void;
   /** "Over how long?" of the item on screen (minutes; 2026-10-19): kept while the left side is that item */ overMin?: number;
 }) {
   const box = useRef<HTMLDivElement>(null);
@@ -115,6 +117,7 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
           <div className="cmpactions">{onVideo && <>
             {setPlatform ? <span className="lenpick platpick">For: {PLATFORMS.filter((p) => p !== 'facebook').map((p) => <button key={p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>{PLATFORM_LABEL[p]} · {PLATFORM_LENGTH[p]}</button>)}</span>
             : setShort && <span className="lenpick">Length: <button aria-pressed={!short} onClick={() => setShort(false)}>over 1&nbsp;min</button><button aria-pressed={!!short} onClick={() => setShort(true)}>under 30&nbsp;s</button></span>}
+            {setVoice && <VoicePick on={!!voice} set={setVoice} />}
             <button className="primary" onClick={() => onVideo(a, b)}><span aria-hidden="true">🎬 </span>Make this a Reel (9:16)</button></>}</div>
           {offerSame && <div className="lenpick" role="group" aria-label="Amounts">Amounts:
             <button aria-pressed={!same} onClick={() => setSame(false)}>A typical serving each</button>

@@ -27,6 +27,8 @@ import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
+import { VoicePick } from './VoicePick';
+import { narrationFor, type NarrIn } from './video-narration';
 import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
 import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
@@ -550,6 +552,20 @@ export default function AppV4() {
   const [copied, setCopied] = useState<string | null>(null);
   // our own soundtrack (video-audio.ts): music + effects, effects only (2026-10-24: add a trending song in the app), or none
   const [vidSound, setVidSound] = useState<'music' | 'sfx' | 'none'>('music');
+  // 2026-11-05: the voiceover (video-narration.ts script, voice-tts.ts in-browser speech), on by default; it rides on
+  // our soundtrack ("None" has no voice either); its progress while it is made, before the frames
+  const [vidVoice, setVidVoiceS] = useState(() => { try { return localStorage.getItem('i24-voice') !== '0'; } catch { return true; } });
+  const setVidVoice = (v: boolean) => { setVidVoiceS(v); try { localStorage.setItem('i24-voice', v ? '1' : '0'); } catch { /* private mode */ } };
+  const [voiceRec, setVoiceRec] = useState<{ stage: 'load' | 'speak'; frac: number } | null>(null);
+  const voiceFor = (nin: NarrIn) => async () => {
+    try {
+      const { makeVoice } = await import('./voice-tts');
+      const t0 = performance.now(), v = await makeVoice(narrationFor(nin), nin.plan.seconds, (frac, stage) => setVoiceRec({ stage, frac }));
+      if (HASH.get('vqa')) console.log('[vqa] voice', JSON.stringify({ ms: Math.round(performance.now() - t0), device: v?.device, said: v?.said, spans: v?.spans.map((s) => s.map((x) => Math.round(x * 100) / 100)) }));
+      return v;
+    } catch { return null; } finally { setVoiceRec(null); }
+  };
+  const voiceMsg = 'The voiceover couldn’t be made on this device, so the video has our soundtrack without it.';
   // 2026-10-23 body-first video: the camera's cue, the video frame being made, the comparison's cameras, and the
   // 3D canvas sized to the video (1080×1920) while recording (.stage.recbox in v4.css)
   const vcue = useRef<ShotCue | null>(null);
@@ -646,7 +662,9 @@ export default function AppV4() {
     const plan = reelPlan(), opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
       soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: (f: number) => setRecPct(f),
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
-      prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; } };
+      prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
+      voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
+        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);
@@ -672,10 +690,10 @@ export default function AppV4() {
         }, plan, opts)
       : record(canvas, format, pinned, (m, fr) => { recFr.current = fr ?? null; setU(uFromMinutes(m)); cue(fr); }, plan, opts);
     job
-      .then(({ blob, ext, audio }) => setShare({ state: 'ready', format, blob, ext, url: URL.createObjectURL(blob),
+      .then(({ blob, ext, audio, voice }) => setShare({ state: 'ready', format, blob, ext, url: URL.createObjectURL(blob),
         caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`, captions: captionsNow(),
         pin: pinnedIdea(),
-        msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined }))
+        msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined }))
       .catch((e: Error) => setShare({ state: 'error', msg: e.message }))
       .finally(() => { recRef.current = false; reelStops.current = null; recFr.current = null; vcue.current = null; setRecBox(null); });
   };  // QA only: #frame=<reel|feed>-<intro|main|outro> paints one composed video frame over the page after 6 s
@@ -759,17 +777,18 @@ export default function AppV4() {
           };
           return { ...o, a: pin(o.a, 0), b: pin(o.b, 1) };
         };
-        const { blob, ext, audio } = await recordCompare(ca, pinned, (m, fr) => {
+        const { blob, ext, audio, voice } = await recordCompare(ca, pinned, (m, fr) => {
           recFr.current = fr ?? null;
           flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r)));
           if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = splitShot(fr); void chapAt(a, st0); }
           const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
         }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
-          onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; } });
+          onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
+          voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), guess: !!gq }) : undefined });
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
           captions: captionsFor({ name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, hook: { line1: cmpOverlayRef.current?.hook ?? '', line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), sugar: /sugar/i.test(cmpOverlayRef.current?.hook ?? ''), /* (round 16: "which has more sugar?" too) */ caffeine: [a, b].some((x) => x.built.caffeine.doseMg >= 20), compare: { a: cmpName(a.label), b: cmpName(b.label) } }),
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',
-          msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : undefined });
+          msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
       cmpStops.current = null; setCmpRec(null); setCmpNever(false); recFr.current = null; vcue.current = null; setRecBox(null); cmpOn.current = false; cmpRace.current = null; cmpGuess.current = null;
     }, 1500); // let both bodies load (runs once, before the tab can be left)
@@ -1127,9 +1146,11 @@ export default function AppV4() {
 
       {leftNote && !linkNote && <div className="linknote leftout" role="status">{leftNote}<button className="x" aria-label="Close" onClick={() => setLeftNote(null)}>×</button></div>}
       {linkNote && <div className="linknote" role="status">{linkNote}<button className="x" aria-label="Close" onClick={() => setLinkNote(null)}>×</button></div>}
-      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} short={shortVid} setShort={setShortVid} platform={platform} setPlatform={setPlatform} onRight={setVsParts} />}
+      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} voice={vidVoice} setVoice={setVidVoice} short={shortVid} setShort={setShortVid} platform={platform} setPlatform={setPlatform} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
-      {share?.state === 'rec' && <div className="recbadge" role="status">● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</div>}
+      {share?.state === 'rec' && <div className="recbadge" role="status">{voiceRec
+        ? <>● {voiceRec.stage === 'load' ? 'Downloading the voice (once)…' : 'Making the voiceover…'} {Math.round(voiceRec.frac * 100)}% · keep this tab open</>
+        : <>● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</>}</div>}
       {share && share.state !== 'rec' && (
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setShare(null); }}>
           <div ref={shareBox} className="noticebox sharebox" role="dialog" aria-modal="true" aria-label="Share">
@@ -1154,6 +1175,7 @@ export default function AppV4() {
                 <button aria-pressed={vidSound === 'sfx'} onClick={() => setVidSound('sfx')}>Sound effects only</button>
                 <button aria-pressed={vidSound === 'none'} onClick={() => setVidSound('none')}>None (add your own)</button>
               </div>
+              <VoicePick on={vidVoice} set={setVidVoice} noSound={vidSound === 'none'} />
               <div className="fmtpick">
                 <button className="fmt" onClick={() => startShare('reel')}><i className="r916" /><b>Reel / Story / TikTok</b><span>9:16 · 1080×1920</span></button>
                 <button className="fmt" onClick={() => startShare('feed')}><i className="r45" /><b>Feed post</b><span>4:5 · 1080×1350</span></button>

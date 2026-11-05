@@ -6,7 +6,7 @@
 // every word stays inside the platform safe zone (SAFE below), our own soundtrack (video-audio.ts), brand fonts,
 // a hook frame as the first frame (= thumbnail) and an end card that loops back to it.
 import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
-import { aacConfig, encodeSoundtrack, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
+import { aacConfig, encodeSoundtrack, lastVoiceMix, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
 import { bodyMotion, drawBloodFlow, drawBreath, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
@@ -99,11 +99,16 @@ export function pickMime(): { mime: string; ext: 'mp4' | 'webm' } | null {
  *  size) and `onSettled` (called after the warm-up frames, right before the first real frame). */
 export interface RecOpts { sound: boolean; onTick?: (f: number) => void; prepare?: () => Promise<void>; onSettled?: () => void;
   /** 2026-10-24: our music + effects, or effects only (the owner adds a trending song); and what the drink is like */
-  soundMode?: SoundMode; soundFx?: { fizzy?: boolean; solid?: boolean; seed?: number } }
-type SoundIn = { seconds: number; cues: Plan['cues']; beatFrom: number; music: boolean; fizzy?: boolean; solid?: boolean };
-const soundOf = (plan: Plan, opts: RecOpts): SoundIn | null => (opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS, music: opts.soundMode !== 'sfx', ...opts.soundFx } : null);
+  soundMode?: SoundMode; soundFx?: { fizzy?: boolean; solid?: boolean; seed?: number };
+  /** 2026-11-05: the voiceover, made before the soundtrack (voice-tts.ts makeVoice); null or a failure: no voice */
+  voice?: () => Promise<{ data: Float32Array; spans: [number, number][] } | null> }
+type VoiceIn = { data: Float32Array; spans: [number, number][] };
+type SoundIn = { seconds: number; cues: Plan['cues']; beatFrom: number; music: boolean; fizzy?: boolean; solid?: boolean; voice?: () => Promise<VoiceIn | null> };
+const soundOf = (plan: Plan, opts: RecOpts): SoundIn | null => (opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS, music: opts.soundMode !== 'sfx', ...opts.soundFx, voice: opts.voice } : null);
+/** The voiceover, or null on any failure (the video is then made exactly as without it). */
+const voiceOf = async (so: SoundIn): Promise<VoiceIn | null> => { if (!so.voice) return null; try { return await so.voice(); } catch { return null; } };
 export async function record(source: HTMLCanvasElement, format: Format, overlay: () => Overlay, seek: (minute: number, fr?: VFrame) => void,
-  plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+  plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
   const fmt = pickMime();
   if (!fmt) throw new Error('This browser can’t record video.');
   await loadFonts();
@@ -114,9 +119,9 @@ export async function record(source: HTMLCanvasElement, format: Format, overlay:
   out.width = W; out.height = H;
   const ctx = out.getContext('2d')!;
   const stream = out.captureStream(FPS);
-  let sound: ReturnType<typeof playSoundtrack> = null;
+  let sound: ReturnType<typeof playSoundtrack> = null, voiced: VoiceIn | null = null;
   if (opts.sound && typeof OfflineAudioContext !== 'undefined') {
-    try { const so = soundOf(plan, opts)!; sound = playSoundtrack(await renderSoundtrack2(so.seconds, so.cues, so)); } catch { sound = null; }
+    try { const so = soundOf(plan, opts)!; voiced = await voiceOf(so); sound = playSoundtrack(await renderSoundtrack2(so.seconds, so.cues, { ...so, voice: voiced })); } catch { sound = null; }
     if (sound) stream.addTrack(sound.track);
   }
   // with a sound track, name only the container: a codecs list naming just the video codec can refuse the audio
@@ -131,7 +136,7 @@ export async function record(source: HTMLCanvasElement, format: Format, overlay:
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   let first: HTMLCanvasElement | null = null;
   return new Promise((resolve, reject) => {
-    rec.onstop = () => resolve({ blob: new Blob(chunks, { type: fmt.mime.split(';')[0] }), ext: fmt.ext, audio: !!sound });
+    rec.onstop = () => resolve({ blob: new Blob(chunks, { type: fmt.mime.split(';')[0] }), ext: fmt.ext, audio: !!sound, voice: !!sound && !!voiced });
     rec.onerror = () => { sound?.stop(); reject(new Error('The recording failed. Please try again.')); };
     const t0 = performance.now();
     let raf = 0;
@@ -184,14 +189,16 @@ async function h264Config(W: number, H: number): Promise<VideoEncoderConfig> {
 /** Encodes frames drawn by `draw(i)` into an MP4 (plus our soundtrack when `sound` is given). Shared by the single
  *  video and the comparison video. Throttled by the encoder's queue, so memory stays flat on long videos. */
 async function encodeMp4(out: HTMLCanvasElement, count: number, draw: (i: number) => void, sound: SoundIn | null,
-  onTick?: (frac: number) => void): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+  onTick?: (frac: number) => void): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
   const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
   const W = out.width, H = out.height;
   const config = await h264Config(W, H);
   // sound: rendered offline first (a second or two), then encoded before the picture
   const acfg = sound ? await aacConfig() : null;
   let abuf: AudioBuffer | null = null;
-  if (acfg && sound) { try { abuf = await renderSoundtrack2(sound.seconds, sound.cues, sound); } catch { abuf = null; } }
+  let voiced: VoiceIn | null = null;
+  if (acfg && sound) { voiced = await voiceOf(sound); try { abuf = await renderSoundtrack2(sound.seconds, sound.cues, { ...sound, voice: voiced }); } catch { abuf = null; }
+    if (voiced && /vqa/.test(location.hash)) console.log('[vqa] mix', JSON.stringify(lastVoiceMix)); }
   const target = new ArrayBufferTarget();
   const muxer = new Muxer({ target, video: { codec: 'avc', width: W, height: H, frameRate: FPS },
     ...(abuf ? { audio: { codec: 'aac' as const, numberOfChannels: 2, sampleRate: SAMPLE_RATE } } : {}),
@@ -216,14 +223,14 @@ async function encodeMp4(out: HTMLCanvasElement, count: number, draw: (i: number
   await enc.flush(); enc.close();
   if (failed) throw failed;
   muxer.finalize();
-  return { blob: new Blob([target.buffer], { type: 'video/mp4' }), ext: 'mp4', audio: !!abuf };
+  return { blob: new Blob([target.buffer], { type: 'video/mp4' }), ext: 'mp4', audio: !!abuf, voice: !!abuf && !!voiced };
 }
 
 /** step(minute) must set the day position and render one 1/30 s frame of the 3D scene synchronously.
  *  plan = every frame of the video (video-plan.ts). With sound on and an AAC encoder available, our own
  *  soundtrack goes in as a second track; otherwise the video is silent (still valid everywhere). */
 export async function recordFrames(source: HTMLCanvasElement, format: Format, overlay: () => Overlay,
-  step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+  step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
   await loadFonts();
   const [W, H] = SIZE[format];
   // WebCodecs without an H.264 encoder (some Firefox / Linux builds): film the same plan in real time instead;
@@ -320,7 +327,7 @@ export interface CmpOverlay { hook: string; clock: string; progress: number; han
 /** Comparison Reel (9:16): both bodies side by side at the top, where the whole width is free of platform buttons;
  *  the two captions stacked below, inside the safe column. Timing from planCompare (video-plan.ts). */
 export async function recordCompare(canvA: HTMLCanvasElement, overlay: () => CmpOverlay,
-  step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean }> {
+  step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
   await loadFonts();
   await opts.prepare?.();
   const W = 1080, H = 1920;
