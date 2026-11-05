@@ -533,7 +533,8 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     'hot-chocolate': 'no hot chocolate made with milk was tested in healthy people (only a mix made with water: the water variant has it)',
     buttermilk: 'buttermilk is not in the 2008 or 2021 tables',
     beer: 'Atkinson 2021 Suppl. Table 1 has two beers, 119 ± 10 and 89 ± 2 (mean 104): they disagree by 30 and a beer sugar curve would change the alcohol story; left for the owner',
-    'beer.alcohol-free': 'no alcohol-free beer tested',
+    // 'beer.alcohol-free' was here as "no alcohol-free beer tested"; it has a GI since 2026-11-05: Atkinson 2021
+    // Suppl. Table 1 row 74, Nikolai 0.0% lager, 80 ± 6 (research/improvements/gi-estimates-verification-2026-11-05.md)
     'beer.radler': 'beer + lemonade: beer has no GI here (see beer)',
     'red-wine.dessert': 'no dessert wine tested',
     'protein-shake': 'the whey powder has no tested GI',

@@ -64,6 +64,8 @@ export interface Macros {
   /** Glycaemic load = Σ GI × available carbs / 100 over the parts with a measured GI; null when none of the
    *  carbohydrate has one. `missingGi` names parts left out, so the real load is at least this. */
   gl: number | null; gi: number | null; missingGi: string[];
+  /** 2026-11-05: the parts of missingGi that count with their kind's typical GI (giEstimate.ts), for the card text */
+  giEstimated?: { name: string; gi: number; kind: string }[];
 }
 
 export const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
@@ -388,12 +390,14 @@ export function macros(parts: Part[]): Macros {
   const avail = (p: Per100) => Math.max(0, (p.carbs ?? 0) - (p.fiber ?? 0));
   let glSum = 0, knownCarbs = 0;
   const missingGi: string[] = [];
+  const giEstimated: { name: string; gi: number; kind: string }[] = [];
   for (const x of parts) {
     const c = (avail(x.food.p) * x.grams) / 100;
     if (c < 3) continue; // under 3 g of available carbs: no meaningful sugar response (an egg, cheese, meat)
     // round 18 (critic T-3): a GI never measured counts with its kind's typical GI (giEstimate.ts), named in missingGi
     // (an alcoholic drink keeps its alcohol story, and under 10 g the rise is too small to tell: no estimate)
-    const est = x.food.gi === null && c >= 10 && (x.food.p.alcoholG ?? 0) < 0.6 ? estimatedGi(x.food).gi : null;
+    const e = x.food.gi === null && c >= 10 && (x.food.p.alcoholG ?? 0) < 0.6 ? estimatedGi(x.food) : null, est = e?.gi ?? null;
+    if (e && !giEstimated.some((g) => g.name === x.food.name)) giEstimated.push({ name: x.food.name, gi: e.gi, kind: e.kind });
     if (x.food.gi === null) { missingGi.push(x.food.name); if (est !== null) { glSum += (est * c) / 100; knownCarbs += c; } } else { glSum += (x.food.gi * c) / 100; knownCarbs += c; }
   }
   const gl = knownCarbs > 0 ? glSum : null;
@@ -403,7 +407,7 @@ export function macros(parts: Part[]): Macros {
     fiber: sum((p) => p.fiber), fat: sum((p) => p.fat), protein: sum((p) => p.protein), waterG: sum((p) => p.waterG),
     caffeineMg: sum((p) => p.caffeineMg), alcoholG: sum((p) => p.alcoholG), sodiumMg: sum((p) => p.sodiumMg),
     satFat: sum((p) => p.satFat ?? 0), freeSugars: sum((p) => p.freeSugars ?? 0), // (round 18: the verdict's trophy rule)
-    gl, gi: gl !== null && !missingGi.length && knownCarbs >= 1 ? Math.round((100 * gl) / knownCarbs) : null, missingGi,
+    gl, gi: gl !== null && !missingGi.length && knownCarbs >= 1 ? Math.round((100 * gl) / knownCarbs) : null, missingGi, giEstimated,
   };
 }
 

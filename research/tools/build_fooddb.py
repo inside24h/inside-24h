@@ -105,6 +105,10 @@ GI_SUPP = {
  "a1_pancakes": (66, A1 + " rows 30-35: Pancakes, homemade (Fiji), 66 ± 9, 8 subjects; also prepared from shake mix 67 ± 5 and from wheat flour (China) 80 ± 4: the nearest tested food for a home flour-milk-egg batter (no crêpe was tested)"),
  "a1_nutella": (29, A1 + " rows 1447-1449: Nutella, chocolate hazelnut spread (Ferrero Australia), 33 ± 4, 30 ± 4 and 25 ± 4, 10-12 subjects each, printed mean of three studies 29"),
  "a1_hot_choc_water": (51, A1 + " row 85: Complete Hot Chocolate mix made with hot water (Nestlé, Australia), 51 ± 3, 10 subjects, single test"),
+ # ---- 2026-11-05 (GI-estimate verification, research/improvements/gi-estimates-verification-2026-11-05.md): row read in
+ # the 2021 Suppl. Table 1 PDF (pdftotext -raw): "74 Beer, non-alcoholic (0.0% alcohol by volume) (Nikolai Lager,
+ # Sinebrychoff Ltd, Finland) Finland 2012* 80±6 8 Normal, 10 25 640 Glucose, 2h Standard ... 13"
+ "t21_nab": (80, T21 + " row 74: Beer, non-alcoholic (0.0% alcohol by volume) (Nikolai Lager, Sinebrychoff, Finland), 80 ± 6, 10 subjects, 25 g available carbohydrate in a 640 g portion, single test: the only alcohol-free beer tested (the same tables: beer with alcohol, mean of two foods 104)"),
 }
 # Data round 3: GI keys used only to override a builder option (opt(..., gi=KEY)); see build_variants.build_option.
 def gi_lookup(key):

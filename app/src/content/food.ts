@@ -8,6 +8,7 @@ const pm = (id: string) => `https://pubmed.ncbi.nlm.nih.gov/${id}/`;
 export const FOOD_SOURCES = {
   usdaSR: { id: 'usdaSR', cite: 'USDA FoodData Central, SR Legacy (April 2018)', url: 'https://fdc.nal.usda.gov/' },
   atkinson2008: { id: 'atkinson2008', cite: 'Atkinson FS et al. 2008, Diabetes Care (GI tables)', url: 'https://europepmc.org/article/PMC/PMC2584181' },
+  atkinson2021: { id: 'atkinson2021', cite: 'Atkinson FS et al. 2021, Am J Clin Nutr (GI tables 2021)', url: 'https://doi.org/10.1093/ajcn/nqab233' },
   tougas2000: { id: 'tougas2000', cite: 'Tougas G et al. 2000, Am J Gastroenterol', url: pm('10894578') },
   parkman2025: { id: 'parkman2025', cite: 'Parkman HP et al. 2025, Dig Dis Sci', url: 'https://europepmc.org/article/PMC/PMC11972169' },
   camps2016: { id: 'camps2016', cite: 'Camps G et al. 2016, Am J Clin Nutr (MRI)', url: pm('27281305') },
@@ -91,7 +92,7 @@ for (const f of foodDb as unknown as DbFood[]) {
 export const FOOD_CLAIMS: Record<string, Claim> = Object.fromEntries([
   c('DB1', 'A', 'Calories, carbohydrate, sugar, fiber, fat, protein, water, caffeine and alcohol per 100 g come from the USDA SR Legacy database, unless a statement here names a product label instead. Portion sizes like “1 medium apple” are USDA portion weights.', ['usdaSR']),
   c('DB2', 'C', 'Household amounts we had to assume: glass 250 ml, cup 200 ml, can 330 ml (beer 500 ml, the usual Croatian can), bottle 500 ml (wine 750 ml), tablespoon 15 ml, teaspoon 5 ml. Mixed drinks (coffee with milk, cappuccino, latte) are our own recipes from USDA ingredients.', ['usdaSR'], 'Typical European serving sizes; marked “assumed” on screen.'),
-  c('DB3', 'A', 'Glycemic index values are from the international GI tables (Atkinson 2008: Table 1, and single tests in healthy people from Supplementary Tables A1 and A2). Foods without a measured GI show no sugar curve rather than a guess.', ['atkinson2008']),
+  c('DB3', 'A', 'Glycemic index values are from the international GI tables (Atkinson 2008: Table 1, and single tests in healthy people from Supplementary Tables A1 and A2; Atkinson 2021: Supplemental Table 1). A food whose GI was never measured, with at least 10 g of carbohydrate and no alcohol, counts with the typical GI of its kind, taken or computed (median of the listed foods) from the same tables, and the first card says it is an estimate and for which kind of food. Under 10 g of carbohydrate, or in an alcoholic drink, such a food is left out of the sugar curve.', ['atkinson2008', 'atkinson2021']),
   c('GE1', 'A', 'A normal solid meal: about 69% is still in the stomach after 1 hour, 24% after 2 hours and about 1% after 4 hours (123 healthy adults). More than 10% left at 4 hours counts as delayed.', ['tougas2000']),
   c('GE4', 'B', 'Half of a 255 kcal solid meal leaves the stomach in about 94 minutes; smaller meals in about 67 minutes, but never much faster than about an hour.', ['parkman2025']),
   c('GE5', 'C', 'Our solid-food curve: retention = exp(−(t/τ)^1.8), half-time 94 × √(kcal/255) min, at least 65 and at most 210 min (the slowest big meals measured by MRI). It reproduces the 69/24/1% data within a few points.', ['tougas2000', 'parkman2025', 'farivar2026'], 'Power-exponential fit to GE1 with GE4 scaling by meal energy.'),

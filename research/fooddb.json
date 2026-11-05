@@ -4302,22 +4302,22 @@
      "source": "volume 500 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
     },
     "per100g": {
-     "kcal": 37.0,
-     "carbs": 8.05,
-     "sugars": 8.05,
+     "kcal": 21.0,
+     "carbs": 4.796,
+     "sugars": 1.299,
      "freeSugars": 0.0,
-     "fiber": 0.0,
-     "fat": 0.12,
-     "satFat": 0.02,
-     "protein": 0.21,
+     "fiber": null,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.0,
      "sodiumMg": 13.0,
      "caffeineMg": 0.0,
-     "alcoholG": 0.3,
+     "alcoholG": 0.0,
      "waterG": 91.2
     },
     "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
-    "gi": null,
-    "giSource": null,
+    "gi": 80,
+    "giSource": "Atkinson 2021 (AJCN 114:1625) Suppl. Table 1 row 74: Beer, non-alcoholic (0.0% alcohol by volume) (Nikolai Lager, Sinebrychoff, Finland), 80 ± 6, 10 subjects, 25 g available carbohydrate in a 640 g portion, single test: the only alcohol-free beer tested (the same tables: beer with alcohol, mean of two foods 104)",
     "color": "#e5a823",
     "usdaFdcId": 174863,
     "usdaDescription": "Malt beverage, includes non-alcoholic beer",
@@ -4330,19 +4330,89 @@
        "all"
       ],
       "level": "A",
-      "text": "Alcohol-free beer: values from the USDA record “Malt beverage, includes non-alcoholic beer” (37 kcal and 8 g sugar per 100 g, 0.3 g alcohol). European alcohol-free lagers are often lighter: Heineken 0.0 lists 21 kcal and 4.8 g carbohydrate per 100 ml (FatSecret NZ entry), so a 0.5 l glass is about 105–186 kcal. Range: kcal 105–186 per serving.",
+      "text": "Alcohol-free beer: calories, carbohydrate and sugar are from a European 0.0% lager label (Heineken 0.0, see the label row); the other values are from the USDA record “Malt beverage, includes non-alcoholic beer”. EU alcohol-free lagers range from 21 to 33 kcal per 100 ml (Bitburger 0.0), so a 0.5 l glass is about 105–165 kcal. Glycemic index 80 is the one alcohol-free beer that was tested (Atkinson 2021). Range: kcal 105–165 per serving.",
       "cite": "USDA FoodData Central, SR Legacy 174863: Malt beverage, includes non-alcoholic beer",
       "url": "https://fdc.nal.usda.gov/food-details/174863/nutrients",
       "claim": "DBV-beer.alcohol-free"
+     },
+     {
+      "fields": [
+       "alcoholG",
+       "carbs",
+       "fat",
+       "fiber",
+       "kcal",
+       "protein",
+       "satFat",
+       "sugars"
+      ],
+      "level": "A",
+      "text": "Alcohol-free beer: calories, carbohydrate and sugar are from the Heineken 0.0 label (21 kcal, 4.8 g carbohydrate, 1.3 g sugar, 0.0% alcohol per 100 ml), a typical European alcohol-free lager. USDA’s “malt beverage” record lists 37 kcal and 8 g sugar, more than EU lager labels (21–33 kcal, 1.3–4.4 g sugar).",
+      "cite": "Grupa Żywiec (Heineken Poland), Heineken 0.0 product page: per 100 ml energy 89 kJ / 21 kcal, fat 0 g, saturates 0 g, carbohydrate 4.8 g, sugars 1.3 g, protein 0 g, salt < 0.01 g, 0.0% vol. (same values on Open Food Facts 8712000050115). Range: Birell (Plzeňský Prazdroj) 21 kcal, 5.0 g carbohydrate, 2.4 g sugars (Open Food Facts 8594404001302); Bitburger Pils 0.0% 33 kcal, 7.8 g carbohydrate, 4.4 g sugars (Open Food Facts 4102430315207); Nikolai 0.0% lager in Atkinson 2021 Suppl. Table 1 row 74: 25 g available carbohydrate in 640 g = 3.9 g per 100 g",
+      "url": "https://grupazywiec.pl/?p=3824",
+      "claim": "DBO-beer.alcohol-free-0"
      }
     ],
     "range": {
      "kcal": [
       105,
-      186
+      165
      ]
     },
-    "overrides": null
+    "overrides": [
+     {
+      "fields": [
+       "alcoholG",
+       "carbs",
+       "fat",
+       "fiber",
+       "kcal",
+       "protein",
+       "satFat",
+       "sugars"
+      ],
+      "basis": "per100ml",
+      "label": {
+       "kcal": 21,
+       "carbs": 4.8,
+       "sugars": 1.3,
+       "fat": 0,
+       "satFat": 0,
+       "protein": 0,
+       "alcoholG": 0,
+       "fiber": null
+      },
+      "usdaBefore": {
+       "kcal": 37.0,
+       "carbs": 8.05,
+       "sugars": 8.05,
+       "fat": 0.12,
+       "satFat": 0.024,
+       "protein": 0.21,
+       "alcoholG": 0.3,
+       "fiber": 0.0
+      },
+      "level": "A",
+      "text": "Alcohol-free beer: calories, carbohydrate and sugar are from the Heineken 0.0 label (21 kcal, 4.8 g carbohydrate, 1.3 g sugar, 0.0% alcohol per 100 ml), a typical European alcohol-free lager. USDA’s “malt beverage” record lists 37 kcal and 8 g sugar, more than EU lager labels (21–33 kcal, 1.3–4.4 g sugar).",
+      "source": "Grupa Żywiec (Heineken Poland), Heineken 0.0 product page: per 100 ml energy 89 kJ / 21 kcal, fat 0 g, saturates 0 g, carbohydrate 4.8 g, sugars 1.3 g, protein 0 g, salt < 0.01 g, 0.0% vol. (same values on Open Food Facts 8712000050115). Range: Birell (Plzeňský Prazdroj) 21 kcal, 5.0 g carbohydrate, 2.4 g sugars (Open Food Facts 8594404001302); Bitburger Pils 0.0% 33 kcal, 7.8 g carbohydrate, 4.4 g sugars (Open Food Facts 4102430315207); Nikolai 0.0% lager in Atkinson 2021 Suppl. Table 1 row 74: 25 g available carbohydrate in 640 g = 3.9 g per 100 g",
+      "url": "https://grupazywiec.pl/?p=3824",
+      "note": "Checked 2026-11-05. Fiber not declared (None; EU carbohydrate excludes fiber). Sodium, water and minerals stay from USDA 174863 (label salt < 0.01 g = under 4 mg sodium vs USDA 13 mg). Ranges are the label values per 100 ml (density about 1.0).",
+      "rangesPer100g": {
+       "kcal": [
+        21,
+        33
+       ],
+       "carbs": [
+        3.9,
+        7.8
+       ],
+       "sugars": [
+        1.3,
+        4.4
+       ]
+      }
+     }
+    ]
    },
    {
     "v": "radler",

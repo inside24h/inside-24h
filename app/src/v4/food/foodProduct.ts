@@ -221,8 +221,16 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const spiritsNoSugar = !isMeal && meal.alcoholG > 1 && (parts[0].food.p.alcoholG ?? 0) >= 13 && m.sugars < 0.5 && m.carbs < 1;
   const what = partsPhrase(parts); // "1 hamburger, a small portion of french fries and 330 ml of cola"
   const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fiber` : ''}.`;
+  // 2026-11-05 (GI-estimate verification): the card says the GI is an estimate, its value and the kind of food it is
+  // typical for (giEstimate.ts); a part with no estimate (an alcoholic drink, or under 10 g carbohydrate) is left out
+  const giEst = m.giEstimated ?? [], giUnest = m.missingGi.filter((n) => !giEst.some((e) => e.name === n));
+  const andList = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] ?? '').toLowerCase();
+  const giEstLine = !giEst.length ? '' : ` The glycemic index of ${andList(giEst.map((e) => e.name))} has not been measured, so the sugar curve uses ${giEst.length === 1
+    ? `an estimate: GI ${giEst[0].gi}, the typical value for ${giEst[0].kind}`
+    : `estimates, the typical values of their kinds: ${giEst.map((e) => `${e.name.toLowerCase()} GI ${e.gi} (${e.kind})`).join(', ')}`}.`;
+  const giUnestLine = giUnest.length ? ` The glycemic index of ${andList(giUnest)} has not been measured, so the sugar curve leaves ${giUnest.length > 1 ? 'them' : 'it'} out.` : '';
   const giLine = m.gi !== null && m.availCarbs >= 5 ? ` Glycemic index ${m.gi} (${m.gi >= 70 ? 'high' : m.gi >= 56 ? 'medium' : 'low'}).`
-    : m.missingGi.length && gl !== null ? ` The glycemic index of ${m.missingGi.join(', ').toLowerCase()} has not been measured, so the sugar curve uses the typical value for similar foods.`
+    : m.missingGi.length && gl !== null ? `${giEstLine}${giUnestLine}`
     : m.missingGi.length ? ' Its glycemic index has not been measured, so we don’t draw a sugar curve.' : '';
   const ch: Chapter[] = [
     { min: 0, title: mixed ? 'First bite and sip' : isDrink || parts.every((x) => isDrinkFood(x.food)) ? 'First sip' : 'First bite', focus: 'tongue', claims: ['DB1', ...labelClaims(parts), 'DB2', 'DB3', ...(spiritsNoSugar ? ['AL15'] : [])], text: `${(what[0] ?? '').toUpperCase()}${what.slice(1)}.${paceLine} ${macroLine}${giLine}${spiritsNoSugar ? ' No sugar: plain distilled spirits like this have none, so all the calories come from the alcohol (sweet liqueurs and honey brandy such as medica do have sugar).' : ''}` },
