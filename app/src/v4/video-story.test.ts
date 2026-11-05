@@ -327,7 +327,7 @@ describe('round 11: platforms, two hooks, captions, cover, variety', () => {
   it('the video never asks for a comment (Meta): the guess chip, the comparison hook', () => {
     expect(VIDEO_COPY.guessChip).toBe('Guess before the answer.');
     expect(hookForCompare('Cola', 'Water', true).line2).not.toMatch(/comment/i);
-    expect(compareHookB('Guess: which leaves your stomach first?', 'Cola', 'Water')).toBe('Cola or Water: which leaves your stomach first?');
+    expect(compareHookB('Guess: which leaves your stomach first?', 'Cola', 'Water')).toBe('Cola or water: which leaves your stomach first?'); // (round 17: no capital mid-sentence)
   });
   it('captions (every food): search phrase first, ≤ 5 hashtags on Instagram, Shorts title ≤ 60, sources and disclaimer, comment ask only on TikTok', () => {
     const bad: string[] = [];

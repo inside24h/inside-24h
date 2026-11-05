@@ -24,6 +24,8 @@ const fit = (s: string, max = 8) => words(s) <= max;
 /** A share in words, as the bedtime card says it (video-beats.ts fractionWord). */
 const share = (r: number) => { if (!(r >= 0.07)) return null; const W: [number, string][] = [[0.1, 'a tenth'], [0.2, 'a fifth'], [0.25, 'a quarter'], [1 / 3, 'a third'], [0.5, 'half'], [2 / 3, 'two thirds'], [0.75, 'three quarters'], [0.9, 'almost all']]; return W.reduce((b, w) => (Math.abs(w[0] - r) < Math.abs(b[0] - r) ? w : b))[1]; };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** Round 17: a name inside a sentence ("orange juice"), unless it is an acronym or a brand-like word ("USDA", "McFlurry"). */
+export const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 /** "1.6×", "2×" (round 14: the oat milk answer). */
 export const timesText = (r: number) => (r >= 1.95 ? `${Math.round(r)}×` : `${(Math.round(r * 10) / 10).toFixed(1)}×`);
 /** Round 14: a hook must carry a number (or a number word) or a question. */
@@ -64,10 +66,19 @@ export function hookFor(h: HookIn): Hook {
   // food: its calories lead (a whole pizza is about its size, not its teaspoons)
   // round 5 (critic): a big number comes with the portion's size, and the promise is a question the 24 h moment answers
   const day = h.chapters.find((c) => /% has left your body so far/.test(c.text));
-  const promise = day ? { line2: 'Where is it 24 hours later?', payoff: day.title } : { line2: 'Watch it for 24 hours.' };
+  // round 17 (critic G-3: "Brie: 95 kcal. Watch it for 24 hours." asked nothing): else a question its own moments answer
+  const fq = fallbackQ(h);
+  const promise = day ? { line2: 'Where is it 24 hours later?', payoff: day.title } : fq.payoff ? { line2: fq.line1, payoff: fq.payoff } : fq.payoffMin !== undefined ? { line2: fq.line1, payoffMin: fq.payoffMin } : { line2: 'Watch it for 24 hours.' };
   // round 13 (critic P0-2c: salmon opened with "Watch it for 24 hours."): protein-led food leads with its protein
   const prot = Number(/(\d+) g protein/.exec(first)?.[1] ?? 0), carbs = Number(/(\d+) g carbohydrate/.exec(first)?.[1] ?? 0);
   if (h.solid && prot >= 20 && carbs < 15) { const l1 = `${cap(name)}: ${prot} g of protein.`; return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: 'Watch your body use it.', lead: `${prot} g of protein.` }; }
+  // round 17 (critic G-3: brie): a small, fatty food leads with its fat (the number it is about), and asks what its
+  // own moments answer
+  const fat = Number(/(\d+) g fat/.exec(first)?.[1] ?? 0), kc = Number(/(\d+) kcal/.exec(first)?.[1] ?? 0);
+  if (h.solid && fat >= 5 && kc > 0 && kc < 300 && fat * 9 >= 0.5 * kc && !/teaspoons? of sugar/.test(first.replace(/about [01] teaspoons?/, ''))) {
+    const l1 = `${cap(name.replace(/ with .*$/i, ''))}: ${fat} g of fat.`;
+    if (fit(l1, 9)) return { line1: l1, ...promise, lead: `${fat} g of fat.` };
+  }
   // the surprise names what it is in (critic: "9 teaspoons of sugar." did not say cola)
   const tsp = /(\d+) g (?:of )?sugar[^.]*?about (\d+) teaspoons?/.exec(first);
   // (round 6, critic: "Watch where it goes" was never paid off in the short): the moment that says where the sugar
@@ -82,7 +93,7 @@ export function hookFor(h: HookIn): Hook {
     // round 14 (critic G-2: crepes "434 kcal. Watch it for 24 hours."): a sweet dish under 500 kcal leads with its sugar
     if (tsp && Number(tsp[2]) >= 4 && k && Number(k) < 500) return tspHook();
     const sized = h.grams && !/\d+\s*g\b/.test(name) && !/^\d/.test(name) ? `${cap(name)} (${Math.round(h.grams)} g): ${k} kcal.` : `${cap(name)}: ${k} kcal.`;
-    if (k && Number(k) >= 300) return { line1: fit(sized) ? sized : fit(`${cap(name)}: ${k} kcal.`) ? `${cap(name)}: ${k} kcal.` : `One meal: ${k} kcal.`, ...promise, lead: `${k} kcal in total.` };
+    if (k && Number(k) >= 300) return { line1: fit(sized) ? sized : fit(`${cap(name)}: ${k} kcal.`, 9) ? `${cap(name)}: ${k} kcal.` : `One meal: ${k} kcal.` /* (round 17: a builder name with its add-ons, 9 words) */, ...promise, lead: `${k} kcal in total.` };
   }
   if (tsp && Number(tsp[2]) >= 3) return tspHook();
   // round 12 (critic P1-1: "1 kaiser roll. Watch where it goes." had no number): a starchy food leads with what its
@@ -103,6 +114,8 @@ export function hookFor(h: HookIn): Hook {
     if (colon && (!fw || Number(mg) / (h.caffeineMg ?? 1) < 0.3)) return { line1, line2: 'It sends 1 in 3 to the toilet.', payoff: colon.title };
     if (bed && fw) return { line1, line2: `${cap(fw)} is still in you at bedtime.`, payoff: bed.title };
     const pk = h.chapters.find((c) => /caffeine/i.test(c.title) && c.min > 0);
+    // (round 17, critic G-4: green tea): the caffeine's own number, and when it hits
+    if (pk && h.caffeineMg && h.caffeineMg >= 20 && fit(`${cap(name)}: ${Math.round(h.caffeineMg)} mg of caffeine.`)) return { line1: `${cap(name)}: ${Math.round(h.caffeineMg)} mg of caffeine.`, line2: 'When does it hit?', payoff: pk.title };
     if (pk) return { line1: 'Where does the caffeine go?', line2: line1, payoff: pk.title };
   }
   if (h.solid && h.kcal && h.kcal >= 300 && fit(`${cap(name)}: ${Math.round(h.kcal)} kcal.`)) {
@@ -112,17 +125,21 @@ export function hookFor(h: HookIn): Hook {
   }
   // round 14 (critic: a hook carries a number or a question): its kcal, else a question its own moments answer
   const k = /(\d+) kcal/.exec(first)?.[1];
-  if (k && Number(k) >= 1) return { line1: fit(`${cap(name)}: ${k} kcal.`) ? `${cap(name)}: ${k} kcal.` : `${k} kcal.`, ...promise, lead: `${k} kcal in total.` };
+  if (k && Number(k) >= 1) return { line1: fit(`${cap(name)}: ${k} kcal.`) ? `${cap(name)}: ${k} kcal.` : `${cap(name.replace(/ with .*$/i, ''))}: ${k} kcal.`, ...promise, lead: `${k} kcal in total.` };
   return { ...fallbackQ(h), line2: fit(`${cap(name)}.`) ? `${cap(name)}.` : 'One drink, 24 hours.' };
 }
 /** A question the video answers, from the moments it has (round 14); `not` = a question already asked (hook A). */
-function fallbackQ(h: HookIn, not = ''): { line1: string; payoff?: string } {
+function fallbackQ(h: HookIn, not = ''): { line1: string; payoff?: string; payoffMin?: number } {
   const day = h.chapters.find((c) => /% has left your body so far/.test(c.text));
   const blood = h.chapters.find((c) => c.min > 0 && /blood/i.test(c.title));
-  const kid = h.chapters.find((c) => /Kidneys|Bladder/.test(c.title));
-  const all = [day && { line1: 'Where is it 24 hours later?', payoff: day.title }, blood && { line1: 'How fast does it reach your blood?', payoff: blood.title },
-    kid && { line1: 'Where does the water go?', payoff: kid.title }].filter((x): x is { line1: string; payoff: string } => !!x && x.line1 !== not);
-  return all[0] ?? { line1: 'What happens to it in 24 hours?' };
+  // (round 17, critic G-4: "Where does the water go?" for cod): the water question only for a drink
+  const kid = !h.solid && h.chapters.find((c) => /Kidneys|Bladder/.test(c.title));
+  // round 17: how long it stays in the stomach, answered by the stomach's own half time ("Half has moved on after 61 minutes.")
+  const half = Number(/half has moved on after about (\d+) minutes/.exec(h.chapters.find((c) => c.title === 'In your stomach')?.text ?? '')?.[1] ?? 0);
+  type Q = { line1: string; payoff?: string; payoffMin?: number };
+  const all = ([day ? { line1: 'Where is it 24 hours later?', payoff: day.title } : null, blood ? { line1: 'How fast does it reach your blood?', payoff: blood.title } : null,
+    kid ? { line1: 'Where does the water go?', payoff: kid.title } : null, h.solid && half >= 20 ? { line1: 'How long does it stay in your stomach?', payoffMin: half } : null] as (Q | null)[]).filter((x): x is Q => !!x && x.line1 !== not);
+  return all[0] ?? { line1: 'What does it do inside you?' };
 }
 
 /** The comparison's hook: a guess the video answers (the race out of the stomach comes from the model). */
@@ -150,7 +167,11 @@ export function hookB(h: HookIn, a: Hook): Hook {
     if (/\?$/.test(a.line1) || !morning) return g ? { line1: fit(`${name}: ${g} g of alcohol.`) ? `${name}: ${g} g of alcohol.` : `${g} g of alcohol.`, line2: 'Watch what alcohol does.', ...keep } : { line1: 'Where does the alcohol go?', line2: a.line2, ...keep };
     return { line1: 'Is it gone by the next morning?', line2: a.line1, ...keep };
   }
+  // (round 17: "Ice cream: 4 teaspoons of sugar." had no moment for "Where does it go?"): its blood sugar peak answers
+  const sugarPk = h.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title));
+  if (/teaspoons of sugar/.test(a.line1) && !a.payoff && a.payoffMin === undefined && sugarPk) return { line1: 'How fast does it hit your blood sugar?', line2: a.line1, ...keep, payoff: sugarPk.title };
   const q = /teaspoons of sugar/.test(a.line1) ? 'Where does all that sugar go?'
+    : /mg of caffeine\.$/.test(a.line1) && /\?$/.test(a.line2) ? `When does its caffeine hit?`
     : /toilet/.test(a.line2) ? 'Does coffee send you to the toilet?'
       : /bedtime/.test(a.line2) ? 'How much is left at bedtime?'
         : /\?$/.test(a.line1) ? null
@@ -158,13 +179,14 @@ export function hookB(h: HookIn, a: Hook): Hook {
   if (q && (a.payoff || a.payoffMin !== undefined)) return { line1: q, line2: a.line1, ...keep };
   // otherwise a question with its own answer moment, the fact second
   const f = fallbackQ(h, a.line1);
-  if (f.payoff) return { line1: f.line1, line2: /\?$/.test(a.line1) ? a.line2 : a.line1, payoff: f.payoff, ...(a.lead ? { lead: a.lead } : {}) };
-  return { line1: `${a.line1.replace(/\.$/, '')}, in 24 hours.`, line2: a.line2, ...keep };
+  if (f.payoff || f.payoffMin !== undefined) return { line1: f.line1, line2: /\?$/.test(a.line1) ? a.line2 : a.line1, ...(f.payoff ? { payoff: f.payoff } : {}), ...(f.payoffMin !== undefined ? { payoffMin: f.payoffMin } : {}), ...(a.lead ? { lead: a.lead } : {}) };
+  // (round 17, critic G-3: "…, in 24 hours. Watch it for 24 hours."): the question first, never the day twice
+  return { line1: `What does ${lowerName(name)} do inside you?`, line2: /\?$/.test(a.line1) ? a.line2 : a.line1, ...keep };
 }
 /** Round 11: the comparison's second hook: both names first, then the same question (still a guess). */
 export function compareHookB(question: string, a: string, b: string): string {
   const rest = question.replace(/^Guess:\s*/i, '').replace(/^\w/, (c) => c.toLowerCase());
-  const tries = [`${a} or ${b}: ${rest}`, `${a} vs ${b}: guess first.`];
+  const tries = [`${a} or ${lowerName(b)}: ${rest}`, `${a} vs ${b}: guess first.`]; // (round 17: "Cola or orange juice", no capital mid-sentence)
   return tries.find((s) => words(s) <= 9) ?? tries[1];
 }
 /** Round 11 (research R5): a stable number per food (FNV-1a of its name), so its hook order, music motif and camera

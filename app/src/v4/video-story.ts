@@ -6,7 +6,7 @@ import { chapterText } from './stories';
 import { beatLines, eventMin, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
-import { mainGauge, whereGauge, type BuiltLike } from './video-body';
+import { inText, mainGauge, whereCard, whereGauge, type BuiltLike } from './video-body';
 import { worstMoment } from './status';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { parseMeal } from './food/parse';
@@ -20,9 +20,24 @@ export const CMP_SHORT = [0, 20, 90, 240, 720, 1440]; // 2026-10-24: the planner
 /** Round 9: on screen in plain American spelling ("Ćevapi" → "Cevapi"). */
 export const plainLatin = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
 // (round 16, critic P2-PZ: "A whole 14-inch pizza (1154 g)" read heavy): a pizza with toppings says so
-export const shortName = (n: string) => { const s = plainLatin(n).replace(/\s*\([^)]*\)/g, ''); return s.split(/\s+/).length > 5 && / with /.test(s) ? `${s.slice(0, s.indexOf(' with '))}${/\bpizza\b/i.test(s) ? ' with toppings' : ''}` : s; };
+// round 17 (critic G-5: "1 hamburger: 538 kcal" for a burger with bacon and an extra patty): a builder's name keeps its
+// first add-ons when they fit ("1 hamburger with bacon & extra patty"); critic G-8 / G-4: "Brie cheese" is "Brie",
+// "Cod / white fish" is "Cod"
+const CHEESE_NAMED = /\b(brie|camembert|cheddar|gouda|edam|parmesan|emmental|emmentaler|mozzarella|feta|gorgonzola|halloumi|ricotta|mascarpone) cheese\b/i;
+export const shortName = (n: string) => {
+  const kind = /^Cheese \(([a-z]+)\)$/i.exec(plainLatin(n).trim())?.[1]; // "Cheese (cheddar)" is "Cheddar"
+  if (kind && CHEESE_NAMED.test(`${kind} cheese`)) return kind.charAt(0).toUpperCase() + kind.slice(1);
+  const s = plainLatin(n).replace(/\s*\([^)]*\)/g, '').replace(/\s+\/\s+[^,]*$/, '').replace(CHEESE_NAMED, '$1');
+  if (!(s.split(/\s+/).length > 5 && / with /.test(s))) return s;
+  const core = s.slice(0, s.indexOf(' with '));
+  if (/\bpizza\b/i.test(s)) return `${core} with toppings`;
+  const adds = s.slice(s.indexOf(' with ') + 6).split(/,\s*|\s+and\s+/).map((x) => x.trim()).filter(Boolean);
+  const two = `${core} with ${adds.slice(0, 2).join(' & ')}`, one = `${core} with ${adds[0]}`;
+  return [two, one].find((x) => x.replace(/^\d+\s+/, '').split(/\s+/).length <= 6) ?? core; // ("1 hamburger with bacon & extra patty")
+};
 /** The comparison's name for a side (round 5): the amount moves to its own line ("330 ml of water" → "Water"). */
-export const cmpName = (label: string) => { const s = plainLatin(label).replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, ''); return s.charAt(0).toUpperCase() + s.slice(1); };
+// (round 17: the same clean name as the single video, "Cod", "Brie", "Kebab", never "Cod / white fish")
+export const cmpName = (label: string) => { const s = shortName(plainLatin(label).replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, '')); return s.charAt(0).toUpperCase() + s.slice(1); };
 
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
 export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number): BeatCtx {
@@ -132,6 +147,22 @@ export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters: { min: number
   const sugarMoment = sugarIsPeak ? chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title))?.min : undefined;
   return { peakMin: sugarMoment ?? climaxOf(b, sugarKnown, chapters), ...(p === undefined ? { peakByS: CLIMAX_BY_S } : {}) };
 };
+/** Round 17: the end card's hero number (one source for the app and the text audit): the main gauge at the video's
+ *  climax, with when ("+38 % · 45 min in"). */
+export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[], unit: Profile['glucoseUnit'], hook?: { extra?: { min: number }; lead?: string }): { big: string; small: string } | undefined {
+  const cm = climaxFx(b, sugarKnown, chapters, hook).peakMin;
+  const g = cm === undefined ? undefined : gaugesAt(b, cm, unit, sugarKnown).find((x) => x.curve);
+  if (g && cm !== undefined) return { big: `${g.big} · ${inText(cm)}`, small: g.small.split(' · ')[0] };
+  // round 17 (critic G-7: brie and cod ended without a number): the hook's own number ("41 g · protein")
+  const m = /^(\d+(?:[.,]\d+)?)\s*(g|mg|kcal)\b(?:\s+of)?\s*([^.:,]*)/.exec(hook?.lead ?? '');
+  if (m) return { big: `${m[1]} ${m[2]}`, small: m[3].trim() || 'in total' };
+  const k = /(\d+) kcal/.exec(chapters[0]?.text ?? '')?.[1];
+  if (k && Number(k) >= 5) return { big: `${k} kcal`, small: 'in total' };
+  // a drink without calories: where it is at its kidney moment ("190 ml · Urine made in the last 3 h")
+  const kid = chapters.find((c) => /Kidneys|Bladder/.test(c.title));
+  const w = whereGauge(b, kid?.min ?? cm ?? 120);
+  return w ? { big: `${w.big} · ${inText(kid?.min ?? cm ?? 120)}`, small: w.small } : undefined;
+}
 /** The minute of the sugar curve's top (for climaxFx, which then prefers the story's own moment). */
 const peakOfSugar = (b: PeakIn) => { const g = b.effects.glucoseMgDl; if (!g) return undefined; let k = 0; for (let i = 1; i <= Math.min(1440, g.length - 1); i++) if (g[i] > g[k]) k = i; return k; };
 
@@ -215,6 +246,9 @@ export interface ComparePlan { plan: Plan; guess: Guess | null; race: { a: Float
  *  moments that say something new, and the plan for them. */
 /** Round 14 (owner decision): a comparison says its amounts early: "A typical serving each: 150 ml vs 500 ml." (or
  *  "Same amount: 330 ml each."), from each side's serving text ("1 glass · 250 ml" → "250 ml"). */
+/** Round 17 ("A typical serving each: 198 g vs 1 avocado without skin and seed."): the amount in ml or g, from the
+ *  serving text, else its grams. */
+export const servingAmount = (x: { serving: string; macros: { grams: number } }) => /(\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl))\b/i.exec(x.serving.split('·').pop() ?? x.serving)?.[1] ?? `${Math.round(x.macros.grams)} g`;
 export function servingsCard(sa: string, sb: string): string {
   const amt = (s: string) => /(\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl))\b/i.exec(s.split('·').pop() ?? s)?.[1] ?? s.trim();
   const x = amt(sa), y = amt(sb);
@@ -224,6 +258,10 @@ export function servingsCard(sa: string, sb: string): string {
 export const CHIP_MAX = 34;
 export const CHIP_SHORT: [RegExp, string][] = [[/sugar peak|blood sugar/i, 'sugar peak'], [/alcohol peak/i, 'alcohol peak'], [/peak/i, 'its peak'], [/dip|crash/i, 'sugar dip'],
   [/going to bed|bedtime/i, 'bedtime'], [/morning/i, 'next morning'], [/gone/i, 'all gone'], [/large intestine/i, 'large intestine'], [/24 hours/i, '24 hours later']];
+/** Round 17: chapters about the way in (bite, stomach, small intestine), true only for a few hours. */
+export const TRANSIT_TITLE = /^(First (bite|sip)|First bite and sip|Down the food pipe|In your stomach|Into the small intestine|Building blocks|Your gut)/i;
+/** Round 17: a chapter shown at minute `at` long after it happened (a +0:25 card at +24:00). */
+export const staleAt = (c: { min: number; title: string }, at: number) => (at >= 1440 ? c.min < 720 : TRANSIT_TITLE.test(c.title) && at - c.min > 360);
 /** Round 13: the comparison's answer is revealed no earlier than this share of the video. */
 export const REVEAL_FROM = 0.55;
 export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: boolean | Cut): ComparePlan {
@@ -231,7 +269,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   const cut: Cut = typeof cutIn === 'boolean' ? (cutIn ? 'short' : 'long') : cutIn, shortVid = cut === 'short';
   // each side's words at each moment (as on screen); planCompare sets the reading times and the length
   const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
-  const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(shortName(x.label), x.built, profile.drinkAtMin), factsFirst: true }); };
+  const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(cmpName(x.label), x.built, profile.drinkAtMin), factsFirst: true } /* (round 17: "Orange juice.", its amount is on the servings card) */); };
   // the game's facts from the model (spec §3.3): the race out of the stomach, the peak, the lights, the verdict
   // round 4: the question this pair answers clearly (out of the stomach / out of the blood / bigger sugar rise),
   // or none; its race bars and its answer come from the same model
@@ -239,7 +277,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)), { bedMin });
   const race = gq && gq.kind !== 'bedtime' ? { a: gq.progress[0], b: gq.progress[1] } : null; // (no race for "still in you at bedtime")
   const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
-  const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit);
+  const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit, gq && { tie: /^Almost the same/.test(gq.answer1) });
   const nonAlc = [a, b].filter((x) => (x.built.alcoholG ?? 0) <= 1), pk = [...nonAlc, a, b].map((x) => peakOf(x.built, x.glucose !== undefined)).find((x) => x !== undefined);
   // the impact lands on the answer when there is a guess (the moment the race is decided), else on the peak
   const hit = gq ? Math.round(gq.decidedMin) : pk;
@@ -270,7 +308,8 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       const rank = (c: typeof fresh0[number]) => (gq?.kind === 'stomach' && /stomach/i.test(c.title) ? 0 : c === fresh0[fresh0.length - 1] ? 1 : 2);
       // round 7 (critic B2: a bedtime card showed at +24:00 under KIDNEYS): only the chapter of this moment (and,
       // in a stomach race, the stomach chapter), so a card is never shown under another moment's title or time
-      const fresh = fresh0.map((c, i) => ({ c, i })).sort((p, q) => rank(p.c) - rank(q.c) || p.i - q.i).map((p) => p.c).filter((c) => rank(c) < 2);
+      // (round 17: and never a chapter long past, "Next morning" at +24:00 when the +12:00 moment was left out)
+      const fresh = fresh0.map((c, i) => ({ c, i })).sort((p, q) => rank(p.c) - rank(q.c) || p.i - q.i).map((p) => p.c).filter((c) => rank(c) < 2 && !staleAt(c, at));
       prev = at;
       if (fresh.length) {
         // (round 12: a card that says "now" only under its own moment, never minutes later)
@@ -279,6 +318,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
         return { lines, title: fresh[0].title, text: chapterText(fresh[0], fresh[0].min), isNew: true };
       }
       const c = chap(x, at);
+      // round 17 (critic G-2: "INTO THE SMALL INTESTINE · Protein is broken into building blocks." under +24:00): a
+      // chapter long past is never shown as this moment's; the side says where it is now, under the moment's own time
+      if (staleAt(c, at)) { const wl = whereCard(x.built, at); return { lines: [wl ?? ''], title: at >= 1440 ? '24 hours later' : `${Math.round(at / 60)} hours later`, text: wl ?? '', isNew: false }; }
       const rest = lastCh === c ? lastLines.slice(seen) : [];
       seen = Math.min(lastLines.length, seen + perStop);
       // (round 8: nothing new = this side is quiet, never the same card again under a later moment)
@@ -290,7 +332,12 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   const build = (mins0: number[]) => {
     const sa = sideCards(a, mins0), sb = sideCards(b, mins0);
     // round 14 (owner): the amounts, said once and early: a typical serving each (or the same amount)
-    if (sa[0] && sb[0]) { const card = servingsCard(a.serving, b.serving); sa[0].lines = [card, ...sa[0].lines]; sb[0].lines = [card, ...sb[0].lines]; }
+    if (sa[0] && sb[0]) { const card = servingsCard(servingAmount(a), servingAmount(b)); sa[0].lines = [card, ...sa[0].lines]; sb[0].lines = [card, ...sb[0].lines]; }
+    // round 17 (critic P2-OJ: "Cola." next to "29 g of sugar: about 7 teaspoons." before the answer): the guessed number
+    // is said by neither side before the answer
+    const hide = gq?.kind === 'sugarG' ? /\d+ g of sugar|teaspoons? of sugar/ : gq?.kind === 'kcal' ? /\d+ kcal/ : gq?.kind === 'alcohol' ? /\d+ g of alcohol/ : null;
+    const revealMin = fx.peakMin ?? hit ?? 0;
+    if (hide) for (const side of [sa, sb]) side.forEach((c, i) => { if (mins0[i] < revealMin) { const ls = c.lines.filter((l) => !hide.test(l)); c.lines = ls.length ? ls : ['']; } });
     const keepAt = mins0.map((at, i) => i === 0 || at === hit || sa[i].isNew || sb[i].isNew);
     const mins = mins0.filter((_m, i) => keepAt[i]);
     const pick = <T,>(xs: T[]) => xs.filter((_x, i) => keepAt[i]);

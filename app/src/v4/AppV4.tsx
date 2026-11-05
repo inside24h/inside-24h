@@ -29,7 +29,7 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
-import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
+import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
 import { compareHookB, hookB, hookFor, hookForCompare, seedOf, type HookIn } from './video-hook';
 import { captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Captions, type Platform } from './video-caption';
 /** Round 11 (research R2, R5): the two hooks of a video; which formula comes first rotates per food (its seed). */
@@ -624,12 +624,7 @@ export default function AppV4() {
     ...lifeOf(PRODUCT.name, built, minute, gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null)),
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     // round 14 (critic G-3): the end card's hero number, the main gauge at the video's climax (the same numbers)
-    hero: (() => {
-      const cm = climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow).peakMin;
-      if (cm === undefined) return undefined;
-      const g = gaugesAt(built, cm, profile.glucoseUnit, peakNow !== null).find((x) => x.curve);
-      return g ? { big: `${g.big} · ${inText(cm)}`, small: g.small.split(' · ')[0] } : undefined;
-    })(),
+    hero: heroOf(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), profile.glucoseUnit, hookNow), // (round 17: one source, video-story heroOf)
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
       // plain words (round 4); round 5: the time as on the video's clock ("at +0:20"), never a bare "13:13"; not tracked = grey
@@ -727,7 +722,7 @@ export default function AppV4() {
     const race = cmpRace.current;
     const gq = cmpGuess.current;
     cmpOverlayRef.current = { hook: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(cmpRec.a.label), cmpName(cmpRec.b.label)) : gq.question) : hookForCompare(cmpName(cmpRec.a.label), cmpName(cmpRec.b.label), false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
-      answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit), a: side(cmpRec.a), b: side(cmpRec.b) };
+      answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit, gq && { tie: /^Almost the same/.test(gq.answer1) }), a: side(cmpRec.a), b: side(cmpRec.b) };
   }
   // the organ each body's current moment is about (the split-screen cameras frame both, the organs light up)
   const cmpFocus: [string | null, string | null] | undefined = cmpRec ? (() => {

@@ -4,6 +4,8 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
+/** Round 17: a name inside a sentence ("orange juice"), as video-hook lowerName. */
+const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG' | 'kcal';
 export interface GuessSide {
   name: string;
@@ -140,8 +142,9 @@ export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number 
   const ask = (kind: GuessKind, question: string, x: number, y: number, unit: string, more: string, tieGap: number, at: number): Guess => {
     const w = (x >= y ? 0 : 1) as 0 | 1, tie = Math.abs(x - y) < Math.max(tieGap, 0.1 * Math.max(x, y));
     return { kind, question, winner: w, decidedMin: at,
-      answer1: tie ? 'Almost the same.' : `${more}: ${the(sides[w].name)}.`, answer2: `${Math.round(x)} ${unit} vs ${Math.round(y)} ${unit}.`,
-      recap: tie ? `Answer: ${sides[0].name} and ${sides[1].name}, almost the same.` : `Answer: ${sides[w].name}, ${more.toLowerCase()}.`, progress: [flat, flat] };
+      // (round 17: "25 g vs 27 g of sugar.", never "25 g of sugar vs 27 g of sugar."; no capital mid-sentence)
+      answer1: tie ? 'Almost the same.' : `${more}: ${the(sides[w].name)}.`, answer2: `${Math.round(x)} ${unit.split(' ')[0]} vs ${Math.round(y)} ${unit}.`,
+      recap: tie ? `Answer: ${sides[0].name} and ${lowerName(sides[1].name)}, almost the same.` : `Answer: ${sides[w].name}, ${more.toLowerCase()}.`, progress: [flat, flat] };
   };
   if (a.alcohol && b.alcohol) return ask('alcohol', 'Guess: which brings more alcohol?', ga, gb, 'g of alcohol', 'More alcohol', 2, Math.max(later(a.bac), later(b.bac)));
   if (!anyAlcohol && sa >= 1 && sb >= 1) return ask('sugarG', 'Guess: which has more sugar?', sa, sb, 'g of sugar', 'More sugar', 3, Math.max(later(a.sugar), later(b.sugar)));

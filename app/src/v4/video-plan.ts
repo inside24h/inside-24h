@@ -186,7 +186,7 @@ export const TEASE_PREFIX = 'Coming up: ', TEASE_PREFIX2 = 'Still to come: ';
 /** Round 13 (critic P1-2: "Coming up: peak." meant nothing to most people): what the moment means for the viewer. */
 export const TEASE_HUMAN: [RegExp, string][] = [
   [/sugar peak|blood sugar/i, 'when your blood sugar tops out'], [/alcohol peak/i, 'when the alcohol hits hardest'], [/peak/i, 'when it hits hardest'],
-  [/dip|crash/i, 'the sugar crash'], [/going to bed|bedtime/i, 'what is left at bedtime'], [/sleep/i, 'what it does to your sleep'],
+  [/dip|crash/i, 'the sugar crash'], [/going to bed|bedtime/i, 'what is left at bedtime'], [/sleepy/i, 'the after-meal slump'] /* (round 17, critic G-6: not "your sleep") */, [/sleep/i, 'what it does to your sleep'],
   [/morning/i, 'what is left the next morning'], [/gone/i, 'when it is finally gone'], [/large intestine/i, 'where the leftovers go'],
   [/toilet/i, 'when it reaches the toilet'], [/24 hours/i, 'what is left after 24 hours'],
 ];

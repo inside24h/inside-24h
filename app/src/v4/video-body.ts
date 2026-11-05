@@ -143,7 +143,9 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
 export function whereCard(b: BuiltLike, m: number): string | null {
   const top = presentAt(b, m).filter(([id]) => id !== 'swallow')[0];
   const small = top ? WHERE_SMALL[top[0]] : undefined;
-  return small && /^In your /.test(small) ? `Most of it is ${small.charAt(0).toLowerCase()}${small.slice(1)} now.` : null;
+  // (round 17, critic P2-CR: "It collects in your bladder." then "Most of it is in your blood now." read as urine): it says what
+  const t0 = b.story?.chapters[0]?.title ?? '', what = /bite and sip/i.test(t0) ? 'the meal' : /bite/i.test(t0) ? 'the food' : 'the drink';
+  return small && /^In your /.test(small) ? `${what.charAt(0).toUpperCase()}${what.slice(1)} is mostly ${small.charAt(0).toLowerCase()}${small.slice(1)}.` : null;
 }
 
 /** Video colours (2026-10-24, owner review: the brain glowed white-blue): a calm violet tint for the brain, whose

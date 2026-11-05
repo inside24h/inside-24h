@@ -80,8 +80,12 @@ export const sugarPeakText = (peakMmol: number | null, unit: Unit = 'mmol/L') =>
  * - a winner is only named when we can say why in words; otherwise it is close.
  */
 /** "Espresso wins", "3 espressos win" (round 12: the verb agrees with a counted plural). */
+/** Round 17: a name inside a sentence ("orange juice"), unless an acronym or brand-like ("USDA", "McFlurry"). */
+const lowerIn = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 const winsOf = (label: string) => `${label} ${/^(?:[2-9]|\d{2,})\s/.test(label.trim()) ? 'win' : 'wins'}`;
-export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): string {
+/** `guess`: the comparison video's question, when there is one: one tie rule for all its text (round 17, critic G-1:
+ *  "Banana raised blood sugar more." next to "It's close: … about the same."). */
+export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess?: { tie: boolean } | null): string {
   const skip = a.sugarPeak === null || b.sugarPeak === null; // compare like with like
   const stressOf = (x: Analysis, key: System['key']) => {
     const s = x.systems.find((y) => y.key === key);
@@ -96,11 +100,15 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
   const caf = (x: Analysis) => x.built.caffeine.doseMg;
   const cafStress = (x: Analysis) => stressOf(x, 'brain') + stressOf(x, 'heart'); // only used when the other side has no alcohol
   const sugarOk = (x: Analysis, y: Analysis) => !skip && x.sugarPeak !== null && y.sugarPeak !== null;
-  // (round 16, critic V-1: the same amount of each reads as its own sentence)
+  // (round 16, critic V-1: the same amount of each reads as its own sentence; round 17, critic P0-1: "the same 250 ml
+  // of 250 ml of cola": the bare names, never the amount twice; names in a sentence are lower case)
   const amt = (s: string) => /(\d+(?:[.,]\d+)?\s*(?:ml|g))/i.exec(s.split('·').pop() ?? s)?.[1];
   const sameAmt = !!amt(a.serving) && amt(a.serving) === amt(b.serving);
-  const pair = [a.label.toLowerCase(), b.label.toLowerCase()].sort(); // (in either order the same sentence)
-  const close = sameAmt ? `It’s close: the same ${amt(a.serving)} of ${pair[0]} and ${pair[1]} hits your body about the same.` : `It’s close: ${a.label} and ${b.label} affect your body about the same.`;
+  const bare = (x: Analysis) => lowerIn(x.label.replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, ''));
+  const pair = [bare(a), bare(b)].sort(); // (in either order the same sentence)
+  // an answer that named a difference: the rest is about the same ("Apart from that, …")
+  const lead = guess && !guess.tie ? 'Apart from that,' : 'It’s close:';
+  const close = sameAmt ? `${lead} the same amount of ${pair[0]} and ${pair[1]} hits your body about the same way.` : `${lead} ${pair[0]} and ${pair[1]} affect your body about the same.`;
 
   /** why w is easier on the body than l, in words (alcohol aside) */
   const reasons = (w: Analysis, l: Analysis) => {
@@ -149,7 +157,8 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L'): stri
     }
     const pa = bacPeak(a), pb = bacPeak(b);
     if (Math.abs(pa - pb) >= 0.05) { const [w, l] = pa < pb ? [a, b] : [b, a]; return lighter(w, l, 'a lower blood alcohol peak'); }
-    return `It’s close: ${a.label} and ${b.label} bring about the same alcohol (about ${Math.round((alcA + alcB) / 2)} g). Both: don’t drive.`;
+    const two = bare(a) === bare(b) ? [lowerIn(a.label), lowerIn(b.label)].sort() : pair;
+    return `${guess && !guess.tie ? 'Apart from that,' : 'It’s close:'} ${two[0]} and ${two[1]} bring about the same alcohol (about ${Math.round((alcA + alcB) / 2)} g). Both: don’t drive.`;
   }
   const sa = score(a), sb = score(b);
   if (near(sa, sb)) return close;

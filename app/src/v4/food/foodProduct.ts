@@ -194,7 +194,8 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const noun = isMeal ? 'meal' : isDrink ? 'drink' : 'food';
   const mixed = !!(s.meal?.phases.drink && s.meal.phases.food);
   const g = (mgdl: number) => `${formatGlucose(mgdl, p.glucoseUnit)} ${p.glucoseUnit}`;
-  const sugarTsp = r0(m.sugars / 4); // 1 teaspoon of sugar ≈ 4 g
+  // (round 17, critic G-9: "14 g: about 3" next to "14 g: about 4"): from the grams as shown
+  const sugarTsp = r0(r0(m.sugars) / 4); // 1 teaspoon of sugar ≈ 4 g
   // round 12 (critic P1-1): a starchy food says what its starch becomes, in the same teaspoons (4 g each): all its
   // available carbohydrate is digested to glucose and reaches the blood over a few hours (SI10)
   const starchTsp = !isDrink && meal.alcoholG <= 1 && m.availCarbs >= 20 && sugarTsp < 3 ? r0(m.availCarbs / 4) : 0;
