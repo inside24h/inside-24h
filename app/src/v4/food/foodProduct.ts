@@ -253,6 +253,12 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         const steps = [m.availCarbs >= 2 && (hasStarch(m) ? 'starch and sugar become glucose' : 'the sugar passes into your blood'), m.protein >= 3 && 'protein becomes amino acids', m.fat >= 3 && 'fat is split with bile from your gallbladder'].filter(Boolean);
         const what = [meal.caffeineMg >= 10 && 'caffeine', meal.alcoholG > 1 && 'alcohol', meal.waterG >= 50 && 'water'].filter(Boolean).join(' and ');
         const alcNote = meal.alcoholG > 1 ? ' Some of the alcohol was already absorbed through your stomach wall.' : '';
+        // v21 (video review: "In the small intestine it is taken apart" over a glass of wine): a drink whose only step is
+        // its sugar passing into the blood is absorbed, not taken apart
+        // (an alcoholic drink's few carbohydrates are not starch to digest: it is absorbed too)
+        const sugarOnly = steps.length === 1 && (/passes into your blood/.test(String(steps[0])) || (isDrink && meal.alcoholG > 1));
+        const parts = [...(what ? what.split(' and ') : []), 'sugar'], absorbed = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+        if (sugarOnly) return `Your small intestine absorbs the ${absorbed} into your blood within minutes.${alcNote}`;
         return steps.length
           ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : steps.length === 1 && /passes into your blood/.test(String(steps[0])) ? '' : 'The pieces pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${starchTsp ? ` In all, about ${starchTsp} teaspoons of sugar reach your blood, over a few hours.` : ''}${alcNote}`
           : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.${alcNote}`;

@@ -53,28 +53,58 @@ const numWords = (n: number): number => (n <= 20 ? 1 : n < 100 ? (n % 10 ? 2 : 1
 export const wordsOf = (s: string) => s.replace(/(\d+)(?:\.(\d+))?/g, (_m, a: string, b?: string) => Array(numWords(Number(a)) + (b ? 1 + b.length : 0)).fill('w').join(' '))
   .trim().split(/[\s-]+/).filter((w) => /\w/.test(w)).length;
 /** Seconds a line takes at WPS (counted on its spoken form: units in words). */
-export const speakS = (s: string) => wordsOf(speakable(s)) / WPS;
+export const speakS = (s: string) => wordsOf(ttsText(speakable(s))) / WPS;
 /** Numbers in a text ("+30–50 %" → 30, 50; "0.04" stays "0.04"). */
-export const numbersOf = (s: string) => (clock12(s).match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.'));
+export const numbersOf = (s: string) => (clock12(s).match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.').replace(/\.0+$/, ''));
 /** v20: a clock time as Americans say it ("07:00" → "7 AM", "22:30" → "10:30 PM"); numbers compare in this form. */
 export const clock12 = (s: string) => s.replace(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g, (_m, h: string, mm: string) => {
   const H = Number(h), h12 = H % 12 || 12;
   return `${h12}${mm === '00' ? '' : `:${mm}`} ${H < 12 ? 'AM' : 'PM'}`;
 });
 
-/** The words a speech engine needs: units spelled out, ranges with "to", clock times in 12 h. Keeps every number. */
+/** v21: a clock time said the way people say it ("7 AM" → "7 in the morning", "10:30 PM" → "10:30 at night"). */
+const dayPart = (h12: number, pm: boolean) => (!pm ? (h12 === 12 || h12 < 5 ? 'at night' : 'in the morning') : h12 === 12 || h12 < 5 ? 'in the afternoon' : h12 < 9 ? 'in the evening' : 'at night');
+/** v21: "1 hours" → "1 hour" (the unit after a lone 1 is singular). */
+const singular = (s: string) => s.replace(/(^|[^\d.,])1 (hours|minutes|grams|milligrams|milliliters|calories|teaspoons)\b/g, (_m, a: string, u: string) => `${a}1 ${u.slice(0, -1)}`);
+/** v21: the line as shown in the word-by-word captions: what the voice says, in a readable form (clock times in
+ *  12 h, "h"/"min" as words, "&" as "and"); "g", "ml", "mg", "kcal" and "%" stay short on screen. Keeps every number. */
+export function shownText(s: string): string {
+  return singular(clock12(s.replace(/\+(\d{1,2}):(\d\d)\b/g, (_m, h: string, mm: string) => `${Number(h)} h${mm === '00' ? '' : ` ${Number(mm)} min`} later`))
+    .replace(/(\d)\s*h\b/g, '$1 hours')
+    .replace(/(\d)\s*min\b/g, '$1 minutes')
+    .replace(/\s&\s/g, ' and ')
+    .replace(/\b(\d+ (?:hours|minutes)) later later\b/g, '$1 later'));
+}
+
+/** The words a speech engine needs: units spelled out, ranges with "to", clock times in 12 h said with the part of the
+ *  day, symbols as words. Keeps every number (the lint compares them with the screen). */
 export function speakable(s: string): string {
-  return clock12(s)
+  return singular(shownText(s)
+    .replace(/(\d+)(?::(\d\d))? (AM|PM)\b/g, (_m, h: string, mm: string | undefined, ap: string) => `${h}${mm ? `:${mm}` : ''} ${dayPart(Number(h), ap === 'PM')}`)
     .replace(/(\d)\s*[–-]\s*(\d)/g, '$1 to $2')
     .replace(/\bvs\.?(?=\s)/g, 'versus')
     .replace(/\+(?=\d)/g, '')
     .replace(/(\d)\s*%/g, '$1 percent')
+    .replace(/(\d)\s*×/g, '$1 times')
+    .replace(/\s*&\s*/g, ' and ')
+    .replace(/[~≈]\s*(?=\d)/g, 'about ')
     .replace(/(\d)\s*mg\b/g, '$1 milligrams')
     .replace(/(\d)\s*kcal\b/g, '$1 calories')
     .replace(/(\d)\s*ml\b/g, '$1 milliliters')
     .replace(/(\d)\s*g\b/g, '$1 grams')
-    .replace(/(\d)\s*h\b/g, '$1 hours')
-    .replace(/(\d)\s*min\b/g, '$1 minutes')
+    .replace(/\bBAC\b/g, 'blood alcohol')
+    .replace(/\s{2,}/g, ' ').trim());
+}
+
+/** v21: the last step before the speech engine (not shown, not linted on numbers): durations as people say them
+ *  ("1.5 hours" → "an hour and a half", "1 hour 30 minutes" → "an hour and a half", "6.0" → "6"). */
+export function ttsText(say: string): string {
+  const half = (h: number) => (h === 0 ? 'half an hour' : h === 1 ? 'an hour and a half' : `${h} and a half hours`);
+  return say
+    .replace(/\b(\d+)\.0+\b/g, '$1')
+    .replace(/\b(\d+)\.5 hours\b/g, (_m, h: string) => half(Number(h)))
+    .replace(/\b(\d+) hours? (?:and )?(\d+) minutes\b/g, (_m, h: string, mm: string) => (mm === '30' ? half(Number(h)) : `${h === '1' ? 'an hour' : `${h} hours`} and ${mm} minutes`))
+    .replace(/(^|[^\d.,])1 hour\b/g, '$1an hour')
     .replace(/\s{2,}/g, ' ').trim();
 }
 
@@ -144,6 +174,8 @@ const ORGAN_BEAT = [(o: string) => `Your ${o}, hard at work.`, (o: string) => `W
 const VAGUE = /^(Half|Most|Almost|Nearly|Some|All|Much|Little|None|Less|More)\b/;
 const lc1 = (s: string) => (/^[A-Z][a-z’']*\b/.test(s) && !/^I\b|^I[’']/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** v21: "Cod: protein keeps arriving" (after a name and a colon, a sentence goes on in lower case; not "I" or a name). */
+const lower1 = (s: string) => (/^[A-Z][a-z]+\b/.test(s) && !/^I\b/.test(s) && /^(The|Half|Most|Almost|All|Some|Your|Its|It|In|At|By|After|About|Protein|Fat|Sugar|Blood|Caffeine|Alcohol|Insulin|Fiber|Water|Even|Both|Less|More|Still|Every|Coffee|Gut|Mouth|Urine|Starch|Focus|Sleepy|Heart|Brain|Liver|Energy|A|An|No|Not|Nothing|Fruit|Food|This|That)\b/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 const words = (s: string) => s.toLowerCase().replace(/[’']/g, "'").split(/[^a-z0-9.']+/).map((w) => w.replace(/\.$/, '')).filter((w) => w.length > 2 || /\d/.test(w));
 /** Every word (3+ letters) and number of `card` is in `said` (the card would only repeat what was just said). */
 export const saidAlready = (card: string, said: string) => { const s = new Set(words(said)); const c = words(card); return c.length > 0 && c.every((w) => s.has(w)); };
@@ -183,6 +215,19 @@ export function climaxKind(n: NarrIn): keyof typeof CLIMAX {
 }
 
 /** The voiceover script for one video plan. */
+/** v21: two lines say the same thing (3+ content words shared, most of them, on 4-letter stems; the hook's question is
+ *  not repeated by its answer). */
+const STOP = new Set("the and your you are was has have had its it’s it's this that these those there here now then than what with from into after about over still should will can one all see when does did just".split(' '));
+const stems = (x: string) => new Set(x.toLowerCase().replace(/[^a-z'’ ]/g, ' ').split(/\s+/).filter((w) => w.length >= 3 && !STOP.has(w)).map((w) => w.slice(0, 4)));
+export const repeats = (a: string, b: string) => {
+  const A = stems(a), B = stems(b);
+  if (!A.size || !B.size) return false;
+  let n = 0; for (const w of A) if (B.has(w)) n++;
+  return n >= 3 && n / (A.size + B.size - n) >= 0.5;
+};
+/** The kinds of line that may not repeat an earlier one (the hook, the climax, the day and the loop lines are fixed beats). */
+const DEDUP = new Set<NarrId>(['card', 'beat', 'tease']);
+
 export function narrationFor(n: NarrIn): NarrLine[] {
   const { cues, seconds } = n.plan, s = n.seed;
   const at = (k: Cue['kind'], f?: (c: Cue) => boolean) => cues.filter((c) => c.kind === k && (!f || f(c))).map((c) => c.t);
@@ -236,6 +281,8 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const t = hit !== undefined ? hit + IMPACT_POST_S + 0.1 : sp.t0 + CARD_LEAD_S, late = hit !== undefined ? 99 : CARD_DELAY_S;
     // a long moment gets a short beat after its card
     if (sp.t1 - sp.t0 >= BEAT_MIN_SPAN_S) cands.push({ id: 'beat', t: Math.max(t, sp.t0 + 3.2), until: sp.t1 - 0.2, delay: 99, options: beats(`${sp.title} ${sp.a} ${sp.b}`), source: '' });
+    // v21: a stretch with no card after this one (the bodies just move on) gets a short beat, not silence
+    if (nx && nx.t0 - sp.t1 >= 3) cands.push({ id: 'beat', t: sp.t1 + 0.3, until: nx.t0 - GAP_S, delay: 99, options: beats(`${sp.title} ${sp.a} ${sp.b}`), source: '' });
     const atPeak = !cmp && peak !== undefined && sp.t0 <= peak + 0.5 && sp.t1 > peak + 0.5;
     if (!cmp) {
       if (!sp.a || saidAlready(sp.a, spoken)) { if (sp.t1 - sp.t0 >= 2.5 && sp.t1 - sp.t0 < BEAT_MIN_SPAN_S) cands.push({ id: 'beat', t, until: sp.t1 - 0.2, delay: 99, options: beats(), source: '' }); return; }
@@ -265,7 +312,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const side = (x: string, nm: string, title: string, k: 0 | 1, tt: number, delay: number) => {
       if (!ends(x)) return;
       const said = cardSaid(x, title), who = x.toLowerCase().includes(nm.trim().toLowerCase()) ? '' : cap1(nm.trim());
-      cands.push({ id: 'card', t: tt, until, delay, options: [...(who ? [`${who}: ${x}`] : []), ...said, ...beats()], source: `${title} ${x} ${who}`, ...(isName(x, nm) || saidAlready(x, spoken) ? {} : { card: x, side: k }) });
+      cands.push({ id: 'card', t: tt, until, delay, options: [...(who ? [`${who}: ${lower1(x)}`] : []), ...said, ...beats()], source: `${title} ${x} ${who}`, ...(isName(x, nm) || saidAlready(x, spoken) ? {} : { card: x, side: k }) });
     };
     if (newA) side(a, names[0], sp.title, 0, t, late);
     if (newB) side(b, names[1], sp.titleB, 1, t + (newA ? 0.01 : 0), newA ? 99 : late);
@@ -293,14 +340,16 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     if (t - c.t > c.delay + 1e-6) continue;
     if (c.id === 'beat' && t - lastBeat < BEAT_EVERY_S) continue;
     const slot = clearSlot(t, c.until);
-    const text = c.options.find((x) => speakS(x) <= slot && wordsOf(x) <= SLOT_WORDS[c.id]);
+    // v21: no line that says again what an earlier one said ("Don't drive after drinking." … "Never drink and drive.")
+    const text = c.options.find((x) => speakS(x) <= slot && wordsOf(x) <= SLOT_WORDS[c.id] && (cmp || !DEDUP.has(c.id) || !out.some((o) => o.id !== 'hook' && repeats(x, o.text)))
+      && !(/\bdriv/i.test(x) && out.some((o) => /\bdriv/i.test(o.text)))); // (the driving warning: said once)
     if (!text) continue;
     // (a line from a pool has no on-screen source: it says no number)
     const fromPool = (c.id === 'answer' && !heroL.includes(text)) || (c.id === 'hook' && !hookOpts.includes(text)) || (c.id === 'climax' && !c.card && cmp && !text.endsWith((n.answer ?? '').trim() || '\u0000'));
     const { until: _u, delay: _d, options: _o, card, side, ...rest } = c; void _u; void _d; void _o;
     // (a pool line instead of the card: the card stays on screen, and the line has no on-screen source)
     const reads = !!card && card.split('|').every((x) => text.toLowerCase().includes(x.slice(1).toLowerCase()));
-    out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text, say: speakable(text), source: fromPool || (card && !reads) ? '' : c.source });
+    out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text: shownText(text), say: speakable(text), source: fromPool || (card && !reads) ? '' : c.source });
     free = t + speakS(text) + GAP_S;
     if (c.id === 'beat') lastBeat = t;
   }
@@ -349,7 +398,7 @@ export function lintNarration(lines: NarrLine[], n: NarrIn): NarrIssue[] {
     if (/\s{2,}|\s[,.?!:]|\.\.|\?\.|[,:]$/.test(l.text)) bad('narration grammar', l.text);
     if (/\b(\w+)\s+\1\b/i.test(l.text)) bad('narration grammar', `repeated word: ${l.text}`);
     // v20: a line that reads a card says that card word for word (its caption takes the card's place: one text)
-    if (l.card && !l.card.split('|').every((c) => l.text.toLowerCase().includes(c.slice(1).toLowerCase()))) bad('narration differs from its card', `${l.text} | ${l.card}`);
+    if (l.card && !l.card.split('|').every((c) => l.text.toLowerCase().includes(shownText(c).slice(1).toLowerCase()))) bad('narration differs from its card', `${l.text} | ${l.card}`);
   }
   return out;
 }

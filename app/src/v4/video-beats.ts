@@ -59,7 +59,7 @@ const RULES: Rule[] = [
   [/^Blood from your gut goes to the liver first/, () => ['Blood from your gut reaches the liver first.']],
   [/^Your gut wall and liver together hold back about (\d+)% of the fructose/, (m) => [`Gut and liver catch ${m[1]}% of fruit sugar.`, 'Most of the rest goes into your blood.']],
   [/^Over the next hours your body burns about half of the fructose for energy and, mainly in the liver, turns about (\d+)% into glucose/, (_m) => ['Your body burns some sugar for energy.', `Your liver turns some into blood sugar.`]],
-  [/^Your liver takes the caffeine apart: half of it is gone about every ([\d.]+) hours/, (m) => ['Your liver takes the caffeine apart.', `Half is gone every ${m[1]} hours.`]],
+  [/^Your liver takes the caffeine apart: half of it is gone about every ([\d.]+) hours/, (m) => ['Your liver takes the caffeine apart.', `Half is gone every ${m[1].replace(/\.0+$/, '')} hours.`]],
   // blood sugar
   [/^Your blood sugar (?:climbs|goes) from /, () => ['Your blood sugar climbs to its peak.']],
   [/^Your pancreas releases insulin to bring it back down/, () => ['Insulin brings your blood sugar back down.']],

@@ -124,7 +124,7 @@ describe('caption cards', () => {
     expect(t('In your stomach', 'Each drink: half of it leaves your stomach within about 40 minutes: the alcohol and the rest of the drink slow the stomach down (water would be gone in about 13).'))
       .toEqual(['Each drink: half leaves within 40 minutes.', 'The drink slows your stomach down.']);
     expect(t('The liver breaks it down', 'Your liver takes the caffeine apart: half of it is gone about every 6.0 hours (our estimate; in healthy adults it ranges from 2.5 to 10 hours).'))
-      .toEqual(['Your liver takes the caffeine apart.', 'Half is gone every 6.0 hours.']);
+      .toEqual(['Your liver takes the caffeine apart.', 'Half is gone every 6 hours.']);
     expect(t('Bedtime', 'About 12 mg of caffeine is still in you at 23:00. Too little to affect your sleep.')).toEqual(['Some caffeine is still in you.', 'Too little to affect your sleep.']);
   });
 });

@@ -5,7 +5,7 @@
 // script, transformers.js' Cache Storage for the model): later videos start at once.
 // Every failure (offline, no WebAssembly, a slow phone, a timeout) returns null: the video is made exactly as before,
 // without the voice.
-import { OVERRUN_S, placeClips, type NarrLine } from './video-narration';
+import { OVERRUN_S, placeClips, ttsText, type NarrLine } from './video-narration';
 import { SAMPLE_RATE } from './video-audio';
 import { pausesOf, type CapLine } from './video-captions';
 
@@ -83,10 +83,10 @@ export async function makeVoice(lines: NarrLine[], seconds: number, onProgress?:
       onProgress?.(i / lines.length, 'speak');
       let r: Raw | null = null;
       try {
-        r = trim(await withTimeout(tts.generate(l.say, { voice: VOICE_ID, speed: VOICE_SPEED }), LINE_TIMEOUT_MS));
+        r = trim(await withTimeout(tts.generate(ttsText(l.say), { voice: VOICE_ID, speed: VOICE_SPEED }), LINE_TIMEOUT_MS));
         const d = r.audio.length / r.sampling_rate;
         // a little long for its slot: said a little faster (at most 1.2×), else left out by placeClips
-        if (d > l.slotS + OVERRUN_S) r = trim(await withTimeout(tts.generate(l.say, { voice: VOICE_ID, speed: Math.min(1.2, (VOICE_SPEED * d) / l.slotS) }), LINE_TIMEOUT_MS));
+        if (d > l.slotS + OVERRUN_S) r = trim(await withTimeout(tts.generate(ttsText(l.say), { voice: VOICE_ID, speed: Math.min(1.2, (VOICE_SPEED * d) / l.slotS) }), LINE_TIMEOUT_MS));
       } catch { r = null; }
       clips.push(r && sane(r) ? r : null);
     }
