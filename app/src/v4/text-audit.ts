@@ -180,7 +180,7 @@ export function lintMoment(title: string | undefined, stop: number, chapters: { 
 }
 
 /** 2026-11-05: the voiceover input exactly as AppV4 builds it (single and comparison). */
-export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero, hook: o.hook });
+export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero, hook: o.hook, name: o.name });
 export const compareNarrIn = (a: Analysis, b: Analysis, cp: ComparePlan): NarrIn => {
   const an = cmpName(a.label), bn = cmpName(b.label), hook = cp.guess ? cp.guess.question : hookForCompare(an, bn, false).line1;
   return { plan: cp.plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((y) => (y.built.alcoholG ?? 0) > 1), guess: !!cp.guess,

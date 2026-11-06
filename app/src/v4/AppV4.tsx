@@ -664,7 +664,7 @@ export default function AppV4() {
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
-        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow }) : undefined };
+        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName) }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);

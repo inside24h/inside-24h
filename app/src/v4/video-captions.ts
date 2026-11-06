@@ -111,6 +111,8 @@ export const CAP_PAGE = 3;
 export function captionPages(words: CapWord[], nextT = Infinity): CapPage[] {
   const pages: CapWord[][] = [];
   const chars = (ws: CapWord[]) => ws.reduce((s, x) => s + x.w.length + 1, -1);
+  // v21b: the lines the page wraps into (a page of few characters can still wrap into 3 when its words are long)
+  const wraps = (ws: CapWord[]) => ws.reduce((a, x) => (a.len && a.len + 1 + x.w.length > CAP_MAX_CHARS ? { n: a.n + 1, len: x.w.length } : { n: a.n, len: a.len ? a.len + 1 + x.w.length : x.w.length }), { n: 1, len: 0 }).n;
   // phrases: split after punctuation
   const phrases: CapWord[][] = [[]];
   words.forEach((x, i) => { phrases[phrases.length - 1].push(x); if (/[.!?,:;]$/.test(x.w) && i < words.length - 1) phrases.push([]); });
@@ -118,12 +120,12 @@ export function captionPages(words: CapWord[], nextT = Infinity): CapPage[] {
     // (the shorter page first: "Where does | the alcohol go?", an article stays with its noun)
     const cut = (k: number) => Array.from({ length: k }, (_, j) => ph.slice(Math.floor((j * ph.length) / k), Math.floor(((j + 1) * ph.length) / k)));
     let k = Math.ceil(ph.length / CAP_PAGE);
-    while (k < ph.length && cut(k).some((g) => chars(g) > 2 * CAP_MAX_CHARS - 2)) k++;
+    while (k < ph.length && cut(k).some((g) => chars(g) > 2 * CAP_MAX_CHARS - 2 || wraps(g) > 2)) k++;
     pages.push(...cut(k));
   }
   // a lone last word joins the page before when it fits
   const last = pages[pages.length - 1], prev = pages[pages.length - 2];
-  if (last && prev && last.length === 1 && prev.length < CAP_MAX_WORDS && chars([...prev, ...last]) <= 2 * CAP_MAX_CHARS - 2) { prev.push(...last); pages.pop(); }
+  if (last && prev && last.length === 1 && prev.length < CAP_MAX_WORDS && chars([...prev, ...last]) <= 2 * CAP_MAX_CHARS - 2 && wraps([...prev, ...last]) <= 2) { prev.push(...last); pages.pop(); }
   return pages.map((ws, k) => {
     const lines: string[][] = [[]];
     for (const x of ws) { const l = lines[lines.length - 1]; if (l.length && [...l, x.w].join(' ').length > CAP_MAX_CHARS) lines.push([x.w]); else l.push(x.w); }

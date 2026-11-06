@@ -47,7 +47,7 @@ export function retention(nin: NarrIn) {
 
 const check = (r: ReturnType<typeof retention>, cut: Cut, where: string, bad: string[]) => {
   if (r.cov < 0.45) bad.push(`${where}: voice covers only ${(100 * r.cov).toFixed(0)} %`);
-  if (r.gap > 5.5) bad.push(`${where}: ${r.gap.toFixed(1)} s without voice at ${r.gapAt.toFixed(1)} s`);
+  if (r.gap > (where.includes(' vs ') ? 3 : 5.5)) bad.push(`${where}: ${r.gap.toFixed(1)} s without voice at ${r.gapAt.toFixed(1)} s`);
   if (r.still > 3.2) bad.push(`${where}: ${r.still.toFixed(1)} s without a visual event at ${r.stillAt.toFixed(1)} s`);
   if (r.mismatch.length) bad.push(`${where}: said while its card is not on screen: ${r.mismatch.join(' / ')}`);
   const L = LENGTH[cut];
