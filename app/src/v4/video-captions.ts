@@ -11,8 +11,8 @@
 import { speakable } from './video-narration';
 
 export interface CapWord { w: string; t0: number; t1: number }
-export interface CapPage { words: CapWord[]; t0: number; t1: number; lines: string[][]; /** the whole spoken line */ line?: string }
-export interface CapLine { text: string; t: number; dur: number }
+export interface CapPage { words: CapWord[]; t0: number; t1: number; lines: string[][]; /** the whole spoken line */ line?: string; /** v20: it reads this card (hidden meanwhile) */ card?: string; side?: 0 | 1 | 2 }
+export interface CapLine { text: string; t: number; dur: number; /** v20: the card the line reads (video-narration NarrLine.card) */ card?: string; side?: 0 | 1 | 2 }
 export interface Box { x0: number; y0: number; x1: number; y1: number; text?: string; deco?: boolean }
 /** A point to keep clear of, with its own clearance (default FOCUS_R: the organ of the moment). */
 export interface Pt { x: number; y: number; r?: number }
@@ -138,8 +138,24 @@ export function captionTrack(lines: CapLine[], pauses: number[][] = []): CapPage
   const out: CapPage[] = [];
   lines.forEach((l, i) => {
     const nx = lines[i + 1];
-    out.push(...captionPages(wordTimes(l.text, l.t, l.dur, pauses[i] ?? []), nx ? nx.t - 0.05 : Infinity).map((p) => ({ ...p, line: l.text })));
+    out.push(...captionPages(wordTimes(l.text, l.t, l.dur, pauses[i] ?? []), nx ? nx.t - 0.05 : Infinity).map((p) => ({ ...p, line: l.text, ...(l.card ? { card: l.card, side: l.side } : {}) })));
   });
+  return out;
+}
+
+/** v20 pattern interrupts: a spoken key word (a number, an organ, the peak…) gets a quick camera punch-in and a soft
+ *  accent (share.ts adds them as 'punch' cues: picture and sound from one timeline). At most one per caption page,
+ *  PUNCH_GAP_S apart, never in the hush before an impact nor right after it (the impact has its own hit). */
+export const KEY_WORD = /^(\d|peak|spike|sugar|insulin|caffeine|alcohol|fat\b|stomach|intestine|liver|kidneys|bladder|brain|heart|toilet|bedtime|sleep|gone|dips?\b|crash|highest|boom|guess|left|right)/i;
+export const PUNCH_GAP_S = 2.0;
+export function punchTimes(pages: CapPage[], impacts: number[], end: number): { t: number; v: 0 | 1; side?: 0 | 1 | 2 }[] {
+  const out: { t: number; v: 0 | 1; side?: 0 | 1 | 2 }[] = [];
+  let last = -Infinity;
+  for (const p of pages) {
+    const w = p.words.find((x) => KEY_WORD.test(x.w.replace(/^[“"(]+/, '')) && x.t0 - last >= PUNCH_GAP_S && x.t0 < end - 0.6 && !impacts.some((q) => x.t0 > q - 1.8 && x.t0 < q + 1.0));
+    if (!w) continue;
+    out.push({ t: w.t0, v: /^\d/.test(w.w) ? 1 : 0, ...(p.side !== undefined ? { side: p.side } : {}) }); last = w.t0;
+  }
   return out;
 }
 export const pageAt = (pages: CapPage[], t: number) => pages.find((p) => t >= p.t0 && t < p.t1) ?? null;

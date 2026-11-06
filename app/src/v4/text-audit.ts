@@ -180,8 +180,12 @@ export function lintMoment(title: string | undefined, stop: number, chapters: { 
 }
 
 /** 2026-11-05: the voiceover input exactly as AppV4 builds it (single and comparison). */
-export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero });
-export const compareNarrIn = (a: Analysis, b: Analysis, cp: ComparePlan): NarrIn => ({ plan: cp.plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((y) => (y.built.alcoholG ?? 0) > 1), guess: !!cp.guess });
+export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero, hook: o.hook });
+export const compareNarrIn = (a: Analysis, b: Analysis, cp: ComparePlan): NarrIn => {
+  const an = cmpName(a.label), bn = cmpName(b.label), hook = cp.guess ? cp.guess.question : hookForCompare(an, bn, false).line1;
+  return { plan: cp.plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((y) => (y.built.alcoholG ?? 0) > 1), guess: !!cp.guess,
+    hook: { line1: hook, line2: '' }, names: [an, bn], answer: cp.guess?.answer1 };
+};
 
 export interface AuditResult { issues: Issue[]; dump: string[] }
 const hm = (m: number) => `+${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`;
@@ -231,7 +235,7 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       // 2026-11-05: the voiceover script of this cut (video-narration.ts), as the app builds it
       const nin = singleNarrIn(x, o, solid), vo = narrationFor(nin);
       for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${id} ${cut} ${v} voice`, text: i.text });
-      for (const l of vo) res.issues.push(...lintText(l.text, `${id} ${cut} ${v} voice`, 'card'));
+      for (const l of vo) res.issues.push(...lintText(l.text, `${id} ${cut} ${v} voice`, 'note')); // (v20: a spoken line may read a card with its lead-in; its length is linted per slot, lintNarration)
       if (v === 'A' && cut === 'long') res.dump.push(`    voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);
       if (v === 'A' && cut === 'long') countScript(vo.map((l) => l.text), id);
     }

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
 import { narrationFor, placeClips, wordsOf } from './video-narration';
 import { captionPages, captionTrack, duplicateOnScreen, pausesOf, wordTimes, CAP_MAX_CHARS, CAP_MAX_WORDS, FOCUS_R, PAGE_MIN_S, type CapLine, type CapPage } from './video-captions';
-import { drawCaption, drawCmpFrame, drawFrame, lastFrameFocus, logText, SAFE, swallowing, SWALLOW_R, type CapState, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
+import { drawCaption, drawCmpFrame, drawFrame, hushCards, lastFrameFocus, logText, SAFE, swallowing, SWALLOW_R, type CapState, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
 import { arrangement, melodyOf, motifOf } from './video-audio';
 import { gaugesAt, cmpName, plainLatin } from './video-story';
 import { FPS, type Plan } from './video-plan';
@@ -56,14 +56,16 @@ function checkPage(pg: CapPage, frame: (t: number) => void, where: string, T: Ta
       if (o) T.bad.push(`${w} over "${o.text}"`);
     }
     for (const p of focus) if (p.x > a.x - (p.r ?? FOCUS_R) + 1 && p.x < a.x + a.w + (p.r ?? FOCUS_R) - 1 && p.y > a.y - (p.r ?? FOCUS_R) + 1 && p.y < a.y + a.h + (p.r ?? FOCUS_R) - 1) T.bad.push(`${where} t=${t.toFixed(2)}: caption on the focal organ (${Math.round(p.x)},${Math.round(p.y)})`);
-    if (duplicateOnScreen(pg.line ?? '', boxes)) T.bad.push(`${where}: caption repeats the screen "${pg.line}"`);
+    // (v20: a line that reads a card: that card is not on screen meanwhile; any other line: not a repeat of the screen)
+    if (pg.card) { if (pg.card.split('|').some((c) => boxes.some((b) => !!b.text && b.text.trim().length >= Math.min(12, c.length) && c.startsWith(b.text.trim()) && (pg.side === 2 || pg.side === undefined || (pg.side === 0) === ((b.x0 + b.x1) / 2 < W / 2))))) T.bad.push(`${where}: the card and its caption at once "${pg.card}"`); }
+    else if (duplicateOnScreen(pg.line ?? '', boxes)) T.bad.push(`${where}: caption repeats the screen "${pg.line}"`);
   }
 }
 const lastSwallow = (f: { r?: number }[]) => f.filter((p) => p.r === SWALLOW_R).length;
 const frameAt = (plan: Plan, t: number) => plan.frames[Math.max(0, Math.min(plan.frames.length - 1, Math.round(t * FPS)))];
 const linesOf = (nin: Parameters<typeof narrationFor>[0]): CapLine[] => {
   const lines = narrationFor(nin);
-  return placeClips(lines, lines.map((l) => mockDur(l.say)), nin.plan.seconds).map((c) => ({ text: c.line.text, t: c.t, dur: c.dur }));
+  return placeClips(lines, lines.map((l) => mockDur(l.say)), nin.plan.seconds).map((c) => ({ text: c.line.text, t: c.t, dur: c.dur, card: c.line.card, side: c.line.side }));
 };
 
 describe('v19 spoken-word captions (video-captions.ts)', () => {
@@ -98,7 +100,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
     for (const it2 of auditItems()) {
       const x = it2.x, o = auditSingle(x, 'long', 'A', AUDIT_PROFILE, it2.vname), plan = o.plan, st0 = x.built.story;
       const solid = /bite/i.test(st0.chapters[0]?.title ?? '');
-      const caps = captionTrack(linesOf(singleNarrIn(x, o, solid)));
+      const said = linesOf(singleNarrIn(x, o, solid)), caps = captionTrack(said);
       // the focal organ: seeded over the body's middle (where the stomach, liver and gut sit on the frame)
       const fy = 640 + ((k++ * 97) % 620), fx = 470 + ((k * 53) % 140);
       const frame = (t: number) => {
@@ -106,6 +108,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
         const ov: Overlay = { hook: `${o.hook.line1}\n${o.hook.line2}`, title: plainLatin(x.label.replace(/\s*\([^)]*\)/g, '')), sub: 'Man, 35 · 178 cm · 80 kg', clock: '22:00', step: ch.title, caption: fr.cap ?? '',
           progress: fr.u ?? 0, lights: lightsAt(x, m), handle: '@inside24h', hero: o.hero, gauges: gaugesAt(x.built, m, 'mmol/L', x.glucose !== undefined).map((g, j) => ({ ...g, at: { x: fx + (j % 2 ? 60 : -40), y: fy - 140 * j } })),
           summary: lightsAt(x, m).map((l) => ({ ...l, note: 'Mild stress at 23:28' })), alcohol: (x.built.alcoholG ?? 0) > 1, solid, pins: { tongue: { x: 540, y: 470 }, esophagus: { x: 545, y: 760 }, stomach: { x: fx, y: fy } }, focus: 'stomach' };
+        hushCards(said, t); // (v20: the card being read steps aside, as in the export)
         drawFrame(fakeCtx(0.56), W, H, SRC, ov, 'reel', fr, plan, null);
         // v19b: while the bite goes down, the whole mouth → food pipe → stomach path is kept clear (checkPage checks it)
         if (swallowing(fr) && lastSwallow(lastFrameFocus()) < 6) T.bad.push(`${it2.id} t=${t.toFixed(2)}: the swallow path is not kept clear`);
@@ -121,7 +124,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
     const T: Tally = { pages: 0, shown: 0, dup: 0, bad: [] };
     for (const pr of auditPairs(auditItems(), 60)) {
       const o = auditCompare(pr.a, pr.b, 'long'), cp = o.cp, plan = cp.plan;
-      const caps = captionTrack(linesOf(compareNarrIn(pr.a, pr.b, cp)));
+      const said = linesOf(compareNarrIn(pr.a, pr.b, cp)), caps = captionTrack(said);
       const side = (x: Analysis, m: number, stop: number, cap: string | undefined, gx: number): CmpOverlay['a'] => {
         const ch = x.built.story.chapters.reduce((acc, c) => (stop + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
         const g = gaugesAt(x.built, m, 'mmol/L', x.glucose !== undefined);
@@ -134,6 +137,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
         const ov = { hook: o.hook, guess: !!g, clock: '22:00', progress: fr.u ?? 0, handle: '@inside24h', stamp: 'LATER', verdict: cp.verdict,
           answer: g ? { a1: g.answer1, a2: g.answer2, recap: g.recap, kind: g.kind, winner: g.winner } : undefined,
           a: { ...side(pr.a, m, stop, fr.cap, 270), pins: { tongue: { x: 270, y: 470 }, esophagus: { x: 272, y: 760 }, stomach: { x: 290, y: 1000 } } }, b: { ...side(pr.b, m, stop, fr.capB, 810), pins: { tongue: { x: 810, y: 470 }, esophagus: { x: 812, y: 760 }, stomach: { x: 830, y: 1000 } } } } as CmpOverlay;
+        hushCards(said, t);
         drawCmpFrame(fakeCtx(0.56), W, H, SRC, ov, fr, plan, null);
         if (swallowing(fr) && lastSwallow(lastFrameFocus()) < 12) T.bad.push(`${pr.id} t=${t.toFixed(2)}: the swallow paths are not kept clear`);
       };

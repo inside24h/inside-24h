@@ -664,7 +664,7 @@ export default function AppV4() {
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
-        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero }) : undefined };
+        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);
@@ -784,7 +784,9 @@ export default function AppV4() {
           const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
         }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
           onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
-          voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), guess: !!gq }) : undefined });
+          voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), guess: !!gq,
+            // (v20: the hook as the video shows it, from this export's own guess; the overlay ref can still hold the last one)
+            hook: { line1: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, line2: '' }, names: [cmpName(a.label), cmpName(b.label)], answer: gq?.answer1 }) : undefined });
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${a.label} vs ${b.label}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
           captions: captionsFor({ name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, hook: { line1: cmpOverlayRef.current?.hook ?? '', line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), sugar: /sugar/i.test(cmpOverlayRef.current?.hook ?? ''), /* (round 16: "which has more sugar?" too) */ caffeine: [a, b].some((x) => x.built.caffeine.doseMg >= 20), compare: { a: cmpName(a.label), b: cmpName(b.label) } }),
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',

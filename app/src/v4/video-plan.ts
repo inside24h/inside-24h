@@ -131,8 +131,9 @@ export interface VFrame {
 /** One timeline for picture and sound (2026-10-24 creative spec §2.1): every effect and every sound effect is placed
  *  from these cues, so they always land on the same frame. */
 export type CueKind = 'start' | 'move' | 'stop' | 'page' | 'outro' | 'end'
-  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart' | 'surge' | 'day';
-export interface Cue { t: number; kind: CueKind; data?: { level?: 0 | 1 | 2; side?: 0 | 1; v?: number; label?: string } }
+  | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart' | 'surge' | 'day'
+  /** v20: a spoken key word (video-captions punchTimes): a camera punch-in and a soft accent; side 2 = both */ | 'punch';
+export interface Cue { t: number; kind: CueKind; data?: { level?: 0 | 1 | 2; side?: 0 | 1 | 2; v?: number; label?: string } }
 export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number; peakT?: number }
 /** What the effects need from the model (all optional; the plan works without). */
 export interface PlanFx {

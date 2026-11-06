@@ -14,6 +14,8 @@ export const KOKORO_JS = 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/koko
 export const KOKORO_MODEL = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 /** One voice for every video: American English, warm and bright (Kokoro's best-rated). */
 export const VOICE_ID = 'af_heart';
+/** v20: a touch slower than the engine's default (af_heart runs ~3 words/s): clearer, and the story fills the video. */
+export const VOICE_SPEED = 0.92;
 /** 8-bit weights: 92 MB, the same file for WebGPU and WebAssembly. */
 export const VOICE_DTYPE = 'q8';
 export const VOICE_DOWNLOAD_NOTE = 'Downloads a voice model once, ~90 MB';
@@ -81,10 +83,10 @@ export async function makeVoice(lines: NarrLine[], seconds: number, onProgress?:
       onProgress?.(i / lines.length, 'speak');
       let r: Raw | null = null;
       try {
-        r = trim(await withTimeout(tts.generate(l.say, { voice: VOICE_ID, speed: 1 }), LINE_TIMEOUT_MS));
+        r = trim(await withTimeout(tts.generate(l.say, { voice: VOICE_ID, speed: VOICE_SPEED }), LINE_TIMEOUT_MS));
         const d = r.audio.length / r.sampling_rate;
         // a little long for its slot: said a little faster (at most 1.2×), else left out by placeClips
-        if (d > l.slotS + OVERRUN_S) r = trim(await withTimeout(tts.generate(l.say, { voice: VOICE_ID, speed: Math.min(1.2, d / l.slotS) }), LINE_TIMEOUT_MS));
+        if (d > l.slotS + OVERRUN_S) r = trim(await withTimeout(tts.generate(l.say, { voice: VOICE_ID, speed: Math.min(1.2, (VOICE_SPEED * d) / l.slotS) }), LINE_TIMEOUT_MS));
       } catch { r = null; }
       clips.push(r && sane(r) ? r : null);
     }
@@ -105,7 +107,7 @@ export async function makeVoice(lines: NarrLine[], seconds: number, onProgress?:
       const b = ctx.createBuffer(1, c.audio.length, c.sampling_rate); b.getChannelData(0).set(c.audio);
       const s = ctx.createBufferSource(); s.buffer = b; s.connect(hp); s.start(p.t);
       spans.push([p.t, p.t + p.dur]);
-      capLines.push({ text: p.line.text, t: p.t, dur: p.dur }); pauses.push(pausesOf(c.audio, c.sampling_rate));
+      capLines.push({ text: p.line.text, t: p.t, dur: p.dur, ...(p.line.card ? { card: p.line.card, side: p.line.side } : {}) }); pauses.push(pausesOf(c.audio, c.sampling_rate));
     }
     const out = await ctx.startRendering();
     return { data: out.getChannelData(0).slice(), spans, device, said: placed.map((p) => p.line.text), lines: capLines, pauses };

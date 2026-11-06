@@ -35,7 +35,17 @@ export function bodyMotion(cues: readonly Cue[] | undefined, t: number, H: numbe
   if (beat === 'teaser') scale *= 1 + 0.02 * clamp01(t / 0.45);
   const m = since(cues, 'micro', t);
   if (m.cue?.data?.v === 0 && m.age < 0.9) scale *= 1 + 0.03 * Math.sin(Math.PI * clamp01(m.age / 0.9)); // one gentle breath
+  scale *= 1 + punchZoom(cues, t);
   return { scale, dx, dy };
+}
+/** v20: an editor's punch-in on a spoken key word: snaps 5 % closer (7 % on a number) in 0.08 s, holds, eases back. */
+export const PUNCH_HOLD_S = 1.1, PUNCH_OUT_S = 0.4;
+export function punchZoom(cues: readonly Cue[] | undefined, t: number): number {
+  const p = since(cues, 'punch', t);
+  if (!p.cue || p.age > PUNCH_HOLD_S + PUNCH_OUT_S) return 0;
+  const amt = p.cue.data?.v ? 0.07 : 0.05;
+  const k = p.age < 0.08 ? easeOutCubic(p.age / 0.08) : p.age < PUNCH_HOLD_S ? 1 : 1 - smooth((p.age - PUNCH_HOLD_S) / PUNCH_OUT_S);
+  return amt * k;
 }
 
 /** Riser vignette: the edges close in (to 0.25) for the 1.6 s before the impact, and open again after it. */

@@ -503,6 +503,12 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
       }
       case 'page': osc('sine', 987.8, null, t, 0.16, 0.035, sfx); break;
       case 'micro': osc('sine', 1567.98, null, t, 0.09, 0.022, sfx, c.data?.v === 1 ? -0.3 : 0.3); break; // a soft beat with each small picture event
+      case 'punch': { // v20: the camera's punch-in on a spoken key word: a soft low thump (+ a glint on a number), under the voice
+        const pan = c.data?.side === 0 ? -0.35 : c.data?.side === 1 ? 0.35 : 0;
+        osc('sine', 150, 58, t, 0.16, 0.08, sfx, pan);
+        if (c.data?.v === 1) osc('sine', 2093, null, t + 0.02, 0.12, 0.018, sfx, pan);
+        break;
+      }
       case 'next': if (c.data?.label === 'tease') { osc('triangle', 659.25, null, t, 0.3, 0.1, sfx); osc('triangle', 987.77, null, t + 0.12, 0.4, 0.1, sfx); } // A17 stinger
         else { osc('sine', 880, 1320, t, 0.12, 0.11, sfx); osc('sine', 1760, 2640, t, 0.1, 0.03, sfx); } break; // A9 blip (audible over the music on a phone)
       case 'guess': osc('sine', 880, 1320, t + 0.2, 0.09, 0.05, sfx, -0.4); osc('sine', 1047, 1568, t + 0.35, 0.09, 0.05, sfx, 0.4); break;

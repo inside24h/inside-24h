@@ -13,7 +13,8 @@ function check(nin: NarrIn, where: string, bad: string[]) {
   for (const i of lintNarration(lines, nin)) bad.push(`${where}: ${i.cls}: ${i.text}`);
   if (!lines.some((l) => l.id === 'hook')) bad.push(`${where}: no hook line`);
   if (!lines.some((l) => l.id === 'answer')) bad.push(`${where}: no end line`);
-  const placed = placeClips(lines, lines.map((l) => mockDur(l.say)), nin.plan.seconds);
+  // (as voice-tts makeVoice: a clip a little long for its slot is said again faster, at most 1.2×)
+  const placed = placeClips(lines, lines.map((l) => { const d = mockDur(l.say); return d > l.slotS + OVERRUN_S ? d / Math.min(1.2, d / l.slotS) : d; }), nin.plan.seconds);
   const cues = nin.plan.cues, impacts = cues.filter((c) => c.kind === 'peak' || c.kind === 'verdict').map((c) => c.t);
   const outro = cues.find((c) => c.kind === 'outro')!.t;
   placed.forEach((c, i) => {
@@ -22,12 +23,14 @@ function check(nin: NarrIn, where: string, bad: string[]) {
     if (e > nin.plan.seconds - TAIL_S + 1e-6) bad.push(`${where}: voice past the end`);
     if (placed[i + 1] && e > placed[i + 1].t) bad.push(`${where}: clips overlap`);
     if (impacts.some((p) => c.t < p + IMPACT_POST_S && e > p - IMPACT_PRE_S + OVERRUN_S + 1e-6)) bad.push(`${where}: voice over an impact: ${c.line.text}`);
-    // one source: a number said is on the end card (the hero), and only while the end card is up
+    // one source: a number said is on the screen text the line reads (v20: the hook card, a story card, the end
+    // card's hero), and the hero's only while the end card is up
     const nums = numbersOf(c.line.say);
     if (nums.length) {
-      const hero = nin.hero ? numbersOf(`${nin.hero.big} ${nin.hero.small}`) : [];
-      if (nums.some((n) => !hero.includes(n))) bad.push(`${where}: number not on screen: ${c.line.text}`);
-      if (c.t < outro) bad.push(`${where}: number said before the end card`);
+      const src = numbersOf(c.line.source);
+      if (nums.some((n) => !src.includes(n))) bad.push(`${where}: number not on screen: ${c.line.text}`);
+      if (c.line.id === 'answer' && c.t < outro) bad.push(`${where}: number said before the end card`);
+      if (c.line.id === 'answer' && nin.hero && nums.some((n) => !numbersOf(`${nin.hero!.big} ${nin.hero!.small}`).includes(n))) bad.push(`${where}: end line number not the hero's: ${c.line.text}`);
     }
   });
   return { lines, placed };

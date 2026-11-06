@@ -6,10 +6,11 @@
 // every word stays inside the platform safe zone (SAFE below), our own soundtrack (video-audio.ts), brand fonts,
 // a hook frame as the first frame (= thumbnail) and an end card that loops back to it.
 import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
-import { captionTrack, pageAt, placeCaption, duplicateOnScreen, CAP_FS, CAP_LH, CAP_PAD, PIN_R, type CapLine, type CapPage, type Pt } from './video-captions';
+import { captionTrack, pageAt, placeCaption, duplicateOnScreen, punchTimes, CAP_FS, CAP_LH, CAP_PAD, PIN_R, type CapLine, type CapPage, type Pt } from './video-captions';
 import { aacConfig, encodeSoundtrack, lastVoiceMix, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
 import type { Gauge } from './video-body';
 import { numberConflict } from './video-beats';
+import { CARD_DELAY_S } from './video-narration';
 import { bodyMotion, drawBloodFlow, drawBreath, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
 import { CMP_OUTRO_EXTRA_S, readChars, REWIND_S, TEASER_S } from './video-plan';
 
@@ -108,7 +109,25 @@ type VoiceIn = { data: Float32Array; spans: [number, number][]; lines?: CapLine[
 type SoundIn = { seconds: number; cues: Plan['cues']; beatFrom: number; music: boolean; fizzy?: boolean; solid?: boolean; voice?: () => Promise<VoiceIn | null> };
 const soundOf = (plan: Plan, opts: RecOpts): SoundIn | null => (opts.sound ? { seconds: plan.seconds, cues: plan.cues, beatFrom: plan.introS, music: opts.soundMode !== 'sfx', ...opts.soundFx, voice: opts.voice } : null);
 /** The voiceover, or null on any failure (the video is then made exactly as without it). */
-const voiceOf = async (so: SoundIn): Promise<VoiceIn | null> => { if (!so.voice) return null; try { return await so.voice(); } catch { return null; } };
+const voiceOf = async (so: SoundIn): Promise<VoiceIn | null> => {
+  let v: VoiceIn | null = null;
+  if (so.voice) { try { v = await so.voice(); } catch { v = null; } }
+  addPunches(so.cues, v, so.seconds);
+  return v;
+};
+/** v20: the spoken key words as 'punch' cues on the video's own timeline (picture: bodyMotion; sound: video-audio),
+ *  made again for every export (an earlier export's are taken out first). */
+export function addPunches(cues: Plan['cues'], v: { lines?: CapLine[]; pauses?: number[][] } | null, seconds: number) {
+  for (let i = cues.length - 1; i >= 0; i--) if (cues[i].kind === 'punch') cues.splice(i, 1);
+  if (!v?.lines?.length) return;
+  const impacts = cues.filter((c) => c.kind === 'peak' || c.kind === 'verdict').map((c) => c.t);
+  for (const p of punchTimes(captionTrack(v.lines, v.pauses), impacts, seconds)) cues.push({ t: p.t, kind: 'punch', data: { v: p.v, ...(p.side !== undefined ? { side: p.side } : {}) } });
+}
+/** v20: the cards being read out right now (each steps aside while its line is said: the caption takes its place). */
+let hushed: CapLine[] = [];
+/** Sets the cards hushed at time t (the captioner, every frame; the caption tests the same way). */
+export const hushCards = (lines: readonly CapLine[], t: number) => { hushed = lines.filter((l) => l.card && t >= l.t - CARD_DELAY_S - 0.2 && t < l.t + l.dur + 6); };
+const isHushed = (text: string | undefined, side: 0 | 1) => !!text && hushed.some((l) => (l.side === side || l.side === 2) && l.card!.split('|').includes(text.trim()));
 export async function record(source: HTMLCanvasElement, format: Format, overlay: () => Overlay, seek: (minute: number, fr?: VFrame) => void,
   plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
   const fmt = pickMime();
@@ -177,11 +196,16 @@ export const lastFrameFocus = () => frameFocus;
  *  word on the frame and of the focal organ, left out where the screen already says the same thing. */
 function captioner(v: VoiceIn | null, W: number, H: number) {
   const pages = v?.lines?.length ? captionTrack(v.lines, v.pauses) : [];
+  const cardLines = (v?.lines ?? []).filter((l) => l.card);
   const st: CapState = {};
   return (ctx: CanvasRenderingContext2D, i: number, draw: () => void) => {
-    const pg = pages.length ? pageAt(pages, i / FPS) : null;
-    if (!pg) { draw(); return; }
+    const t = i / FPS;
+    // (from just before the line, as its card comes up, until the card is gone: never the card and its caption at once)
+    hushCards(cardLines, t);
+    const pg = pages.length ? pageAt(pages, t) : null;
+    if (!pg) { draw(); hushed = []; return; }
     const boxes = logText(draw);
+    hushed = [];
     drawCaption(ctx, W, H, pg, i / FPS, boxes, frameFocus, st);
   };
 }
@@ -191,7 +215,7 @@ const CAP_HI = '#ffe14d';
 /** One caption page at time t (TikTok style: bold white words with a black edge, the word being said in yellow).
  *  Returns where it went, or null when it was left out (no clear place, or the screen already says it). */
 export function drawCaption(ctx: CanvasRenderingContext2D, W: number, H: number, pg: CapPage, t: number, boxes: TextBox[], focus: Pt[], st: CapState = {}): { x: number; y: number; w: number; h: number } | null {
-  if (pg.line && duplicateOnScreen(pg.line, boxes)) return null;
+  if (pg.line && !pg.card && duplicateOnScreen(pg.line, boxes)) return null;
   const S = SAFE.reel;
   ctx.save();
   // the widest line fits the narrower column (clear of the platforms' buttons, whatever height it lands at)
@@ -1306,7 +1330,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     // (round 9: the card leaves BEFORE the NEXT chip comes in, never a cross-fade of two texts in the same place)
     const plate = fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
     ctx.save(); ctx.globalAlpha = E.main * plate;
-    const title = (fr.title ?? o.step ?? '').trim(), cap = (fr.phase === 'intro' ? '' : fr.cap ?? '').trim();
+    const title = (fr.title ?? o.step ?? '').trim(), cap = (fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? '').trim();
     const titleOnly = !!cap && cap.replace(/\.$/, '').toLowerCase() === title.toLowerCase();
     const capFit = balanced(ctx, fitWrap(ctx, cap, RL - L, 2, Lo.capFs, 42, (px) => `${titleOnly ? 700 : 600} ${px}px ${SANS}`), cap, RL - L);
     const capBot = S.bottom - 4, capY0 = capBot - (capFit.lines.length - 1) * Lo.capLH - capFit.px * 0.22;
@@ -1586,7 +1610,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     // each side's moment: its title, its short card
     // (round 9: the cards leave before the NEXT chip comes in, never two texts cross-fading in one place)
     ctx.save(); ctx.globalAlpha *= fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
-    const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' ? '' : fr.capB ?? '']];
+    const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' || isHushed(fr.capB, 1) ? '' : fr.capB ?? '']];
     // (round 13, critic P1-3: wine vs beer showed the same sentence twice, side by side): one card across both columns
     const same = !!caps[0][1].trim() && caps[0][1].trim() === caps[1][1].trim();
     sides.forEach((s, k) => {
