@@ -29,6 +29,7 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { VoicePick } from './VoicePick';
 import { narrationFor, type NarrIn } from './video-narration';
+import { compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
 import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
 import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
@@ -664,7 +665,8 @@ export default function AppV4() {
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
-        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName) }) : undefined };
+        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName),
+        facts: factLines({ kcal: built.energy.total, macros: productId === 'food' ? macros(foodParts) : null, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl, t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? '') }, vSeed) }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);
@@ -786,7 +788,9 @@ export default function AppV4() {
           onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
           voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), guess: !!gq,
             // (v20: the hook as the video shows it, from this export's own guess; the overlay ref can still hold the last one)
-            hook: { line1: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, line2: '' }, names: [cmpName(a.label), cmpName(b.label)], answer: gq?.answer1 }) : undefined });
+            hook: { line1: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, line2: '' }, names: [cmpName(a.label), cmpName(b.label)], answer: gq?.answer1,
+            facts: compareFacts(factInOf(a), factInOf(b), [cmpName(a.label), cmpName(b.label)], seedOf(`${a.label} vs ${b.label}`)),
+            lateFacts: compareDiffs(factInOf(a), factInOf(b), [cmpName(a.label), cmpName(b.label)], seedOf(`${a.label} vs ${b.label}`)), verdict: cp.verdict }) : undefined });
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${cmpName(a.label)} vs ${cmpName(b.label)}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
           captions: captionsFor({ name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, hook: { line1: cmpOverlayRef.current?.hook ?? '', line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), sugar: /sugar/i.test(cmpOverlayRef.current?.hook ?? ''), /* (round 16: "which has more sugar?" too) */ caffeine: [a, b].some((x) => x.built.caffeine.doseMg >= 20), compare: { a: cmpName(a.label), b: cmpName(b.label) } }),
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',

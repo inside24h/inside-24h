@@ -47,6 +47,9 @@ export interface NarrIn {
   /** v20: the hook card on screen (single: two lines; comparison: line1 is the question or the hook) */ hook?: { line1: string; line2: string };
   /** v20, comparison: the two names (left, right) and the guess's answer banner (its first line) */ names?: [string, string]; answer?: string;
   /** v21b, single: the food's short name ("Ham sub"): the hook says it first */ name?: string;
+  /** v21c: this food's facts as short spoken lines (video-facts.ts; a comparison's name their side): the only fillers */ facts?: string[];
+  /** v21c, comparison: its differences as spoken lines, said only after the answer */ lateFacts?: string[];
+  /** v21c, comparison: the end card's verdict ("🏆 Cod wins: no blood sugar peak, 486 fewer kcal.") */ verdict?: string;
 }
 
 /** Words as spoken: a number counts as the words it is said with ("22" two, "0.04" four), hyphens split words. */
@@ -91,6 +94,7 @@ export function speakable(s: string): string {
     .replace(/[~≈]\s*(?=\d)/g, 'about ')
     .replace(/(\d)\s*mg\b/g, '$1 milligrams')
     .replace(/(\d)\s*kcal\b/g, '$1 calories')
+    .replace(/\bkcal\b/g, 'calories')
     .replace(/(\d)\s*ml\b/g, '$1 milliliters')
     .replace(/(\d)\s*g\b/g, '$1 grams')
     .replace(/\bBAC\b/g, 'blood alcohol')
@@ -124,7 +128,7 @@ export function heroLines(hero: { big: string; small: string } | undefined, alco
   const { big, small } = hero, all = `${big} ${small}`;
   let m: RegExpExecArray | null;
   if (/^Blood sugar up/.test(big) && (m = /\+?(\d+)–(\d+) %/.exec(small))) return [`The peak? Blood sugar up ${m[1]}–${m[2]} %.`, `Blood sugar: up ${m[1]}–${m[2]} %.`, `Sugar: up ${m[1]}–${m[2]} %.`];
-  if (/^Blood fat up · \d+ h/.test(big)) return [`The slowest part? The fat.`, `The fat took longest.`];
+  if ((m = /^Blood fat up · (\d+) h/.exec(big))) return [`The slowest part? The fat.`, `The fat took longest.`, `The slowest part took ${m[1]} hours.`];
   if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body/.test(small)) return [`A day later? ${m[1]} mg of caffeine, still in you.`, `${m[1]} mg of caffeine, still in you.`, `${m[1]} mg, still in you.`];
   // alcohol: the BAC range is too long to say well ("zero point zero one one to …"): the safety line instead
   if (/BAC/.test(small) || alcohol) return ['Remember: never drink and drive.', 'Never drink and drive.'];
@@ -158,7 +162,7 @@ const DAY = ['One full day later.', 'Twenty-four hours later.', 'A day later.', 
 const LOOP = { sip: ['From the first sip.', 'Back to the start.', 'Watch it again.', 'One more time?'], bite: ['From the first bite.', 'Back to the start.', 'Watch it again.', 'One more time?'] } as const;
 const ANSWER_FALLBACK = { single: ["That's one full day inside you.", 'Now you know where it goes.', 'One day, inside you.'], compare: ['Now you know the difference.', 'Now you know.'] } as const;
 /** v19: the most words a line may have in each slot (short and spoken: a viewer hears it once). */
-export const SLOT_WORDS: Record<NarrId, number> = { hook: 18, card: 16, beat: 6, tease: 12, climax: 14, day: 6, answer: 10, loop: 5 };
+export const SLOT_WORDS: Record<NarrId, number> = { hook: 18, card: 16, beat: 12, tease: 12, climax: 14, day: 6, answer: 14, loop: 5 };
 /** v20: a card is read from this long after it comes up; a reading may start this much later (after the line before). */
 export const CARD_LEAD_S = 0.15, CARD_DELAY_S = 2.5;
 /** v20: exclamations in front of the climax card (calm ones for alcohol: never celebrated). */
@@ -167,15 +171,15 @@ const TEASE_LEAD = ['Stay with me.', 'Wait for it.', "Don't scroll yet.", 'Keep 
 const GUESS_TAIL = ['Guess now.', 'Lock it in.', 'Make your guess.', 'Pick one now.'] as const;
 const REVEAL_LEAD = ['Called it?', 'Were you right?', 'Did you get it?'] as const;
 /** v20: a short beat in a long moment (6.5 s or more), after its card: keeps the eyes on the body, says no number. */
-const BEAT = ['Watch it happen.', 'Look closely.', 'Keep your eyes on it.', 'See it move?', 'Right inside you.', 'All of this, inside you.', 'Watch this part.', 'Look at it go.',
+export const BEAT = ['Watch it happen.', 'Look closely.', 'Keep your eyes on it.', 'See it move?', 'Right inside you.', 'All of this, inside you.', 'Watch this part.', 'Look at it go.',
   'Stay with it.', 'Step by step.', 'Here it goes.', 'Pretty wild.', 'Now notice this.'] as const;
 const ORGAN_WORDS = ['hard at work', 'Watch your', 'right now'];
 /** v21b: a comparison's own short beats (both bodies at once) */
-const CMP_BEAT = ['Keep an eye on both.', 'Two bodies, one clock.', 'Left and right, side by side.', 'Both at work.'] as const;
-const isPoolBeat = (x: string) => (BEAT as readonly string[]).includes(x) || ORGAN_WORDS.some((b) => x.includes(b));
+export const CMP_BEAT = ['Keep an eye on both.', 'Two bodies, one clock.', 'Left and right, side by side.', 'Both at work.'] as const;
+const isPoolBeat = (x: string) => (BEAT as readonly string[]).includes(x) || /^(Your [\w ]+, hard at work|Watch your [\w ]+ work|That's your [\w ]+, right now)\.$/.test(x); void ORGAN_WORDS;
 export const BEAT_MIN_SPAN_S = 6.5, BEAT_EVERY_S = 4;
-const ORGANS = /\b(stomach|small intestine|large intestine|liver|kidneys|bladder|brain|heart|pancreas|gut)\b/i;
-const ORGAN_BEAT = [(o: string) => `Your ${o}, hard at work.`, (o: string) => `Watch your ${o} work.`, (o: string) => `That's your ${o}, right now.`];
+export const ORGANS = /\b(stomach|small intestine|large intestine|liver|kidneys|bladder|brain|heart|pancreas|gut)\b/i;
+export const ORGAN_BEAT = [(o: string) => `Your ${o}, hard at work.`, (o: string) => `Watch your ${o} work.`, (o: string) => `That's your ${o}, right now.`];
 /** A card whose subject leans on its title ("Half has moved on…" under IN YOUR STOMACH) is said with the title first. */
 const VAGUE = /^(Half|Most|Almost|Nearly|Some|All|Much|Little|None|Less|More)\b/;
 const lc1 = (s: string) => (/^[A-Z][a-z’']*\b/.test(s) && !/^I\b|^I[’']/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
@@ -314,7 +318,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   // (the name without its amount: "1 slice of pizza with salami" → "Pizza with salami"; the amount is on the hook card)
   const bare = (x: string) => cap1(x.trim().replace(/^[\d½.,]+\s+(?:(?:ml|g|l|cl|oz|slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?)\s+of\s+)?/i, '').replace(/\s+\d+(?:[.,]\d+)?\s*%\.?$/, ''));
   const named = (cmp ? (n.names ?? ['', '']) : [n.name ?? '']).map(bare).filter((x) => x && !/\d/.test(x));
-  const lead = cmp ? (named.length === 2 ? `${named[0]} or ${lower1(named[1])}` : '') : named[0] ?? '';
+  const lead = cmp ? (named.length === 2 ? `${named[0]} or ${lower1(named[1])}` : '') : (named[0] ?? '').split(/ with | in /)[0];
   const nameFirst = (x: string) => !lead || namesFirst(x, named);
   const q = [h1, h2].find((x) => /\?$/.test(x)) ?? '';
   const st = [h1, h2].find((x) => ends(x) && !/\?$/.test(x)) ?? '';
@@ -328,6 +332,9 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   if (st && nameFirst(st) && !hookOpts.includes(st)) hookOpts.push(st);
   // (chosen here: the cards after it skip what it said; it is the first line, so its window is known)
   const hookPool = [pick(hookSet, s, 1), ...hookSet].map((x) => (lead ? `${lead}: ${lower1(x, named)}` : x));
+  // v21c: the hook card's question is always said (options with it first)
+  const hasQ = (x: string) => !!qq && x.toLowerCase().includes(qq.toLowerCase().replace(/^which|^how|^what|^when|^where|^does|^is/, '').slice(0, 20));
+  hookOpts.sort((a, b) => Number(hasQ(b)) - Number(hasQ(a)));
   const hookAll = [...hookOpts, ...hookPool, ...(lead ? [`${cap1(lead)}.`] : [])];
   const hookText = hookAll.find((x) => speakS(x) <= clearSlot(hookT, hookT + 6.5) && wordsOf(x) <= SLOT_WORDS.hook) ?? '';
   cands.push({ id: 'hook', t: hookT, until: hookT + 6.5, delay: 0, options: hookText ? [hookText] : [], source: `${h1} ${h2}`.trim() });
@@ -338,12 +345,21 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   let prevA = '', prevB = '';
   // short beats, each video's own order, none twice in a row
   let nBeat = 0;
-  const beats = (about = '') => {
-    const k = BEAT.indexOf(pick(BEAT, s, 10)) + nBeat++, gen = [...BEAT.slice(k % BEAT.length), ...BEAT.slice(0, k % BEAT.length)];
-    // (the organ of this moment first: "Your kidneys, hard at work.")
-    const org = ORGANS.exec(about)?.[1]?.toLowerCase();
-    return org ? [...ORGAN_BEAT.map((f) => f(org)).slice(nBeat % ORGAN_BEAT.length), ...ORGAN_BEAT.map((f) => f(org)), ...gen] : gen;
-  };
+  // v21c (review: "gap-filler lines must be data-specific, never generic"): the fillers are this food's facts (its
+  // numbers, video-facts.ts), each said once, none whose numbers the screen already shows; no generic beat
+  const screenNums = new Set([h1, h2, ...spans.flatMap((x) => [x.a, x.b]), n.hero ? `${n.hero.big} ${n.hero.small}` : ''].flatMap((x) => numbersOf(x)));
+  const facts = (n.facts ?? []).filter((f) => numbersOf(f).some((x) => !screenNums.has(x)));
+  const late = (n.lateFacts ?? []).filter((f) => numbersOf(f).some((x) => !screenNums.has(x))), reveal0 = peak ?? Infinity;
+  // (a difference that cannot give the guess away may come before the answer: "Butter has 12 g more fat" when the
+  // question is which raises blood sugar more)
+  const subject = `${h1} ${h2}`.toLowerCase();
+  const spoils = (x: string) => !n.guess ? false : /stomach|first|leaves/.test(subject) ? /stomach|half (is )?(through|out|gone)|minutes/i.test(x) : /sugar|sweet|rise/.test(subject) ? /sugar|carb|teaspoon/i.test(x)
+    : /calorie|kcal|energy/.test(subject) ? /kcal/i.test(x) : /caffeine/.test(subject) ? /caffeine/i.test(x) : /alcohol/.test(subject) ? /alcohol/i.test(x)
+    : /fat/.test(subject) ? /fat/i.test(x) : /protein/.test(subject) ? /protein/i.test(x) : late.includes(x);
+  // (v21c: no fact that gives the guess away before the answer: "Blueberries: half is out in 87 minutes" before "which leaves first?")
+  const revealOf = (x: string) => (spoils(x) ? reveal0 : -Infinity);
+  facts.push(...late);
+  const beats = (_about = '') => { void _about; const k = facts.length ? nBeat++ % facts.length : 0; return [...facts.slice(k), ...facts.slice(0, k)]; };
   spans.forEach((sp, i) => {
     const nx = spans[i + 1], until = Math.min(sp.t1 + 0.3, nx ? nx.t0 - GAP_S : Infinity);
     // (a card that comes up in the hush before an impact, or on it, is read after the impact's own line)
@@ -374,7 +390,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const a = sp.a, b = sp.b, newA = !!a && a !== prevA, newB = !!b && b !== prevB;
     prevA = a; prevB = b;
     if (a && a === b) {
-      if (!saidAlready(a, spoken) && ends(a)) cands.push({ id: sp.tease ? 'tease' : 'card', t, until, delay: late, options: sp.tease ? [`${pick(TEASE_LEAD, s, 3)} ${a}`, a, pick(TEASE, s, 3)] : [a, ...beats()], source: a, card: a, side: 2 });
+      if (!saidAlready(a, spoken) && ends(a)) cands.push({ id: sp.tease ? 'tease' : 'card', t, until, delay: late, options: sp.tease ? [`${pick(TEASE_LEAD, s, 3)} ${a}`, a, pick(TEASE, s, 3)] : [...(a.includes(':') ? [] : [`Both: ${lower1(a)}`]), a, ...beats()], source: a, card: a, side: 2 });
       return;
     }
     const isName = (x: string, nm: string) => !!nm && x.replace(/\.$/, '').toLowerCase() === nm.toLowerCase();
@@ -382,7 +398,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const side = (x: string, nm: string, title: string, k: 0 | 1, tt: number, delay: number) => {
       if (!ends(x)) return;
       const said = cardSaid(x, title), who = x.toLowerCase().includes(nm.trim().toLowerCase()) ? '' : cap1(nm.trim());
-      cands.push({ id: 'card', t: tt, until, delay, options: [...(who ? [`${who}: ${lower1(x, names)}`] : []), ...said, ...beats()], source: `${title} ${x} ${who}`, ...(isName(x, nm) || saidAlready(x, spoken) ? {} : { card: x, side: k }) });
+      cands.push({ id: 'card', t: tt, until, delay, options: [...(who ? [`${who}${x.includes(':') ? ',' : ':'} ${lower1(x, names)}`, ...said.map((y) => `${who}${y.includes(':') ? ',' : ':'} ${lower1(y, names)}`)] : said), ...beats()], source: `${title} ${x} ${who}`, ...(isName(x, nm) || saidAlready(x, spoken) ? {} : { card: x, side: k }) });
     };
     if (newA) side(a, names[0], sp.title, 0, t, late);
     if (newB) side(b, names[1], sp.titleB, 1, t + (newA ? 0.01 : 0), newA ? 99 : late);
@@ -398,12 +414,17 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   // 5. the end card: its one number (single), else a number-free close; then the loop line, ending on the last frame
   const heroL = !cmp ? heroLines(n.hero, n.alcohol) : [];
   const ansT = outro + 0.25;
-  cands.push({ id: 'answer', t: ansT, until: end, delay: 0.6, options: [...heroL, ...ANSWER_FALLBACK[n.kind]], source: heroL.length && n.hero ? `${n.hero.big} ${n.hero.small}` : '' });
+  // v21c: a comparison closes on its verdict ("Cod wins: no blood sugar peak, 486 fewer kcal."), else its first clause
+  const vd = (n.verdict ?? '').replace(/^[^A-Za-z0-9]+/, '').trim(), vd1 = /^([^:;]+?)[:;]/.exec(vd)?.[1];
+  const verdictL = cmp && /[.!]$/.test(vd) ? [vd, ...(vd1 && /\bwins?\b/.test(vd1) ? [`${vd1}.`] : [])] : [];
+  cands.push({ id: 'answer', t: ansT, until: end, delay: 0.6, options: [...heroL, ...verdictL, ...ANSWER_FALLBACK[n.kind]], source: heroL.length && n.hero ? `${n.hero.big} ${n.hero.small}` : verdictL.length ? vd : '' });
   const lp = LOOP[n.solid ? 'bite' : 'sip'];
   cands.push({ id: 'loop', t: ansT + 0.01, until: end, delay: 99, options: [pick(lp, s, 5), ...lp], source: '' });
   // place them: time order, none over the next, each in its own window
   cands.sort((p, q) => p.t - q.t);
   const out: NarrLine[] = [];
+  const isFact = (x: string) => facts.some((f) => f === x || variants(f).includes(x));
+  const filler = (x: string) => isPoolBeat(x) || isFact(x);
   const nameWords = new Set((cmp ? names : [n.name ?? '']).flatMap((x) => stemList(x)));
   let free = 0, lastBeat = -Infinity;
   for (const c of cands) {
@@ -415,18 +436,22 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const ok = (x: string) => speakS(x) <= slot && wordsOf(x) <= SLOT_WORDS[c.id] && (cmp || !DEDUP.has(c.id) || !out.some((o) => o.id !== 'hook' && repeats(x, o.text)))
       && !(/\bdriv/i.test(x) && out.some((o) => /\bdriv/i.test(o.text))) // (the driving warning: said once)
       && !(c.id === 'answer' && out.length > 0 && [...stems(x)].filter((w) => stems(out[out.length - 1].text).has(w)).length >= 2) // (v21b: not "One full day later. That's one full day…")
-      && !(isPoolBeat(x) && (out.some((o) => o.text === x) || (out.length >= 2 && out.slice(-2).every((o) => isPoolBeat(o.text))))); // (v21b: no beat twice, never 3 in a row)
+      && !(isFact(x) && t < revealOf(x)) // (a fact that would give the answer away: after it)
+      && !(c.id !== 'hook' && filler(x) && numbersOf(x).every((v) => out.some((o) => numbersOf(o.text).includes(v)))) // (no number twice)
+      && !(filler(x) && (out.some((o) => o.text === x) || (out.length >= 2 && out.slice(-2).every((o) => filler(o.text))))); // (v21b: no filler twice, never 3 in a row)
     // v21b: word variety: no content word a third time within VARIETY_S (a line is said another way, else the next option)
     // (every option as written first; the other wordings after them, so a pronoun is used only when it must be)
-    const opts = c.id === 'answer' ? [...c.options] : [...c.options, ...c.options.flatMap((x) => variants(x).slice(1))]; // (the closing line is said as written)
+    const own = c.options.filter((x) => !filler(x));
+    // (v21c: the card said another way comes before any filler)
+    const opts = c.id === 'answer' ? [...c.options] : [...own, ...own.flatMap((x) => variants(x).slice(1)), ...c.options.filter(filler)]; // (the closing line is said as written)
     const text = (FIXED.has(c.id) ? undefined : opts.find((x) => ok(x) && fresh(out, x, t, nameWords))) ?? (c.id === 'climax' || c.id === 'answer' || c.id === 'day' || c.id === 'loop' || FIXED.has(c.id) ? c.options.find(ok) : undefined);
     if (!text) continue;
     // (a line from a pool has no on-screen source: it says no number)
-    const fromPool = (c.id === 'answer' && !heroL.some((h) => variants(h).includes(text))) || (c.id === 'hook' && !hookOpts.includes(text)) || (c.id === 'climax' && !c.card && cmp && !text.endsWith((n.answer ?? '').trim() || '\u0000'));
+    const fromPool = (c.id === 'answer' && !heroL.some((h) => variants(h).includes(text)) && !verdictL.includes(text)) || (c.id === 'hook' && !hookOpts.includes(text)) || (c.id === 'climax' && !c.card && cmp && !text.endsWith((n.answer ?? '').trim() || '\u0000'));
     const { until: _u, delay: _d, options: _o, card, side, ...rest } = c; void _u; void _d; void _o;
     // (a pool line instead of the card: the card stays on screen, and the line has no on-screen source)
     const reads = !!card && card.split('|').every((x) => variants(x).some((v) => text.toLowerCase().includes(v.slice(1).toLowerCase())));
-    out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text: shownText(text), say: speakable(text), source: fromPool || (card && !reads) ? '' : c.source });
+    out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text: shownText(text), say: speakable(text), source: isFact(text) ? text : fromPool || (card && !reads) ? '' : c.source });
     free = t + speakS(text) + GAP_S;
     if (c.id === 'beat') lastBeat = t;
   }
@@ -435,13 +460,15 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   for (let i = 0, guard = 0; i < out.length && guard < 40; i++) {
     const e = out[i].t + speakS(out[i].text), nx = out[i + 1]?.t ?? outro;
     // (a single: only a longer silence, and never a third pool beat in a row)
-    const pool = (l?: NarrLine) => !!l && isPoolBeat(l.text);
-    if (nx > outro + 1e-6 || nx - e <= (cmp ? GAP_FILL_S : 3) || hushed(e, nx) || ((pool(out[i]) || pool(out[i + 1])) && (pool(out[i - 1]) || pool(out[i + 1]) && pool(out[i])) && nx - e <= (cmp ? 2.6 : 5))) continue;
-    const t = e + Math.min(1.1, (nx - e) / 3), slot = Math.min(clearSlot(t, nx - GAP_S), nx - GAP_S - t);
+    const pool = (l?: NarrLine) => !!l && filler(l.text);
+    if (nx > outro + 1e-6 || nx - e <= (cmp ? 1.6 : 2.2) || hushed(e, nx) || ((pool(out[i]) || pool(out[i + 1])) && (pool(out[i - 1]) || pool(out[i + 1]) && pool(out[i])) && nx - e <= (cmp ? 1.6 : 4))) continue;
+    const t = e + Math.min(0.3, (nx - e) / 4), slot = Math.min(clearSlot(t, nx - GAP_S), nx - GAP_S - t);
     const prevBeat = out.map((o) => o.text);
-    const text = [...(cmp ? CMP_BEAT : []), ...beats()].find((x) => speakS(x) <= slot && !prevBeat.includes(x) && fresh(out, x, t, nameWords));
+    // (the one that fills the pause best)
+    const text = beats().sort((p, q) => speakS(q) - speakS(p)).find((x) => speakS(x) <= slot && !prevBeat.includes(x) && fresh(out, x, t, nameWords) && !(t < revealOf(x))
+      && !numbersOf(x).every((v) => out.some((o) => numbersOf(o.text).includes(v))));
     if (!text) continue;
-    out.splice(i + 1, 0, { id: 'beat', t, slotS: slot, text, say: speakable(text), source: '' }); guard++;
+    out.splice(i + 1, 0, { id: 'beat', t, slotS: slot, text: shownText(text), say: speakable(text), source: text }); guard++;
   }
   // the loop line ends on the last frame (it hands over to frame 0)
   const loop = out[out.length - 1];
