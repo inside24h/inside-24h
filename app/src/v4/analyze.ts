@@ -4,7 +4,7 @@ import { cmpName, isPluralName, lowerName, plainLatin } from './video-names';
 import { buildVitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
 import { simulateHydration } from '../science/hydration';
-import { MG_DL_PER_MMOL_L, type Profile } from '../science/profile';
+import { MG_DL_PER_MMOL_L, totalBodyWaterL, type Profile } from '../science/profile';
 import { bodyStatus, type System } from './status';
 import { quickAnswers } from './Answers';
 import { climateNow, findCity, cityLabel } from './climate/cities';
@@ -43,6 +43,7 @@ export function analyze(parts: Part[], p: Profile, overMin = 0) {
   const sugarPeak = unknownSugar ? null : g ? Math.max(0, ...Array.from(g.subarray(0, 600))) / 18.016 : 0;
   return { name: def.content.name, color: built.story.color, built, systems, answers, sugarPeak, glucose: unknownSugar ? undefined : g, kcal: built.energy.total, macros: m,
     sleepDelayMin: v.extraLatencyMin, // minutes caffeine adds to falling asleep (verdictOf)
+    caffeineAtBedMg: v.mgAtBed, toBedMin: v.toBedMin, bodyWaterL: totalBodyWaterL(p), waterMl, weightKg: p.weightKg, // (v22: the video's spoken facts, video-facts.ts)
     // the name for Compare, its video and verdict: with the amount when it is not one usual serving ("2 espressos",
     // "3 × 500 ml of beer"), so "Beer vs Beer" or "Espresso … 127 mg" never hides how much (QA 2026-10-23)
     label: one && Math.abs(one.grams - one.food.serving.grams) > 1 ? capFirst(amountPhrase(one).replace(/ \([^)]*\)/g, '')) : def.content.name,

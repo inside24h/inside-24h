@@ -10,7 +10,7 @@ import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { ClaimRow } from '../ui/ClaimRow';
 import { SOURCES } from '../content/sources';
 import { LEVEL_LABEL, type Claim, type Stage } from '../content/types';
-import { DEFAULT_PROFILE, formatGlucose, healthyTwin, type Profile } from '../science/profile';
+import { DEFAULT_PROFILE, formatGlucose, healthyTwin, totalBodyWaterL, type Profile } from '../science/profile';
 import { at, type Timeline } from '../science/espressoSim';
 import { buildVitals, caffeineLatencyMin, sleepConc, sleepRiskOf, type Vitals } from '../science/daily';
 import { sleepAnchors } from '../science/anchors';
@@ -666,7 +666,8 @@ export default function AppV4() {
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
         solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName),
-        facts: factLines({ kcal: built.energy.total, macros: productId === 'food' ? macros(foodParts) : null, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl, t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? '') }, vSeed) }) : undefined };
+        facts: (() => { const fm = productId === 'food' ? macros(foodParts) : null; return factLines({ kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
+          bac: built.bac, glucose: fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }, vSeed); })() }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);

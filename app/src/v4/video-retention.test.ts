@@ -45,9 +45,11 @@ export function retention(nin: NarrIn) {
   return { cov: voiced / seconds, gap, gapAt, still, stillAt, mismatch, seconds, lines: placed.length, punches: punches.length };
 }
 
+export const MAX_SILENCE_S = 3;
 const check = (r: ReturnType<typeof retention>, cut: Cut, where: string, bad: string[]) => {
   if (r.cov < (where.includes(' vs ') ? 0.45 : 0.35)) bad.push(`${where}: voice covers only ${(100 * r.cov).toFixed(0)} %`);
-  if (r.gap > (where.includes(' vs ') ? 4.2 : 7.5)) bad.push(`${where}: ${r.gap.toFixed(1)} s without voice at ${r.gapAt.toFixed(1)} s`);
+  // v22: no silence over 3 s anywhere (the hush before an impact aside), singles and comparisons alike
+  if (r.gap > MAX_SILENCE_S) bad.push(`${where}: ${r.gap.toFixed(1)} s without voice at ${r.gapAt.toFixed(1)} s`);
   if (r.still > 3.2) bad.push(`${where}: ${r.still.toFixed(1)} s without a visual event at ${r.stillAt.toFixed(1)} s`);
   if (r.mismatch.length) bad.push(`${where}: said while its card is not on screen: ${r.mismatch.join(' / ')}`);
   const L = LENGTH[cut];
@@ -67,7 +69,7 @@ describe('v20 retention sweep (voice coverage, silences, visual events, said = s
     console.log('[retention] singles: longest silence', JSON.stringify(stats(gaps)));
     expect(bad.slice(0, 25)).toEqual([]);
     for (const cut of AUDIT_CUTS) expect(stats(cov[cut]).median).toBeGreaterThan(0.6);
-    expect(stats(gaps).median).toBeLessThan(3.5); // (the typical video: no silence over ~3 s but the hush before the hit)
+    expect(stats(gaps).max).toBeLessThanOrEqual(MAX_SILENCE_S); // (v22: every video, not just the typical one)
   }, 600_000);
 
   it('audit comparisons, every cut', () => {
