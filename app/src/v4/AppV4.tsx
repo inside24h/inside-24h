@@ -29,7 +29,7 @@ import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { VoicePick } from './VoicePick';
 import { narrationFor, type NarrIn } from './video-narration';
-import { compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
+import { arcFor, compareDiffs, compareFacts, factInOf, factLines, type FactIn } from './video-facts';
 import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
 import { planVideo, type Plan, type VFrame } from './video-plan';
 import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
@@ -666,8 +666,8 @@ export default function AppV4() {
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
         solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName),
-        facts: (() => { const fm = productId === 'food' ? macros(foodParts) : null; return factLines({ kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
-          bac: built.bac, glucose: fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }, vSeed); })() }) : undefined };
+        ...(() => { const fm = productId === 'food' ? macros(foodParts) : null; const fi: FactIn = { kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
+          bac: built.bac, glucose: fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }; return { facts: factLines(fi, vSeed), arc: arcFor(fi, vSeed) }; })() }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);

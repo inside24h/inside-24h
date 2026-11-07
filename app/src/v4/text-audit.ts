@@ -23,7 +23,7 @@ import { FPS, readSeconds, type Cut, type Plan, type PlanFx, type StopIn } from 
 import { BEAT_WORDS } from './video-beats';
 import { worstMoment } from './status';
 import { lintNarration, narrationFor, type NarrIn } from './video-narration';
-import { compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
+import { arcFor, compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
 import { seedOf } from './video-hook';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
@@ -181,7 +181,7 @@ export function lintMoment(title: string | undefined, stop: number, chapters: { 
 }
 
 /** 2026-11-05: the voiceover input exactly as AppV4 builds it (single and comparison). */
-export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero, hook: o.hook, name: o.name, facts: factLines(factInOf(x), seedOf(o.name)) });
+export const singleNarrIn = (x: Analysis, o: SingleOut, solid: boolean): NarrIn => ({ plan: o.plan, kind: 'single', seed: seedOf(o.name), alcohol: (x.built.alcoholG ?? 0) > 1, caffeine: x.built.caffeine.doseMg >= 10, solid, hero: o.hero, hook: o.hook, name: o.name, facts: factLines(factInOf(x), seedOf(o.name)), arc: arcFor(factInOf(x), seedOf(o.name)) });
 export const compareNarrIn = (a: Analysis, b: Analysis, cp: ComparePlan): NarrIn => {
   const an = cmpName(a.label), bn = cmpName(b.label), hook = cp.guess ? cp.guess.question : hookForCompare(an, bn, false).line1;
   return { plan: cp.plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((y) => (y.built.alcoholG ?? 0) > 1), guess: !!cp.guess,

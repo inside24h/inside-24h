@@ -288,3 +288,112 @@ export const factTemplate = (line: string, names: readonly string[] = []) => {
   for (const nm of names) if (nm) s = s.replace(new RegExp(`^${nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:\\s*`, 'i'), '');
   return s.replace(/\d+(?:[.,]\d+)?/g, '#').toLowerCase();
 };
+
+// v23 (editor review 2026-11-07: "accurate, but it reads like a list of facts"): an editorial story arc per item class.
+// setup (what is inside, one striking number) → rising tension (the cards, said in the present tense) → climax (the
+// peak) → twist (a myth-buster or a surprise from the model) → payoff (the hook answered, timed from the first sip) →
+// a loop line that sets up a rewatch. Every number below comes from the model (derivedFacts, the macros); alcohol is
+// never framed as good; American English.
+export type ArcClass = 'alcohol' | 'sugar' | 'starch' | 'caffeine' | 'fat' | 'meal' | 'drink' | 'water';
+export interface Arc {
+  cls: ArcClass;
+  /** the hook's curiosity line (a statement said between the food and the hook card's question): counter-intuitive,
+   *  numeric or personal; honest (each only when the model backs it) */ hook: string[];
+  /** the striking number, said right after the hook */ setup: string[];
+  /** the surprise after the climax (a myth-buster, a hidden cost) */ twist: string[];
+  /** the closing line when the end card's number cannot be said (number-free, never a restatement) */ answer: string[];
+  /** the loop line: sets up the rewatch (5 words at most) */ loop: string[];
+}
+/** The class an item's story is told as (the hook, the twist and the close follow it). */
+export function arcClass(f: FactIn): ArcClass {
+  const m = f.macros, k = Math.max(1, f.kcal);
+  if ((f.alcoholG ?? 0) >= 1) return 'alcohol';
+  if (f.drink && f.kcal < 20 && (f.caffeineMg ?? 0) < 40) return 'water';
+  if ((f.caffeineMg ?? 0) >= 40 && !(m && m.sugars >= 20)) return 'caffeine';
+  if (m && m.sugars >= 8 && m.sugars >= 0.6 * Math.max(1, m.availCarbs) && (4 * m.sugars) / k >= 0.35) return 'sugar';
+  if (m && m.availCarbs >= 15 && m.sugars < 0.4 * m.availCarbs && (4 * m.availCarbs) / k >= 0.45) return 'starch';
+  if (m && (m.fat >= 5 || m.protein >= 10) && (9 * m.fat + 4 * m.protein) / k >= 0.6) return 'fat';
+  // (a product without its macros here, a can of cola: its own glucose curve tells a sugar story)
+  if (!m && f.kcal >= 50 && derivedFacts(f).some((x) => x.kind === 'sugarPeak')) return 'sugar';
+  if (!f.drink && f.kcal >= 300) return 'meal';
+  return f.drink ? 'drink' : 'meal';
+}
+const ARC_LOOP: Record<ArcClass, readonly string[]> = {
+  alcohol: ['Now watch the peak again.', 'Back to the first sip.', 'Rewatch: spot the peak.'],
+  sugar: ['Now watch the spike again.', 'Rewatch: spot the spike.', 'Back to the first sip.'],
+  starch: ['Rewatch: spot the spike.', 'Now watch the starch again.', 'Back to the first bite.'],
+  caffeine: ['Now watch it hit again.', 'Rewatch: spot the peak.', 'Back to the first sip.'],
+  fat: ['Now watch the slow part.', 'Rewatch: follow the fat.', 'Back to the first bite.'],
+  meal: ['Back to the first bite.', 'Now watch it again.', 'Rewatch: follow the meal.'],
+  drink: ['Back to the first sip.', 'Now watch it again.', 'Rewatch: follow the sip.'],
+  water: ['Rewatch: follow the water.', 'Back to the first sip.', 'Now watch it again.'],
+};
+/** The arc lines of one food (single videos). */
+export function arcFor(f: FactIn, seed: number): Arc {
+  const cls = arcClass(f), m = f.macros, dv = derivedFacts(f), d = (k: FactKind) => dv.find((x) => x.kind === k);
+  const rot = (xs: string[], salt: number) => { if (xs.length < 2) return xs; const k = pick(xs.map((_, i) => i), seed, salt); return [...xs.slice(k), ...xs.slice(0, k)]; };
+  const at = (x?: { n?: number; u?: string }) => (x?.n !== undefined ? `about ${x.n} ${x.u ?? 'hours'} in` : '');
+  const hook: string[] = [], setup: string[] = [], twist: string[] = [], answer: string[] = [];
+  const g = r(f.alcoholG ?? 0), sd = d('stdDrinks'), rate = d('liverRate'), walk = d('walk'), gi = d('gi');
+  if (cls === 'alcohol') {
+    hook.push(`That's ${g} g your liver must clear.`, `Your liver can't rush these ${g} g.`, 'Feeling fine? Your blood may disagree.');
+    // (no "alcohol" here: the hook's question and the peak card say it; a word said a third time in 15 s is swapped out)
+    if (sd?.n !== undefined) setup.push(`${sd.n} standard drink${sd.n === 1 ? '' : 's'}: ${g} g for your liver.`);
+    setup.push(`That's ${g} g your liver must clear.`, `${g} g for your liver to clear.`);
+    twist.push("Coffee won't sober you up. Only time does.");
+    if (rate?.n) twist.push(`Coffee won't help: your liver clears about ${rate.n} g an hour.`, `Nothing speeds it up: about ${rate.n} g an hour, no faster.`);
+    if (d('bedAlcohol')) twist.push('It goes to bed with you: lighter, broken sleep.');
+    answer.push('Feeling fine is not the same as sober.', 'One drink, hours of liver work.', 'Sober takes time.');
+  } else {
+    const sp = d('sugarPeak'), dip = d('sugarDip'), tg = d('tgPeak'), ch = d('cafHalf'), cp = d('cafPeak'), cb = d('cafBed'), bw = d('bodyWater'), ws = d('waterShare');
+    const sug = m ? r(m.sugars) : 0, tsp = Math.max(1, r(sug / 4.2)), carbs = m ? r(m.availCarbs) : 0;
+    if (cls === 'sugar') {
+      if (dip) hook.push('Then comes the crash.');
+      if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
+      hook.push('No chewing, no waiting: it hits fast.');
+      if (sug >= 1) setup.push(`${sug} g of sugar, about ${tsp} teaspoons.`);
+      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`, `Walking it off: about ${walk.n} minutes.`);
+      if (dip) twist.push(`The twist: ${at(dip)}, it dips below where it started.`);
+      answer.push(sug >= 8 ? 'Your blood felt every teaspoon.' : 'Sweet for a moment, work for your body.', 'Sweet now, work later.');
+    } else if (cls === 'starch') {
+      hook.push("It isn't sweet, but it turns into sugar.");
+      if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
+      setup.push(`${carbs} g of carbs, most of it turned into glucose.`);
+      if (gi?.n) twist.push(`Not sweet at all, yet its glycemic index is ${gi.n}.`);
+      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
+    } else if (cls === 'caffeine') {
+      if (cp) hook.push(`You'll feel it ${at(cp)}.`);
+      if (ch?.n) hook.push(`Half is still in you after ${ch.n} hours.`);
+      setup.push(`${r(f.caffeineMg ?? 0)} mg of caffeine, heading for your brain.`);
+      if (ch?.n) twist.push(`The catch: half of it is still in you after ${ch.n} hours.`);
+      if (cb?.n) twist.push(`At bedtime, ${cb.n} % of it is still working.`);
+      answer.push('Remember that at bedtime.');
+    } else if (cls === 'fat') {
+      if (tg?.n) hook.push(`Its fat peaks ${tg.n} hours later.`);
+      hook.push('Your body takes it apart slowly.');
+      if (m && m.fat >= 5) setup.push(`${r(m.fat)} g of fat, the slowest part.`);
+      if (m && m.protein >= 5) setup.push(`${r(m.protein)} g of protein to take apart.`);
+      if (tg?.n) twist.push(`The fat arrives late: blood fat peaks about ${tg.n} hours in.`);
+      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
+    } else if (cls === 'meal') {
+      if ((f.t50 ?? 0) >= 30) hook.push(`Your stomach needs ${r(f.t50!)} minutes for just half.`);
+      hook.push('Your gut has hours of work ahead.');
+      const dk = d('dvKcal'); if (dk?.n) setup.push(`That's ${dk.n} % of a whole day of calories.`);
+      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
+      if (tg?.n) twist.push(`The fat arrives late: blood fat peaks about ${tg.n} hours in.`);
+    } else if (cls === 'water') {
+      if (bw?.n) hook.push(`You already hold about ${bw.n} liters of water.`);
+      hook.push('No calories. So where does it go?');
+      if (ws?.n) setup.push(`It tops up your body water by just ${ws.n} %.`);
+      if (bw?.n && ws?.n) twist.push(`You already carry about ${bw.n} liters, so this adds only ${ws.n} %.`);
+    } else {
+      if (d('flatSugar')) hook.push('Your glucose barely moves.');
+      if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
+      if (sug >= 3) setup.push(`${sug} g of sugar, about ${tsp} teaspoons.`);
+      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
+    }
+    answer.push(f.drink ? 'Every sip, accounted for.' : 'Every bite, accounted for.');
+  }
+  // (the alcohol myth-buster leads its twists: coffee will not sober you up)
+  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205) };
+}
