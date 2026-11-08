@@ -305,6 +305,7 @@ export interface Arc {
   /** the loop line: sets up the rewatch (5 words at most) */ loop: string[];
   /** v23b: the answer to "how fast does it hit?": the model's peak, timed from the first sip (and its short form, said
    *  after the peak card: "About 25 minutes after the first sip.") */ fast?: string; fastShort?: string;
+  /** v23c: the model's glucose curve dips below where it started (only then may a line say "crash" or "dip") */ dip?: boolean;
 }
 /** The class an item's story is told as (the hook, the twist and the close follow it). */
 export function arcClass(f: FactIn): ArcClass {
@@ -352,12 +353,13 @@ export function arcFor(f: FactIn, seed: number): Arc {
     const sp = d('sugarPeak'), dip = d('sugarDip'), tg = d('tgPeak'), ch = d('cafHalf'), cp = d('cafPeak'), cb = d('cafBed'), bw = d('bodyWater'), ws = d('waterShare');
     const sug = m ? r(m.sugars) : 0, tsp = Math.max(1, r(sug / 4.2)), carbs = m ? r(m.availCarbs) : 0;
     if (cls === 'sugar') {
-      if (dip) hook.push('Then comes the crash.');
+      if (dip) hook.push('Then it dips below where it started.');
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
       hook.push('No chewing, no waiting: it hits fast.');
       if (sug >= 1) setup.push(`${sug} g of sugar, about ${tsp} teaspoons.`);
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`, `Walking it off: about ${walk.n} minutes.`);
       if (dip) twist.push(`The twist: ${at(dip)}, it dips below where it started.`);
+      if (cb?.n && (f.caffeineMg ?? 0) >= 10) twist.push(`At bedtime, ${cb.n} % of its caffeine is still in you.`, `${cb.n} % of its caffeine lasts until bedtime.`);
       if (sug >= 8) answer.push('Your blood felt every teaspoon.');
       if (sp?.u === 'minutes') answer.push('That sugar hit your blood within minutes.');
     } else if (cls === 'starch') {
@@ -402,5 +404,5 @@ export function arcFor(f: FactIn, seed: number): Arc {
   const pk = d('sugarPeak') ?? d('cafPeak'), fast = pk?.n !== undefined ? `${d('sugarPeak') ? 'Your blood sugar' : 'Caffeine'} peaks about ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
   // (the alcohol myth-buster leads its twists: coffee will not sober you up)
   const fastShort = pk?.n !== undefined ? `About ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
-  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}) };
+  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}), ...(d('sugarDip') ? { dip: true } : {}) };
 }
