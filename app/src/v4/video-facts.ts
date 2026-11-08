@@ -305,6 +305,7 @@ export interface Arc {
   /** the loop line: sets up the rewatch (5 words at most) */ loop: string[];
   /** v23b: the answer to "how fast does it hit?": the model's peak, timed from the first sip (and its short form, said
    *  after the peak card: "About 25 minutes after the first sip.") */ fast?: string; fastShort?: string;
+  /** v23d: number-free lines of how the body handles this class (said in a pause no fact may fill: no number twice) */ extra?: string[];
   /** v23c: the model's glucose curve dips below where it started (only then may a line say "crash" or "dip") */ dip?: boolean;
 }
 /** The class an item's story is told as (the hook, the twist and the close follow it). */
@@ -403,6 +404,17 @@ export function arcFor(f: FactIn, seed: number): Arc {
   }
   const pk = d('sugarPeak') ?? d('cafPeak'), fast = pk?.n !== undefined ? `${d('sugarPeak') ? 'Your blood sugar' : 'Caffeine'} peaks about ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
   // (the alcohol myth-buster leads its twists: coffee will not sober you up)
+  const extra: string[] = [];
+  if (cls === 'water' || (f.drink && f.kcal < 20 && (f.alcoholG ?? 0) < 1)) extra.push('Water needs no digesting at all.', 'Your kidneys balance it out.', 'Most of it leaves as urine.');
+  if (d('flatSugar') || (m && m.availCarbs < 2 && (f.alcoholG ?? 0) < 1)) extra.push('No sugar spike, so no insulin rush.');
+  if ((f.caffeineMg ?? 0) >= 1) extra.push('Caffeine blocks the signal that makes you sleepy.', 'Your liver breaks the caffeine down.');
+  if (m && m.fiber >= 2) extra.push('Fiber slows the whole trip down.');
+  if (m && m.fat >= 5) extra.push('Fat keeps it in your stomach longer.');
+  if (m && m.sugars >= 3 && m.sugars >= 0.8 * m.availCarbs && m.fat < 2 && m.fiber < 1) extra.push('Pure sugar needs almost no digesting.');
+  if (m && m.protein >= 5) extra.push('Protein gets split into amino acids.');
+  if (!f.drink && m && m.grams >= 5) extra.push('Your stomach churns it for a while first.');
+  if ((f.alcoholG ?? 0) < 1) extra.push('Your blood carries it to every cell.');
+  if (m && m.sugars >= 3 && (f.alcoholG ?? 0) < 1) extra.push('Your cells can burn this sugar right away.');
   const fastShort = pk?.n !== undefined ? `About ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
-  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}), ...(d('sugarDip') ? { dip: true } : {}) };
+  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}), ...(d('sugarDip') ? { dip: true } : {}), ...(extra.length ? { extra } : {}) };
 }
