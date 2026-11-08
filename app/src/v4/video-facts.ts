@@ -303,6 +303,8 @@ export interface Arc {
   /** the surprise after the climax (a myth-buster, a hidden cost) */ twist: string[];
   /** the closing line when the end card's number cannot be said (number-free, never a restatement) */ answer: string[];
   /** the loop line: sets up the rewatch (5 words at most) */ loop: string[];
+  /** v23b: the answer to "how fast does it hit?": the model's peak, timed from the first sip (and its short form, said
+   *  after the peak card: "About 25 minutes after the first sip.") */ fast?: string; fastShort?: string;
 }
 /** The class an item's story is told as (the hook, the twist and the close follow it). */
 export function arcClass(f: FactIn): ArcClass {
@@ -336,10 +338,12 @@ export function arcFor(f: FactIn, seed: number): Arc {
   const hook: string[] = [], setup: string[] = [], twist: string[] = [], answer: string[] = [];
   const g = r(f.alcoholG ?? 0), sd = d('stdDrinks'), rate = d('liverRate'), walk = d('walk'), gi = d('gi');
   if (cls === 'alcohol') {
-    hook.push(`That's ${g} g your liver must clear.`, `Your liver can't rush these ${g} g.`, 'Feeling fine? Your blood may disagree.');
+    // (no number here: the setup right after says it, "1 standard drink: 16 g, 127 kcal.")
+    hook.push("Your liver can't rush it.", 'Feeling fine? Your blood may disagree.', "You'll feel sober before you are.");
     // (no "alcohol" here: the hook's question and the peak card say it; a word said a third time in 15 s is swapped out)
-    if (sd?.n !== undefined) setup.push(`${sd.n} standard drink${sd.n === 1 ? '' : 's'}: ${g} g for your liver.`);
+    if (sd?.n !== undefined) setup.push(`${sd.n} standard drink${sd.n === 1 ? '' : 's'}: ${g} g, ${r(f.kcal)} kcal.`, `${sd.n} standard drink${sd.n === 1 ? '' : 's'}: ${g} g for your liver.`, `${sd.n} standard drink${sd.n === 1 ? '' : 's'}: ${g} g.`);
     setup.push(`That's ${g} g your liver must clear.`, `${g} g for your liver to clear.`);
+    if (sd?.n !== undefined) setup.push(`${sd.n} standard drink${sd.n === 1 ? '' : 's'}.`);
     twist.push("Coffee won't sober you up. Only time does.");
     if (rate?.n) twist.push(`Coffee won't help: your liver clears about ${rate.n} g an hour.`, `Nothing speeds it up: about ${rate.n} g an hour, no faster.`);
     if (d('bedAlcohol')) twist.push('It goes to bed with you: lighter, broken sleep.');
@@ -354,7 +358,8 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (sug >= 1) setup.push(`${sug} g of sugar, about ${tsp} teaspoons.`);
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`, `Walking it off: about ${walk.n} minutes.`);
       if (dip) twist.push(`The twist: ${at(dip)}, it dips below where it started.`);
-      answer.push(sug >= 8 ? 'Your blood felt every teaspoon.' : 'Sweet for a moment, work for your body.', 'Sweet now, work later.');
+      if (sug >= 8) answer.push('Your blood felt every teaspoon.');
+      if (sp?.u === 'minutes') answer.push('That sugar hit your blood within minutes.');
     } else if (cls === 'starch') {
       hook.push("It isn't sweet, but it turns into sugar.");
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
@@ -394,6 +399,8 @@ export function arcFor(f: FactIn, seed: number): Arc {
     }
     answer.push(f.drink ? 'Every sip, accounted for.' : 'Every bite, accounted for.');
   }
+  const pk = d('sugarPeak') ?? d('cafPeak'), fast = pk?.n !== undefined ? `${d('sugarPeak') ? 'Your blood sugar' : 'Caffeine'} peaks about ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
   // (the alcohol myth-buster leads its twists: coffee will not sober you up)
-  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205) };
+  const fastShort = pk?.n !== undefined ? `About ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
+  return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}) };
 }

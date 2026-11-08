@@ -15,7 +15,7 @@
 // frame. Spoken = on screen, word for word, so every number said is a number shown (lintNarration). Target: 60-75 %
 // of a video voiced, no silence over ~4 s except the hush before an impact (video-narration.test.ts sweeps).
 import { FPS, type Cue, type Plan, type VFrame } from './video-plan';
-import type { Arc } from './video-facts';
+import { timeAt, type Arc } from './video-facts';
 
 /** Speaking rate the slots are planned with (words per second; Kokoro af_heart at speed 1 says ~2.6-2.9). */
 export const WPS = 2.6;
@@ -27,7 +27,7 @@ export const IMPACT_PRE_S = 1.7, IMPACT_POST_S = 0.35;
 export const TAIL_S = 0.3;
 export const GAP_S = 0.25;
 
-export type NarrId = 'hook' | 'card' | 'beat' | 'tease' | 'climax' | 'twist' | 'day' | 'answer' | 'loop';
+export type NarrId = 'hook' | 'card' | 'beat' | 'setup' | 'tease' | 'climax' | 'twist' | 'payoff' | 'day' | 'answer' | 'loop';
 export interface NarrLine {
   id: NarrId;
   /** start (s) */ t: number;
@@ -39,13 +39,14 @@ export interface NarrLine {
   /** v20, comparison: the side whose card it reads (0 left, 1 right, 2 both) */ side?: 0 | 1 | 2;
 }
 export interface NarrIn {
-  plan: Pick<Plan, 'seconds' | 'cues' | 'introS' | 'outroS'> & { frames?: readonly Pick<VFrame, 'phase' | 't' | 'cap' | 'capB' | 'title' | 'titleB' | 'tease'>[] };
+  plan: Pick<Plan, 'seconds' | 'cues' | 'introS' | 'outroS'> & { frames?: readonly (Pick<VFrame, 'phase' | 't' | 'cap' | 'capB' | 'title' | 'titleB' | 'tease'> & { stop?: number })[] };
   kind: 'single' | 'compare';
   seed: number;
   alcohol?: boolean; caffeine?: boolean; solid?: boolean;
   /** single: the end card's hero number (video-story heroOf) */ hero?: { big: string; small: string };
   /** compare: the guess game is on (a question with an answer banner at the 'peak' cue) */ guess?: boolean;
-  /** v20: the hook card on screen (single: two lines; comparison: line1 is the question or the hook) */ hook?: { line1: string; line2: string };
+  /** v20: the hook card on screen (single: two lines; comparison: line1 is the question or the hook); v23b: the title of
+   *  the moment that answers its question (video-hook payoff, or its extra moment) */ hook?: { line1: string; line2: string; payoff?: string; extra?: { title: string } };
   /** v20, comparison: the two names (left, right) and the guess's answer banner (its first line) */ names?: [string, string]; answer?: string;
   /** v21b, single: the food's short name ("Ham sub"): the hook says it first */ name?: string;
   /** v21c: this food's facts as short spoken lines (video-facts.ts; a comparison's name their side): the only fillers */ facts?: string[];
@@ -137,7 +138,7 @@ export function heroLines(hero: { big: string; small: string } | undefined, alco
   let m: RegExpExecArray | null;
   if (/^Blood sugar up/.test(big) && (m = /\+?(\d+)–(\d+) %/.exec(small))) return [`The peak? Blood sugar up ${m[1]}–${m[2]} %.`, `Blood sugar: up ${m[1]}–${m[2]} %.`, `Sugar: up ${m[1]}–${m[2]} %.`];
   if ((m = /^Blood fat up · (\d+) h/.exec(big))) return [`The slowest part? The fat.`, `The fat took longest.`, `The slowest part took ${m[1]} hours.`];
-  if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body/.test(small)) return [`A day later? ${m[1]} mg of caffeine, still in you.`, `${m[1]} mg of caffeine, still in you.`, `${m[1]} mg, still in you.`];
+  if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body/.test(small)) return [`A day later? ${m[1]} mg of caffeine, still in you.`, `A day later, ${m[1]} mg is still in you.`, `${m[1]} mg, still there a day later.`];
   // alcohol: the BAC range is too long to say well ("zero point zero one one to …"): the safety line instead
   if (/BAC/.test(small) || alcohol) return ['Remember: never drink and drive.', 'Never drink and drive.'];
   if ((m = /^(\d+) kcal$/.exec(big))) return [`The total? ${m[1]} kcal.`, `${m[1]} kcal in total.`];
@@ -170,7 +171,7 @@ const DAY = ['One full day later.', 'Twenty-four hours later.', 'A day later.', 
 const LOOP = { sip: ['From the first sip.', 'Back to the start.', 'Watch it again.', 'One more time?'], bite: ['From the first bite.', 'Back to the start.', 'Watch it again.', 'One more time?'] } as const;
 const ANSWER_FALLBACK = { single: ["That's one full day inside you.", 'Now you know where it goes.', 'One day, inside you.'], compare: ['Now you know the difference.', 'Now you know.'] } as const;
 /** v19: the most words a line may have in each slot (short and spoken: a viewer hears it once). */
-export const SLOT_WORDS: Record<NarrId, number> = { hook: 18, card: 16, beat: 12, tease: 12, climax: 14, twist: 15, day: 6, answer: 14, loop: 5 };
+export const SLOT_WORDS: Record<NarrId, number> = { hook: 18, card: 16, beat: 12, setup: 14, tease: 12, climax: 14, twist: 15, payoff: 14, day: 6, answer: 14, loop: 5 };
 /** v23 (editor: "filler lines add nothing"): lines that only restate the state the viewer already sees, with no new
  *  information (a card like this stays on screen but is not read; the lint flags any line like this). */
 export const RESTATE: readonly RegExp[] = [
@@ -184,6 +185,20 @@ export const restates = (x: string) => RESTATE.some((re) => re.test(x.trim()));
 export const CLOCK = /\b\d{1,2}(?::\d\d)?\s?(?:AM|PM)\b|\b\d\d:\d\d\b/;
 /** v23: a line that says when the body has cleared it (the hook's answer for a drink: said one way only) */
 export const CLEAR_TIME = /^(?!Half\b)(?:.*?)\b(?:gone|clear\w*|out of your blood|burns? it off|break it down)\b[^.]*\b\d+(?:[.,]\d+)?(?:–\d+)?\s*(?:hours?|minutes?|h)\b|\b\d+(?:–\d+)?\s*(?:hours?|h)\b[^.]*\b(?:to clear|cleared|gone|clear it|break it down|burns? it off|liver work)\b/i;
+/** v23b (editor: "About three quarters of the caffeine remains." had no when): a line about what is still there says when */
+export const STATE = /\b(?:remains?|still (?:in|there|working|here)|is left|left in you)\b/i;
+export const ANCHOR = /\b(?:bedtime|morning|night|tonight|now|at \d|after|hours?|minutes?|later|by|until|day|in)\b/i;
+export const unanchored = (x: string) => STATE.test(x) && !ANCHOR.test(x.replace(/\bstill in\b/gi, ''));
+/** v23b: the time a moment is at, said from the first sip ("5 hours in, …"; bedtime and morning by name) */
+export function whenLead(title: string, stop?: number): string {
+  if (/bed/i.test(title)) return 'At bedtime, ';
+  if (/morning/i.test(title)) return 'By morning, ';
+  if (stop === undefined || stop < 5) return '';
+  const [k, u] = timeAt(stop);
+  return `${k} ${k === 1 ? u.replace(/s$/, '') : u} in, `;
+}
+/** v23b: the hook's question, when it asks how soon something happens (the model's peak time answers it) */
+export const FAST_Q = /\b(?:how fast does it hit|when does (?:it|its caffeine) hit)\b/i;
 /** v23: present-tense leads that tie a card to what is on screen right now (rising tension, before the peak) */
 const RISE = ['Right now, ', 'Watch: ', 'Look, '] as const;
 const PRESENT = /\b(?:is|are|leaves|reaches|climbs|passes|absorbs|starts|turns|filters|collects|burns|moves|enters|hits|takes)\b/;
@@ -215,7 +230,7 @@ const words = (s: string) => s.toLowerCase().replace(/[’']/g, "'").split(/[^a-
 export const saidAlready = (card: string, said: string) => { const s = new Set(words(said)); const c = words(card); return c.length > 0 && c.every((w) => s.has(w)); };
 
 /** v20: the story cards as they are on screen: one span per card (left and right for a comparison). */
-export interface CardSpan { t0: number; t1: number; a: string; b: string; title: string; titleB: string; tease: boolean }
+export interface CardSpan { t0: number; t1: number; a: string; b: string; title: string; titleB: string; tease: boolean; /** the moment (min) */ stop?: number }
 export function cardSpans(frames: NonNullable<NarrIn['plan']['frames']>): CardSpan[] {
   const out: CardSpan[] = [];
   for (const f of frames) {
@@ -224,7 +239,7 @@ export function cardSpans(frames: NonNullable<NarrIn['plan']['frames']>): CardSp
     if (!a && !b) continue;
     const l = out[out.length - 1];
     if (l && l.a === a && l.b === b && f.t - l.t1 < 0.1) { l.t1 = f.t + 1 / FPS; continue; }
-    out.push({ t0: f.t, t1: f.t + 1 / FPS, a, b, title: (f.title ?? '').trim(), titleB: (f.titleB ?? '').trim(), tease: !!f.tease });
+    out.push({ t0: f.t, t1: f.t + 1 / FPS, a, b, title: (f.title ?? '').trim(), titleB: (f.titleB ?? '').trim(), tease: !!f.tease, stop: (f as { stop?: number }).stop });
   }
   return out;
 }
@@ -280,7 +295,7 @@ const fresh = (out: readonly NarrLine[], x: string, t: number, nameWords: Set<st
  *  variant; the original comes first. */
 const VARY: [RegExp, string][] = [
   [/\byour blood sugar\b/gi, 'it'], [/\bblood sugar\b/gi, 'glucose'], [/\bIn your stomach: /g, ''], [/\byour stomach churns it\b/gi, 'it gets churned'],
-  [/\bThe food is mostly in your stomach\b/g, 'Most of it is still in there'], [/\bHalf leaves your stomach within\b/g, 'Half moves on within'],
+  [/\bThe food is mostly in your stomach\b/g, 'Most of it sits in your stomach'], [/\bHalf leaves your stomach within\b/g, 'Half moves on within'],
   [/\balmost all has moved on by\b/gi, 'almost all is out by'], [/\bthe alcohol is gone\b/gi, 'it clears'], [/\bthe alcohol should be gone\b/gi, 'it should be cleared'],
   [/\bwhen it is finally gone\b/gi, 'when it finally clears'], [/\bThere is still alcohol in your blood\b/g, 'Some of it is still in you'],
   [/\bBlood alcohol is at its highest now\b/g, "It's at its highest now"], [/\bBlood fat is highest around now\b/g, 'Levels are highest around now'],
@@ -325,7 +340,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     return Math.max(0, e - t);
   };
   // candidates; placed in time order, each as soon after the one before as it may (`delay`), else left out
-  type Cand = Omit<NarrLine, 'slotS' | 'say' | 'text'> & { until: number; delay: number; options: readonly string[]; /** v22: tried first */ pref?: readonly string[] };
+  type Cand = Omit<NarrLine, 'slotS' | 'say' | 'text'> & { until: number; delay: number; options: readonly string[]; /** v22: tried first */ pref?: readonly string[]; /** v23b: said even if a word repeats */ must?: boolean };
   const cands: Cand[] = [];
   const cmp = n.kind === 'compare', calm = !!n.alcohol;
   const peak = at('peak')[0];
@@ -401,6 +416,25 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   const setupL = !cmp && n.arc ? n.arc.setup.filter((x) => !dropF(x)) : [];
   facts.unshift(...setupL);
   let nRise = 0;
+  // v23b (editor: "the hook asks and it is never answered"): the moment that answers the hook's question is always said
+  const qHook = !cmp && /\?/.test(`${h1} ${h2}`), payT = (n.hook?.payoff ?? n.hook?.extra?.title ?? '').toLowerCase();
+  const paySpan = qHook && payT ? spans.find((x) => x.title.toLowerCase() === payT && !!x.a && /[.?!]$/.test(x.a) && !restates(x.a) && !CLOCK.test(x.a)) : undefined;
+  // v23b: the setup is its own line, right after the hook, before the first card ("1 standard drink: 16 g, 127 kcal.")
+  const hookNums = new Set(qtyOf(hookText)), hookEnd = hookT + speakS(hookText) + GAP_S;
+  const setupNew = setupL.filter((x) => !qtyOf(x).some((v) => hookNums.has(v)));
+  const nextSp = spans.find((x) => x.t0 + CARD_LEAD_S + CARD_DELAY_S > hookEnd && !!x.a && !saidAlready(x.a, `${h1} ${h2}`));
+  // (a "127 kcal in total." card right after the hook is said inside the setup: "1 standard drink: 16 g, 127 kcal."; the
+  // card stays on screen)
+  const kcalLead = !!nextSp && /^\d+ kcal in total\.$/.test(nextSp.a) && setupNew.some((x) => qtyOf(x).some((v) => qtyOf(nextSp.a).includes(v)));
+  const sp2 = kcalLead ? spans[spans.indexOf(nextSp!) + 1] : nextSp;
+  if (setupNew.length && nextSp && sp2 && (peak === undefined || nextSp.t0 < peak)) cands.push({ id: 'setup', t: hookEnd, until: Math.min(sp2.t0 + CARD_LEAD_S + CARD_DELAY_S, (impacts.find((p) => p > sp2.t0) ?? Infinity) - IMPACT_PRE_S - speakS(sp2.a || 'x')) - GAP_S, delay: 0.6, options: kcalLead ? [...setupNew.filter((x) => qtyOf(x).some((v) => qtyOf(nextSp.a).includes(v))), ...setupNew] : setupNew, source: '' });
+  let shortTwist = false, shortFast = false;
+  // v23b: "how fast does it hit?" is answered at the peak itself, with the model's time ("There it is. Your blood sugar peaks about 25 minutes after the first sip.")
+  const fastQ = qHook && FAST_Q.test(`${h1} ${h2}`) && n.arc?.fast ? n.arc.fast : '';
+  // (said at the peak only when the peak is that one: blood sugar for a sugar peak, caffeine for a caffeine peak)
+  const fastShort = fastQ ? n.arc?.fastShort ?? '' : '', peakShort = fastShort ? `Peak: ${lc1(fastShort).replace(/ after the first (?:sip|bite)\.$/, ' in.')}` : '';
+  const fastAtPeak = (card: string) => !!fastShort && ((/sugar/i.test(card) && /sugar/i.test(fastQ)) || (/caffeine/i.test(card) && /caffeine/i.test(fastQ)));
+  const shortCut = n.plan.seconds < 35;
   const late = (n.lateFacts ?? []).filter((f) => qtyOf(f).some((x) => !screenNums.has(x))), reveal0 = peak ?? Infinity;
   // (a difference that cannot give the guess away may come before the answer: "Butter has 12 g more fat" when the
   // question is which raises blood sugar more)
@@ -440,10 +474,24 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       if (!said.length) return;
       if (atPeak) {
         const tp = peak! + IMPACT_POST_S + 0.05, ex = EXCL[calm ? 'calm' : 'std'];
-        cands.push({ id: 'climax', t: tp, until, delay: 0.3, options: [...said.map((x) => `${pick(ex, s, 2)} ${x}`), ...said, pick(CLIMAX[ck], s, 2), ...CLIMAX[ck]], source: `${sp.title} ${sp.a}`, card: sp.a, side: 0 });
+        cands.push({ id: 'climax', t: tp, until, delay: 0.3, options: [...(fastAtPeak(sp.a) ? said.map((x) => `${x} ${fastShort}`) : []), ...said.map((x) => `${pick(ex, s, 2)} ${x}`), ...said, pick(CLIMAX[ck], s, 2), ...CLIMAX[ck]], source: `${sp.title} ${sp.a} ${fastShort}`, card: sp.a, side: 0 });
         return;
       }
       if (sp.tease) { cands.push({ id: 'tease', t, until, delay: late, options: [`${pick(TEASE_LEAD, s, 3)} ${sp.a}`, sp.a, pick(TEASE, s, 3)], source: sp.a, card: sp.a, side: 0 }); return; }
+      const isPay = sp === paySpan;
+      if (kcalLead && sp === nextSp) return;
+      // v23b: a Shorts cut with "how fast?" answers before the peak, in place of a lower-value card (no room after it)
+      if (shortCut && fastQ && !shortFast && i > 0 && !isPay && peak !== undefined && sp.t1 < peak) {
+        shortFast = true;
+        cands.push({ id: 'payoff', t, until, delay: late, options: [fastQ, peakShort], source: `${fastQ} ${peakShort}`, must: true });
+        return;
+      }
+      // v23b: a Shorts cut trims a lower-value card after the peak to make room for the twist (the card stays on screen)
+      if (shortCut && !isPay && !shortTwist && twistL.length && peak !== undefined && sp.t0 > peak + ((fastQ && !spans.some((x) => x.t0 <= peak + 0.5 && x.t1 > peak + 0.5 && fastAtPeak(x.a))) || /how high/i.test(`${h1} ${h2}`) ? 6 : 0)) {
+        shortTwist = true;
+        cands.push({ id: 'twist', t, until: nx ? nx.t0 - GAP_S : until + 3, delay: 1.5, options: twistL, source: '' });
+        return;
+      }
       // (a card the headline already shows is read, but not captioned and not hidden: the screen already says it)
       const onTop = saidAlready(sp.a, `${h1} ${h2}`);
       // v23: the payoff, timed from the first sip ("From your first sip, the alcohol is gone after about 1–4 hours."); a
@@ -451,7 +499,10 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       const pay = CLEAR_TIME.test(sp.a) && !/first (?:sip|bite)/i.test(sp.a) ? said.map((x) => `${n.solid ? 'From your first bite' : 'From your first sip'}, ${lc1(x)}`) : [];
       const rise = !pay.length && i > 0 && nRise < 2 && peak !== undefined && sp.t0 < peak && PRESENT.test(sp.a) && !VAGUE.test(sp.a) && !/^(?:Right now|Watch|Look)\b/i.test(sp.a) ? said.map((x) => `${pick(RISE, s, 10 + nRise)}${lc1(x)}`) : [];
       if (rise.length) nRise++;
-      cands.push({ id: 'card', t, until, delay: late, options: [...pay, ...rise, ...said, ...beats()], source: `${sp.title} ${sp.a}`, ...(onTop ? {} : { card: sp.a, side: 0 as const }) });
+      // v23b: a state line says when ("5 hours in, about three quarters of the caffeine remains.")
+      const wl = unanchored(sp.a) ? whenLead(sp.title, sp.stop) : '';
+      const anch = wl ? said.map((x) => `${wl}${lc1(x)}`) : [];
+      cands.push({ id: 'card', t, until: isPay ? Math.max(until, sp.t1 + 0.3) : until, delay: isPay ? 99 : late, options: [...pay, ...anch, ...rise, ...(wl ? [] : said), ...beats(), ...(isPay && wl ? said : [])], source: `${sp.title} ${sp.a} ${wl}`, ...(onTop ? {} : { card: sp.a, side: 0 as const }), ...(isPay ? { must: true } : {}) });
       return;
     }
     // comparison: a card both sides show is said once; the two names as "Left: … Right: …"; else each side whose card
@@ -461,15 +512,17 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     // (v23: a clock-time or restating card is not read in a comparison either)
     const quiet = (x: string) => CLOCK.test(x) || restates(x);
     if (a && a === b) {
-      if (!saidAlready(a, spoken) && ends(a) && !quiet(a)) cands.push({ id: sp.tease ? 'tease' : 'card', t, until, delay: late, options: sp.tease ? [`${pick(TEASE_LEAD, s, 3)} ${a}`, a, pick(TEASE, s, 3)] : [...(a.includes(':') ? [] : [`Both: ${lower1(a)}`]), a, ...beats()], source: a, card: a, side: 2, ...(/^Same amount\b/i.test(a) ? { pref: contrasts.filter((x) => !spoils(x)) } : {}) });
+      if (!saidAlready(a, spoken) && ends(a) && !quiet(a)) cands.push({ id: sp.tease ? 'tease' : 'card', t, until, delay: late, options: sp.tease ? [`${pick(TEASE_LEAD, s, 3)} ${a}`, a, pick(TEASE, s, 3)] : (() => { const wl = unanchored(a) ? whenLead(sp.title, sp.stop) : '', aa = wl ? `${wl}${lc1(a)}` : a; return [...(a.includes(':') ? [] : [`Both: ${lower1(aa)}`]), aa, ...beats()]; })(), source: `${a} ${unanchored(a) ? whenLead(sp.title, sp.stop) : ''}`, card: a, side: 2, ...(/^Same amount\b/i.test(a) ? { pref: contrasts.filter((x) => !spoils(x)) } : {}) });
       return;
     }
     const isName = (x: string, nm: string) => !!nm && x.replace(/\.$/, '').toLowerCase() === nm.toLowerCase();
     if (newA && newB && isName(a, names[0]) && isName(b, names[1])) { cands.push({ id: 'card', t, until, delay: late, options: [`Left: ${a} Right: ${b}`], source: `${a} ${b}` }); return; } // (the names are on screen: no caption)
     const side = (x: string, nm: string, title: string, k: 0 | 1, tt: number, delay: number) => {
       if (!ends(x) || quiet(x)) return;
-      const said = cardSaid(x, title), who = x.toLowerCase().includes(nm.trim().toLowerCase()) ? '' : cap1(nm.trim());
-      cands.push({ id: 'card', t: tt, until, delay, options: [...(who ? [`${who}${x.includes(':') ? ',' : ':'} ${lower1(x, names)}`, ...said.map((y) => `${who}${y.includes(':') ? ',' : ':'} ${lower1(y, names)}`)] : said), ...beats()], source: `${title} ${x} ${who}`, ...(isName(x, nm) || saidAlready(x, spoken) ? {} : { card: x, side: k }) });
+      // (v23b: a state card says when, "Cola: at bedtime, almost all the caffeine is still in you.")
+      const wl = unanchored(x) ? whenLead(title, sp.stop) : '', an = (y: string) => (wl ? `${wl}${lc1(y)}` : y);
+      const said = cardSaid(x, title).map(an), who = x.toLowerCase().includes(nm.trim().toLowerCase()) ? '' : cap1(nm.trim());
+      cands.push({ id: 'card', t: tt, until, delay, options: [...(who ? [`${who}${x.includes(':') ? ',' : ':'} ${lower1(an(x), names)}`, ...said.map((y) => `${who}${y.includes(':') ? ',' : ':'} ${lower1(y, names)}`)] : said), ...beats()], source: `${title} ${x} ${who} ${wl}`, ...(isName(x, nm) || saidAlready(x, spoken) ? {} : { card: x, side: k }) });
     };
     if (newA) side(a, names[0], sp.title, 0, t, late);
     if (newB) side(b, names[1], sp.titleB, 1, t + (newA ? 0.01 : 0), newA ? 99 : late);
@@ -480,6 +533,11 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const opts = cmp && n.guess && ends(ans) ? [`${pick(REVEAL_LEAD, s, 2)} ${ans}`, ans, pick(CLIMAX[ck], s, 2), ...CLIMAX[ck]] : [pick(CLIMAX[ck], s, 2), ...CLIMAX[ck]];
     cands.push({ id: 'climax', t: tp, until: tp + 4, delay: 0.3, options: opts, source: ans });
   }
+  // v23b: a hook that asks how soon gets the model's time, right after the peak ("It peaks about 25 minutes after the first sip.")
+  // (and "how high?" the end card's rise, said at the peak: "At its peak, blood sugar is up 26–60 %.")
+  const hi = qHook && /how high/i.test(`${h1} ${h2}`) && n.hero && /^Blood sugar up/.test(n.hero.big) ? /\+?(\d+)–(\d+) %/.exec(n.hero.small) : null;
+  if (hi && peak !== undefined) cands.push({ id: 'payoff', t: peak + IMPACT_POST_S + 2.2, until: peak + 12, delay: 6, options: [`At its peak, blood sugar is up ${hi[1]}–${hi[2]} %.`, `Blood sugar: up ${hi[1]}–${hi[2]} %.`], source: `${n.hero!.big} ${n.hero!.small}`, must: true });
+  if (fastQ && peak !== undefined) cands.push({ id: 'payoff', t: peak + IMPACT_POST_S + 2.2, until: peak + 12, delay: 6, options: [fastQ, peakShort], source: `${fastQ} ${peakShort}`, must: true });
   // 4. the 24 h beat (the lights come on): single only (a comparison's verdict impact lands there)
   // (v23: a single has no "A day later." line: it only restated the clock; its pause goes to a fact)
   if (!cmp && lights !== undefined && !n.arc) { const t = lights - 0.25; cands.push({ id: 'day', t, until: Math.min(outro, (dayCue ?? outro) + 0.6) - GAP_S, delay: 0.3, options: [pick(DAY, s, 4), ...DAY], source: '' }); }
@@ -518,6 +576,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       && !(c.id === 'answer' && out.length > 0 && [...stems(x)].filter((w) => stems(out[out.length - 1].text).has(w)).length >= 2) // (v21b: not "One full day later. That's one full day…")
       && !(isFact(x) && t < revealOf(x)) // (a fact that would give the answer away: after it)
       && !(c.id !== 'hook' && filler(x) && qtyOf(x).length > 0 && qtyOf(x).every((v) => out.some((o) => qtyOf(o.text).includes(v)))) // (no number twice)
+      && !(c.id === 'payoff' && out.some((o) => /peak/i.test(o.text) && qtyOf(o.text).some((v) => qtyOf(x).includes(v)))) // (the peak already said it)
       && !(c.id === 'twist' && (out.some((o) => o.id === 'twist') || (qtyOf(x).length > 0 && qtyOf(x).every((v) => out.some((o) => qtyOf(o.text).includes(v))))))
       && !(filler(x) && (out.some((o) => o.text === x) || (out.length >= 2 && out.slice(-2).every((o) => filler(o.text))))); // (v21b: no filler twice, never 3 in a row)
     // v21b: word variety: no content word a third time within VARIETY_S (a line is said another way, else the next option)
@@ -526,15 +585,15 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     // (v21c: the card said another way comes before any filler)
     // (v23: the setup, the striking number, before the first impact, once)
     const setupFirst = c.id === 'beat' && (peak === undefined || t < peak) && !out.some((o) => setupL.includes(o.text)) ? setupL : [];
-    const opts = c.id === 'answer' ? [...c.options] : [...setupFirst, ...(c.pref ?? []), ...own, ...own.flatMap((x) => variants(x).slice(1)), ...c.options.filter(filler)]; // (the closing line is said as written)
-    const text = (FIXED.has(c.id) ? undefined : opts.find((x) => ok(x) && fresh(out, x, t, nameWords))) ?? (c.id === 'climax' || c.id === 'answer' || c.id === 'day' || c.id === 'loop' || FIXED.has(c.id) ? c.options.find(ok) : undefined);
+    const opts = c.id === 'answer' ? [...c.options] : [...setupFirst, ...(c.pref ?? []), ...own, ...own.filter((x) => !fastQ || (!x.includes(fastQ.slice(0, -1)) && !(fastShort && x.includes(fastShort)))).flatMap((x) => variants(x).slice(1)), ...c.options.filter(filler)]; // (the closing line is said as written)
+    const text = (FIXED.has(c.id) ? undefined : opts.find((x) => ok(x) && fresh(out, x, t, nameWords))) ?? (c.id === 'climax' || c.id === 'answer' || c.id === 'day' || c.id === 'loop' || c.must || FIXED.has(c.id) ? c.options.find(ok) : undefined);
     if (!text) continue;
     // (a line from a pool has no on-screen source: it says no number)
     const fromPool = (c.id === 'answer' && !heroL.some((h) => variants(h).includes(text)) && !verdictL.includes(text)) || (c.id === 'hook' && !hookOpts.includes(text)) || (c.id === 'climax' && !c.card && cmp && !text.endsWith((n.answer ?? '').trim() || '\u0000'));
-    const { until: _u, delay: _d, options: _o, pref: _p, card, side, ...rest } = c; void _u; void _d; void _o; void _p;
+    const { until: _u, delay: _d, options: _o, pref: _p, must: _m, card, side, ...rest } = c; void _u; void _d; void _o; void _p; void _m;
     // (a pool line instead of the card: the card stays on screen, and the line has no on-screen source)
     const reads = !!card && card.split('|').every((x) => variants(x).some((v) => text.toLowerCase().includes(v.slice(1).toLowerCase())));
-    out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text: shownText(text), say: speakable(text), source: isFact(text) || c.id === 'twist' ? text : fromPool || (card && !reads) ? '' : c.source });
+    out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text: shownText(text), say: speakable(text), source: isFact(text) || c.id === 'twist' || c.id === 'payoff' || c.id === 'setup' || (!!fastQ && text.includes(fastQ.slice(0, -1))) ? text : fromPool || (card && !reads) ? '' : c.source });
     free = t + speakS(text) + GAP_S;
     if (c.id === 'beat') lastBeat = t;
   }
@@ -559,13 +618,16 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     // v23: after the peak, the arc's twist first (once); before it, the setup first
     const tw = twistL.length && !out.some((o) => o.id === 'twist') && peak !== undefined && t > peak + IMPACT_POST_S && t < outro - 1
       ? twistL.find((x) => fitsAny(x) && wordsOf(x) <= SLOT_WORDS.twist && speakS(x) >= slot - 2 && !(qtyOf(x).length > 0 && qtyOf(x).every((v) => out.some((o) => qtyOf(o.text).includes(v))))) : undefined;
+    // (v23b: "how fast?" not answered yet: the model's peak time first, in any pause it fits)
+    const pf = fastQ && !out.some((o) => /peak|after the first/i.test(o.text) && qtyOf(o.text).some((v) => qtyOf(fastQ).includes(v))) ? [fastQ, peakShort].find((x) => fitsAny(x)) : undefined;
+    if (pf) { out.splice(i + 1, 0, { id: 'payoff', t, slotS: slot, text: shownText(pf), say: speakable(pf), source: pf }); guard++; continue; }
     if (tw) { out.splice(i + 1, 0, { id: 'twist', t, slotS: slot, text: shownText(tw), say: speakable(tw), source: tw }); guard++; continue; }
     const pre = peak === undefined || t < peak;
     const text = beats().sort((p, q) => (pre ? Number(setupL.includes(q)) - Number(setupL.includes(p)) : 0) || speakS(q) - speakS(p)).find((x) => fits(x)
       && !(qtyOf(x).length > 0 && qtyOf(x).every((v) => out.some((o, j) => !movable(o, j) && qtyOf(o.text).includes(v)))))
       // v22: else a callback to a number the hook card gave (its fact said in full: "Water in it: 250 ml."), when
       // nothing has said that number for RECALL_S and no other fact of this food is left
-      ?? [...recall, ...facts].filter((x) => recalled < 2 && !out.some((o) => repeats(x, o.text) || (o.id === 'beat' && o.t > t - 2 * RECALL_S + 10 && qtyOf(o.text).some((v) => qtyOf(x).includes(v)))) && qtyOf(x).length > 0 && !qtyOf(x).some((v) => heroSaid.has(v)) && !out.some((o) => o.t > t - (t > outro - 10 ? RECALL_S / 2 : RECALL_S) && qtyOf(o.text).some((v) => qtyOf(x).includes(v)))).sort((p, q) => speakS(q) - speakS(p)).find(fits);
+      ?? [...recall, ...facts].filter((x) => recalled < 2 && !out.some((o) => repeats(x, o.text) || (o.id === 'beat' && o.t > t - 2 * RECALL_S + 10 && qtyOf(o.text).some((v) => qtyOf(x).includes(v)))) && qtyOf(x).length > 0 && !qtyOf(x).some((v) => heroSaid.has(v)) && !out.some((o) => o.id === 'setup' && saidAlready(x, o.text)) && !out.some((o) => o.t > t - (t > outro - 10 ? RECALL_S / 2 : RECALL_S) && qtyOf(o.text).some((v) => qtyOf(x).includes(v)))).sort((p, q) => speakS(q) - speakS(p)).find(fits);
     // v23: a late pause no fact can fill gets the arc's number-free closer ("Remember that at bedtime."), when the close
     // itself says the end card's number
     const close = !text && !cmp && n.arc && t > outro - 12 && t < outro ? n.arc.answer.find((x) => !/accounted for/.test(x) && fitsAny(x) && wordsOf(x) <= SLOT_WORDS.day && !out.some((o) => o.id === 'day' || o.text === x || repeats(x, o.text) || (Math.abs(o.t - t) < 12 && [...stems(x)].some((w) => stems(o.text).has(w))))) : undefined;
@@ -661,6 +723,9 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     if (x) Object.assign(l, { text: shownText(x), say: speakable(x), source: x });
   }
   // (v23: no close placed: the loop's place goes to it, the shortest number-free close that fits)
+  // (else the last line after the peak gives way to it: every video has an end line)
+  const last = out[out.length - 1];
+  if (!out.some((o) => o.id === 'answer') && last && last.id !== 'loop' && last.id !== 'hook' && last.id !== 'climax' && last.id !== 'payoff' && !(last.id === 'card' && last.card) && !cmp && n.arc && last.t > outro - 8) Object.assign(last, { id: 'loop' });
   if (!out.some((o) => o.id === 'answer') && out[out.length - 1]?.id === 'loop' && !cmp && n.arc) {
     const l = out[out.length - 1], room = end - TAIL_S - l.t;
     const x = [...n.arc.answer, n.solid ? 'Every bite, accounted for.' : 'Every sip, accounted for.'].filter((y) => !out.some((o) => o.text === y)).sort((p, q) => speakS(p) - speakS(q)).find((y) => speakS(y) <= room);
@@ -669,6 +734,13 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   // the loop line ends on the last frame (it hands over to frame 0)
   const loop = out[out.length - 1];
   if (loop?.id === 'loop') { const t = Math.max(loop.t, end - TAIL_S - speakS(loop.text) - 0.1); loop.slotS -= t - loop.t; loop.t = t; }
+  // (v23b: the close before it moves later when that leaves a long pause before the loop line: two short pauses instead)
+  if (loop?.id === 'loop' && out.length >= 3) {
+    const pv = out[out.length - 2], pp = out[out.length - 3];
+    const after = loop.t - pv.t - speakS(pv.text), before = pv.t - pp.t - speakS(pp.text);
+    const sh = Math.min((after - before) / 2, after - GAP_S - 0.05);
+    if (after > 2.2 && sh > 0.05 && (pv.id === 'answer' || pv.id === 'day')) { pv.t += sh; pv.slotS = loop.t - GAP_S - pv.t; }
+  }
   for (let i = 0; i < out.length; i++) { const nx = out[i + 1]; if (nx) out[i].slotS = Math.min(out[i].slotS, nx.t - GAP_S - out[i].t); }
   return out;
 }
@@ -713,6 +785,9 @@ export function lintNarration(lines: NarrLine[], n: NarrIn): NarrIssue[] {
     // v23: every line earns its place (no line that only restates the state); time phrases from the first sip, not the clock
     if (restates(l.text)) bad('restates without new info', l.text);
     if (l.id !== 'hook' && CLOCK.test(l.text)) bad('clock time in narration', l.text);
+    // (a card that answers the hook's own question, "Is it still in you at bedtime?", has its time in that question)
+    const qAnch = ANCHOR.test(`${n.hook?.line1 ?? ''} ${n.hook?.line2 ?? ''}`.split(/(?<=[.?!])\s+/).filter((x) => x.includes('?')).join(' '));
+    if (l.id !== 'hook' && unanchored(l.text) && !(qAnch && l.card)) bad('state without time anchor', l.text);
     // v19: length per slot, and the grammar of a spoken line (a capital, an end mark, a question that is one)
     if (wordsOf(l.text) > SLOT_WORDS[l.id]) bad('narration line too long for its kind', `${l.id}: ${l.text}`);
     if (!/^[A-Z0-9]/.test(l.text) || !/[.?!]$/.test(l.text)) bad('narration grammar', l.text);
@@ -730,6 +805,16 @@ export function lintNarration(lines: NarrLine[], n: NarrIn): NarrIssue[] {
   // v23: the clearing time is said one way only (the hook's answer: "1–4 hours" twice, never "about 3 hours" as well)
   const clr = [...new Set(lines.filter((l) => l.id !== 'hook' && CLEAR_TIME.test(l.text)).map((l) => qtyOf(l.text).filter((x) => /\d$|hours|minutes/.test(x)).join(' ')))];
   if (clr.length > 1 && n.kind === 'single') bad('inconsistent time reference', clr.join(' | '));
+  // v23b: a hook question is answered out loud: the moment that answers it is read (and, for "how fast", the model's time)
+  if (n.kind === 'single' && /\?/.test(`${n.hook?.line1 ?? ''} ${n.hook?.line2 ?? ''}`)) {
+    const pt = (n.hook?.payoff ?? n.hook?.extra?.title ?? '').toLowerCase(), sp = n.plan.frames ? cardSpans(n.plan.frames).filter((x) => x.title.toLowerCase() === pt && /[.?!]$/.test(x.a) && !restates(x.a) && !CLOCK.test(x.a)) : [];
+    const said = (c: string) => lines.some((l) => l.id !== 'hook' && l.text.toLowerCase().includes(c.slice(1).replace(/\.$/, '').toLowerCase()));
+    if (pt && sp.length && !sp.some((x) => said(x.a) || lines.some((l) => l.card === x.a)) && !lines.some((l) => l.id === 'payoff' || (!!n.arc?.fast && FAST_Q.test(`${n.hook?.line1} ${n.hook?.line2}`) && /peak|after the first/i.test(l.text) && qtyOf(l.text).some((v) => qtyOf(n.arc!.fast!).includes(v))))) bad('hook question never answered', `${n.hook?.line1} ${n.hook?.line2} | ${sp.map((x) => x.a).join(' / ')}`);
+    // (the model's peak time said anywhere counts: "Peak sugar: about 60 minutes in.", "… About 25 minutes after the first sip.")
+    const pkN = qtyOf(n.arc?.fast ?? '');
+    const timed = (l: NarrLine) => l.id === 'payoff' || (/peak|after the first/i.test(l.text) && qtyOf(l.text).some((v) => pkN.includes(v)));
+    if (FAST_Q.test(`${n.hook?.line1} ${n.hook?.line2}`) && n.arc?.fast && !lines.some(timed)) bad('hook question never answered', `${n.hook?.line1} ${n.hook?.line2} (no time said)`);
+  }
   return out;
 }
 

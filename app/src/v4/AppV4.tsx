@@ -18,6 +18,7 @@ import { MAX_MIN, minutesFromU, uFromMinutes } from '../time';
 import { Drawer } from './Drawer';
 import { CATALOG, type CatalogItem } from './catalog';
 import { PRODUCTS, type WhereRow } from './products';
+import { partsOf } from './current-parts';
 import { BodyStart } from './BodyStart';
 import { StoryPanel } from './StoryPanel';
 import { chapterText } from './stories';
@@ -399,7 +400,7 @@ export default function AppV4() {
       pace: built.pace, canPace: paceable });
   }, [systems, profile, built, vYou, productId, foodParts, overEff, paceable]);
   // the current item as database parts (curated products too), its sugar peak, and a checked better swap
-  const currentParts = useMemo(() => (productId === 'food' ? foodParts : parseMeal(({ cola: 'cola', espresso: 'espresso', water: 'glass of water' } as Record<string, string>)[productId] ?? productId)), [productId, foodParts]);
+  const currentParts = useMemo(() => partsOf(productId, foodParts), [productId, foodParts]);
   const peakNow = useMemo(() => {
     const m = productId === 'food' ? macros(foodParts) : null;
     if (m && m.gl === null && m.availCarbs >= 3) return null;
@@ -608,7 +609,7 @@ export default function AppV4() {
   const vSeed = seedOf(shortName(videoName)), hookPair = hookPairOf(hookIn, vSeed);
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
   // (round 12: the story's own signal: espresso is #caffeine; round 18: a pljeskavica is #protein, not #bloodsugar)
-  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, ...captionFlags({ alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, decaf: /\bdecaf/i.test(videoName), sugarPeak: peakNow, solid: /bite/i.test(story.chapters[0]?.title ?? ''), macros: productId === 'food' && foodParts.length ? macros(foodParts) : undefined }) });
+  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, ...captionFlags({ alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, decaf: /\bdecaf/i.test(videoName), sugarPeak: peakNow, solid: /bite/i.test(story.chapters[0]?.title ?? ''), macros: currentParts.length ? macros(currentParts) : undefined }) });
   overlayRef.current = {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
@@ -666,8 +667,8 @@ export default function AppV4() {
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
         solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName),
-        ...(() => { const fm = productId === 'food' ? macros(foodParts) : null; const fi: FactIn = { kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
-          bac: built.bac, glucose: fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }; return { facts: factLines(fi, vSeed), arc: arcFor(fi, vSeed) }; })() }) : undefined };
+        ...(() => { const fm = currentParts.length ? macros(currentParts) : null; const fi: FactIn = { kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
+          bac: built.bac, glucose: productId === 'food' && fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }; return { facts: factLines(fi, vSeed), arc: arcFor(fi, vSeed) }; })() }) : undefined };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);

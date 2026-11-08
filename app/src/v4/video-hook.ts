@@ -183,7 +183,8 @@ export function hookB(h: HookIn, a: Hook): Hook {
   }
   // (round 17: "Ice cream: 4 teaspoons of sugar." had no moment for "Where does it go?"): its blood sugar peak answers
   const sugarPk = h.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title));
-  if (/teaspoons of sugar/.test(a.line1) && !a.payoff && a.payoffMin === undefined && sugarPk) return { line1: ["How fast does it hit your blood sugar?", "How high does your blood sugar go?"][seedOf(h.name) % 2], line2: a.line1, ...keep, payoff: sugarPk.title };
+  // (v23b, editor: "Where does that sugar end up?" was never answered out loud): the peak, which the model times, answers
+  if (/teaspoons of sugar/.test(a.line1) && a.payoffMin === undefined && sugarPk) return { line1: ["How fast does it hit your blood sugar?", "How high does your blood sugar go?"][seedOf(h.name) % 2], line2: a.line1, ...keep, payoff: sugarPk.title };
   const q = /teaspoons of sugar/.test(a.line1) ? ['Where does all that sugar go?', 'Where does that sugar end up?'][seedOf(h.name) % 2]
     : /mg of caffeine\.$/.test(a.line1) && /\?$/.test(a.line2) ? `When does its caffeine hit?`
     : /toilet/.test(a.line2) ? 'Does coffee send you to the toilet?'

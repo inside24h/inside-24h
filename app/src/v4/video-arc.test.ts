@@ -4,6 +4,10 @@
 import { describe, expect, it } from 'vitest';
 import { arcClass, arcFor, type FactIn } from './video-facts';
 import { lintNarration, restates, type NarrIn, type NarrLine } from './video-narration';
+import { PRODUCTS } from './products';
+import { partsOf } from './current-parts';
+import { macros } from './food/parse';
+import { auditItems } from './text-audit';
 
 const nin: NarrIn = { plan: { seconds: 30, cues: [], introS: 0, outroS: 3 }, kind: 'single', seed: 1, alcohol: true };
 const line = (t: number, text: string, id: NarrLine['id'] = 'card'): NarrLine => ({ id, t, slotS: 9, text, say: text, source: text });
@@ -31,8 +35,14 @@ describe('v23 story arc', () => {
     expect(a.hook.length).toBeGreaterThanOrEqual(2);
     expect(a.twist[0]).toMatch(/coffee/i);
     for (const x of [...a.hook, ...a.setup, ...a.twist, ...a.answer]) expect(x).not.toMatch(/\b(fun|enjoy|relax|cheers|reward|healthy|celebrate|buzz)\b/i);
-    for (const x of [...a.hook, ...a.setup]) for (const n of x.match(/\d+/g) ?? []) expect(['16', '1']).toContain(n);
+    for (const x of [...a.hook, ...a.setup]) for (const n of x.match(/\d+/g) ?? []) expect(['16', '1', '127']).toContain(n);
     for (const f of [wine, cola, water]) for (const x of arcFor(f, 7).loop) expect(x.split(/\s+/).length).toBeLessThanOrEqual(5);
     expect(arcFor(cola, 1).setup[0]).toMatch(/^35 g of sugar, about 8 teaspoons\.$/);
+  });
+  it('every item carries its macros into the video path (curated products too: cola, espresso, water)', () => {
+    const bad: string[] = [];
+    for (const id of Object.keys(PRODUCTS)) { const ps = partsOf(id, []); if (!ps.length || !(macros(ps).grams > 0)) bad.push(`product ${id}`); }
+    for (const it of auditItems()) if (!(it.x.macros.grams > 0)) bad.push(`item ${it.id}`);
+    expect(bad).toEqual([]);
   });
 });
