@@ -105,6 +105,19 @@ export default defineConfig({
     emptyOutDir: true,
     assetsInlineLimit: 4096, // the .glb and fonts stay separate files
     modulePreload: { polyfill: true },
-    rollupOptions: { input: 'index-v4.html' },
+    rollupOptions: {
+      input: 'index-v4.html',
+      output: {
+        // Audit C3 (2026-11-12): the food database and the climate table are data that changes far less often than the
+        // code: each is its own chunk, fetched in parallel with the entry (modulepreload) and kept in the browser's
+        // cache across deploys that do not touch it. (The video engine is lazy: src/v4/video-kit.ts.)
+        manualChunks(id) {
+          const f = id.replace(/\\/g, '/');
+          if (f.endsWith('/src/v4/food/fooddb.json')) return 'fooddb';
+          if (f.endsWith('/src/v4/climate/climate.json')) return 'climate';
+          return undefined;
+        },
+      },
+    },
   },
 });

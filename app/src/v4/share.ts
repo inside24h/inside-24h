@@ -950,12 +950,7 @@ export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w
 }
 
 /** First sentence(s) of a chapter, short enough for a caption. */
-export function captionOf(text: string, max = 130): string {
-  const parts = text.split(/(?<=[.!?])\s+/); // sentence ends need a space after them, so 2.4 stays one number
-  let out = '';
-  for (const p of parts) { if ((out + ' ' + p).length > max && out) break; out = out ? `${out} ${p}` : p; }
-  return out.trim();
-}
+export { captionOf } from './caption-text'; // (audit C3: moved there so the first screen needs no share.ts)
 
 type Downloads = { save: (r: { filename: string; data: Blob }) => Promise<{ status: string }> };
 type ClaudeHost = { use: (name: string) => Promise<unknown> };

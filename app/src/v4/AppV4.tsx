@@ -29,23 +29,48 @@ import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
 import { VoicePick } from './VoicePick';
-import { narrationFor, type NarrIn } from './video-narration';
-import { arcFor, compareDiffs, compareFacts, factInOf, factLines, type FactIn } from './video-facts';
-import { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, type CmpOverlay, type CmpSide, record, recordFrames, saveFile, type Format, type Overlay } from './share';
-import { planVideo, type Plan, type VFrame } from './video-plan';
-import { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
-import { compareHookB, hookB, hookFor, hookForCompare, seedOf, type HookIn } from './video-hook';
-import { captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Captions, type Platform } from './video-caption';
+import type { NarrIn } from './video-narration';
+import type { FactIn } from './video-facts';
+import type { CmpOverlay, CmpSide, Format, Overlay } from './share';
+import type { Plan, VFrame } from './video-plan';
+import type { Hook, HookIn } from './video-hook';
+import type { Captions, Platform } from './video-caption';
+import type { CapLine } from './video-captions';
+import { captionOf } from './caption-text'; // (the calm bar needs it on the first screen)
+// Audit C3 (2026-11-12): the video engine (video-kit.ts) is its own chunk, loaded when the page is idle or when Share
+// is tapped (loadVideoKit below), not in the first download. These bindings keep their old names, so the code below
+// reads as before; whatever renders before the kit is there checks `kitReady` first.
+type VideoKit = typeof import('./video-kit');
+let narrationFor!: VideoKit['narrationFor'], arcFor!: VideoKit['arcFor'], compareDiffs!: VideoKit['compareDiffs'], compareFacts!: VideoKit['compareFacts'], factInOf!: VideoKit['factInOf'], factLines!: VideoKit['factLines'];
+let canEncode!: VideoKit['canEncode'], composeCmpFrame!: VideoKit['composeCmpFrame'], composeCover!: VideoKit['composeCover'], composeFrame!: VideoKit['composeFrame'], recordCompare!: VideoKit['recordCompare'], stampFor!: VideoKit['stampFor'], record!: VideoKit['record'], recordFrames!: VideoKit['recordFrames'], saveFile!: VideoKit['saveFile'], SIZE!: VideoKit['SIZE'], VIDEO_COPY!: VideoKit['VIDEO_COPY'], videoSupportHere!: VideoKit['videoSupportHere'];
+let planVideo!: VideoKit['planVideo'];
+let beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], heroOf!: VideoKit['heroOf'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
+let compareHookB!: VideoKit['compareHookB'], hookB!: VideoKit['hookB'], hookFor!: VideoKit['hookFor'], hookForCompare!: VideoKit['hookForCompare'], seedOf!: VideoKit['seedOf'];
+let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor'], PLATFORM_CUT!: VideoKit['PLATFORM_CUT'], PLATFORM_LABEL!: VideoKit['PLATFORM_LABEL'], PLATFORM_LENGTH!: VideoKit['PLATFORM_LENGTH'], PLATFORMS!: VideoKit['PLATFORMS'];
+let idleDrift!: VideoKit['idleDrift'], ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
+let bodyGlowAt!: VideoKit['bodyGlowAt'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
+let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
+let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
+let kitP: Promise<void> | null = null;
+/** Loads the video engine once (later calls share the same promise; a failed load is tried again next time). */
+const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((k) => {
+  ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
+    planVideo, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf,
+    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, idleDrift, ORGAN_AT, project, SIDE_X, splitPose,
+    bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
+  SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
+}, (e) => { kitP = null; throw e; }));
+const NO_HOOK: Hook = { line1: '', line2: '' };
 /** Round 11 (research R2, R5): the two hooks of a video; which formula comes first rotates per food (its seed). */
 const hookPairOf = (h: HookIn, seed: number) => { const a = hookFor(h), b = hookB(h, a); return seed % 2 ? [b, a] : [a, b]; };
 import type { Guess } from './video-guess';
 import type { PlanFx } from './video-plan';
 // 2026-10-23 body-first video: the camera's shots, organ glow and the gauges pinned to the body
-import { idleDrift, ORGAN_AT, project, SIDE_X, splitPose, type Shot, type V3 } from './video-cam';
-import { bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, type BuiltLike } from './video-body';
+import type { Shot, V3 } from './video-cam';
+import type { BuiltLike } from './video-body';
 import type { ShotCue } from './VideoCam';
 import type { CmpCams } from './CompareVideo';
-import { SIZE, VIDEO_COPY, type PinnedGauge } from './share';
+import type { PinnedGauge } from './share';
 import { verdict, worstMoment } from './status';
 
 const ICON_OF = { energy: '⚡', heart: '❤', water: '💧', brain: '🧠' } as const;
@@ -59,7 +84,6 @@ import { CalmBar } from './CalmBar';
 import { Answers, mealLinesFor, quickAnswers } from './Answers';
 import { personalNotes } from '../science/personal';
 import { Disclaimer, HowWeKnow } from './HowWeKnow';
-import { videoSupportHere } from './share';
 import { bacRangeText, glucoseRangeTextIn } from '../science/ranges';
 import { Compare, EveryDay, Pro, VideoFallback, YourBody } from './lazyUi'; // loaded on first use
 import { isTouch } from './perf/device';
@@ -67,8 +91,8 @@ import { analyze, sugarDeltaText, sugarPeakText, verdictOf, type Analysis } from
 import { SwapCard, useSwap } from './Swap';
 import { formatTime, isCuratedServing, linkFor, mealText, own, PORTIONS, resolveLink, writeLink } from './deeplink';
 import { MealBar } from './MealBar';
-import { drawMomentCard } from './shareCard';
-import { MomentShare, type Moment } from './MomentShare';
+import type { Moment } from './MomentShare';
+import { MomentShare } from './lazyUi'; // (audit C3: it saves through share.ts, so it waits for the video kit too)
 
 
 import { SmartSearch } from './SmartSearch';
@@ -217,7 +241,7 @@ const BIG_V = new Set(['jejunum', 'ileum', 'colon_asc', 'colon_trans', 'colon_de
 /** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
  *  moment is read and out again for the quiet hours and the end. */
 const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62 - 0.1 * (idleDrift(fr) ?? 0)) }); // (round 5: breathes in and out with each card)
-const SPLIT_OPENING: Shot = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
+// (audit C3: SPLIT_OPENING is set when the video kit loads, see loadVideoKit)
 // (round 9: gaugesAt moved to video-story.ts)
 /** A pixel of a canvas of cw×ch drawn cover-cropped into a fw×fh frame (share.ts drawCover). */
 function coverMap(p: { x: number; y: number } | null, cw: number, ch: number, fw: number, fh: number) {
@@ -345,7 +369,16 @@ export default function AppV4() {
     return () => clearTimeout(id);
   }, [started, personalized, nudge]);
   useEffect(() => { if (panel === 'body') markPersonal(); }, [panel, markPersonal]); // found "Your body" on their own
-  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string; pin?: string; captions?: Captions } | null>(null);
+  const [share, setShare] = useState<{ state: 'choose' | 'rec' | 'ready' | 'error' | 'nosupport'; format?: Format; url?: string; blob?: Blob; ext?: string; msg?: string; caption?: string; pin?: string; captions?: Captions; srt?: string } | null>(null);
+  // audit C3: the video engine arrives after the first screen (loadVideoKit); until then nothing video-only renders
+  const [kitReady, setKitReady] = useState(false);
+  useEffect(() => {
+    let on = true;
+    const go = () => { loadVideoKit().then(() => { if (on) setKitReady(true); }, () => { /* tried again when Share is tapped */ }); };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 5000 }); else setTimeout(go, 2500);
+    return () => { on = false; };
+  }, []);
   const [handle, setHandle] = useState(() => { try { return localStorage.getItem('i24-handle') || '@inside24h'; } catch { return '@inside24h'; } });
   const recRef = useRef(false);
   const r3f = useRef<RootState | null>(null);
@@ -547,7 +580,7 @@ export default function AppV4() {
   const reelStops = useRef<number[] | null>(null);
   // round 11 (research R3): the platform picks the cut: TikTok / Facebook 62-75 s, Instagram Reels 45-55 s, Shorts 23-30 s
   const [platform, setPlatform] = useState<Platform>('tiktok');
-  const vidCut = PLATFORM_CUT[platform], shortVid = vidCut === 'short';
+  const vidCut = kitReady ? PLATFORM_CUT[platform] : 'long', shortVid = vidCut === 'short';
   const setShortVid = (v: boolean) => setPlatform(v ? 'shorts' : 'tiktok'); // (the comparison's own length switch)
   // round 11 (research R2): two hooks per video, A and B (which formula is A rotates per food: research R5)
   const [hookVar, setHookVar] = useState<'A' | 'B'>('A');
@@ -559,10 +592,13 @@ export default function AppV4() {
   const [vidVoice, setVidVoiceS] = useState(() => { try { return localStorage.getItem('i24-voice') !== '0'; } catch { return true; } });
   const setVidVoice = (v: boolean) => { setVidVoiceS(v); try { localStorage.setItem('i24-voice', v ? '1' : '0'); } catch { /* private mode */ } };
   const [voiceRec, setVoiceRec] = useState<{ stage: 'load' | 'speak'; frac: number } | null>(null);
+  const voiceLines = useRef<CapLine[] | null>(null); // audit C16: the spoken lines as placed, for the .srt next to the video
   const voiceFor = (nin: NarrIn) => async () => {
+    voiceLines.current = null;
     try {
       const { makeVoice } = await import('./voice-tts');
       const t0 = performance.now(), v = await makeVoice(narrationFor(nin), nin.plan.seconds, (frac, stage) => setVoiceRec({ stage, frac }));
+      voiceLines.current = v?.lines ?? null;
       if (HASH.get('vqa')) console.log('[vqa] voice', JSON.stringify({ ms: Math.round(performance.now() - t0), device: v?.device, said: v?.said, spans: v?.spans.map((s) => s.map((x) => Math.round(x * 100) / 100)) }));
       return v;
     } catch { return null; } finally { setVoiceRec(null); }
@@ -600,17 +636,17 @@ export default function AppV4() {
   const recChapter = story.chapters.reduce((acc, c) => (recStop + 1e-6 >= c.min ? c : acc), story.chapters[0]);
   // while the video is made: the organs at work light up, the rest dims (video-body.ts)
   const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null) : null;
-  const hookIn = { name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
+  const hookIn = !kitReady ? null : { name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
     alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
     pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
     grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg,
     surprise: productId === 'food' && foodParts.length === 1 ? surpriseOf(videoName, peakNow, profile) : undefined,
     decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined };
-  const vSeed = seedOf(shortName(videoName)), hookPair = hookPairOf(hookIn, vSeed);
+  const vSeed = hookIn ? seedOf(shortName(videoName)) : 0, hookPair = hookIn ? hookPairOf(hookIn, vSeed) : [NO_HOOK, NO_HOOK];
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
   // (round 12: the story's own signal: espresso is #caffeine; round 18: a pljeskavica is #protein, not #bloodsugar)
   const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, ...captionFlags({ alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, decaf: /\bdecaf/i.test(videoName), sugarPeak: peakNow, solid: /bite/i.test(story.chapters[0]?.title ?? ''), macros: currentParts.length ? macros(currentParts) : undefined }) });
-  overlayRef.current = {
+  overlayRef.current = !kitReady ? null : {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
     // 2026-10-24: two lines, the surprise first and the promise second, from the model of this export (video-hook.ts)
@@ -695,7 +731,7 @@ export default function AppV4() {
       : record(canvas, format, pinned, (m, fr) => { recFr.current = fr ?? null; setU(uFromMinutes(m)); cue(fr); }, plan, opts);
     job
       .then(({ blob, ext, audio, voice }) => setShare({ state: 'ready', format, blob, ext, url: URL.createObjectURL(blob),
-        caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`, captions: captionsNow(),
+        caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`, captions: captionsNow(), srt: voice && voiceLines.current?.length ? srtOf(voiceLines.current) : undefined,
         pin: pinnedIdea(),
         msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined }))
       .catch((e: Error) => setShare({ state: 'error', msg: e.message }))
@@ -705,7 +741,8 @@ export default function AppV4() {
     const spec = HASH.get('frame');
     if (!spec) return;
     const [fmt, phase] = spec.split('-') as [Format, 'intro' | 'main' | 'outro'];
-    const id = setTimeout(() => {
+    const id = setTimeout(async () => {
+      await loadVideoKit();
       const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
       if (!canvas || !overlayRef.current) return;
       const c = composeFrame(canvas, fmt, overlayRef.current, phase);
@@ -719,7 +756,7 @@ export default function AppV4() {
   const [cmpNever, setCmpNever] = useState(false);
   const cmpOverlayRef = useRef<CmpOverlay | null>(null);
   const cmpStops = useRef<number[] | null>(null); // the moments the comparison video stops at (video-plan.ts planCompare)
-  if (cmpRec) {
+  if (cmpRec && kitReady) {
     const m = minutesFromU(cmpRec.u), mi = Math.round(Math.min(1440, m));
     const mStop = recFr.current?.stop ?? (cmpStops.current ?? (shortVid ? CMP_SHORT : CMP_STOPS)).find((x) => x >= m - 0.01) ?? 1440; // text belongs to the moment we are heading to
     const side = (x: Analysis): CmpSide => {
@@ -795,6 +832,7 @@ export default function AppV4() {
             lateFacts: compareDiffs(factInOf(a), factInOf(b), [cmpName(a.label), cmpName(b.label)], seedOf(`${a.label} vs ${b.label}`)), verdict: cp.verdict }) : undefined });
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${cmpName(a.label)} vs ${cmpName(b.label)}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
           captions: captionsFor({ name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, hook: { line1: cmpOverlayRef.current?.hook ?? '', line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), sugar: /sugar/i.test(cmpOverlayRef.current?.hook ?? ''), /* (round 16: "which has more sugar?" too) */ caffeine: [a, b].some((x) => x.built.caffeine.doseMg >= 20), compare: { a: cmpName(a.label), b: cmpName(b.label) } }),
+          srt: voice && voiceLines.current?.length ? srtOf(voiceLines.current) : undefined,
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',
           msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined });
       } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
@@ -809,7 +847,8 @@ export default function AppV4() {
     if (!bp.length || !currentParts.length) return; // unknown food in a QA link: nothing to draw
     const b = analyze(bp, profile), a = analyze(currentParts, profile);
     setCmpRec({ a, b, u: uFromMinutes(HASH_T ?? 0) });
-    const id = setTimeout(() => {
+    const id = setTimeout(async () => {
+      await loadVideoKit();
       const ca = document.querySelector<HTMLCanvasElement>('.stage canvas');
       if (!ca || !cmpOverlayRef.current) return;
       const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st); // draw now (two viewports), read in the same task
@@ -926,7 +965,7 @@ export default function AppV4() {
             <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
           </div>
           {started && <button className="ghost hdr" onClick={() => setCompare({})}><span aria-hidden="true">⇄ </span>Compare</button>}
-          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setVideoOpen(false); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
+          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setVideoOpen(false); void loadVideoKit().then(() => { setKitReady(true); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }, () => setShare({ state: 'error', msg: 'We couldn’t load the video maker. Check your connection and try again.' })); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
           <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>coming soon</small></button>
           <button className="ghost hdr support" onClick={() => setPanel('support')}><span aria-hidden="true">♥ </span>Support</button>
@@ -1154,7 +1193,7 @@ export default function AppV4() {
 
       {leftNote && !linkNote && <div className="linknote leftout" role="status">{leftNote}<button className="x" aria-label="Close" onClick={() => setLeftNote(null)}>×</button></div>}
       {linkNote && <div className="linknote" role="status">{linkNote}<button className="x" aria-label="Close" onClick={() => setLinkNote(null)}>×</button></div>}
-      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={canEncode() ? makeCompareVideo : undefined} voice={vidVoice} setVoice={setVidVoice} short={shortVid} setShort={setShortVid} platform={platform} setPlatform={setPlatform} onRight={setVsParts} />}
+      {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={kitReady && canEncode() ? makeCompareVideo : undefined} voice={vidVoice} setVoice={setVidVoice} short={shortVid} setShort={setShortVid} platform={platform} setPlatform={setPlatform} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
       {share?.state === 'rec' && <div className="recbadge" role="status">{voiceRec
         ? <>● {voiceRec.stage === 'load' ? 'Downloading the voice (once)…' : 'Making the voiceover…'} {Math.round(voiceRec.frac * 100)}% · keep this tab open</>
@@ -1210,6 +1249,11 @@ export default function AppV4() {
                 const r = await saveFile(`${fileName}-${share.format === 'reel' ? platform : 'feed'}${hookVar === 'B' ? '-hookB' : ''}.${share.ext}`, share.blob!);
                 setShare({ ...share, msg: r === 'saved' ? 'Saved. Post it as a Reel, Story or TikTok.' : r === 'declined' ? 'Not saved.' : 'Saving files isn’t available here. Right-click the video and choose “Save video as…”.' });
               }}>Save video ({share.ext?.toUpperCase()}, {((share.blob?.size ?? 0) / 1e6).toFixed(1)} MB)</button>}
+              {share.state === 'ready' && share.srt && <button className="ghost" onClick={async () => {
+                // audit C16: the voiceover's words as subtitles, for YouTube / Facebook (upload it with the video)
+                const r = await saveFile(`${fileName}-${share.format === 'reel' ? platform : 'feed'}${hookVar === 'B' ? '-hookB' : ''}.srt`, new Blob([share.srt!], { type: 'application/x-subrip' }));
+                setShare({ ...share, msg: r === 'saved' ? 'Subtitles saved (.srt). Upload them with the video on YouTube or Facebook.' : r === 'declined' ? 'Not saved.' : 'Saving files isn’t available here.' });
+              }}>Save subtitles (.srt)</button>}
               {share.state === 'ready' && <button className="ghost" onClick={() => setShare({ state: 'choose' })}>Make another</button>}
               {share.state === 'choose' && videoOpen && <button className="ghost" onClick={saveCover}>Save cover image (PNG)</button>}
               <button className="ghost" onClick={() => setShare(null)}>Close</button>

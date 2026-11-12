@@ -9,6 +9,7 @@ import type { EveryDay as EveryDayT } from './EveryDay';
 import type { Pro as ProT } from './Pro';
 import type { VideoFallback as VideoFallbackT } from './VideoFallback';
 import type { Browse as BrowseT } from './Browse';
+import type { MomentShare as MomentShareT } from './MomentShare';
 
 const loaders = {
   Compare: () => import('./Compare').then((m) => ({ default: m.Compare })),
@@ -17,6 +18,7 @@ const loaders = {
   Pro: () => import('./Pro').then((m) => ({ default: m.Pro })),
   VideoFallback: () => import('./VideoFallback').then((m) => ({ default: m.VideoFallback })),
   Browse: () => import('./Browse').then((m) => ({ default: m.Browse })),
+  MomentShare: () => import('./MomentShare').then((m) => ({ default: m.MomentShare })), // (audit C3: with share.ts)
 };
 
 function onDemand<C extends (props: never) => unknown>(load: () => Promise<{ default: C }>) {
@@ -31,6 +33,7 @@ export const EveryDay = onDemand<typeof EveryDayT>(loaders.EveryDay);
 export const Pro = onDemand<typeof ProT>(loaders.Pro);
 export const VideoFallback = onDemand<typeof VideoFallbackT>(loaders.VideoFallback);
 export const Browse = onDemand<typeof BrowseT>(loaders.Browse);
+export const MomentShare = onDemand<typeof MomentShareT>(loaders.MomentShare);
 
 /** Fetch every on-demand part in the background (call when idle). */
 export function prefetchUi() {

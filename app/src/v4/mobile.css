@@ -16,7 +16,7 @@
   background: var(--raised); border: 1px solid var(--line2); border-radius: 14px; box-shadow: 0 18px 40px rgba(0, 0, 0, .5); }
 .topmenu > button { text-align: left; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--text); font: 15px var(--body); cursor: pointer; }
 .topmenu > button:hover, .topmenu > button:focus-visible { background: rgba(92, 211, 255, .1); outline: 0; }
-.topmenu > button small { font: 10px var(--mono); color: #ffd27a; margin-left: 4px; }
+.topmenu > button small { font: 11px var(--mono); color: #ffd27a; margin-left: 4px; }
 .topmenu .seg2.mode { margin-bottom: 6px; }
 .topmenu .seg2.mode button { min-height: 40px; }
 .sheetback { position: fixed; inset: 0; z-index: 45; background: rgba(2, 5, 9, .55); }
@@ -75,7 +75,7 @@
 .calmlight.warn { border-color: var(--line2); background: rgba(255, 255, 255, .03); }
 .calmlight.on { border-color: var(--accent); background: rgba(92, 211, 255, .08); }
 .calmlight em { font-style: normal; color: var(--mute); }
-.calmlight .why { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line2); font: 600 10px var(--mono); color: var(--mute); }
+.calmlight .why { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line2); font: 600 11px var(--mono); color: var(--mute); }
 .calmexplain { max-width: 920px; width: 100%; margin: 0 auto; display: grid; gap: 4px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line2); text-align: left; }
 .calmexplain b { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
 .calmexplain b i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
@@ -248,7 +248,7 @@
   /* calm bar: a tapped light replaces the long sentence instead of pushing the body off the screen */
   .calmbar:has(.calmexplain) .calmtext p, .calmbar:has(.calmexplain) .calmwhere { display: none; }
   .calmctl .eatenat { display: grid; justify-items: center; gap: 0; }
-  .calmctl .eatenat .plabel { display: block; margin: 0; font: 10px var(--mono); letter-spacing: .04em; color: var(--mute); }
+  .calmctl .eatenat .plabel { display: block; margin: 0; font: 11px var(--mono); letter-spacing: .04em; color: var(--mute); }
   .eatenat input { min-height: 40px; }
 
   /* FULL view on a phone: the body on top (no cards over it), then the lights, the trip and the story below */
@@ -397,7 +397,7 @@
 .startsheet .tile i { grid-row: auto; width: 26px; height: 34px; border: 2px solid rgba(220, 235, 250, .55); border-radius: 4px 4px 9px 9px; opacity: 1; background: linear-gradient(180deg, transparent 30%, var(--tc) 30%); }
 .startsheet .tile.solid i { width: 30px; height: 30px; border-radius: 50%; background: var(--tc); margin-block: 2px; }
 .startsheet .tile b { font: 400 19px/1 var(--display); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.startsheet .tile span { font: 10.5px var(--mono); color: var(--mute); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.startsheet .tile span { font: 11px var(--mono); color: var(--mute); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .startsheet .tile:hover, .startsheet .tile:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); outline: 0; }
 .startsheet .then { font-size: 13px; }
 .startsheet .then .link { font-size: 13px; }
@@ -452,3 +452,14 @@
 /* "+ Add" is a direct child of the header's meal bar now (row 1, next to the search), also for a meal */
 .mealbar > .madd { justify-self: end; }
 .mealbar:has(.results) > .madd { display: none; } /* while the search list is open it gets the whole width */
+/* audit C16 (2026-11-12): on touch screens every tap target is at least 44 × 44 px (measured at 390 px wide) */
+@media (pointer: coarse) {
+  .sfield input, .eatenat input, .sharebox .handle input { min-height: 44px; }
+  .cchips button, .sharebox .nbtns button, .lenpick button { min-height: 44px; }
+  .portion button, .lenpick button, .calmctl .portion button, .calmctl .portion button.named, .calmctl .portion button.cur { min-width: 44px; }
+  .topmenu .seg2.mode button { min-height: 44px; }
+  .drawer input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), .drawer select { min-height: 44px; }
+}
+/* (and at least 24 px tall with a mouse: WCAG 2.2 target size minimum) */
+@media (pointer: fine) { .top .brand, button.link, .disclaim button, .calmdots .fullview, .check { min-height: 24px; } }
+@media (pointer: coarse) { .drawer .check { min-height: 44px; } }
