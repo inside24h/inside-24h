@@ -454,6 +454,8 @@ describe('round 13: one source of truth for every number and time; lively pacing
   const argmax = (s: ArrayLike<number>) => { let k = 0; for (let i = 1; i <= Math.min(1440, s.length - 1); i++) if (s[i] > s[k]) k = i; return k; };
   it('the end card says the same peak minute as the video (sugar: the "Blood sugar peak" moment; alcohol: the BAC peak)', () => {
     const bad: string[] = [];
+    // (master audit 2026-11-12, C12: the end card rounds a model's minute, to 5 under an hour and to 15 from an hour on)
+    const tol = (min: number) => (min >= 57.5 ? 7.5 : min >= 9.5 ? 2.5 : 2);
     for (const { id, x } of EVERY) {
       for (const s of x.systems) {
         const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
@@ -461,9 +463,9 @@ describe('round 13: one source of truth for every number and time; lively pacing
         const m = minOf(note);
         if (s.key === 'energy' && m !== null && /peak|spike/i.test(note)) {
           const ch = x.built.story.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title));
-          if (ch && Math.abs(ch.min - m) > 2) bad.push(`${id}: "${note}" vs moment +${ch.min}`);
+          if (ch && Math.abs(ch.min - m) > tol(ch.min)) bad.push(`${id}: "${note}" vs moment +${ch.min}`);
         }
-        if (s.key === 'brain' && m !== null && x.built.bac && Math.max(...Array.from(x.built.bac)) > 0.02 && Math.abs(argmax(x.built.bac) - m) > 2) bad.push(`${id}: "${note}" vs BAC peak`);
+        if (s.key === 'brain' && m !== null && x.built.bac && Math.max(...Array.from(x.built.bac)) > 0.02 && Math.abs(argmax(x.built.bac) - m) > tol(argmax(x.built.bac))) bad.push(`${id}: "${note}" vs BAC peak`);
         if (note.length > 32) bad.push(`${id}: note too long "${note}"`);
       }
     }

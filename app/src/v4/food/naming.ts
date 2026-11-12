@@ -133,6 +133,8 @@ export function amountPhrase(p: Pick<Part, 'food' | 'amountLabel' | 'grams'>): s
       return done(count === 0.5 ? `half ${art(adj)} ${adj} ${n}` : `${fmtCount(count)} ${adj} ${count > 1 ? pluralOf(n) : n}`, detail);
     }
     if (ITSELF.test(one)) return done(count === 0.5 ? `half ${art(n)} ${n}` : `${fmtCount(count)} ${count > 1 ? pluralOf(n) : n}`, detail);
+    // (master audit 2026-11-12, C18: "10 gummy bears of gummy candy"): a unit that already names the food is enough
+    if (/\s/.test(one) && one.toLowerCase().split(/\s+/).some((w) => w.length >= 4 && nw.some((x) => x.toLowerCase() === w))) return done(countWord(count, one), detail);
     return done(`${countWord(count, one)} of ${n}`, detail);
   }
   return `${n} (${p.amountLabel})`;

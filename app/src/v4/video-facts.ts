@@ -2,9 +2,10 @@
 // lines the voiceover says between the story cards. Each is a fact of this food from the model (its calories, sugar,
 // protein, fat, fiber, alcohol, caffeine, water, grams), said in one of several ways (the video's seed picks), so no
 // wording is heard on more than a few videos. A comparison's facts name their side ("Muffin: 9 g of fat …").
-import type { Macros } from './food/parse';
+import { sugarWord, type Macros } from './food/parse';
 import { ANY_GL, ATTENTION_GL, alcoholClock } from '../science/alcoholClock';
 import { bacRange } from '../science/ranges';
+import { minWords, roundMin, SUGAR_DIP_MGDL } from './timeWords';
 
 export interface FactIn {
   kcal: number; macros?: Macros | null; alcoholG?: number; caffeineMg?: number; waterMl?: number; /** half out of the stomach (min) */ t50?: number;
@@ -116,7 +117,7 @@ export const FACT_SHORT: Record<FactKind, readonly string[]> = {
 /** v22: the derived numbers of one food, from its model curves (exported for the "fact = model" test). Rounded as
  *  said: minutes to 5 (under 2 h), else hours to the half; percentages whole. */
 export const halfH = (min: number) => Math.round(min / 30) / 2;
-export const timeAt = (min: number): [number, string] => (min < 120 ? [Math.max(5, Math.round(min / 5) * 5), 'minutes'] : [halfH(min), 'hours']);
+export const timeAt = (min: number): [number, string] => (min < 120 ? [Math.max(5, roundMin(min)), 'minutes'] : [halfH(min), 'hours']); // (C12: to 5 min, from an hour on to 15)
 const argmaxV = (xs: ArrayLike<number>, n = xs.length) => xs[argmax(xs, n)];
 const argmax = (xs: ArrayLike<number>, n = xs.length) => { let k = 0; for (let i = 1; i < Math.min(n, xs.length); i++) if (xs[i] > xs[k]) k = i; return k; };
 export function derivedFacts(f: FactIn) {
@@ -153,7 +154,7 @@ export function derivedFacts(f: FactIn) {
       let back = -1; for (let i = k; i < Math.min(900, f.glucose.length); i++) if (f.glucose[i] <= 0.1 * pk) { back = i; break; }
       if (back > k) { const [n2, u2] = timeAt(back); out.push({ kind: 'sugarBack', n: n2, u: u2 }); }
       let lo = k; for (let i = k; i < Math.min(900, f.glucose.length); i++) if (f.glucose[i] < f.glucose[lo]) lo = i;
-      if (f.glucose[lo] <= -5) { const [n3, u3] = timeAt(lo); out.push({ kind: 'sugarDip', n: n3, u: u3 }); }
+      if (f.glucose[lo] <= -SUGAR_DIP_MGDL) { const [n3, u3] = timeAt(lo); out.push({ kind: 'sugarDip', n: n3, u: u3 }); }
     }
   }
   // blood fat (mmol/L change)
@@ -169,7 +170,7 @@ export function derivedFacts(f: FactIn) {
   dv('dvKcal', kcal, DV.kcal, 1);
   if (m) { dv('dvSodium', m.sodiumMg, DV.sodiumMg, 5); dv('dvFiber', m.fiber, DV.fiber, 5); dv('dvProtein', m.protein, DV.protein, 5); dv('dvSatFat', m.satFat, DV.satFat, 5); }
   // brisk walking, 3.5 MET (Compendium of Physical Activities), kcal/min = MET × 3.5 × kg / 200 (ACSM); not for alcohol
-  if (kcal >= 5 && (f.weightKg ?? 0) > 20 && (f.alcoholG ?? 0) < 0.5) out.push({ kind: 'walk', n: Math.max(1, Math.round(kcal / ((WALK_MET * 3.5 * f.weightKg!) / 200))) });
+  if (kcal >= 5 && (f.weightKg ?? 0) > 20 && (f.alcoholG ?? 0) < 0.5) out.push({ kind: 'walk', n: roundMin(kcal / ((WALK_MET * 3.5 * f.weightKg!) / 200)) });
   if (f.glucose && f.glucose.length > 60 && m && m.availCarbs < 5 && argmaxV(f.glucose, 600) < 5) out.push({ kind: 'flatSugar' });
   if (f.drink && (f.waterMl ?? 0) >= 100 && (f.bodyWaterL ?? 0) > 10 && (f.alcoholG ?? 0) < 0.5 && kcal < 60) {
     out.push({ kind: 'bodyWater', n: Math.round(f.bodyWaterL!) });
@@ -203,7 +204,7 @@ export function factLines(f: FactIn, seed: number, name = ''): string[] {
   if (f.kcal >= 20) out.push(['kcal', r(f.kcal)]); else if (f.kcal >= 1) out.push(['lowKcal', r(f.kcal)]);
   if ((f.caffeineMg ?? 0) >= 0.5 && (f.caffeineMg ?? 0) < 10) out.push(['lowCaffeine', r(f.caffeineMg!)]);
   if (m && m.sodiumMg >= 150) out.push(['sodium', r(m.sodiumMg)]);
-  if ((f.t50 ?? 0) >= 5) out.push(['stomach', r(f.t50!)]);
+  if ((f.t50 ?? 0) >= 5) out.push(['stomach', roundMin(f.t50!)]);
   if (f.drink && (f.waterMl ?? 0) >= 100) out.push(['water', r(f.waterMl!)]);
   else if (!f.drink && m && m.grams >= 30) out.push(['grams', r(m.grams)]);
   // v22: a light food has few big numbers: its small ones too (a pause needs a fact, never a generic line)
@@ -224,11 +225,15 @@ export function factLines(f: FactIn, seed: number, name = ''): string[] {
   // v22: the derived facts (from the model curves) come after the food's main numbers, the most telling first; each
   // in two wordings when it has a number (the planner says a fact once: no number twice), so a pause has a choice
   const dv = derivedFacts(f), lead = out.slice(0, 2), rest = out.slice(2);
-  const main = [...lead.map(([k, n, t], i) => say(pick(ok(FACT_WORDINGS[k]), seed, 31 + i * 7), n, t)),
+  // (master audit 2026-11-12, C2): natural sugar (milk, whole fruit) is named so, never "teaspoons of sugar"
+  const sw = m?.sugarSource ? sugarWord(m.sugarSource) : '';
+  const nat = (k: FactKind, w: string) => (k !== 'sugar' || !sw ? w : w.replace('{n} g of sugar, about {t} teaspoons.', '{n} g of SW.').replace('{t} teaspoons of sugar in there.', '{n} g of SW in there.')
+    .replace('About {t} teaspoons of sugar, all told.', 'About {n} g of SW, all told.').replace(/^Sugar\b/, 'SWC').replace(/\bsugar\b/, 'SW').replace('SWC', sw.charAt(0).toUpperCase() + sw.slice(1)).replace('SW', sw));
+  const main = [...lead.map(([k, n, t], i) => say(nat(k, pick(ok(FACT_WORDINGS[k]), seed, 31 + i * 7)), n, t)),
     ...dv.map((d, i) => say(pick(ok(FACT_WORDINGS[d.kind]), seed, 131 + i * 11), d.n ?? 0, undefined, d.u, d.a)),
-    ...rest.map(([k, n, t], i) => say(pick(ok(FACT_WORDINGS[k]), seed, 45 + i * 7), n, t))];
+    ...rest.map(([k, n, t], i) => say(nat(k, pick(ok(FACT_WORDINGS[k]), seed, 45 + i * 7)), n, t))];
   const alt = dv.filter((d) => d.n !== undefined).map((d, i) => { const ws = ok(FACT_WORDINGS[d.kind]); return say(ws[(ws.indexOf(pick(ws, seed, 131 + i * 11) as never) + 1) % ws.length], d.n!, undefined, d.u, d.a); });
-  return [...main, ...out.map(([k, n, t], i) => say(pick(ok(FACT_SHORT[k]), seed, 77 + i * 5), n, t)),
+  return [...main, ...out.map(([k, n, t], i) => say(nat(k, pick(ok(FACT_SHORT[k]), seed, 77 + i * 5)), n, t)),
     ...dv.flatMap((d, i) => (d.n === undefined ? [] : [say(pick(ok(FACT_SHORT[d.kind]), seed, 177 + i * 5), d.n, undefined, d.u, d.a)])), ...alt.filter((x) => !main.includes(x))];
 }
 
@@ -357,11 +362,11 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (dip) hook.push('Then it dips below where it started.');
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
       hook.push('No chewing, no waiting: it hits fast.');
-      if (sug >= 1) setup.push(`${sug} g of sugar, about ${tsp} teaspoons.`);
+      if (sug >= 1) setup.push(m?.sugarSource ? `${sug} g of ${sugarWord(m.sugarSource)}.` : `${sug} g of sugar, about ${tsp} teaspoons.`);
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`, `Walking it off: about ${walk.n} minutes.`);
       if (dip) twist.push(`The twist: ${at(dip)}, it dips below where it started.`);
       if (cb?.n && (f.caffeineMg ?? 0) >= 10) twist.push(`At bedtime, ${cb.n} % of its caffeine is still in you.`, `${cb.n} % of its caffeine lasts until bedtime.`);
-      if (sug >= 8) answer.push('Your blood felt every teaspoon.');
+      if (sug >= 8 && !m?.sugarSource) answer.push('Your blood felt every teaspoon.');
       if (sp?.u === 'minutes') answer.push('That sugar hit your blood within minutes.');
     } else if (cls === 'starch') {
       hook.push("It isn't sweet, but it turns into sugar.");
@@ -384,7 +389,7 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (tg?.n) twist.push(`The fat arrives late: blood fat peaks about ${tg.n} hours in.`);
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
     } else if (cls === 'meal') {
-      if ((f.t50 ?? 0) >= 30) hook.push(`Your stomach needs ${r(f.t50!)} minutes for just half.`);
+      if ((f.t50 ?? 0) >= 30) hook.push(`Your stomach needs ${minWords(f.t50!)} for just half.`);
       hook.push('Your gut has hours of work ahead.');
       const dk = d('dvKcal'); if (dk?.n) setup.push(`That's ${dk.n} % of a whole day of calories.`);
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
@@ -397,7 +402,7 @@ export function arcFor(f: FactIn, seed: number): Arc {
     } else {
       if (d('flatSugar')) hook.push('Your glucose barely moves.');
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
-      if (sug >= 3) setup.push(`${sug} g of sugar, about ${tsp} teaspoons.`);
+      if (sug >= 3) setup.push(m?.sugarSource ? `${sug} g of ${sugarWord(m.sugarSource)}.` : `${sug} g of sugar, about ${tsp} teaspoons.`);
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
     }
     answer.push(f.drink ? 'Every sip, accounted for.' : 'Every bite, accounted for.');
@@ -410,7 +415,9 @@ export function arcFor(f: FactIn, seed: number): Arc {
   if ((f.caffeineMg ?? 0) >= 1) extra.push('Caffeine blocks the signal that makes you sleepy.', 'Your liver breaks the caffeine down.');
   if (m && m.fiber >= 2) extra.push('Fiber slows the whole trip down.');
   if (m && m.fat >= 5) extra.push('Fat keeps it in your stomach longer.');
-  if (m && m.sugars >= 3 && m.sugars >= 0.8 * m.availCarbs && m.fat < 2 && m.fiber < 1) extra.push('Pure sugar needs almost no digesting.');
+  // (master audit 2026-11-12, C2: natural sugar says where it comes from; it is not "pure sugar")
+  if (m?.sugarSource && m.sugars >= 3) extra.push('Nothing sweet was added.', m.sugarSource === 'milk' ? 'This sugar comes naturally from the milk.' : m.sugarSource === 'fruit' ? 'This sugar comes naturally from the fruit.' : 'This sugar comes naturally with the food.');
+  if (m && !m.sugarSource && m.sugars >= 3 && m.sugars >= 0.8 * m.availCarbs && m.fat < 2 && m.fiber < 1) extra.push('Pure sugar needs almost no digesting.');
   if (m && m.protein >= 5) extra.push('Protein gets split into amino acids.');
   if (!f.drink && m && m.grams >= 5) extra.push('Your stomach churns it for a while first.');
   if ((f.alcoholG ?? 0) < 1) extra.push('Your blood carries it to every cell.');

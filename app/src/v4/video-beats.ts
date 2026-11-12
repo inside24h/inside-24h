@@ -11,6 +11,7 @@
 
 import { BAC_SPREAD, BAC_SPREAD_UP } from '../science/ranges';
 import { ELIM_RANGE } from '../science/alcoholClock';
+import { minWords } from './timeWords';
 
 /** Longest card, in words (numbers and "×" count as words). */
 export const BEAT_WORDS = 8;
@@ -33,19 +34,19 @@ type Rule = [RegExp, (m: RegExpMatchArray) => string[]];
 const RULES: Rule[] = [
   // stomach
   [/^(?:Each (\w+): )?[Hh]alf of it leaves your stomach within about (\d+) minutes(.*)$/, (m) => [
-    m[1] ? `Each ${m[1]}: half leaves within ${m[2]} minutes.` : `Half leaves your stomach within ${m[2]} minutes.`,
+    m[1] ? `Each ${m[1]}: half leaves within ${minWords(Number(m[2]))}.` : `Half leaves your stomach within ${minWords(Number(m[2]))}.`,
     ...(/alcohol and the rest of the drink slow/.test(m[3]) ? ['The drink slows your stomach down.'] : /alcohol slows the stomach a little/.test(m[3]) ? ['Alcohol slows your stomach a little.']
       : /calories slow/.test(m[3]) ? ['Its calories slow your stomach down.'] : /as fast as water/.test(m[3]) ? ['About as fast as water.'] : [])]],
   // (round 13: the "almost all" time comes from the model, in minutes or hours, and may be left out)
   [/^(?:Each \w+: y|Y)our stomach churns it into a paste and lets it out slowly: half has moved on after about (\d+) minutes(?:, almost all of it by about (\d+) (minutes|hours))?/, (m) => [
-    'Your stomach churns it into a paste.', `Half has moved on after ${m[1]} minutes.`, ...(m[2] ? [`Almost all has moved on by ${m[3] === 'minutes' && Number(m[2]) >= 90 ? `about ${Math.floor(Number(m[2]) / 60)} h${Number(m[2]) % 60 >= 5 ? ` ${Math.round(Number(m[2]) % 60)} min` : ''}` : `${m[2]} ${m[3]}`}.`] : [])]], // (round 18: never "by 100 minutes")
+    'Your stomach churns it into a paste.', `Half has moved on after ${minWords(Number(m[1]))}.`, ...(m[2] ? [`Almost all has moved on by ${m[3] === 'minutes' && Number(m[2]) >= 90 ? `about ${Math.floor(Number(m[2]) / 60)} h${Number(m[2]) % 60 >= 5 ? ` ${Math.round(Number(m[2]) % 60)} min` : ''}` : `${m[2]} ${m[3]}`}.`] : [])]], // (round 18: never "by 100 minutes")
   [/^(?:Each round has t|T)wo speeds: (.+?) runs ahead along the stomach wall, half gone in about (\d+) minutes/, (m) => [
-    'Your stomach works at two speeds.', ...(words(`${m[1]} runs ahead along the stomach wall.`) <= BEAT_WORDS ? [cap(`${m[1]} runs ahead along the stomach wall.`)] : ['The drink runs ahead along the wall.']), `Half of it is gone in ${m[2]} minutes.`]],
-  [/^.+ (?:are|is) churned into a paste and let out slowly: half after about (\d+) minutes/, (m) => ['The food is churned into a paste.', `Half of it moves on after ${m[1]} minutes.`]],
-  [/^(?:Each round: e|E)verything is mixed into one paste: half of the meal has moved on after about (\d+) minutes/, (m) => ['Everything is mixed into one paste.', `Half has moved on after ${m[1]} minutes.`]],
-  [/^Because of the sugar, it lets the (\w+) out slowly: half is still here after about (\d+) minutes/, (m) => [`The sugar makes the ${m[1]} leave slowly.`, `Half is still here after ${m[2]} minutes.`]],
-  [/^Water barely stops here: half of it moves on within about (\d+) minutes/, (m) => ['Water barely stops here.', `Half moves on within ${m[1]} minutes.`]],
-  [/^A small drink leaves fast: half of it moves on within about (\d+) minutes/, (m) => ['A small drink leaves fast.', `Half moves on within ${m[1]} minutes.`]],
+    'Your stomach works at two speeds.', ...(words(`${m[1]} runs ahead along the stomach wall.`) <= BEAT_WORDS ? [cap(`${m[1]} runs ahead along the stomach wall.`)] : ['The drink runs ahead along the wall.']), `Half of it is gone in ${minWords(Number(m[2]))}.`]],
+  [/^.+ (?:are|is) churned into a paste and let out slowly: half after about (\d+) minutes/, (m) => ['The food is churned into a paste.', `Half of it moves on after ${minWords(Number(m[1]))}.`]],
+  [/^(?:Each round: e|E)verything is mixed into one paste: half of the meal has moved on after about (\d+) minutes/, (m) => ['Everything is mixed into one paste.', `Half has moved on after ${minWords(Number(m[1]))}.`]],
+  [/^Because of the sugar, (?:it|your stomach) lets the (\w+) out slowly: half is still here after about (\d+) minutes/, (m) => [`The sugar makes the ${m[1]} leave slowly.`, `Half is still here after ${minWords(Number(m[2]))}.`]],
+  [/^Water barely stops here: half of it moves on within about (\d+) minutes/, (m) => ['Water barely stops here.', `Half moves on within ${minWords(Number(m[1]))}.`]],
+  [/^A small drink leaves fast: half of it moves on within about (\d+) minutes/, (m) => ['A small drink leaves fast.', `Half moves on within ${minWords(Number(m[1]))}.`]],
   [/^Coffee also makes your stomach produce more acid/, () => ['Coffee also makes more stomach acid.']],
   // gut, blood, liver
   [/^In about 1 in 3 people coffee makes the lower bowel start moving within minutes/, () => ['Coffee sends 1 in 3 to the toilet.', 'Even before the caffeine kicks in.']],
@@ -190,13 +191,15 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
     // what it is, then its numbers (all fixed for the whole day)
     // (round 14: from the chapter's own words, before long brackets are cut: "(27 g sugar, about 7 teaspoons)")
     const raw = ch.text;
-    const sugar = /(\d+) g (?:of )?sugar(?:[^.]*?about (\d+) teaspoons?)?/.exec(raw), caf = /(\d+) mg of caffeine/.exec(raw);
+    // (master audit 2026-11-12, C2: natural sugar keeps its own words, "12 g of natural milk sugar", never teaspoons)
+    const sm = /(\d+) g (?:of )?((?:natural (?:milk |fruit )?)?sugar)(?:[^.]*?about (\d+) teaspoons?)?/.exec(raw), caf = /(\d+) mg of caffeine/.exec(raw);
+    const sugar = sm ? [sm[0], sm[1], sm[3]] as const : null, sw = sm?.[2] ?? 'sugar';
     const alc = /(\d+) g (?:of )?alcohol/.exec(raw), kcal = /(\d+) kcal/.exec(raw);
     const prot = /(\d+) g protein/.exec(raw), carb = /(\d+) g carbohydrate/.exec(raw);
     // (round 15, critic N-3: "about 1 teaspoons"): teaspoons only from 2 on, always in agreement (plural())
     // (round 16, critic E-1: an energy drink never said its 80 mg): sugar and caffeine together, one card, said early
-    const both = sugar && caf && Number(caf[1]) >= 20 ? `${sugar[1]} g of sugar and ${caf[1]} mg of caffeine.` : null;
-    const facts = [both ?? (sugar && (sugar[2] && Number(sugar[2]) >= 2 ? `${sugar[1]} g of sugar: about ${plural(Number(sugar[2]), 'teaspoon')}.` : `${sugar[1]} g of sugar.`)), !both && caf && `${caf[1]} mg of caffeine.`,
+    const both = sugar && caf && Number(caf[1]) >= 20 ? (sw === 'sugar' ? `${sugar[1]} g of sugar and ${caf[1]} mg of caffeine.` : `${sugar[1]} g of ${sw.replace(/^natural (?=\w+ sugar)/, '')}, ${caf[1]} mg of caffeine.`) : null;
+    const facts = [both ?? (sugar && (sugar[2] && Number(sugar[2]) >= 2 ? `${sugar[1]} g of sugar: about ${plural(Number(sugar[2]), 'teaspoon')}.` : `${sugar[1]} g of ${sw}.`)), !both && caf && `${caf[1]} mg of caffeine.`,
       alc && `${alc[1]} g of alcohol.`, kcal && !sugar && `${kcal[1]} kcal in total.`,
       // (round 14: a protein-led food says its protein, the number its hook leads with)
       prot && Number(prot[1]) >= 20 && Number(carb?.[1] ?? 0) < 15 && `${prot[1]} g of protein.`].filter((x): x is string => !!x);

@@ -39,11 +39,26 @@ describe('verdictOf', () => {
   it('everyday alcohol-free pairs keep their plain answers', () => {
     const p = P(16);
     expect(verdictOf(an('1 can of cola', p), an('glass of water', p))).toBe('🏆 Water wins: no blood sugar peak, 139 fewer kcal.');
-    expect(verdictOf(an('orange juice', p), an('1 orange', p))).toBe('🏆 Orange wins: a smaller blood sugar peak (+0.7 vs +1.9 mmol/L), 67 fewer kcal.');
+    // (master audit 2026-11-12, C1: the orange's 67 fewer kcal come from its smaller portion, gram for gram they are
+    // about the same, so one reason is left: the facts, no trophy)
+    expect(verdictOf(an('orange juice', p), an('1 orange', p))).toBe('Orange: a smaller blood sugar peak (+0.7 vs +1.9 mmol/L), 67 fewer kcal.');
     expect(verdictOf(an('orange juice', p), an('1 orange', p), 'mg/dL')).toMatch(/\(\+\d+ vs \+\d+ mg\/dL\)/);
     expect(verdictOf(an('espresso', P(8)), an('glass of water', P(8)))).toMatch(/^It’s close/); // a morning espresso is fine
-    expect(verdictOf(an('espresso', P(22)), an('glass of water', P(22)))).toBe('🏆 Water wins: no caffeine.');
-    expect(verdictOf(an('espresso', P(22)), an('green tea', P(22)))).toBe('🏆 Green tea wins: less caffeine (30 vs 63 mg).');
+    // (C1: caffeine alone is never a trophy)
+    expect(verdictOf(an('espresso', P(22)), an('glass of water', P(22)))).toMatch(/^Water: no caffeine/);
+    expect(verdictOf(an('espresso', P(22)), an('green tea', P(22)))).toBe('Green tea: less caffeine (30 vs 63 mg).');
+  });
+
+  it('master audit 2026-11-12 (C1): a trophy needs two health reasons that hold at the same amount', () => {
+    const p = P(16), V = (l: string, r: string) => [verdictOf(an(l, p), an(r, p)), verdictOf(an(r, p), an(l, p))];
+    for (const [l, r] of [['dates', 'walnuts'], ['cottage cheese', 'pineapple'], ['rocket salad', 'espresso'], ['whole-wheat pasta', 'beer']] as const) {
+      for (const v of V(l, r)) {
+        const m = /^🏆 .+? wins?: (.+)\.$/.exec(v);
+        if (m) expect(m[1].split(/, (?![^(]*\))/).length, v).toBeGreaterThanOrEqual(2);
+        expect(v).not.toMatch(/wins?: (?:no caffeine|more protein)\.$/);
+      }
+    }
+    expect(verdictOf(an('1 can of cola', p), an('glass of water', p))).toMatch(/^🏆 Water wins: no blood sugar peak, \d+ fewer kcal\.$/); // (two reasons, both hold per gram)
   });
 
   it('every pair of drinks: alcohol never wins, every winner has a reason, order does not matter', () => {

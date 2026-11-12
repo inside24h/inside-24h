@@ -9,8 +9,22 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Inside 24h: what food really does inside you" />
     <meta property="og:description" content="Watch any food or drink travel through your body over 24 hours, and compare two foods side by side." />
+    <!-- link previews (audit C8a): scripts/site-meta.mjs makes og:image, og:url and twitter:image absolute from
+         SITE_URL when the site is built for its address; the image is site/og.png (1200x630) -->
+    <meta property="og:site_name" content="Inside 24h" />
+    <meta property="og:url" content="/" />
     <meta property="og:image" content="/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Inside 24h: a 3D body showing where food and drink go over 24 hours" />
+    <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Inside 24h: what food really does inside you" />
+    <meta name="twitter:description" content="Watch any food or drink travel through your body over 24 hours, and compare two foods side by side." />
+    <meta name="twitter:image" content="/og.png" />
+    <meta name="twitter:image:alt" content="Inside 24h: a 3D body showing where food and drink go over 24 hours" />
+    <meta name="robots" content="index, follow" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2304070c' stroke='%235cd3ff' stroke-width='4'/%3E%3Ctext x='32' y='41' font-size='24' text-anchor='middle' fill='%235cd3ff' font-family='Arial' font-weight='700'%3E24%3C/text%3E%3C/svg%3E" />
     <!-- Loading shell: paints at once, before the big bundle (moved to the end of <body> at build) has arrived.
          React replaces it when it mounts (src/v4/main.tsx). Fonts are self-hosted in src/assets/fonts. -->
@@ -30,14 +44,16 @@
         .boot-body::after { animation: none; top: 50%; } .boot-line { animation: none; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-v4-CDSr8H62.js"></script>
-      <link rel="preload" as="style" crossorigin href="/assets/index-v4-FFso9G89.css">
-    <script>/* a link that opens a food needs the 3D at once: fetch it alongside the UI */(function(){try{if(!/(?:^#|&)(?:q|m|p|t|compare)=/.test(location.hash))return;var h=document.head;["/assets/scene3d-C_LZI0uO.js"].forEach(function(u){var l=document.createElement('link');l.rel='modulepreload';l.href=u;h.appendChild(l)});var g=document.createElement('link');g.rel='preload';g.as='fetch';g.crossOrigin='anonymous';g.href="/assets/anatomy.meshopt-ivRLkiWQ.glb";h.appendChild(g)}catch(e){}})()</script>
+    <script type="module" crossorigin src="/assets/index-v4-fL97qEwd.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/fooddb-D8ThzZdt.js">
+    <link rel="modulepreload" crossorigin href="/assets/climate-t0z6tI7h.js">
+      <link rel="preload" as="style" crossorigin href="/assets/index-v4-BU_3jNCp.css">
+    <script>/* a link that opens a food needs the 3D at once: fetch it alongside the UI */(function(){try{if(!/(?:^#|&)(?:q|m|p|t|compare)=/.test(location.hash))return;var h=document.head;["/assets/scene3d-B6iV9-6j.js","/assets/video-cam-Dc_2wc2e.js","/assets/share-CkEOg8Kl.js","/assets/video-audio-K2J-eBwJ.js"].forEach(function(u){var l=document.createElement('link');l.rel='modulepreload';l.href=u;h.appendChild(l)});var g=document.createElement('link');g.rel='preload';g.as='fetch';g.crossOrigin='anonymous';g.href="/assets/anatomy.meshopt-ivRLkiWQ.glb";h.appendChild(g)}catch(e){}})()</script>
   </head>
   <body>
     <div id="root"><div class="boot" role="status" aria-live="polite"><div class="boot-body" aria-hidden="true"></div><div class="boot-name">Inside 24h</div><div class="boot-line">Loading your body…</div></div></div>
     <noscript><p style="position:fixed;inset:auto 0 24px;text-align:center;color:#8292a7;font:13px system-ui,sans-serif">Inside 24h needs JavaScript turned on.</p></noscript>
-  <link rel="stylesheet" crossorigin href="/assets/index-v4-FFso9G89.css" media="print" data-i24-css onload="this.media='all'">
-<noscript><link rel="stylesheet" crossorigin href="/assets/index-v4-FFso9G89.css"></noscript>
+  <link rel="stylesheet" crossorigin href="/assets/index-v4-BU_3jNCp.css" media="print" data-i24-css onload="this.media='all'">
+<noscript><link rel="stylesheet" crossorigin href="/assets/index-v4-BU_3jNCp.css"></noscript>
 </body>
 </html>

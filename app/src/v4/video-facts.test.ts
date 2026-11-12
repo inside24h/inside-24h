@@ -9,7 +9,9 @@ import { numbersOf } from './video-narration';
 import { alcoholClock } from '../science/alcoholClock';
 
 const r = (x: number) => Math.round(x), half = (min: number) => Math.round(min / 30) / 2;
-const at = (min: number) => (min < 120 ? Math.max(5, Math.round(min / 5) * 5) : half(min));
+// (master audit 2026-11-12, C12: to 5 min under an hour, to 15 min from an hour on, independently of timeWords.ts)
+const at = (min: number) => (min < 120 ? Math.max(5, min < 9.5 ? Math.round(min) : min < 59.5 ? Math.round(Math.round(min) / 5) * 5 : Math.round(Math.round(min) / 15) * 15) : half(min));
+const rmin = (min: number) => { const v = Math.max(1, Math.round(min)); return v < 10 ? v : v < 60 ? Math.round(v / 5) * 5 : Math.round(v / 15) * 15; };
 const top = (xs: ArrayLike<number>, n = xs.length) => { let k = 0; for (let i = 1; i < Math.min(n, xs.length); i++) if (xs[i] > xs[k]) k = i; return k; };
 
 describe('v22 fact pools', () => {
@@ -22,6 +24,7 @@ describe('v22 fact pools', () => {
       const ok = new Set<string>(['100', '0.08', '0.05']);
       const add = (v: number | undefined) => { if (v !== undefined && Number.isFinite(v)) ok.add(String(Math.round(v * 10) / 10).replace(/\.0$/, '')); };
       [kcal, m.sugars, m.protein, m.fat, m.fiber, m.availCarbs, m.satFat, m.sodiumMg, m.grams, x.built.alcoholG, x.built.caffeine.doseMg, f.waterMl, f.t50].forEach((v) => add(v === undefined ? v : r(v)));
+      if (f.t50 !== undefined) add(rmin(f.t50));
       add(Math.max(1, r(m.sugars / 4.2)));
       // derived, from the model curves
       const aG = x.built.alcoholG ?? 0;
@@ -39,7 +42,7 @@ describe('v22 fact pools', () => {
       const tg = x.built.effects.tgMmol; if (tg) add(half(top(tg)));
       add(r((900 * m.fat) / kcal)); add(r((400 * m.protein) / kcal)); add(r((100 * kcal) / m.grams)); add(r((100 * m.waterG) / m.grams)); if (m.gi !== null) add(r(m.gi));
       add(r(x.bodyWaterL)); if (f.waterMl) add(Math.round((f.waterMl / (10 * x.bodyWaterL)) * 10) / 10);
-      add(Math.max(1, r(kcal / ((3.5 * 3.5 * x.weightKg) / 200))));
+      add(rmin(kcal / ((3.5 * 3.5 * x.weightKg) / 200)));
       for (const [v, ref] of [[kcal, 2000], [m.sodiumMg, 2300], [m.fiber, 28], [m.protein, 50], [m.satFat, 20]] as const) add(r((100 * v) / ref));
       for (const line of factLines(f, 7)) {
         const extra = numbersOf(line).filter((n) => !ok.has(n));

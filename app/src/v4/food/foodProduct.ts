@@ -15,7 +15,8 @@ import type { OrganKey, Product, Stage } from '../../content/types';
 import { BLOOD_SITES, GUT_SITES, ROUTE_GUT_TO_BODY } from '../../scene/Flow';
 import type { Built, ProductDef, WhereRow } from '../products';
 import type { Change, Chapter, Dir, LiquidMap, Story } from '../stories';
-import { macros, mixColor, type Macros, type Part } from './parse';
+import { macros, mixColor, sugarWord, type Macros, type Part } from './parse';
+import { roundMin, SUGAR_DIP_MGDL } from '../timeWords';
 import { canPace, isDrink as isDrinkFood, mealKind, paceLabel, toMeal } from './meal';
 import { alcoholClock, alcoholTier, clockLabel, poisonRisk } from '../../science/alcoholClock';
 import { MEAL_CLAIMS } from '../../content/mealClaims';
@@ -160,7 +161,7 @@ export function makeFoodProduct(parts: Part[], id: string, overMin = 0): Product
       switch (key) {
         case 'stomach': return s.meal?.phases.drink && s.meal.phases.food
           ? { name: 'Stomach', claims: ['GE1', 'ML1', 'ML2', 'ML3'], text: mealDrinkNote(s), lines: [{ label: 'Drink still here', value: grams(at(s.meal.drinkStomachG, t)) }, { label: 'Food still here', value: grams(at(s.meal.foodStomachG, t)) }] }
-          : { name: 'Stomach', claims: ['GE1', 'GE12'], text: s.pace ? `Spread over ${paceLabel(s.pace.overMin)}: each ${s.pace.doses > 1 && parts.length === 1 ? 'serving' : 'round'} is half gone from your stomach after about ${s.pace.doseT50} minutes.` : `Half of this ${noun} has left your stomach after about ${s.t50} minutes.`, lines: [{ label: 'Still here', value: grams(at(s.stomachG, t)) }] };
+          : { name: 'Stomach', claims: ['GE1', 'GE12'], text: s.pace ? `Spread over ${paceLabel(s.pace.overMin)}: each ${s.pace.doses > 1 && parts.length === 1 ? 'serving' : 'round'} is half gone from your stomach after about ${roundMin(s.pace.doseT50)} minutes.` : `Half of this ${noun} has left your stomach after about ${roundMin(s.t50)} minutes.`, lines: [{ label: 'Still here', value: grams(at(s.stomachG, t)) }] };
         case 'duodenum': case 'jejunum': case 'ileum': return { name: 'Small intestine', claims: ['SI10', 'TE1'], text: 'Here sugars, protein and fat are taken apart and absorbed into your blood and lymph. Fiber passes through untouched.', lines: [{ label: 'Being digested here', value: grams(at(s.intestineG, t)) }, { label: 'Energy absorbed so far', value: `${r0(at(s.kcalAbsorbed, t))} kcal` }] };
         case 'cecum': case 'colon_asc': case 'colon_trans': case 'colon_desc': case 'rectum': return { name: 'Large intestine', claims: ['SI10', 'CO1', 'CO3'], text: 'Fiber and leftovers arrive here. Bacteria ferment part of it while water is taken back. The trip through takes about 1–2 days.', lines: [{ label: 'Fiber here now', value: grams(s.colonG.reduce((a, c) => a + at(c, t), 0)) }, { label: 'Already out', value: grams(at(s.exitedG, t)) }] };
         // insulin is our estimate from the sugar curve (cola anchor); protein adds insulin we don't draw [ML5 / Mishra 2026]
@@ -191,7 +192,7 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   // round 13 (critic P0-3: "half after 225 minutes" and a fixed "almost all by 4 hours" contradicted each other): when
   // nine tenths have left, from the same stomach model; with rounds it is not said (each round has its own)
   const st90 = (() => { if (pc) return null; let g0 = 0; for (let t = 0; t < s.stomachG.length; t++) g0 = Math.max(g0, s.stomachG[t]); if (!(g0 > 0)) return null; for (let t = 1; t < s.stomachG.length; t++) if (s.stomachG[t] <= 0.1 * g0 && s.stomachG[t - 1] > 0.1 * g0) return t; return null; })();
-  const allBy = st90 === null ? '' : st90 < 105 ? `, almost all of it by about ${Math.max(10, Math.round(st90 / 10) * 10)} minutes` : `, almost all of it by about ${Math.round(st90 / 60)} hours`;
+  const allBy = st90 === null ? '' : st90 < 105 ? `, almost all of it by about ${Math.max(10, roundMin(st90))} minutes` : `, almost all of it by about ${Math.round(st90 / 60)} hours`;
   const paceLine = pc ? ` Spread over ${paceLabel(pc.overMin)}: ${pc.doses} ${roundWord}s, one about every ${Math.round(pc.everyMin)} minutes${parts.length > 1 ? ' (each round a share of everything)' : ''}.` : '';
   const toBed = minutesToBed(p);
   // had it at or after the usual bedtime: bed right after (wave 7: "at bedtime" too, else there was no bed chapter)
@@ -213,14 +214,14 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
   const cecumMin = s.colonG[0].indexOf(peakOf(s.colonG[0]));
   const hasFibre = s.residueG >= 0.5 && m.fiber >= 2; // (round 15, critic J-2: "Fiber goes on undigested" for 1 g)
   const gl = m.gl;
-  let dipMin = -1; { let lo = 0; for (let t = 0; t < 400; t++) { if (s.glucoseDeltaMgDl[t] < lo) { lo = s.glucoseDeltaMgDl[t]; dipMin = t; } } if (lo > -5) dipMin = -1; }
+  let dipMin = -1; { let lo = 0; for (let t = 0; t < 400; t++) { if (s.glucoseDeltaMgDl[t] < lo) { lo = s.glucoseDeltaMgDl[t]; dipMin = t; } } if (lo > -SUGAR_DIP_MGDL) dipMin = -1; }
 
   // the amount in words: "1 hamburger", "a whole pizza Capricciosa (1104 g)", "2 large eggs" (food/naming.ts; it replaced
   // the local amountWith of the sense audit 2026-10-18, which gave "Whole · 1104 g pizza capricciosa" — QA 2026-10-23)
   // plain spirits (≥ 13 g alcohol per 100 g, the spirits class) with no sugar: say so, people ask [AL15, USDA 174815]
   const spiritsNoSugar = !isMeal && meal.alcoholG > 1 && (parts[0].food.p.alcoholG ?? 0) >= 13 && m.sugars < 0.5 && m.carbs < 1;
   const what = partsPhrase(parts); // "1 hamburger, a small portion of french fries and 330 ml of cola"
-  const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fiber` : ''}.`;
+  const macroLine = `${r0(meal.kcal)} kcal: ${r0(m.carbs)} g carbohydrate${m.sugars >= 1 ? ` (${r0(m.sugars)} g ${m.sugarSource ? sugarWord(m.sugarSource) : `sugar${sugarTsp >= 1 ? `, about ${sugarTsp} teaspoon${sugarTsp > 1 ? 's' : ''}` : ''}`})` : ''}, ${r0(m.fat)} g fat, ${r0(m.protein)} g protein${m.fiber >= 1 ? `, ${r0(m.fiber)} g fiber` : ''}.`;
   // 2026-11-05 (GI-estimate verification): the card says the GI is an estimate, its value and the kind of food it is
   // typical for (giEstimate.ts); a part with no estimate (an alcoholic drink, or under 10 g carbohydrate) is left out
   const giEst = m.giEstimated ?? [], giUnest = m.missingGi.filter((n) => !giEst.some((e) => e.name === n));
@@ -241,10 +242,10 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         // only nutrient calories slow the stomach (alcohol's don't: GE12 counts kcal minus 7 × alcohol g); never "slowed
         // down … water would be gone in about 13" when it IS 13 (rakija, sense audit 2026-10-18)
         // alcohol slows the stomach too [GE19, model review 2026-10-20]: beer and wine more than their alcohol alone
-        ? `${pc ? `Each ${roundWord}: half of it` : 'Half of it'} leaves your stomach within about ${st50} minutes${meal.alcoholG / (pc?.doses ?? 1) > 1 && st50 >= 16
+        ? `${pc ? `Each ${roundWord}: half of it` : 'Half of it'} leaves your stomach within about ${roundMin(st50)} minutes${meal.alcoholG / (pc?.doses ?? 1) > 1 && st50 >= 16
           ? (alcoholGE(meal.alcoholG, meal.alcoholKa).cls === 'spirits' ? ': alcohol slows the stomach a little (water would be gone in about 13)' : ': the alcohol and the rest of the drink slow the stomach down (water would be gone in about 13)')
           : (meal.kcal - 7 * meal.alcoholG) / (pc?.doses ?? 1) > 30 && st50 >= 16 ? ': calories slow the stomach down (water would be gone in about 13)' : ', about as fast as water'}.`
-        : `${pc ? `Each ${roundWord}: your` : 'Your'} stomach churns it into a paste and lets it out slowly: half has moved on after about ${st50} minutes${allBy}.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
+        : `${pc ? `Each ${roundWord}: your` : 'Your'} stomach churns it into a paste and lets it out slowly: half has moved on after about ${roundMin(st50)} minutes${allBy}.${m.fat >= 15 ? ' The fat leaves last.' : ''}` },
     { min: isDrink ? 6 : 25, title: 'Into the small intestine', focus: 'jejunum', claims: ['SI10', 'TE1', ...(meal.alcoholG > 1 ? ['AL17'] : []), ...(m.fat >= 3 ? ['SI11'] : [])],
       text: (() => {
         // fat goes by lymph, not straight to the liver (model review 2026-10-20: "these pass into your blood" said all of it did)

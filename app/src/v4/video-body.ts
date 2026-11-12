@@ -10,6 +10,7 @@ import { at } from '../science/espressoSim';
 import { bacRange, glucoseRangeText } from '../science/ranges';
 import { alcoholTier, ANY_GL } from '../science/alcoholClock';
 import { minutesFromU } from '../time';
+import { roundMin } from './timeWords';
 import { SEG_LABEL, type Route, type SegId, type SegState } from '../scene/segments';
 
 /** Organs each part of the drink's route runs through (as AppV4 SEG_ORGANS) and where its gauge points. */
@@ -214,8 +215,9 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
 export const plainSugar = (peak: number | null, _text?: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `${sugarPct(peak)}, ${peak >= 3 ? 'a big rise' : 'normal'}`);
 /** When in the day, in words: "13 min in", "1½ h in" (round 6: "+0:13" read like a code). */
 export function inText(m: number): string {
-  // (round 13: to the minute, as the video's clock and its moments say it: "1 h 50 min in", never a rounded "2 h")
-  const r = Math.max(1, Math.round(m));
+  // (round 13: "1 h 50 min in", never a rounded "2 h"; master audit 2026-11-12, C12: but never more precise than the
+  // model either: to 5 min under an hour, to 15 min from an hour on, roundMin; "1 h 2 min in" is "1 h in")
+  const r = roundMin(m);
   if (r < 60) return `${r} min in`;
   const h = Math.floor(r / 60), mm = r % 60;
   return mm ? `${h} h ${mm} min in` : `${h} h in`;

@@ -60,6 +60,10 @@ export interface Part { food: Food; grams: number; amountLabel: string; assumed:
 export interface Macros {
   grams: number; kcal: number; carbs: number; availCarbs: number; sugars: number; fiber: number; fat: number; protein: number;
   /** round 18 */ satFat: number; freeSugars: number;
+  /** Master audit 2026-11-12 (C2): where the sugar comes from, for the WORDS only (the model is unchanged): 'milk'
+   *  (lactose), 'fruit' or 'natural' when every part with sugar has a known free-sugar value and free sugars are under a
+   *  quarter of all sugars; undefined when sugar is added (or not known), so only then is it "teaspoons of sugar". */
+  sugarSource?: SugarSource;
   waterG: number; caffeineMg: number; alcoholG: number; sodiumMg: number;
   /** Glycaemic load = Σ GI × available carbs / 100 over the parts with a measured GI; null when none of the
    *  carbohydrate has one. `missingGi` names parts left out, so the real load is at least this. */
@@ -385,6 +389,24 @@ export function suggest(input: string, n = 7): Suggestion[] {
 
 export const POPULAR = ['1 can of cola', 'espresso', 'glass of water', '1 apple', 'banana', 'slice of pizza', 'coffee with milk', 'beer', 'red wine', 'white bread', 'orange juice', 'milk chocolate'];
 
+export type SugarSource = 'milk' | 'fruit' | 'natural';
+const DAIRY = /\b(milk|yogh?urt|kefir|buttermilk|latte|cappuccino|flat white|macchiato|skyr|quark|cottage|cheese|cream|whey|protein shake|ayran|lassi)\b/i;
+const PLANT = /\b(soy|soya|almond|oat|rice|coconut|plant)\b/i;
+/** C2: natural sugar (milk, whole or dried fruit, vegetables) vs added sugar, from the database's free-sugar values. */
+export function sugarSourceOf(parts: Pick<Part, 'food' | 'grams'>[]): SugarSource | undefined {
+  const g = (x: Pick<Part, 'food' | 'grams'>, v: number | null | undefined) => ((v ?? 0) * x.grams) / 100;
+  const sugars = parts.reduce((s, x) => s + g(x, x.food.p.sugars), 0);
+  if (sugars < 1) return undefined;
+  const sweet = parts.filter((x) => g(x, x.food.p.sugars) >= 0.5);
+  if (!sweet.length || sweet.some((x) => x.food.p.freeSugars === null || x.food.p.freeSugars === undefined)) return undefined;
+  if (parts.reduce((s, x) => s + g(x, x.food.p.freeSugars), 0) >= 0.25 * sugars) return undefined;
+  const dairy = (x: Pick<Part, 'food'>) => DAIRY.test(x.food.name) && !PLANT.test(x.food.name);
+  const fruit = (x: Pick<Part, 'food'>) => { const q = x.food.p; return !dairy(x) && x.food.kind !== 'liquid' && (q.fat ?? 0) < 3 && (q.protein ?? 0) < 3 && (q.sugars ?? 0) >= 0.5 * Math.max(0.1, (q.carbs ?? 0) - (q.fiber ?? 0)); };
+  return sweet.every(dairy) ? 'milk' : sweet.every(fruit) ? 'fruit' : 'natural';
+}
+/** C2: "natural milk sugar", "natural fruit sugar", "natural sugar". */
+export const sugarWord = (src: SugarSource | undefined) => (src === 'milk' ? 'natural milk sugar' : src === 'fruit' ? 'natural fruit sugar' : src ? 'natural sugar' : 'sugar');
+
 export function macros(parts: Part[]): Macros {
   const sum = (f: (p: Per100) => number | null) => parts.reduce((s, x) => s + ((f(x.food.p) ?? 0) * x.grams) / 100, 0);
   const avail = (p: Per100) => Math.max(0, (p.carbs ?? 0) - (p.fiber ?? 0));
@@ -407,6 +429,7 @@ export function macros(parts: Part[]): Macros {
     fiber: sum((p) => p.fiber), fat: sum((p) => p.fat), protein: sum((p) => p.protein), waterG: sum((p) => p.waterG),
     caffeineMg: sum((p) => p.caffeineMg), alcoholG: sum((p) => p.alcoholG), sodiumMg: sum((p) => p.sodiumMg),
     satFat: sum((p) => p.satFat ?? 0), freeSugars: sum((p) => p.freeSugars ?? 0), // (round 18: the verdict's trophy rule)
+    sugarSource: sugarSourceOf(parts),
     gl, gi: gl !== null && !missingGi.length && knownCarbs >= 1 ? Math.round((100 * gl) / knownCarbs) : null, missingGi, giEstimated,
   };
 }

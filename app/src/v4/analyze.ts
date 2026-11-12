@@ -132,23 +132,49 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
     if (l.kcal - w.kcal >= 30) why.push(`${Math.round(l.kcal - w.kcal)} fewer kcal`);
     return why;
   };
-  /** Round 18: everything x does better than y (lower sugar peak, kcal, caffeine, saturated fat; more protein, fiber). */
-  const edges = (x: Analysis, y: Analysis) => {
-    const out: string[] = [];
-    if (sugarOk(x, y) && y.sugarPeak! - x.sugarPeak! >= 0.4) out.push(x.sugarPeak! < 0.3 ? 'no blood sugar peak' : `a smaller blood sugar peak (${sugarDeltaText(x.sugarPeak!, unit, false)} vs ${sugarDeltaText(y.sugarPeak!, unit)})`);
-    if (y.kcal - x.kcal >= 30 && y.kcal - x.kcal >= 0.1 * y.kcal) out.push(`${Math.round(y.kcal - x.kcal)} fewer kcal`);
+  /** Round 18: everything x does better than y (lower sugar peak, kcal, caffeine, saturated fat; more protein, fiber).
+   *  Master audit 2026-11-12 (C1): each edge is tagged, so the trophy rule can tell health-relevant edges from the rest. */
+  type Edge = { k: 'sugar' | 'kcal' | 'sleep' | 'caffeine' | 'satFat' | 'protein' | 'fiber'; t: string };
+  const edgeList = (x: Analysis, y: Analysis): Edge[] => {
+    const out: Edge[] = [];
+    if (sugarOk(x, y) && y.sugarPeak! - x.sugarPeak! >= 0.4) out.push({ k: 'sugar', t: x.sugarPeak! < 0.3 ? 'no blood sugar peak' : `a smaller blood sugar peak (${sugarDeltaText(x.sugarPeak!, unit, false)} vs ${sugarDeltaText(y.sugarPeak!, unit)})` });
+    if (y.kcal - x.kcal >= 30 && y.kcal - x.kcal >= 0.1 * y.kcal) out.push({ k: 'kcal', t: `${Math.round(y.kcal - x.kcal)} fewer kcal` });
     // caffeine counts when it weighs on the body (brain / heart lights), as before: a morning espresso is fine
     if (!alc(x) && !alc(y) && caf(y) - caf(x) >= 20 && cafStress(y) - cafStress(x) >= 10) {
-      if (y.sleepDelayMin >= 5 && x.sleepDelayMin <= y.sleepDelayMin - 3) out.push(caf(x) < 1 ? 'no caffeine to keep you awake' : 'less caffeine at bedtime');
-      else out.push(caf(x) < 1 ? 'no caffeine' : `less caffeine (${Math.round(caf(x))} vs ${Math.round(caf(y))} mg)`);
+      if (y.sleepDelayMin >= 5 && x.sleepDelayMin <= y.sleepDelayMin - 3) out.push({ k: 'sleep', t: caf(x) < 1 ? 'no caffeine to keep you awake' : 'less caffeine at bedtime' });
+      else out.push({ k: 'caffeine', t: caf(x) < 1 ? 'no caffeine' : `less caffeine (${Math.round(caf(x))} vs ${Math.round(caf(y))} mg)` });
     }
-    if (y.macros.satFat - x.macros.satFat >= 2 && y.macros.satFat >= 1.5 * x.macros.satFat) out.push('less saturated fat');
-    if (x.macros.protein - y.macros.protein >= 5 && x.macros.protein >= 1.5 * y.macros.protein) out.push('more protein');
-    if (x.macros.fiber - y.macros.fiber >= 3 && x.macros.fiber >= 1.5 * y.macros.fiber) out.push('more fiber');
+    if (y.macros.satFat - x.macros.satFat >= 2 && y.macros.satFat >= 1.5 * x.macros.satFat) out.push({ k: 'satFat', t: 'less saturated fat' });
+    if (x.macros.protein - y.macros.protein >= 5 && x.macros.protein >= 1.5 * y.macros.protein) out.push({ k: 'protein', t: 'more protein' });
+    if (x.macros.fiber - y.macros.fiber >= 3 && x.macros.fiber >= 1.5 * y.macros.fiber) out.push({ k: 'fiber', t: 'more fiber' });
     return out;
   };
+  const edges = (x: Analysis, y: Analysis) => edgeList(x, y).map((e) => e.t);
   /** Round 18: a treat never gets a trophy: mostly added sugar, mostly (saturated) fat, fried or processed meat. */
   const treat = isTreat;
+  /** Master audit 2026-11-12 (C1, owner brief §16): a trophy only when one side is better on at least two independent,
+   *  health-relevant measures (blood sugar, saturated fat, alcohol, caffeine that delays sleep, kcal, fiber; at least
+   *  one of the first four), never on "no caffeine" or "more protein", and only when the result does not flip at the
+   *  same amount: at portions more than 30 % apart every reason must still hold gram for gram, and the other side may
+   *  not be clearly better gram for gram. Otherwise each side's facts, neutrally. `noAlcohol`: w is alcohol-free
+   *  against an alcoholic l (a key reason of its own). Returns the trophy's reasons, or null. */
+  const HEALTH: Edge['k'][] = ['sugar', 'satFat', 'sleep', 'kcal', 'fiber'], KEY: Edge['k'][] = ['sugar', 'satFat', 'sleep'];
+  const perG = (x: Analysis, k: 'kcal' | 'satFat' | 'fiber' | 'availCarbs' | 'caffeine') => (k === 'kcal' ? x.kcal : k === 'caffeine' ? caf(x) : x.macros[k]) / Math.max(1, x.macros.grams);
+  const holdsPerGram = (e: Edge, w: Analysis, l: Analysis) =>
+    e.k === 'kcal' ? perG(w, 'kcal') < 0.9 * perG(l, 'kcal') : e.k === 'satFat' ? perG(w, 'satFat') < perG(l, 'satFat') : e.k === 'fiber' ? perG(w, 'fiber') > perG(l, 'fiber')
+      : e.k === 'sugar' ? perG(w, 'availCarbs') <= perG(l, 'availCarbs') : e.k === 'sleep' ? perG(w, 'caffeine') < perG(l, 'caffeine') : true;
+  const trophyReasons = (w: Analysis, l: Analysis, noAlcohol = false): string[] | null => {
+    if (treat(w)) return null;
+    let h = edgeList(w, l).filter((e) => HEALTH.includes(e.k)).sort((p, q) => Number(KEY.includes(q.k)) - Number(KEY.includes(p.k)));
+    if (Math.max(w.macros.grams, l.macros.grams) > 1.3 * Math.max(1, Math.min(w.macros.grams, l.macros.grams))) {
+      h = h.filter((e) => holdsPerGram(e, w, l)); // (portion-driven reasons do not count: "Dates win: 166 fewer kcal" against 28 g of walnuts)
+      const flips = ((w.sugarPeak ?? 0) >= 0.3 && perG(l, 'availCarbs') < 0.75 * perG(w, 'availCarbs')) || (w.macros.satFat >= 1 && perG(l, 'satFat') < 0.75 * perG(w, 'satFat'))
+        || perG(l, 'kcal') < 0.75 * perG(w, 'kcal');
+      if (flips) return null;
+    }
+    if (h.length + (noAlcohol ? 1 : 0) < 2 || !(noAlcohol || h.some((e) => KEY.includes(e.k)))) return null;
+    return [...(noAlcohol ? ['no alcohol'] : []), ...h.map((e) => e.t)].slice(0, 2);
+  };
 
   /** what n costs the body that d does not (for a trade-off against an alcoholic d) */
   const costs = (n: Analysis, d: Analysis) => {
@@ -173,8 +199,11 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
     const ownCost = cost.some((c) => /blood sugar peak|delays your sleep/.test(c));
     if (cost.length && ((sn > sd && !near(sn, sd)) || ownCost)) return `No clear winner: ${nm(d)} brings alcohol; ${nm(n)} brings ${cost.slice(0, 2).join(' and ')}.`;
     // round 18 (critic T-2: "🏆 French fries wins: no alcohol"): a treat never gets a trophy, the facts side by side
-    if (treat(n)) return `${nm(n)}: no alcohol. ${nm(d)}: ${Math.round(alc(d))} g of alcohol.`;
-    return `🏆 ${winsOf(nm(n))}: ${['no alcohol', ...reasons(n, d)].slice(0, 2).join(', ')}.`;
+    // (master audit 2026-11-12, C1: "Whole-wheat pasta wins: no alcohol" had one reason): a trophy needs a second
+    // health reason that holds at the same amount; else the facts side by side (round 18's treat form)
+    const tr = trophyReasons(n, d, true); void reasons; // (round 18's reasons(), kept for reference: trophyReasons replaced it here)
+    if (!tr) return `${nm(n)}: no alcohol. ${nm(d)}: ${Math.round(alc(d))} g of alcohol.`;
+    return `🏆 ${winsOf(nm(n))}: ${tr.join(', ')}.`;
   }
   if (alcA && alcB) { // both have alcohol: the amount of alcohol decides first, never a trophy
     const lo = Math.min(alcA, alcB), hi = Math.max(alcA, alcB);
@@ -196,8 +225,13 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
   // side's own advantages, side by side (in name order, so the order of the pair never changes the sentence)
   const advA = edges(a, b), advB = edges(b, a);
   if (!advA.length && !advB.length) return close;
-  if (advA.length && !advB.length && !treat(a)) return `🏆 ${winsOf(nm(a))}: ${advA.slice(0, 2).join(', ')}.`;
-  if (advB.length && !advA.length && !treat(b)) return `🏆 ${winsOf(nm(b))}: ${advB.slice(0, 2).join(', ')}.`;
+  // (master audit 2026-11-12, C1): and only with two health reasons that survive the same amount (trophyReasons);
+  // a one-sided edge that does not earn a trophy is said as a plain fact ("Rocket salad: no caffeine.")
+  for (const [w, l, adv, other] of [[a, b, advA, advB], [b, a, advB, advA]] as const) {
+    if (!adv.length || other.length) continue;
+    const tr = trophyReasons(w, l);
+    return tr ? `🏆 ${winsOf(nm(w))}: ${tr.join(', ')}.` : `${nm(w)}: ${adv.slice(0, 2).join(', ')}.`;
+  }
   const sides = ([[a, advA], [b, advB]] as [Analysis, string[]][]).sort((p, q) => nm(p[0]).localeCompare(nm(q[0])));
   const one = (x: Analysis, adv: string[]) => (adv.length ? `${nm(x)}: ${adv.slice(0, adv.length && sides.every(([, v]) => v.length) ? 1 : 2).join(', ')}.` : '');
   return sides.map(([x, adv]) => one(x, adv)).filter(Boolean).join(' ');

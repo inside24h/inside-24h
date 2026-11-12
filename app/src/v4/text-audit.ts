@@ -168,6 +168,58 @@ export function lintText(s: string, where: string, kind: 'card' | 'hook' | 'verd
   if (/\babout 0 h\b|\bafter 0 (?:h|min)|by (?:9\d|\d{3,}) minutes/.test(s)) bad('time math');
   const won = /🏆 (.+?) (wins?):/.exec(s);
   if (won && (won[2] === 'wins') === isPluralName(won[1])) bad('subject-verb agreement');
+  // master audit 2026-11-12 (section B, C12, C18): the classes that were still found in the v23d dump
+  if (falsePrecision(s)) bad('false precision');
+  if (truncatedName(s)) bad('truncated name');
+  if (/\bcrash(?:es|ing)?\b/i.test(s)) bad('sugar crash wording'); // ("dip", and only when the model dips: SUGAR_DIP_MGDL)
+  if (/\bYour stomach fills up\b/i.test(s)) bad('stomach fills up');
+  return out;
+}
+
+/** C12: a model's time said more precisely than it is known: under an hour to 5 minutes (from 10 min on), from an hour
+ *  on to 15 minutes ("1 h 2 min in", "after about 107 minutes"). A pace the person set ("every 23 minutes") is exact. */
+export function falsePrecision(s: string): boolean {
+  for (const m of s.matchAll(/\b(\d+) h (\d+) min\b/g)) if (Number(m[2]) % 15) return true;
+  for (const m of s.matchAll(/(?<!every |\d h |[:.,]|\d )\b(\d+)(?:-minute\b| ?min(?:utes?)?\b)/g)) {
+    const n = Number(m[1]);
+    if ((n >= 60 && n % 15) || (n >= 10 && n < 60 && n % 5)) return true;
+  }
+  return false;
+}
+/** C18: a name cut after a participle or preposition ("hot chocolate made:"), a bare unit ("Ml of cranberry juice"),
+ *  or the same word on both sides of "of" ("Gummy bears of gummy candy"). */
+export function truncatedName(s: string): boolean {
+  return /\b(?:made|cooked|served|topped|filled|mixed|with|without|of|and|or|from)\s*:/i.test(s)
+    || /(?:^|[.:!?]\s+)(?:Ml|G|L|Cl|Dl|ml|cl|dl) of\b/.test(s)
+    || /\b([a-z]{4,})\s+[a-z]+\s+of\s+\1\b/i.test(s);
+}
+/** C2: natural sugar framed as added sugar ("Latte with 2% milk: 3 teaspoons of sugar."); starch's teaspoons say "starch". */
+export const NATURAL_AS_TSP = /teaspoons? of sugar|about \d+ teaspoons|every teaspoon/i;
+export const naturalAsTeaspoons = (s: string) => NATURAL_AS_TSP.test(s) && !/starch/i.test(s);
+
+/** C1: a trophy needs at least two independent, health-relevant reasons (blood sugar, saturated fat, alcohol, caffeine
+ *  that delays sleep, kcal, fiber), at least one of them blood sugar, saturated fat, alcohol or sleep; "no caffeine"
+ *  alone is never one; and at unequal portions (beyond ±30 %) every reason must still hold per gram. */
+export function trophyIssues(v: string, a: Analysis, b: Analysis, where: string): Issue[] {
+  const m = /^🏆 (.+?) wins?: (.+)\.$/.exec(v);
+  if (!m) return [];
+  const out: Issue[] = [], bad = (cls: string) => out.push({ cls, where, text: v });
+  const rs = m[2].split(/, (?![^(]*\))/);
+  const HEALTH = /blood sugar|saturated fat|no alcohol|keep you awake|caffeine at bedtime|fewer kcal|more fiber/, KEY = /blood sugar|saturated fat|no alcohol|keep you awake|caffeine at bedtime/;
+  const h = rs.filter((r) => HEALTH.test(r));
+  if (rs.length < 2) bad('single-reason trophy');
+  else if (h.length < 2 || !h.some((r) => KEY.test(r))) bad('trophy without two health reasons');
+  if (rs.some((r) => /caffeine/.test(r) && !/keep you awake|at bedtime/.test(r))) bad('caffeine as a win reason');
+  const win = [a, b].find((x) => cmpName(x.label) === m[1] || x.label === m[1] || x.name === m[1]), lose = win === a ? b : a;
+  if (win) {
+    const ga = Math.max(1, win.macros.grams), gb = Math.max(1, lose.macros.grams);
+    if (Math.max(ga, gb) > 1.3 * Math.min(ga, gb)) {
+      const d = (x: Analysis, k: 'kcal' | 'satFat' | 'fiber' | 'availCarbs') => (k === 'kcal' ? x.kcal : x.macros[k]) / Math.max(1, x.macros.grams);
+      const flips = rs.some((r) => (/fewer kcal/.test(r) && d(win, 'kcal') >= d(lose, 'kcal')) || (/saturated fat/.test(r) && d(win, 'satFat') >= d(lose, 'satFat'))
+        || (/more fiber/.test(r) && d(win, 'fiber') <= d(lose, 'fiber')) || (/blood sugar/.test(r) && d(win, 'availCarbs') > d(lose, 'availCarbs')));
+      if (flips) bad('portion-driven trophy');
+    }
+  }
   return out;
 }
 
@@ -215,6 +267,7 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       const nw = nameWords(o.name);
       if (nw.length && !(x.built.alcoholG && x.built.pace) && !nw.some((n) => both.toLowerCase().includes(n))) res.issues.push({ cls: 'hook without the food', where: `${id} hook ${v}`, text: both });
     }
+    const said: string[] = []; // (everything this item's videos show or say, for the item-level checks)
     for (const cut of AUDIT_CUTS) for (const v of ['A', 'B'] as const) {
       const o = cut === 'long' ? (v === 'A' ? A : B) : all(cut, v);
       const titleAt = new Map<number, string | undefined>();
@@ -240,8 +293,17 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       for (const l of vo) res.issues.push(...lintText(l.text, `${id} ${cut} ${v} voice`, 'note')); // (v20: a spoken line may read a card with its lead-in; its length is linted per slot, lintNarration)
       if (v === 'A' && cut === 'long') res.dump.push(`    voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);
       if (v === 'A' && cut === 'long') countScript(vo.map((l) => l.text), id);
+      said.push(...o.plan.pages.map((q) => q.text), ...vo.map((l) => l.text));
     }
     if (!A.hero) res.issues.push({ cls: 'end card without a number', where: id, text: A.name });
+    // master audit 2026-11-12 (C18, C2): the video's name is whole, and natural sugar is never "teaspoons of sugar"
+    if (truncatedName(`${A.name}.`) || / (?:made|cooked|served|with|without|of|and)$/i.test(A.name)) res.issues.push({ cls: 'truncated name', where: id, text: A.name });
+    // (a starchy food's "about N teaspoons of sugar" is its starch turned into glucose, said with "Watch the starch …"; its
+    // own sugar is a small share, so the natural-sugar class is about foods whose carbohydrate is mostly sugar)
+    if (x.macros.sugarSource && x.macros.sugars >= 0.5 * x.macros.availCarbs) {
+      said.push(A.hook.line1, A.hook.line2, B.hook.line1, B.hook.line2, A.hook.lead ?? '', A.hero?.big ?? '', A.hero?.small ?? '', A.caps.shorts.title, A.caps.tiktok);
+      for (const t of new Set(said)) if (naturalAsTeaspoons(t)) res.issues.push({ cls: 'natural sugar as teaspoons', where: id, text: t });
+    }
     // round 18 (critique g): the story fits the food's class
     const alc100 = Math.max(0, ...parts.map((q) => q.food.p.alcoholG ?? 0)), alcoholic = (x.built.alcoholG ?? 0) > 1;
     const allText = [A.hook.line1, A.hook.line2, B.hook.line1, B.hook.line2, ...A.plan.pages.map((q) => q.text), A.caps.tiktok].join(' | ');
@@ -287,6 +349,7 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
         const champ = /^🏆 (.+?) wins?:/.exec(o.cp.verdict)?.[1];
         const champX = champ === undefined ? undefined : [pr.a, pr.b].find((x) => x.label === champ);
         if (champX && isTreat(champX)) res.issues.push({ cls: 'trophy for a treat', where, text: o.cp.verdict });
+        res.issues.push(...trophyIssues(o.cp.verdict, pr.a, pr.b, where)); // (master audit 2026-11-12, C1)
         for (const x of [pr.a, pr.b]) if (servingAmount(x).length > 16) res.issues.push({ cls: 'serving label too long', where, text: servingAmount(x) });
         // one tie rule for all the verdict text: an answer that names a winner never sits next to "It's close"
         if (g && !/^Almost the same/.test(g.answer1) && /^It’s close/.test(o.cp.verdict)) res.issues.push({ cls: 'contradiction', where, text: `${g.recap} / ${o.cp.verdict}` });
@@ -309,6 +372,7 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
       for (const pg of o.cp.plan.pages) {
         if (cut === 'long') res.dump.push(`    ${hm(pg.stop).padEnd(7)} ${pg.text || '—'}  ||  ${pg.textB || '—'}`);
         for (const t of [pg.text, pg.textB ?? '']) if (t) res.issues.push(...lintText(t, `${where} ${hm(pg.stop)}`, 'card'));
+        for (const [t, x] of [[pg.text, pr.a], [pg.textB ?? '', pr.b]] as const) if (t && x.macros.sugarSource && naturalAsTeaspoons(t)) res.issues.push({ cls: 'natural sugar as teaspoons', where: `${where} ${hm(pg.stop)}`, text: t });
       }
       // the guessed number is not said before the answer (both sides alike)
       if (g && ['sugarG', 'kcal', 'alcohol'].includes(g.kind)) {

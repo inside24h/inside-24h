@@ -8,7 +8,7 @@ export const plainLatin = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, 
 // round 17 (critic G-8 / G-4): "Brie cheese" is "Brie", "Cod / white fish" is "Cod"
 const CHEESE_NAMED = /\b(brie|camembert|cheddar|gouda|edam|parmesan|emmental|emmentaler|mozzarella|feta|gorgonzola|halloumi|ricotta|mascarpone) cheese\b/i;
 /** The amount in front of a name ("1 portion of", "8 slices of", "A whole 14-inch", "half a"): not part of the name. */
-export const AMOUNT_PREFIX = /^(?:\d+(?:[.,]\d+)?|½|a|an|one|half(?: a| an)?)\s+(?:whole\s+)?(?:\d+-inch\s+)?(?:(?:small|medium|large|side)\s+)?(?:(?:portions?|pieces?|slices?|cups?|glass(?:es)?|bowls?|cans?|bottles?|containers?|servings?|plates?|fillets?|scoops?|pots?)\s+of\s+)?/i;
+export const AMOUNT_PREFIX = /^(?:\d+(?:[.,]\d+)?|½|a|an|one|half(?: a| an)?)\s+(?:whole\s+)?(?:\d+-inch\s+)?(?:(?:small|medium|large|side)\s+)?(?:(?:portions?|pieces?|slices?|cups?|glass(?:es)?|bowls?|cans?|bottles?|containers?|servings?|plates?|fillets?|scoops?|pots?|shakers?|ml|g|l|cl|dl)\s+of\s+)?/i; // (C18: "250 ml of" too, never a bare "Ml of cranberry juice")
 const wordsOf = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 /** Round 18 (critic V-6 / T-6): the add-ons that change a food most come first (meat, fish, egg, cheese, fat). */
 const KEY_ADDON = /\b(bacon|extra patty|patty|pepperoni|salami|ham|sausage|tuna|chicken|beef|egg|cheese|olive oil|sunflower oil|oil|butter|mayonnaise|cream|chocolate)\b/i;

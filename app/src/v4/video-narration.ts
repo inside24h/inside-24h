@@ -364,7 +364,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   const bare = (x: string) => cap1(x.trim().replace(/^[\d½.,]+\s+(?:(?:ml|g|l|cl|oz|slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?)\s+of\s+)?/i, '').replace(/\s+\d+(?:[.,]\d+)?\s*%\.?$/, ''));
   const named = (cmp ? (n.names ?? ['', '']) : [n.name ?? '']).map(bare).filter((x) => x && (cmp ? !/\d\s*(?:ml|g|l|oz|×|x)\b/i.test(x) : !/\d/.test(x))); // (v22: a comparison keeps "2% milk")
   // v22: a comparison's hook names BOTH foods first ("Cod or muffin: which leaves first?", "Cod versus muffin: …")
-  const lead = cmp ? (named.length === 2 ? `${named[0]} ${n.guess ? 'or' : 'versus'} ${lower1(named[1])}` : '') : (named[0] ?? '').split(/ with | in /)[0];
+  const lead = cmp ? (named.length === 2 ? `${named[0]} ${n.guess ? 'or' : 'versus'} ${lower1(named[1])}` : '') : (named[0] ?? '').split(/ with | in /)[0].replace(/ (?:made|cooked|served|topped|filled|mixed|fried|baked)$/i, ''); // (master audit 2026-11-12, C18: never "Oatmeal made:")
   const nameFirst = (x: string) => !lead || (cmp ? named.every((nm) => namesFirst(x, [nm])) : namesFirst(x, named));
   const q = [h1, h2].find((x) => /\?$/.test(x)) ?? '';
   const st = [h1, h2].find((x) => ends(x) && !/\?$/.test(x)) ?? '';

@@ -157,3 +157,34 @@ describe('the parser never silently changes what was typed (prelaunch QA 2026-10
     expect(read('ice cream')).toMatch(/^Ice cream/);
   });
 });
+
+// Master audit 2026-11-12 (C18, C2): names are never cut after a participle or a bare unit, and natural sugar is known
+import { truncatedName, falsePrecision } from '../text-audit';
+import { hookFor } from '../video-hook';
+import { analyze } from '../analyze';
+import { shortName } from '../video-story';
+import { roundMin, minWords } from '../timeWords';
+describe('master audit 2026-11-12: whole names, natural sugar, rounded times', () => {
+  const x = (q: string) => analyze(parseMeal(q), DEFAULT_PROFILE);
+  it('C18: "hot chocolate made", "Ml of …", "gummy bears of gummy candy" are caught and gone', () => {
+    expect(truncatedName('250 ml of hot chocolate made: 6 teaspoons of sugar.')).toBe(true);
+    expect(truncatedName('Ml of cranberry juice drink: 8 teaspoons of sugar.')).toBe(true);
+    expect(truncatedName('Gummy bears of gummy candy: 3 teaspoons of sugar.')).toBe(true);
+    expect(truncatedName('Hot chocolate made with water: 6 teaspoons of sugar.')).toBe(false);
+    const hc = x('hot chocolate made with water'), name = shortName(hc.label);
+    const h = hookFor({ name, chapters: hc.built.story.chapters.map((c) => ({ min: c.min, title: c.title, text: c.text })) });
+    expect(truncatedName(h.line1)).toBe(false);
+    expect(amountPhrase(parseMeal('gummy candy')[0])).not.toMatch(/gummy bears of gummy/i);
+  });
+  it('C2: milk, plain yogurt and whole fruit carry natural sugar; cola and fruit yogurt do not', () => {
+    for (const q of ['glass of whole milk', 'plain yogurt', '1 banana', '1 apple']) expect(x(q).macros.sugarSource, q).toBeTruthy();
+    for (const q of ['1 can of cola', 'fruit yogurt']) expect(x(q).macros.sugarSource, q).toBeUndefined();
+  });
+  it('C12: model times are rounded (5 min under an hour, 15 min from an hour on)', () => {
+    expect([roundMin(7), roundMin(28), roundMin(62), roundMin(107)]).toEqual([7, 30, 60, 105]);
+    expect(minWords(62)).toBe('1 hour');
+    expect(falsePrecision('Blood sugar up · 1 h 2 min in')).toBe(true);
+    expect(falsePrecision('half has moved on after about 107 minutes')).toBe(true);
+    expect(falsePrecision('one about every 23 minutes')).toBe(false);
+  });
+});
