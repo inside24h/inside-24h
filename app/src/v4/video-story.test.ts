@@ -23,6 +23,7 @@ import { alcoholTier, ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
 import { beatCtx, cmpName, plainLatin, applyHook, CHIP_MAX, CHIP_SHORT, climaxFx, comparePlan, decafOf, servingsCard, gaugesAt, payoffMinOf, peakOf, surgeOf, surpriseOf, shortName, singlePlan, singleStops } from './video-story';
 import { COVER_BAND, drawCmpFrame, drawCoverFrame, drawFrame, logText, SAFE, SIZE, VIDEO_COPY, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
+import { sweep } from './sweep.testutil';
 
 type Food = { id: string; name: string; aliases?: string[] };
 const FOODS = db as unknown as Food[];
@@ -167,7 +168,7 @@ describe('round 9: every food and drink in the database makes a correct video', 
   for (const cut of CUTS) {
     it(`single · ${cut}: readable, the right length, real words, numbers agree with the gauges (${FOODS.length} items)`, () => {
       const bad: string[] = [];
-      for (const { f, x } of ALL) {
+      for (const { f, x } of sweep(ALL)) {
         if (!x) continue;
         const { plan, hook } = singlePlanOf(x, cut);
         textOk(hook.line1, `${f.id} hook`, bad); textOk(hook.line2, `${f.id} hook`, bad);
@@ -177,7 +178,7 @@ describe('round 9: every food and drink in the database makes a correct video', 
     });
     it(`single · ${cut}: every sampled frame keeps its text in the safe zone, never text over text`, () => {
       const bad: string[] = [];
-      for (const { f, x } of ALL) { if (!x) continue; const { plan, hook } = singlePlanOf(x, cut); drawSingle(x, plan, hook, `${f.id} ${cut}`, bad); }
+      for (const { f, x } of sweep(ALL)) { if (!x) continue; const { plan, hook } = singlePlanOf(x, cut); drawSingle(x, plan, hook, `${f.id} ${cut}`, bad); }
       expect(failed(bad)).toEqual([]);
     });
   }

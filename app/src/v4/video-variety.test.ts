@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
 import { BEAT, CMP_BEAT, bothNamesEarly, IMPACT_POST_S, IMPACT_PRE_S, shownText, speakS, namesFirst, narrationFor, overused, stemList, variants, type NarrIn } from './video-narration';
 import { factTemplate } from './video-facts';
+import { FAST_TIER, sweep } from './sweep.testutil';
 
 /** v21c: the fillers said, by template, and the videos each one is on */
 const fillers = new Map<string, Set<string>>(), silent: string[] = [], early: string[] = [], sides: string[] = [];
@@ -58,11 +59,11 @@ describe('v21b narration variety and hooks', () => {
   });
   it('every item, every cut, and the audit comparisons: no word a third time in 15 s, the food named first', () => {
     const bad: string[] = [], hooks: string[] = [];
-    for (const it of auditItems()) for (const cut of AUDIT_CUTS) {
+    for (const it of sweep(auditItems())) for (const cut of AUDIT_CUTS) {
       const o = auditSingle(it.x, cut, 'A', AUDIT_PROFILE, it.vname);
       check(singleNarrIn(it.x, o, /bite/i.test(it.x.built.story.chapters[0]?.title ?? '')), `${it.id} ${cut}`, bad, hooks);
     }
-    for (const pr of auditPairs(auditItems(), 120)) for (const cut of AUDIT_CUTS) check(compareNarrIn(pr.a, pr.b, auditCompare(pr.a, pr.b, cut).cp), `${pr.id} ${cut}`, bad, hooks);
+    for (const pr of sweep(auditPairs(auditItems(), 120))) for (const cut of AUDIT_CUTS) check(compareNarrIn(pr.a, pr.b, auditCompare(pr.a, pr.b, cut).cp), `${pr.id} ${cut}`, bad, hooks);
     console.log(`[variety] ${bad.length} videos with a word said 3× in 15 s; ${hooks.length} hooks not naming the food first`);
     expect(bad.slice(0, 20)).toEqual([]);
     expect(hooks.slice(0, 20)).toEqual([]);
@@ -74,11 +75,12 @@ describe('v21b narration variety and hooks', () => {
     expect(early.slice(0, 20)).toEqual([]);
     // (v22: a fact for each side in at least 85 % of the comparison videos; the rest are mostly Shorts of a guess
     // game, where every fact of one side would give the answer away before the reveal and the close is too short)
-    expect(sides.length).toBeLessThanOrEqual(Math.ceil(0.15 * compares));
+    // (the two shares below are statistics of the whole database: the full tier only, a sample is too small for them)
+    if (!FAST_TIER) expect(sides.length).toBeLessThanOrEqual(Math.ceil(0.15 * compares));
     // v21c: fillers are this food's facts; no filler wording on more than 10 % of the videos
     const nItems = new Set([...fillers.values()].flatMap((x) => [...x])).size;
     const top = [...fillers].map(([k, v]) => [k, v.size / Math.max(1, videos / 3)] as const).sort((a, b) => b[1] - a[1]);
     console.log(`[fillers] ${fillers.size} templates on ${nItems} videos; top`, JSON.stringify(top.slice(0, 5)));
-    expect(top.filter(([, f]) => f > 0.1).map(([k, f]) => `${k} ${(100 * f).toFixed(0)} %`)).toEqual([]);
+    if (!FAST_TIER) expect(top.filter(([, f]) => f > 0.1).map(([k, f]) => `${k} ${(100 * f).toFixed(0)} %`)).toEqual([]);
   }, 600_000);
 });

@@ -7,6 +7,7 @@ import { FOODS } from '../v4/food/parse';
 import { ITEM_STEPS, mealFromCode, toMeal } from '../v4/food/meal';
 import { mealAnswerLines } from '../v4/food/mealWords';
 import { PROFILES, checkScreen, checkSim, checkTexts, peak } from './fuzzKit';
+import { sweep } from '../v4/sweep.testutil';
 
 // deterministic pseudo-random meals
 function rng(seed: number) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; }; }
@@ -28,7 +29,7 @@ describe('fuzz: meals', () => {
   }
 
   it('fixed and random meals: sane numbers and text for several bodies', () => {
-    for (const code of [...fixed, ...random]) {
+    for (const code of [...fixed, ...sweep(random)]) {
       const parts = mealFromCode(code);
       expect(parts.length, code).toBeGreaterThan(0);
       for (const [name, p] of Object.entries(PROFILES)) {
@@ -44,7 +45,7 @@ describe('fuzz: meals', () => {
   }, 300_000);
 
   it('a bigger meal is never less effect (all items doubled)', () => {
-    for (const code of [...fixed, ...random]) {
+    for (const code of [...fixed, ...sweep(random)]) {
       const parts = mealFromCode(code);
       const double = parts.map((x) => ({ ...x, grams: x.grams * 2 }));
       const a = simulateFood(toMeal(parts), DEFAULT_PROFILE), b = simulateFood(toMeal(double), DEFAULT_PROFILE);

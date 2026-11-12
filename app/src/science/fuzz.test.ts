@@ -8,12 +8,13 @@ import { DEFAULT_PROFILE } from './profile';
 import { FOODS, FOOD_BY_ID, servingPart } from '../v4/food/parse';
 import { ITEM_STEPS, toMeal } from '../v4/food/meal';
 import { PROFILES, checkScreen, checkSim, peak } from './fuzzKit';
+import { sweep } from '../v4/sweep.testutil';
 
 const amountsOf = (id: string) => ITEM_STEPS.map((n) => servingPart(FOOD_BY_ID[id], n));
 
 describe('fuzz: every food × every amount', () => {
   it('runs the full screen for all foods at ½, 1, 2, 3 servings (default body)', () => {
-    for (const f of FOODS) {
+    for (const f of sweep(FOODS)) {
       let last: { kcal: number; glu: number; bac: number; caf: number; tg: number; t50: number } | null = null;
       for (const part of amountsOf(f.id)) {
         const where = `${f.id} ×${part.amountLabel}`;
@@ -37,7 +38,7 @@ describe('fuzz: every food × every amount', () => {
     for (const [name, p] of Object.entries(PROFILES)) {
       // the body only changes alcohol, caffeine and bedtime: all foods with either, plus every 6th other food
       const foods = FOODS.filter((f, i) => (f.p.alcoholG ?? 0) > 0 || (f.p.caffeineMg ?? 0) > 0 || i % 6 === 0);
-      for (const f of foods) for (const n of [0.5, 3]) {
+      for (const f of sweep(foods)) for (const n of [0.5, 3]) {
         const part = servingPart(f, n);
         const meal = toMeal([part]);
         checkSim(`${name}/${f.id}×${n}`, simulateFood(meal, p), meal.alcoholG, meal.grams);

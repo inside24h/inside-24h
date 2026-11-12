@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
 import { narrationFor, numbersOf, repeats, shownText, speakable, ttsText, type NarrLine } from './video-narration';
+import { sweep } from './sweep.testutil';
 
 const tts = (s: string) => ttsText(speakable(s));
 /** What may reach the speech engine: words, whole or decimal numbers, a clock time, plain punctuation. */
@@ -44,14 +45,14 @@ describe('v21 speech text normalization', () => {
       const drive = lines.filter((l) => /\bdriv/i.test(l.text));
       if (drive.length > 1) rep.push(`${where}: ${drive.map((l) => l.text).join(' / ')}`);
     };
-    for (const it of auditItems()) for (const cut of AUDIT_CUTS) {
+    for (const it of sweep(auditItems())) for (const cut of AUDIT_CUTS) {
       const o = auditSingle(it.x, cut, 'A', AUDIT_PROFILE, it.vname);
       const lines = narrationFor(singleNarrIn(it.x, o, /bite/i.test(it.x.built.story.chapters[0]?.title ?? '')));
       scan(lines, `${it.id} ${cut}`);
       const ded = lines.filter((l) => l.id === 'card' || l.id === 'beat' || l.id === 'tease');
       ded.forEach((l, i) => { if (lines.slice(0, lines.indexOf(l)).some((o) => o.id !== 'hook' && repeats(l.text, o.text))) rep.push(`${it.id} ${cut}: ${l.text}`); void i; });
     }
-    for (const pr of auditPairs(auditItems(), 120)) for (const cut of AUDIT_CUTS) {
+    for (const pr of sweep(auditPairs(auditItems(), 120))) for (const cut of AUDIT_CUTS) {
       const o = auditCompare(pr.a, pr.b, cut);
       scan(narrationFor(compareNarrIn(pr.a, pr.b, o.cp)), `${pr.id} ${cut}`);
     }

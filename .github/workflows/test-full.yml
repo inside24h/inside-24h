@@ -1,0 +1,28 @@
+# Audit C14 (2026-11-12): the full test tier (every sweep over the whole food database, > 10 min, ~2.2 GB RAM).
+# Nightly and on demand (Actions -> "Tests (full)" -> Run workflow). The fast tier runs on every push: ci.yml.
+name: Tests (full)
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - name: Tests (full tier)
+        run: npm run test:full
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144

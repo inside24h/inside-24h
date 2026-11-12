@@ -1,17 +1,17 @@
 // v20 (2026-11-06, owner: "not a boring reel", hold attention from the first second to the last): the retention sweep.
 // Every database item (all three cuts) and the audit comparisons, with the speech engine mocked (each clip lasts its
-// spoken word count at a seeded 2.4-3.0 words/s): the voice tells the story (coverage, no long silence except the hush
+// spoken word count at a fixed-per-line 2.4-3.0 words/s): the voice tells the story (coverage, no long silence except the hush
 // before an impact), something changes on screen every few seconds (cues, caption pages, punch-ins), what is said is
 // what the card says, and every cut keeps its length.
 import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
-import { IMPACT_POST_S, IMPACT_PRE_S, OVERRUN_S, cardSpans, narrationFor, placeClips, wordsOf, type NarrIn } from './video-narration';
+import { IMPACT_POST_S, IMPACT_PRE_S, OVERRUN_S, cardSpans, narrationFor, placeClips, type NarrIn } from './video-narration';
+import { mockDur } from './voice-mock.testutil';
 import { captionTrack, punchTimes, type CapLine } from './video-captions';
 import { LENGTH, type Cut } from './video-plan';
+import { sweep } from './sweep.testutil';
 
-let rnd = 20261106;
-const rand = () => { rnd = (rnd * 1664525 + 1013904223) >>> 0; return rnd / 4294967296; };
-const mockDur = (say: string) => wordsOf(say) / (2.4 + 0.6 * rand()) + 0.12;
+// (mockDur: voice-mock.testutil.ts, each line's speed fixed by its own text)
 /** As voice-tts makeVoice: a clip a little long for its slot is said again faster (at most 1.2×). */
 export const spoken = (say: string, slotS: number) => { const d = mockDur(say); return d > slotS + OVERRUN_S ? d / Math.min(1.2, d / slotS) : d; };
 
@@ -60,7 +60,7 @@ const stats = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); retur
 describe('v20 retention sweep (voice coverage, silences, visual events, said = shown, lengths)', () => {
   it('every item, every cut', () => {
     const bad: string[] = [], cov: Record<Cut, number[]> = { long: [], medium: [], short: [] }, gaps: number[] = [];
-    for (const it of auditItems()) for (const cut of AUDIT_CUTS) {
+    for (const it of sweep(auditItems())) for (const cut of AUDIT_CUTS) {
       const o = auditSingle(it.x, cut, 'A', AUDIT_PROFILE, it.vname);
       const r = retention(singleNarrIn(it.x, o, /bite/i.test(it.x.built.story.chapters[0]?.title ?? '')));
       check(r, cut, `${it.id} ${cut}`, bad); cov[cut].push(r.cov); gaps.push(r.gap);
@@ -74,7 +74,7 @@ describe('v20 retention sweep (voice coverage, silences, visual events, said = s
 
   it('audit comparisons, every cut', () => {
     const bad: string[] = [], cov: number[] = [];
-    for (const pr of auditPairs(auditItems(), 120)) for (const cut of AUDIT_CUTS) {
+    for (const pr of sweep(auditPairs(auditItems(), 120))) for (const cut of AUDIT_CUTS) {
       const o = auditCompare(pr.a, pr.b, cut);
       const r = retention(compareNarrIn(pr.a, pr.b, o.cp));
       check(r, cut, `${pr.id} ${cut}`, bad); cov.push(r.cov);

@@ -1,21 +1,21 @@
 // v19 (2026-11-05): the spoken-word captions (video-captions.ts, share.ts drawCaption) over every database item and
-// the audit comparisons, with the speech engine mocked (each clip lasts its spoken words at a seeded 2.4-3.0 words/s):
+// the audit comparisons, with the speech engine mocked (each clip lasts its spoken words at a fixed-per-line 2.4-3.0 words/s):
 // every caption page is readable (2 lines at most, a few words, long enough), and on the real frame of its moment
 // (drawn with a fake canvas) it sits inside the platforms' safe zone, over no word on the frame and clear of the
 // body's focal organ; a line the screen already shows is not captioned. Also: the music's arrangement (video-audio.ts).
 import { describe, expect, it } from 'vitest';
 import { AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
-import { narrationFor, placeClips, wordsOf } from './video-narration';
+import { narrationFor, placeClips } from './video-narration';
+import { mockDur } from './voice-mock.testutil';
 import { captionPages, captionTrack, duplicateOnScreen, pausesOf, wordTimes, CAP_MAX_CHARS, CAP_MAX_WORDS, FOCUS_R, PAGE_MIN_S, type CapLine, type CapPage } from './video-captions';
 import { drawCaption, drawCmpFrame, drawFrame, hushCards, lastFrameFocus, logText, SAFE, swallowing, SWALLOW_R, type CapState, type CmpOverlay, type Light, type Overlay, type TextBox } from './share';
 import { arrangement, melodyOf, motifOf } from './video-audio';
 import { gaugesAt, cmpName, plainLatin } from './video-story';
 import { FPS, type Plan } from './video-plan';
 import type { Analysis } from './analyze';
+import { sweep } from './sweep.testutil';
 
-let rnd = 20261105;
-const rand = () => { rnd = (rnd * 1664525 + 1013904223) >>> 0; return rnd / 4294967296; };
-const mockDur = (say: string) => wordsOf(say) / (2.4 + 0.6 * rand()) + 0.12;
+// (mockDur: voice-mock.testutil.ts, each line's speed fixed by its own text)
 function fakeCtx(w: number): CanvasRenderingContext2D {
   const st: Record<string, unknown> = { font: '10px sans-serif', textAlign: 'left', textBaseline: 'alphabetic', globalAlpha: 1, fillStyle: '', strokeStyle: '', lineWidth: 1, shadowColor: '', shadowBlur: 0, shadowOffsetY: 0, globalCompositeOperation: 'source-over' };
   const stack: Record<string, unknown>[] = [];
@@ -97,7 +97,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
   it('every item (long cut): readable pages, in the safe zone, over no word, clear of the focal organ', () => {
     const T: Tally = { pages: 0, shown: 0, dup: 0, bad: [] };
     let k = 0;
-    for (const it2 of auditItems()) {
+    for (const it2 of sweep(auditItems())) {
       const x = it2.x, o = auditSingle(x, 'long', 'A', AUDIT_PROFILE, it2.vname), plan = o.plan, st0 = x.built.story;
       const solid = /bite/i.test(st0.chapters[0]?.title ?? '');
       const said = linesOf(singleNarrIn(x, o, solid)), caps = captionTrack(said);
@@ -122,7 +122,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
 
   it('audit comparisons (long cut): the same rules on the split screen, both bodies clear', () => {
     const T: Tally = { pages: 0, shown: 0, dup: 0, bad: [] };
-    for (const pr of auditPairs(auditItems(), 60)) {
+    for (const pr of sweep(auditPairs(auditItems(), 60))) {
       const o = auditCompare(pr.a, pr.b, 'long'), cp = o.cp, plan = cp.plan;
       const said = linesOf(compareNarrIn(pr.a, pr.b, cp)), caps = captionTrack(said);
       const side = (x: Analysis, m: number, stop: number, cap: string | undefined, gx: number): CmpOverlay['a'] => {
@@ -152,7 +152,7 @@ describe('v19 spoken-word captions (video-captions.ts)', () => {
 describe('v19 music arrangement (video-audio.ts)', () => {
   it('intro → build → drop on the climax hit → breakdown → outro, for every item; the melody is the food’s own', () => {
     const bad: string[] = [];
-    for (const it2 of auditItems()) {
+    for (const it2 of sweep(auditItems())) {
       const plan = auditSingle(it2.x, 'long', 'A', AUDIT_PROFILE, it2.vname).plan, arr = arrangement(plan.cues, plan.seconds);
       const names = arr.map((s) => s.name).join(' ');
       const hitT = plan.cues.filter((c) => c.kind === 'peak' || c.kind === 'verdict').map((c) => c.t).sort((a, b) => a - b)[0];

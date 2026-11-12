@@ -4,11 +4,13 @@ import { describe, expect, it } from 'vitest';
 // @ts-ignore (node types are not part of this app's tsconfig; vitest runs in node)
 import { writeFileSync } from 'node:fs';
 import { runAudit } from './text-audit';
+import { FAST_TIER } from './sweep.testutil';
 
 const DUMP = new URL('../../../research/improvements/text-audit-2026-11-05.txt', import.meta.url);
 
 describe('round 17: the text audit (every on-screen and posted string, every item, cut and a broad set of comparisons)', () => {
-  it('no class of text mistake anywhere', () => {
+  // (the whole-database audit takes minutes: full tier only, see sweep.testutil.ts; the targeted checks below run in both)
+  it.skipIf(FAST_TIER)('no class of text mistake anywhere', () => {
     const res = runAudit(300);
     const byCls = new Map<string, string[]>();
     for (const i of res.issues) { const l = byCls.get(i.cls) ?? []; l.push(`${i.where}: ${i.text}`); byCls.set(i.cls, l); }

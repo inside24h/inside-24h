@@ -1,12 +1,12 @@
 // 2026-11-05: the voiceover script (video-narration.ts) over every database item (all three cuts) and the audit
-// comparisons, with the speech engine mocked: each clip lasts its spoken word count at a seeded 2.4–3.0 words/s.
+// comparisons, with the speech engine mocked: each clip lasts its spoken word count at a fixed-per-line 2.4–3.0 words/s.
 import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, compareNarrIn, singleNarrIn } from './text-audit';
 import { HOOK_QUIET_S, IMPACT_PRE_S, IMPACT_POST_S, OVERRUN_S, TAIL_S, lintNarration, narrationFor, numbersOf, placeClips, speakable, wordsOf, type NarrIn } from './video-narration';
+import { mockDur } from './voice-mock.testutil';
+import { sweep } from './sweep.testutil';
 
-let rnd = 20261105;
-const rand = () => { rnd = (rnd * 1664525 + 1013904223) >>> 0; return rnd / 4294967296; };
-const mockDur = (say: string) => wordsOf(say) / (2.4 + 0.6 * rand()) + 0.12; // + the engine's lead-in/out silence
+// (mockDur: voice-mock.testutil.ts, each line's speed fixed by its own text)
 
 function check(nin: NarrIn, where: string, bad: string[]) {
   const lines = narrationFor(nin);
@@ -49,7 +49,7 @@ describe('voiceover script (video-narration.ts)', () => {
   it('every item, every cut: timing, sync, numbers, lints (mocked clip lengths)', () => {
     const bad: string[] = [];
     let n = 0, clips = 0;
-    for (const it of auditItems()) for (const cut of AUDIT_CUTS) {
+    for (const it of sweep(auditItems())) for (const cut of AUDIT_CUTS) {
       const o = auditSingle(it.x, cut, 'A', AUDIT_PROFILE, it.vname);
       const solid = /bite/i.test(it.x.built.story.chapters[0]?.title ?? '');
       const r = check(singleNarrIn(it.x, o, solid), `${it.id} ${cut}`, bad);
@@ -63,7 +63,7 @@ describe('voiceover script (video-narration.ts)', () => {
 
   it('audit comparisons, every cut', () => {
     const bad: string[] = [];
-    for (const pr of auditPairs(auditItems(), 120)) for (const cut of AUDIT_CUTS) {
+    for (const pr of sweep(auditPairs(auditItems(), 120))) for (const cut of AUDIT_CUTS) {
       const o = auditCompare(pr.a, pr.b, cut);
       const r = check(compareNarrIn(pr.a, pr.b, o.cp), `${pr.id} ${cut}`, bad);
       if (!o.cp.guess && r.lines.some((l) => /guess/i.test(l.text))) bad.push(`${pr.id}: a guess line without the game`);
