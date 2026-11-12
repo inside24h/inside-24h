@@ -1,12 +1,13 @@
 // Build 0.4 layout: one screen. Left: what is happening now. Centre: the body. Right: your readings.
 // Bottom: the 24 h timeline. Evidence and the profile open in side panels on demand.
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { RootState } from '@react-three/fiber';
 import { flushSync } from 'react-dom';
 // three.js / r3f / drei and the scene load lazily (hosted build: a separate chunk), see ./lazy3d
 import { advance, Body, CameraRig, CompareScene, ExposeState, Flow, FlowPaths, LiquidRoute, OrbitControls, SafeCanvas, VideoCam } from './lazy3d';
 import type { Glow } from '../scene/Body';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
+import { Body2D, type NoGlReason } from './Body2D';
 import { ClaimRow } from '../ui/ClaimRow';
 import { SOURCES } from '../content/sources';
 import { LEVEL_LABEL, type Claim, type Stage } from '../content/types';
@@ -990,6 +991,13 @@ export default function AppV4() {
   // spoken when paused or scrubbed, not on every frame while playing.
   const stageWhere = overlayRef.current?.where;
   const stageText = `${sinceText(minute, lower)}${stageWhere ? `: ${stageWhere.replace(' · ', ' ')}` : ''}. ${chapter.title}.`;
+  // audit C11: no WebGL, a lost context or a 3D part that failed: the 2D body with the same numbers as the 3D one
+  const body2d = (reason: NoGlReason, error?: unknown, action?: ReactNode) => {
+    const segs = started && built.route ? (Object.entries(built.route.segs(minute)) as [SegId, SegState][]).filter(([, v]) => v.frac >= 0.04).sort((a, b) => b[1].frac - a[1].frac) : [];
+    return <Body2D reason={reason === 'error' && /webgl/i.test(errorText(error)) ? 'nogl' : reason} details={error === undefined ? undefined : errorText(error)}
+      color={story.color} liquid={started ? story.liquid(minute) : {}} present={segs} unit={built.route?.unit}
+      selected={selected} onSelect={(o) => { setSelected(o); setTouched(true); }} action={action} />;
+  };
 
   return (
     <div className={`v4 ${calmNow || !started ? 'calmlay' : ''} ${!started ? 'cold' : ''} ${ansOpen && calmNow ? 'ansopen' : ''}`}>
@@ -1063,9 +1071,9 @@ export default function AppV4() {
 
         <section className={`stage${recBox ? ` recbox ${recBox}` : ''}`} aria-label="3D body" aria-describedby="stage-now"
           onPointerDown={(e) => { down.current = [e.clientX, e.clientY]; setTouched(true); }}>
-          <ErrorBoundary fallback={(e) => <StageError error={e} />}>
-            {sceneError ? <StageError error={sceneError} /> : !show3d ? null : (
-              <Suspense fallback={null}><SafeCanvas rec={!!recBox} camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
+          <ErrorBoundary fallback={(e) => body2d('error', e)}>
+            {sceneError ? body2d('error', sceneError) : !show3d ? null : (
+              <Suspense fallback={null}><SafeCanvas rec={!!recBox} noGl={(r, action) => body2d(r, undefined, action)} camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
                 onPointerMissed={(e) => {
                   const d = down.current;
                   if (!d || Math.hypot(e.clientX - d[0], e.clientY - d[1]) < 5) setSelected(null);
@@ -1131,7 +1139,7 @@ export default function AppV4() {
             </div>
           ) : (
             <div className="legend"><span><i style={{ background: story.color }} />{PRODUCT.name} in your body</span>
-              {(selected || (chapter.focus && !wholeBody)) && <button className="wholebody" onClick={() => { setSelected(null); setWholeBody(true); setFlightKey((k) => k + 1); }}>Show the whole body</button>}
+              {(selected || (chapter.focus && !wholeBody)) && <button className="wholebody" aria-label="Show the whole body" onClick={() => { setSelected(null); setWholeBody(true); setFlightKey((k) => k + 1); }}><span className="wbl">Show the whole body</span><span className="wbs" aria-hidden="true"><i>⤢</i> Whole body</span></button>}
             </div>
           )}
           <div className="credit">Anatomy: BodyParts3D © DBCLS · CC BY 4.0</div>
@@ -1596,11 +1604,6 @@ function MissNote({ text, onPick }: { text: string; onPick: (parts: Part[]) => v
   );
 }
 
-function StageError({ error }: { error: unknown }) {
-  return (
-    <div className="stage-error" role="alert">
-      <b>{/webgl/i.test(String(error instanceof Error ? error.message : error)) ? 'Your browser can’t show 3D. Try opening this page in Chrome or Safari.' : 'The 3D body couldn’t load.'}</b>
-      <p>Everything else still works. Technical details: {error instanceof Error ? error.message : String(error)}</p>
-    </div>
-  );
-}
+// (audit C11, 2026-11-12: the stage no longer shows a bare error here; it shows the 2D body, Body2D.tsx, with the
+// technical detail behind "Details")
+function errorText(error: unknown) { return error instanceof Error ? error.message : String(error); }

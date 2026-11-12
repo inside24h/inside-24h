@@ -5,7 +5,7 @@
 // - WebGL context lost (phone backgrounded the tab, GPU reset) -> a notice with a reload button until it comes back;
 // - preserveDrawingBuffer only where the video export needs it: the frame-exact WebCodecs path renders and reads
 //   in the same task, so it does not; the MediaRecorder fallback (no WebCodecs) reads a frame later, so it does.
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, type CanvasProps } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import { canEncode } from '../share';
@@ -13,7 +13,9 @@ import { deviceTier, webglAvailable } from './device';
 
 const NO_3D = "Your browser can't show 3D — try opening in Chrome/Safari.";
 
-export function SafeCanvas({ children, gl, frameloop, onCreated, rec, ...rest }: CanvasProps & { /** a video is being recorded (2026-10-23: also the screen-recording fallback) */ rec?: boolean }) {
+export function SafeCanvas({ children, gl, frameloop, onCreated, rec, noGl, ...rest }: CanvasProps & { /** a video is being recorded (2026-10-23: also the screen-recording fallback) */ rec?: boolean;
+  /** audit C11: what to show instead of the 3D (the 2D body) when there is no WebGL, or over it while the context is lost */
+  noGl?: (reason: 'nogl' | 'lost', action?: ReactNode) => ReactNode }) {
   // A throwaway test context costs 50–300 ms on slow phones during start-up; the API check is free. If the real
   // context then fails, the ErrorBoundary around the stage shows the same friendly message (AppV4 StageError).
   const ok = useMemo(() => (typeof window !== 'undefined' && 'WebGLRenderingContext' in window) || webglAvailable(), []);
@@ -28,7 +30,7 @@ export function SafeCanvas({ children, gl, frameloop, onCreated, rec, ...rest }:
   // the video's 1080 × 1920, so the body fills the whole frame pixel for pixel
   const recDpr = rec ? 2 : Math.min(3, Math.max(dpr, 2));
 
-  if (!ok) return <div className="stage-error nogl" role="alert"><b>{NO_3D}</b><p>Everything else still works.</p></div>;
+  if (!ok) return noGl ? <>{noGl('nogl')}</> : <div className="stage-error nogl" role="alert"><b>{NO_3D}</b><p>Everything else still works.</p></div>;
   return (
     <>
       <Canvas {...rest} frameloop={frameloop} dpr={recording.current ? recDpr : dpr}
@@ -44,7 +46,8 @@ export function SafeCanvas({ children, gl, frameloop, onCreated, rec, ...rest }:
           onFallback={() => { if (!recording.current) setDpr(1); }} />
         {children}
       </Canvas>
-      {lost && (
+      {lost && noGl && noGl('lost', <button className="nogl-reload" onClick={() => location.reload()}>Reload</button>)}
+      {lost && !noGl && (
         <div className="stage-error nogl" role="alert">
           <b>The 3D view was paused by your browser.</b>
           <p>It usually comes back by itself. If not: <button className="nogl-reload" onClick={() => location.reload()}>Reload</button></p>

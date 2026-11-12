@@ -1,0 +1,40 @@
+/* Audit C11 (2026-11-12): the 2D body when there is no WebGL (Body2D.tsx). It is the stage's first child, so
+   v4.css (.stage > div:first-child) already places it over the whole stage like the 3D canvas. */
+.body2d { position: absolute; inset: 0; z-index: 3; display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; overflow: hidden;
+  background: radial-gradient(ellipse 60% 55% at 50% 45%, #0c1b2c 0%, #04070c 75%); }
+.body2d svg { width: 100%; height: 100%; padding: 64px 8px 8px; box-sizing: border-box; overflow: visible; }
+.body2d .b2skin { fill: rgba(88, 198, 255, .05); stroke: rgba(88, 198, 255, .45); stroke-width: 1.2; }
+.body2d .b2organ { cursor: pointer; }
+.body2d .b2organ:hover path:first-of-type, .body2d .b2organ.on path:first-of-type { stroke-opacity: 1; stroke-width: 2; }
+.body2d .b2organ.on path:first-of-type { filter: drop-shadow(0 0 4px #fff); }
+.body2d .b2dot { stroke: #fff; stroke-width: 1.2; }
+.body2d .b2dot.main { animation: b2pulse 1.6s ease-in-out infinite; }
+@keyframes b2pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .body2d .b2dot.main { animation: none; } }
+
+/* where it is now: the same words as the 3D labels */
+.b2labels { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; justify-items: end; pointer-events: none; }
+.b2labels li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(8, 16, 26, .85); border: 1px solid var(--line2);
+  font: 12px var(--body); color: #cfdbe8; white-space: nowrap; }
+.b2labels li.main { border-color: var(--accent); color: var(--text); font-size: 13px; }
+.b2labels li b { font-weight: 600; }
+.b2labels i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+/* the friendly note, top left; the technical detail only behind "Details" */
+.b2msg { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 12px; border-radius: 12px;
+  background: rgba(8, 16, 26, .9); border: 1px solid var(--line2); font: 13px/1.35 var(--body); color: #dfe8f2; max-width: 520px; }
+.b2msg details { font: 11px var(--mono); color: var(--mute); }
+.b2msg summary { cursor: pointer; min-height: 24px; display: inline-flex; align-items: center; color: var(--mute); }
+.b2msg code { display: block; margin-top: 4px; word-break: break-word; }
+.b2msg .nogl-reload { min-height: 32px; }
+@media (pointer: coarse) { .b2msg summary, .b2msg .nogl-reload { min-height: 44px; } }
+
+/* phones: the labels go under the note, the body takes the rest */
+@media (max-width: 720px) {
+  .body2d svg { padding: 58px 4px 4px; }
+  .b2labels { top: auto; bottom: 30px; left: 10px; right: auto; transform: none; justify-items: start; }
+  .b2msg { font-size: 12.5px; padding: 6px 10px; }
+}
+/* the calm layout's floating controls (Quick answers, whole body) keep clear of the note */
+.stage:has(.body2d) .legend { display: none; }
+.stage:has(.body2d) .hint { display: none; }

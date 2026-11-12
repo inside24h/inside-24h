@@ -463,3 +463,63 @@
 /* (and at least 24 px tall with a mouse: WCAG 2.2 target size minimum) */
 @media (pointer: fine) { .top .brand, button.link, .disclaim button, .calmdots .fullview, .check { min-height: 24px; } }
 @media (pointer: coarse) { .drawer .check { min-height: 44px; } }
+
+/* ==== Audit C4 (2026-11-12): on a phone the body gets well over half of the screen ====
+   Measured with scripts/check-mobile-layout.mjs (canvas share of the viewport, before -> after):
+   360x740 42.1 -> 57.7 %, 390x844 44.3 -> 60.6 %, 430x932 51.8 -> 64.3 % (desktop 1440x900 unchanged, 61.5 %).
+   What changed, phones only (<= 720 px, calm view):
+   - the calm bar is a sheet that peeks: the slider lies on the line between the body and the sheet (a video
+     player's scrubber, 44 px to touch), title + clock share one line, the sentence shows 2 lines (3 on taller
+     phones) and "More" opens the rest and "Right now: ..." (the sheet grows, nothing covers the body);
+   - the chips on the body are smaller: "Whole body" instead of "Show the whole body", the food's name in the
+     legend fades after a few seconds (the sheet and the labels on the body say it too). */
+.calmsince, .calmmore { display: none; }
+@media (max-width: 720px) {
+  .v4.calmlay .calmbar { position: relative; z-index: 6; max-height: none; overflow: visible; gap: 6px; padding: 22px 14px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  /* text: [title ........ 21:20] then "Just now · You swallow, and ..." */
+  .v4.calmlay .calmtext { position: relative; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; text-align: left; align-items: baseline; }
+  .v4.calmlay .calmclock { display: contents; }
+  .v4.calmlay .calmclock b { grid-column: 2; grid-row: 1; font: 500 16px/1 var(--mono); color: var(--text); }
+  .v4.calmlay .calmclock span { display: none; }
+  .v4.calmlay .calmtext h2 { grid-column: 1; grid-row: 1; margin: 0; font-size: 23px; line-height: 1.1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v4.calmlay .calmtext > p:not(.sr) { grid-column: 1 / -1; font-size: 14.5px; line-height: 1.38; -webkit-line-clamp: 2; }
+  .v4.calmlay .calmsince { display: inline; font: 12px var(--mono); color: var(--accent); }
+  .v4.calmlay .calmwhere { display: none; grid-column: 1 / -1; }
+  .v4.calmlay .calmmore { display: inline-flex; align-items: flex-end; justify-content: flex-end; position: absolute; right: 0; bottom: 0; min-width: 76px; min-height: 44px; padding: 0 0 1px 26px;
+    border: 0; background: linear-gradient(to right, transparent, var(--bg) 24px) bottom / 100% 21px no-repeat; color: var(--accent); font: 600 13px/1.38 var(--body); cursor: pointer; }
+  .v4.calmlay .calmmore:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .v4.calmlay .calmbar.more .calmtext { max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; }
+  .v4.calmlay .calmbar.more .calmtext h2 { white-space: normal; }
+  .v4.calmlay .calmbar.more .calmtext > p:not(.sr) { -webkit-line-clamp: unset; display: block; }
+  .v4.calmlay .calmbar.more .calmwhere { display: block; grid-column: 1; grid-row: 3; align-self: center; }
+  .v4.calmlay .calmbar.more .calmmore { position: static; grid-column: 2; grid-row: 3; align-items: center; min-width: 64px; padding: 0; background: none; }
+  .v4.calmlay .calmbar:has(.calmexplain) .calmmore { display: none; }
+  .v4.calmlay .calmexplain { max-height: 34dvh; overflow-y: auto; overscroll-behavior: contain; }
+  /* the slider on the sheet's top edge, full width */
+  .v4.calmlay .calmctl { grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-areas: "play portion time"; }
+  .v4.calmlay .calmtrack { grid-area: auto; position: absolute; left: 0; right: 0; top: -22px; height: 44px; padding: 0 14px; z-index: 1; }
+  .v4.calmlay .calmtrack input[type="range"] { height: 44px; }
+  .v4.calmlay .calmctl > .play { width: 44px; height: 44px; }
+  .v4.calmlay .calmlight { min-height: 44px; padding: 2px; }
+  /* "Had it at" sits in the time field's top border (as a form legend), so the row is only the 44 px field tall */
+  .v4.calmlay .calmctl .eatenat { position: relative; display: block; }
+  .v4.calmlay .calmctl .eatenat .plabel { position: absolute; left: 10px; top: -7px; padding: 0 4px; background: var(--bg); font-size: 10px; line-height: 12px; pointer-events: none; }
+  .v4.calmlay .top { padding-top: 6px; padding-bottom: 6px; }
+  /* the chips on the body: smaller, and out of the slider's way */
+  .v4.calmlay .anstoggle { bottom: 30px; right: 10px; min-height: 44px; padding: 0 12px; gap: 6px; font-size: 13px; }
+  .v4.calmlay .stage .hint { bottom: 84px; }
+  .v4.calmlay .legend { top: 8px; left: 10px; right: 10px; }
+  .v4.calmlay .legend > span:first-child { animation: hintaway .6s ease 5s forwards; }
+  .v4.calmlay .organ { bottom: 84px; }
+}
+@media (max-width: 400px) { .v4.calmlay .anstoggle .chev { display: none; } }
+.wholebody .wbs { display: none; }
+@media (max-width: 1100px) {
+  .v4.calmlay .wholebody .wbl, .grid.simple:not(.calm) .wholebody .wbl { display: none; }
+  .v4.calmlay .wholebody .wbs, .grid.simple:not(.calm) .wholebody .wbs { display: inline; }
+  .wholebody .wbs i { font-style: normal; color: var(--accent); }
+}
+/* taller phones: three lines of the sentence */
+@media (max-width: 720px) and (min-height: 800px) {
+  .v4.calmlay .calmtext > p:not(.sr) { -webkit-line-clamp: 3; }
+}

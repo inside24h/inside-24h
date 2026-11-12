@@ -2,6 +2,9 @@
 // single slider, plus four coloured lights. Everything else lives behind "Full".
 // Phones: the slider gets its own full-width row (≥ 44 px to touch), play + amount + time share the next one, and
 // each light is a button that explains itself ("Brain · high stress" → what it means now + one thing to do).
+// Audit C4 (2026-11-12), phones: a peeking sheet. The slider lies on the line between the body and the sheet (as a
+// video player's scrubber), the title and the clock share one line, the sentence shows two or three lines with
+// "More" for the rest (and "Right now: …"), so the body gets well over half of the screen (mobile.css).
 import { useEffect, useState } from 'react';
 import { MAX_MIN, minutesFromU } from '../time';
 import { SHORT_LABEL, type Level, type System } from './status';
@@ -21,6 +24,7 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
   /** opens "How the colours work" */ onRules?: () => void;
 }) {
   const [open, setOpen] = useState<System['key'] | null>(null);
+  const [more, setMore] = useState(false); // phones: the whole sentence and "Right now" (the sheet grows, the body shrinks)
   // Esc closes the explanation and returns focus to the light that opened it
   useEffect(() => {
     if (!open) return;
@@ -34,11 +38,13 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
   const lvl = sys ? (sys.levels[m] as Level) : 0;
   const tipKey = sys && !sys.unknown && sys.tip ? sys.tip(lvl, m) : null;
   return (
-    <div className="calmbar">
+    <div className={`calmbar ${more ? 'more' : ''}`}>
       <div className="calmtext">
         <div className="calmclock"><b>{clock}</b><span>{since}</span></div>
         <h2>{title}</h2>
-        <p>{text}</p>
+        {/* phones: "Just now ·" leads the sentence (the clock sits next to the title) */}
+        <p><span className="calmsince" aria-hidden="true">{since} · </span>{text}</p>
+        <button className="calmmore" aria-expanded={more} onClick={() => setMore(!more)}>{more ? 'Less' : 'More'}<span aria-hidden="true">{more ? ' ▾' : ' ▴'}</span></button>
         {/* screen readers hear each new step once, not every tick of the clock */}
         <p className="sr" aria-live="polite">{title}. {text}</p>
         {where && <div className="calmwhere">Right now: <b>{where}</b></div>}
