@@ -3,6 +3,7 @@
 // when the time stamp lands, and a resolving chord under the end card. It follows the video plan exactly, so every
 // sound sits on its frame. Rendered offline (faster than real time) and encoded to AAC inside the MP4.
 // Platforms favour videos with sound, and people who prefer a trending track can lower ours in the app's editor.
+import { perfAdd } from './video-perf';
 import type { Cue } from './video-plan';
 
 export const SAMPLE_RATE = 48000;
@@ -560,7 +561,8 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   // A14 ratchet: the clock's soft ticks through the night time-lapse
   for (const [a, b] of nights) for (let t = a + 0.2; t < b - 0.1; t += 1 / 8) { nz(t, 0.004, 0.025, sfx, { type: 'highpass', f: 3000 }, 0, 0.001); osc('sine', 2200, null, t, 0.008, 0.012, sfx, 0, 0.001); }
 
-  const buf = await ctx.startRendering();
+  const tr0 = performance.now(), buf = await ctx.startRendering(), tm0 = performance.now();
+  perfAdd('soundRender', tm0 - tr0);
   // mix: music + effects (or effects only), loudness from the full mix, lookahead limiter, a short fade for the loop
   const m0 = buf.getChannelData(0), m1 = buf.getChannelData(1), s0 = buf.getChannelData(2), s1 = buf.getChannelData(3);
   const out = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
@@ -600,5 +602,6 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
   limit([L, R], CEIL2, sr);
   const fade = Math.round(0.3 * sr);
   for (let i = len - fade; i < len; i++) { const k = (len - i) / fade; L[i] *= k; R[i] *= k; }
+  perfAdd('soundMix', performance.now() - tm0);
   return out;
 }

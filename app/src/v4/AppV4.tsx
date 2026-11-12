@@ -28,7 +28,6 @@ import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
 import { StatusLights, StatusStrips } from './StatusBar';
-import { VoicePick } from './VoicePick';
 import type { NarrIn } from './video-narration';
 import type { FactIn } from './video-facts';
 import type { CmpOverlay, CmpSide, Format, Overlay } from './share';
@@ -100,6 +99,8 @@ import { isPlain, leftOutNote, macros, parseMeal, readPace, servingPart, sizesOf
 import { amountPhrase, capFirst, partsPhrase } from './food/naming';
 import { canPace, paceLabel, paceMatters, setFood } from './food/meal';
 import { makeFoodProduct } from './food/foodProduct';
+import { CANCELLED, etaSeconds, etaText, perfTime } from './video-perf';
+import { afterText, VideoSteps, type VideoPreview } from './VideoSteps';
 
 // Water each drink brings (ml): espresso 30 ml shot, cola 330 ml can (≈ 89% water), water 250 ml glass.
 const WATER_ML: Record<string, number> = { espresso: 29, cola: 295, water: 250 };
@@ -272,6 +273,7 @@ function lifeOf(name: string, b: BuiltLike, m: number, gauges: PinnedGauge[]) {
   return { fizz: fizzy ? Math.min(1, st * 1.4) : 0, foam: /\b(beer|lager|radler)\b/i.test(name) && mi < 4, flow };
 }
 
+const voiceCachedHere = () => { try { return localStorage.getItem('i24-voice-ready') === '1'; } catch { return false; } };
 /** Resolves once the 3D canvas has the video's size (or after 3 s: the frame is then cover-cropped as before). */
 const canvasSized = (W: number, H: number) => new Promise<void>((res) => {
   const t0 = performance.now();
@@ -383,6 +385,13 @@ export default function AppV4() {
   const recRef = useRef(false);
   const r3f = useRef<RootState | null>(null);
   const [recPct, setRecPct] = useState(0);
+  // phase 2A (audit C6): Cancel, the ETA (from the first frame's time), and the 3-step video dialog (1 choose, 2 preview)
+  const recAbort = useRef<AbortController>(new AbortController());
+  const recT0 = useRef<{ t: number; f: number } | null>(null);
+  const recTick = (f: number) => { if (recT0.current === null) recT0.current = { t: performance.now(), f }; setRecPct(f); };
+  const [vStep, setVStep] = useState<1 | 2>(1);
+  const [vFormat, setVFormat] = useState<Format>('reel');
+  const [vPreview, setVPreview] = useState<VideoPreview | null>(null);
   const uRef = useRef(u); uRef.current = u;
 
   // a pasted deep link (#q=…, #p=…) opens that scenario
@@ -589,7 +598,9 @@ export default function AppV4() {
   const [vidSound, setVidSound] = useState<'music' | 'sfx' | 'none'>('music');
   // 2026-11-05: the voiceover (video-narration.ts script, voice-tts.ts in-browser speech), on by default; it rides on
   // our soundtrack ("None" has no voice either); its progress while it is made, before the frames
-  const [vidVoice, setVidVoiceS] = useState(() => { try { return localStorage.getItem('i24-voice') !== '0'; } catch { return true; } });
+  // (phase 2A, audit C6: with no choice made yet, on only when the voice model is already on this device, so nobody
+  // downloads ~90 MB without asking for it)
+  const [vidVoice, setVidVoiceS] = useState(() => { try { const s = localStorage.getItem('i24-voice'); return s === null ? localStorage.getItem('i24-voice-ready') === '1' : s !== '0'; } catch { return false; } });
   const setVidVoice = (v: boolean) => { setVidVoiceS(v); try { localStorage.setItem('i24-voice', v ? '1' : '0'); } catch { /* private mode */ } };
   const [voiceRec, setVoiceRec] = useState<{ stage: 'load' | 'speak'; frac: number } | null>(null);
   const voiceLines = useRef<CapLine[] | null>(null); // audit C16: the spoken lines as placed, for the .srt next to the video
@@ -686,10 +697,47 @@ export default function AppV4() {
       return { icon: ICON_OF[s.key], label: s.label, level: lvl, unknown: !!s.unknown, note: plainNote(s.key, lvl, at0, built, inText(at0), !!s.unknown) };
     }),
   };
+  // the voiceover's script input for this single video (also used by the preview, which makes the voice ahead)
+  const singleNarr = (plan: Plan): NarrIn => ({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
+    solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName),
+    ...(() => { const fm = currentParts.length ? macros(currentParts) : null; const fi: FactIn = { kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
+      bac: built.bac, glucose: productId === 'food' && fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }; return { facts: factLines(fi, vSeed), arc: arcFor(fi, vSeed) }; })() });
+  // step 2 of the video dialog (phase 2A, audit C6): the outline and the opening frame in milliseconds, without
+  // rendering the video; with the voiceover on, its lines are made in the background meanwhile (voice-tts.ts keeps
+  // them, so the render and "Try another opening" reuse them)
+  const [voicePrep, setVoicePrep] = useState<'busy' | 'ready' | null>(null);
+  useEffect(() => {
+    if (share?.state !== 'choose' || !videoOpen || vStep !== 2 || !kitReady) return;
+    let live = true;
+    const id = setTimeout(() => {
+      const plan = reelPlan(); reelStops.current = null;
+      const chapAt = (m: number) => story.chapters.reduce((acc, c) => (m + 1e-6 >= c.min ? c : acc), story.chapters[0]);
+      const moments: VideoPreview['moments'] = [];
+      for (const m of plan.stops) { const title = chapAt(m).title; if (moments[moments.length - 1]?.title !== title) moments.push({ at: afterText(m), title }); }
+      let img: string | null = null;
+      try {
+        const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
+        if (canvas && overlayRef.current) {
+          if (r3f.current) r3f.current.gl.render(r3f.current.scene, r3f.current.camera); // draw now, read in the same task
+          const c = composeFrame(canvas, vFormat, overlayRef.current, 'intro');
+          const s = document.createElement('canvas'); s.width = 224; s.height = Math.round((224 * c.height) / c.width);
+          s.getContext('2d')!.drawImage(c, 0, 0, s.width, s.height); img = s.toDataURL('image/jpeg', 0.85);
+        }
+      } catch { img = null; }
+      setVPreview({ img, seconds: plan.seconds, moments });
+      if (vidVoice && vidSound !== 'none') {
+        setVoicePrep('busy');
+        void import('./voice-tts').then(({ makeVoice }) => makeVoice(narrationFor(singleNarr(plan)), plan.seconds))
+          .then((v) => { if (live) setVoicePrep(v ? 'ready' : null); }, () => { if (live) setVoicePrep(null); });
+      } else setVoicePrep(null);
+    }, 60);
+    return () => { live = false; clearTimeout(id); };
+  }, [share?.state, videoOpen, vStep, hookVar, platform, vFormat, vidVoice, vidSound, kitReady]); // eslint-disable-line react-hooks/exhaustive-deps
   const startShare = (format: Format) => {
     const canvas = document.querySelector<HTMLCanvasElement>('.stage canvas');
     if (!canvas || videoSupportHere() === 'none') { setShare({ state: 'nosupport' }); return; }
     if (share?.url) URL.revokeObjectURL(share.url);
+    recAbort.current = new AbortController(); recT0.current = null;
     setMode('simple'); setSelected(null); setWholeBody(false); setFlightKey((k) => k + 1); setEvidence(null); setPanel(null);
     recRef.current = true; setU(0); setPlaying(false); setShare({ state: 'rec', format }); setRecPct(0);
     // body-first (2026-10-23): the 3D canvas takes the video's size and the video camera films the plan's shots
@@ -698,13 +746,10 @@ export default function AppV4() {
     // frame-exact encoder where available (smooth on any computer), screen recording as a fallback; both follow the
     // same plan (video-plan.ts: reading-speed captions, 62-75 s or ≤ 30 s)
     const plan = reelPlan(), opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
-      soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: (f: number) => setRecPct(f),
+      soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: recTick,
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
-      voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'single', seed: vSeed, alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10,
-        solid: /bite/i.test(story.chapters[0]?.title ?? ''), hero: overlayRef.current?.hero, hook: hookNow, name: shortName(videoName),
-        ...(() => { const fm = currentParts.length ? macros(currentParts) : null; const fi: FactIn = { kcal: built.energy.total, macros: fm, alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, waterMl: built.waterMl ?? WATER_ML[productId], t50: built.t50, drink: !/bite/i.test(story.chapters[0]?.title ?? ''),
-          bac: built.bac, glucose: productId === 'food' && fm && fm.gl === null && fm.availCarbs >= 3 ? undefined : built.effects.glucoseMgDl, tg: built.effects.tgMmol, cafTmaxMin: built.caffeine.tmaxMin, cafHalfLifeH: built.caffeine.halfLifeH, cafAtBedMg: vYou.mgAtBed, toBedMin: vYou.toBedMin, bodyWaterL: totalBodyWaterL(profile), weightKg: profile.weightKg }; return { facts: factLines(fi, vSeed), arc: arcFor(fi, vSeed) }; })() }) : undefined };
+      voice: vidVoice && vidSound !== 'none' ? voiceFor(singleNarr(plan)) : undefined, signal: recAbort.current.signal };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
       const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);
@@ -723,10 +768,10 @@ export default function AppV4() {
       ? recordFrames(canvas, format, pinned, (m, fr) => {
           // render one exact 1/30 s frame ourselves (works even when the browser throttles a background tab)
           recFr.current = fr ?? null;
-          flushSync(() => setU(uFromMinutes(m)));
+          perfTime('react', () => flushSync(() => setU(uFromMinutes(m))));
           cue(fr);
           const st = r3f.current;
-          if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
+          if (st) perfTime('gl', () => advance(st.clock.elapsedTime + 1 / 30, true, st));
         }, plan, opts)
       : record(canvas, format, pinned, (m, fr) => { recFr.current = fr ?? null; setU(uFromMinutes(m)); cue(fr); }, plan, opts);
     job
@@ -734,7 +779,7 @@ export default function AppV4() {
         caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`, captions: captionsNow(), srt: voice && voiceLines.current?.length ? srtOf(voiceLines.current) : undefined,
         pin: pinnedIdea(),
         msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined }))
-      .catch((e: Error) => setShare({ state: 'error', msg: e.message }))
+      .catch((e: Error) => { if (e.message === CANCELLED) { setVideoOpen(true); setVStep(2); setShare({ state: 'choose', msg: 'Video cancelled. Nothing was saved.' }); } else setShare({ state: 'error', msg: e.message }); })
       .finally(() => { recRef.current = false; reelStops.current = null; recFr.current = null; vcue.current = null; setRecBox(null); });
   };  // QA only: #frame=<reel|feed>-<intro|main|outro> paints one composed video frame over the page after 6 s
   useEffect(() => {
@@ -791,7 +836,7 @@ export default function AppV4() {
     return [f(cmpRec.a), f(cmpRec.b)];
   })() : undefined;
   const makeCompareVideo = (a: Analysis, b: Analysis) => {
-    setCompare(null); setCmpRec({ a, b, u: 0 }); setShare({ state: 'rec', format: 'reel' }); setRecPct(0);
+    setCompare(null); setCmpRec({ a, b, u: 0 }); setShare({ state: 'rec', format: 'reel' }); setRecPct(0); recAbort.current = new AbortController(); recT0.current = null;
     setRecBox('reel'); recFr.current = null; vcue.current = { shot: SPLIT_OPENING, start: SPLIT_OPENING }; cmpOn.current = true;
     setTimeout(async () => {
       const ca = document.querySelector<HTMLCanvasElement>('.stage canvas');
@@ -820,11 +865,11 @@ export default function AppV4() {
         };
         const { blob, ext, audio, voice } = await recordCompare(ca, pinned, (m, fr) => {
           recFr.current = fr ?? null;
-          flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r)));
+          perfTime('react', () => flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r))));
           if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = splitShot(fr); void chapAt(a, st0); }
-          const st = r3f.current; if (st) advance(st.clock.elapsedTime + 1 / 30, true, st);
+          const st = r3f.current; if (st) perfTime('gl', () => advance(st.clock.elapsedTime + 1 / 30, true, st));
         }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
-          onTick: (f) => setRecPct(f), prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
+          onTick: recTick, signal: recAbort.current.signal, prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
           voice: vidVoice && vidSound !== 'none' ? voiceFor({ plan, kind: 'compare', seed: seedOf(`${a.label} vs ${b.label}`), alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), guess: !!gq,
             // (v20: the hook as the video shows it, from this export's own guess; the overlay ref can still hold the last one)
             hook: { line1: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, line2: '' }, names: [cmpName(a.label), cmpName(b.label)], answer: gq?.answer1,
@@ -835,7 +880,7 @@ export default function AppV4() {
           srt: voice && voiceLines.current?.length ? srtOf(voiceLines.current) : undefined,
           pin: 'Did the answer surprise you? The verdict can change with the time of day: try your own time in the app.',
           msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined });
-      } catch (e) { setShare({ state: 'error', msg: (e as Error).message }); }
+      } catch (e) { if ((e as Error).message === CANCELLED) { setShare(null); setCompare({ with: vsParts ?? undefined }); } else setShare({ state: 'error', msg: (e as Error).message }); }
       cmpStops.current = null; setCmpRec(null); setCmpNever(false); recFr.current = null; vcue.current = null; setRecBox(null); cmpOn.current = false; cmpRace.current = null; cmpGuess.current = null;
     }, 1500); // let both bodies load (runs once, before the tab can be left)
   };
@@ -965,7 +1010,7 @@ export default function AppV4() {
             <button aria-pressed={mode === 'detailed'} onClick={() => setMode('detailed')}>Detailed</button>
           </div>
           {started && <button className="ghost hdr" onClick={() => setCompare({})}><span aria-hidden="true">⇄ </span>Compare</button>}
-          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setVideoOpen(false); void loadVideoKit().then(() => { setKitReady(true); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }, () => setShare({ state: 'error', msg: 'We couldn’t load the video maker. Check your connection and try again.' })); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
+          {started && <button className="ghost sharebtn" onClick={() => { setPlaying(false); setVideoOpen(false); setVStep(1); void loadVideoKit().then(() => { setKitReady(true); setShare({ state: videoSupportHere() === 'none' ? 'nosupport' : 'choose' }); }, () => setShare({ state: 'error', msg: 'We couldn’t load the video maker. Check your connection and try again.' })); }} disabled={share?.state === 'rec'}>{share?.state === 'rec' ? '● Recording…' : 'Share'}</button>}
           <button className="ghost hdr" onClick={() => setPanel('about')}>About</button>
           <button className="ghost hdr pro" onClick={() => setPanel('pro')}>Pro <small>coming soon</small></button>
           <button className="ghost hdr support" onClick={() => setPanel('support')}><span aria-hidden="true">♥ </span>Support</button>
@@ -1196,38 +1241,24 @@ export default function AppV4() {
       {compare && <Compare current={currentParts} overMin={overEff} profile={profile} initial={compare.with} onClose={() => setCompare(null)} onVideo={kitReady && canEncode() ? makeCompareVideo : undefined} voice={vidVoice} setVoice={setVidVoice} short={shortVid} setShort={setShortVid} platform={platform} setPlatform={setPlatform} onRight={setVsParts} />}
       <Tour active={started && mode === 'simple' && !calmNow && !panel && !share} />
       {share?.state === 'rec' && <div className="recbadge" role="status">{voiceRec
-        ? <>● {voiceRec.stage === 'load' ? 'Downloading the voice (once)…' : 'Making the voiceover…'} {Math.round(voiceRec.frac * 100)}% · keep this tab open</>
-        : <>● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}% · keep this tab open</>}</div>}
+        ? <>● {voiceRec.stage === 'load' ? (voiceCachedHere() ? 'Getting the voice ready…' : 'Downloading the voice (once)…') : 'Making the voiceover…'} {Math.round(voiceRec.frac * 100)}% · keep this tab open</>
+        : <>● Making your video… {Math.round((canEncode() ? recPct : u) * 100)}%{(() => { const e = recT0.current && canEncode() ? etaText(etaSeconds(Math.round((recPct - recT0.current.f) * 1000), Math.round((1 - recT0.current.f) * 1000), performance.now() - recT0.current.t)) : ''; return e ? ` · ${e}` : ''; })()} · keep this tab open</>}
+        {canEncode() && <button className="reccancel" onClick={() => recAbort.current.abort()}>Cancel</button>}</div>}
       {share && share.state !== 'rec' && (
         <div className="drawer-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setShare(null); }}>
           <div ref={shareBox} className="noticebox sharebox" role="dialog" aria-modal="true" aria-label="Share">
             {share.state === 'choose' && !videoOpen && <h2 className="sharetitle">Share</h2>}
-            {share.state !== 'ready' && <MomentShare make={makeMoment} label="Share this moment" />}
+            {share.state !== 'ready' && !(share.state === 'choose' && videoOpen) && <MomentShare make={makeMoment} label="Share this moment" />}
             {share.state === 'choose' && !videoOpen && (
-              <button className="ghost videoopen" aria-expanded={false} onClick={() => setVideoOpen(true)}><span aria-hidden="true">🎬 </span>Or make a 24-hour video (Reel / TikTok)<span aria-hidden="true"> ▾</span></button>
+              <button className="ghost videoopen" aria-expanded={false} onClick={() => { setVStep(1); setVideoOpen(true); }}><span aria-hidden="true">🎬 </span>Or make a 24-hour video (Reel / TikTok)<span aria-hidden="true"> ▾</span></button>
             )}
-            {share.state === 'choose' && videoOpen && (<>
-              <h2>Make a video</h2>
-              <p className="note">The whole 24 hours: an opening question, a pause at each key moment, captions for silent viewing, the food or drink moving through the body, and a summary at the end.</p>
-              <label className="handle">Name in the corner <small>(optional: @inside24h or your own handle)</small><input value={handle} placeholder="@yourname" onChange={(e) => { setHandle(e.target.value); try { localStorage.setItem('i24-handle', e.target.value); } catch { /* private mode */ } }} /></label>
-              <div className="lenpick platpick" role="group" aria-label="Platform">Platform:
-                {PLATFORMS.map((p) => <button key={p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>{PLATFORM_LABEL[p]} · {PLATFORM_LENGTH[p]}</button>)}
-              </div>
-              <div className="lenpick hookpick" role="group" aria-label="Opening line">Opening line:
-                {(['A', 'B'] as const).map((v, i) => <button key={v} aria-pressed={hookVar === v} onClick={() => setHookVar(v)}>{v}: “{hookPair[i].line1} {hookPair[i].line2}”</button>)}
-              </div>
-              <p className="note">Testing hooks: post A and B on different days (or as an Instagram Trial Reel), change one thing a week, and compare the first 3 seconds (“viewed vs. swiped away” on Shorts, 2–3 s hold on TikTok), average % watched, where the curve drops, and shares.</p>
-              <div className="lenpick soundpick" role="group" aria-label="Sound">Sound:
-                <button aria-pressed={vidSound === 'music'} onClick={() => setVidSound('music')}>Our music</button>
-                <button aria-pressed={vidSound === 'sfx'} onClick={() => setVidSound('sfx')}>Sound effects only</button>
-                <button aria-pressed={vidSound === 'none'} onClick={() => setVidSound('none')}>None (add your own)</button>
-              </div>
-              <VoicePick on={vidVoice} set={setVidVoice} noSound={vidSound === 'none'} />
-              <div className="fmtpick">
-                <button className="fmt" onClick={() => startShare('reel')}><i className="r916" /><b>Reel / Story / TikTok</b><span>9:16 · 1080×1920</span></button>
-                <button className="fmt" onClick={() => startShare('feed')}><i className="r45" /><b>Feed post</b><span>4:5 · 1080×1350</span></button>
-              </div>
-            </>)}
+            {share.state === 'choose' && videoOpen && <VideoSteps step={vStep} setStep={(s) => { setShare({ state: 'choose' }); setVStep(s); }}
+              platforms={PLATFORMS.map((p) => ({ id: p, label: PLATFORM_LABEL[p], length: PLATFORM_LENGTH[p] }))} platform={platform} setPlatform={(p) => setPlatform(p as Platform)}
+              voice={vidVoice} setVoice={setVidVoice} sound={vidSound} setSound={setVidSound} format={vFormat} setFormat={setVFormat}
+              handle={handle} setHandle={(h) => { setHandle(h); try { localStorage.setItem('i24-handle', h); } catch { /* private mode */ } }}
+              hooks={[`${hookPair[0].line1} ${hookPair[0].line2}`, `${hookPair[1].line1} ${hookPair[1].line2}`]} hookVar={hookVar} setHookVar={setHookVar}
+              preview={vPreview} voiceNote={vStep === 2 && vidVoice && vidSound !== 'none' ? (voicePrep === 'ready' ? 'The voiceover is ready.' : voicePrep === 'busy' ? 'Making the voiceover in the background while you look…' : null) : null} msg={share.msg}
+              onCompare={() => { setShare(null); setCompare({}); }} onCover={saveCover} onMake={() => startShare(vFormat)} onClose={() => setShare(null)} />}
             {share.state === 'error' && (<><h2>We couldn’t make the video</h2><p>{share.msg}</p></>)}
             {share.state === 'nosupport' && <VideoFallback makeImage={stillImage}
               onSave={async (b) => { const r = await saveFile(`${fileName}-moment.png`, b); return r === 'saved' ? 'Saved. If nothing downloaded, press and hold the picture to save it.' : r === 'declined' ? 'Not saved.' : 'Press and hold the picture to save it.'; }} />}
@@ -1244,7 +1275,7 @@ export default function AppV4() {
               </div>}
               {share.msg && <p className="note">{share.msg}</p>}
             </>)}
-            <div className="nbtns">
+            {!(share.state === 'choose' && videoOpen) && <div className="nbtns">
               {share.state === 'ready' && <button className="primary" onClick={async () => {
                 const r = await saveFile(`${fileName}-${share.format === 'reel' ? platform : 'feed'}${hookVar === 'B' ? '-hookB' : ''}.${share.ext}`, share.blob!);
                 setShare({ ...share, msg: r === 'saved' ? 'Saved. Post it as a Reel, Story or TikTok.' : r === 'declined' ? 'Not saved.' : 'Saving files isn’t available here. Right-click the video and choose “Save video as…”.' });
@@ -1254,10 +1285,9 @@ export default function AppV4() {
                 const r = await saveFile(`${fileName}-${share.format === 'reel' ? platform : 'feed'}${hookVar === 'B' ? '-hookB' : ''}.srt`, new Blob([share.srt!], { type: 'application/x-subrip' }));
                 setShare({ ...share, msg: r === 'saved' ? 'Subtitles saved (.srt). Upload them with the video on YouTube or Facebook.' : r === 'declined' ? 'Not saved.' : 'Saving files isn’t available here.' });
               }}>Save subtitles (.srt)</button>}
-              {share.state === 'ready' && <button className="ghost" onClick={() => setShare({ state: 'choose' })}>Make another</button>}
-              {share.state === 'choose' && videoOpen && <button className="ghost" onClick={saveCover}>Save cover image (PNG)</button>}
+              {share.state === 'ready' && <button className="ghost" onClick={() => { setVStep(1); setVideoOpen(true); setShare({ state: 'choose' }); }}>Make another</button>}
               <button className="ghost" onClick={() => setShare(null)}>Close</button>
-            </div>
+            </div>}
           </div>
         </div>
       )}

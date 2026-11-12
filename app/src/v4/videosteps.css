@@ -1,0 +1,52 @@
+/* Phase 2A (audit C6): the 3-step video dialog (VideoSteps.tsx). Built to fit a 390 × 844 phone without scrolling;
+   "More options" opens below and the dialog scrolls only then. */
+.vsteps { display: grid; gap: 12px; }
+.vshead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.vshead h2 { margin: 0; font: 400 26px/1.05 var(--display); }
+.vsnum { font: 12px var(--mono); color: var(--faint); white-space: nowrap; margin-left: auto; }
+.vshead .x { position: static; flex: none; }
+.vsgroup { display: grid; gap: 6px; }
+.vslbl { font: 12px var(--mono); color: var(--mute); letter-spacing: .02em; display: block; }
+.vsrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.vsgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.vsrow button, .vsgrid button { display: grid; gap: 2px; align-content: center; text-align: left; min-height: 52px; padding: 8px 10px; border-radius: 12px;
+  border: 1px solid var(--line2); background: var(--raised, var(--surface)); color: var(--text); font: inherit; cursor: pointer; }
+.vsrow button { text-align: center; justify-items: center; }
+.vsrow b, .vsgrid b { font-size: 14px; font-weight: 600; line-height: 1.15; }
+.vsrow small, .vsgrid small { font-size: 11.5px; color: var(--mute); line-height: 1.2; }
+.vsrow button[aria-pressed="true"], .vsgrid button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.vsgrid .vscmp { border-style: dashed; }
+.vsteps .voicepick { margin: 0; }
+.vsmore { border-top: 1px solid var(--line2); padding-top: 8px; }
+.vsmore summary { list-style: none; cursor: pointer; min-height: 36px; display: flex; align-items: center; color: var(--mute); font-size: 14px; }
+.vsmore summary::-webkit-details-marker { display: none; }
+.vsmore summary::after { content: "▾"; margin-left: 6px; }
+.vsmore[open] summary::after { content: "▴"; }
+.vsmore[open] { display: grid; gap: 10px; }
+.vsmore .lenpick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vsgo { display: flex; gap: 8px; justify-content: flex-end; }
+.vsgo .primary { min-height: 48px; padding: 10px 20px; border-radius: 12px; }
+.vsgo .ghost { min-height: 48px; }
+.vsprev { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; align-items: start; }
+.vsprev img, .vsnoimg { width: 112px; border-radius: 10px; background: #000; display: block; }
+.vsprev .r916 { aspect-ratio: 9 / 16; }
+.vsprev .r45 { aspect-ratio: 4 / 5; }
+.vsout { display: grid; gap: 8px; min-width: 0; }
+.vsmeta { font: 12px var(--mono); color: var(--mute); }
+.vshook { font-size: 15px; line-height: 1.3; }
+.vsmoments { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; line-height: 1.3; color: #c8d3df; }
+.vsmoments em { font: normal 11.5px var(--mono); color: var(--accent); margin-right: 4px; }
+.vsmorem { color: var(--faint); }
+.vsanother { justify-self: start; min-height: 44px; }
+/* while recording, the 3D view is a fixed 540 × 960 box at z-index 60 (v4.css .stage.recbox): on a phone it covered
+   the progress badge, so nobody saw the progress; the badge now sits above it */
+body .recbadge { z-index: 61; }
+.recbadge .reccancel { margin-left: 10px; min-height: 32px; padding: 4px 12px; border-radius: 999px; border: 1px solid #ff8a8a; background: none; color: #ffd0d0; font: inherit; cursor: pointer; }
+@media (max-width: 720px) {
+  .recbadge { white-space: normal; max-width: calc(100vw - 24px); text-align: center; }
+  .recbadge .reccancel { min-height: 40px; }
+}
+@media (max-width: 380px) {
+  .vsrow b, .vsgrid b { font-size: 13px; }
+  .vsrow button, .vsgrid button { padding: 6px 8px; }
+}

@@ -13,6 +13,7 @@ import { numberConflict } from './video-beats';
 import { CARD_DELAY_S } from './video-narration';
 import { bodyMotion, drawBloodFlow, drawBreath, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
 import { CMP_OUTRO_EXTRA_S, readChars, REWIND_S, TEASER_S } from './video-plan';
+import { CANCELLED, glRenderer, perfAdd, perfAwait, perfLog, perfNow, perfReset, perfTime } from './video-perf';
 
 /** ALL wording of the end cards and calls to action, in one place, so the owner can change it (2026-10-24). Honest:
  *  no promise of new foods on a schedule. */
@@ -103,7 +104,17 @@ export interface RecOpts { sound: boolean; onTick?: (f: number) => void; prepare
   /** 2026-10-24: our music + effects, or effects only (the owner adds a trending song); and what the drink is like */
   soundMode?: SoundMode; soundFx?: { fizzy?: boolean; solid?: boolean; seed?: number };
   /** 2026-11-05: the voiceover, made before the soundtrack (voice-tts.ts makeVoice); null or a failure: no voice */
-  voice?: () => Promise<VoiceIn | null> }
+  voice?: () => Promise<VoiceIn | null>;
+  /** Phase 2A: "Cancel" (the export stops before the next frame and rejects with CANCELLED) */ signal?: AbortSignal }
+export { CANCELLED };
+const checkCancel = (signal?: AbortSignal) => { if (signal?.aborted) throw new Error(CANCELLED); };
+/** A wait that Cancel ends at once (the work itself may finish in the background; the voice keeps its clips). */
+const orCancel = <T,>(p: Promise<T>, signal?: AbortSignal): Promise<T> => (!signal ? p : new Promise<T>((res, rej) => {
+  if (signal.aborted) { rej(new Error(CANCELLED)); return; }
+  const stop = () => rej(new Error(CANCELLED));
+  signal.addEventListener('abort', stop, { once: true });
+  p.then((v) => { signal.removeEventListener('abort', stop); res(v); }, (e) => { signal.removeEventListener('abort', stop); rej(e); });
+}));
 /** The voiceover track (and, v19, its placed lines and pauses for the word-by-word captions). */
 type VoiceIn = { data: Float32Array; spans: [number, number][]; lines?: CapLine[]; pauses?: number[][] };
 type SoundIn = { seconds: number; cues: Plan['cues']; beatFrom: number; music: boolean; fizzy?: boolean; solid?: boolean; voice?: () => Promise<VoiceIn | null> };
@@ -284,44 +295,73 @@ async function h264Config(W: number, H: number): Promise<VideoEncoderConfig> {
 }
 
 /** Encodes frames drawn by `draw(i)` into an MP4 (plus our soundtrack when `sound` is given). Shared by the single
- *  video and the comparison video. Throttled by the encoder's queue, so memory stays flat on long videos. */
+ *  video and the comparison video. Throttled by the encoder's queue; the encoded chunks (~8 Mbit/s) are kept until
+ *  the end, as the in-memory muxer kept them before. */
 async function encodeMp4(out: HTMLCanvasElement, count: number, draw: (i: number) => void, sound: SoundIn | null,
-  onTick?: (frac: number) => void): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
+  onTick?: (frac: number) => void, signal?: AbortSignal): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
+  checkCancel(signal);
   const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
   const W = out.width, H = out.height;
   const config = await h264Config(W, H);
-  // sound: rendered offline first (a second or two), then encoded before the picture
   const acfg = sound ? await aacConfig() : null;
-  let abuf: AudioBuffer | null = null;
   let voiced: VoiceIn | null = null;
-  if (acfg && sound) { voiced = await voiceOf(sound); try { abuf = await renderSoundtrack2(sound.seconds, sound.cues, { ...sound, voice: voiced }); } catch { abuf = null; }
-    if (voiced && /vqa/.test(location.hash)) console.log('[vqa] mix', JSON.stringify(lastVoiceMix)); }
-  const target = new ArrayBufferTarget();
-  const muxer = new Muxer({ target, video: { codec: 'avc', width: W, height: H, frameRate: FPS },
-    ...(abuf ? { audio: { codec: 'aac' as const, numberOfChannels: 2, sampleRate: SAMPLE_RATE } } : {}),
-    fastStart: 'in-memory', firstTimestampBehavior: 'offset' });
-  if (abuf && acfg) {
-    try { await encodeSoundtrack(abuf, acfg, (c, m) => muxer.addAudioChunk(c, m)); }
-    catch { return encodeMp4(out, count, draw, null, onTick); } // the sound failed: make the same video silent
-  }
+  if (acfg && sound) { voiced = await perfAwait('voice', orCancel(voiceOf(sound), signal)); }
+  // Phase 2A: the soundtrack (it needs only the plan's cues and the voice) is rendered and encoded WHILE the frames
+  // are drawn (OfflineAudioContext renders on the audio thread), not before them; the picture's chunks are kept and
+  // everything is muxed at the end. Any sound failure: the same video, silent (as before).
+  const audioJob: Promise<[EncodedAudioChunk, EncodedAudioChunkMetadata | undefined][] | null> = acfg && sound ? (async () => {
+    try {
+      const abuf = await perfAwait('soundtrack', renderSoundtrack2(sound.seconds, sound.cues, { ...sound, voice: voiced }));
+      if (voiced && /vqa/.test(location.hash)) console.log('[vqa] mix', JSON.stringify(lastVoiceMix));
+      const ach: [EncodedAudioChunk, EncodedAudioChunkMetadata | undefined][] = [];
+      await perfAwait('audioEncode', encodeSoundtrack(abuf, acfg, (c, m) => { ach.push([c, m]); }));
+      return ach;
+    } catch { return null; }
+  })() : Promise.resolve(null);
+  const vch: [EncodedVideoChunk, EncodedVideoChunkMetadata | undefined][] = [];
   let failed: Error | null = null;
-  const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { failed = e as Error; } });
+  const enc = new VideoEncoder({ output: (chunk, meta) => { vch.push([chunk, meta]); }, error: (e) => { failed = e as Error; } });
   enc.configure(config);
   const caps = captioner(voiced, W, H), cctx = out.getContext('2d')!;
-  for (let i = 0; i < count; i++) {
-    caps(cctx, i, () => draw(i));
-    const frame = new VideoFrame(out, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
-    enc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
-    frame.close();
-    onTick?.((i + 1) / count);
-    while (enc.encodeQueueSize > 6 && !failed) await enc.flush();
-    if ((i + 1) % 10 === 0) await yieldNow(); // let the progress badge repaint
-    if (failed) throw failed;
-  }
-  await enc.flush(); enc.close();
+  // Phase 2A: wait for the encoder to take one frame off its queue ('dequeue'), not for the whole queue to drain
+  // (flush() stalled the drawing until the encoder was idle), so drawing and encoding overlap
+  const hasDequeue = 'ondequeue' in enc && !/[#&]perf=flush/.test(location.hash); // (#perf=flush: the old way, to compare)
+  let dequeued: (() => void) | null = null;
+  if (hasDequeue) enc.addEventListener('dequeue', () => { const r = dequeued; dequeued = null; r?.(); });
+  const roomInQueue = () => new Promise<void>((r) => { dequeued = r; setTimeout(r, 250); }); // (a timer as a safety net)
+  const loopT0 = performance.now();
+  try {
+    for (let i = 0; i < count; i++) {
+      checkCancel(signal);
+      perfTime('draw', () => caps(cctx, i, () => draw(i)));
+      const frame = perfTime('videoFrame', () => new VideoFrame(out, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) }));
+      perfTime('encodeCall', () => enc.encode(frame, { keyFrame: i % (FPS * 2) === 0 }));
+      frame.close();
+      perfNow().frames = i + 1;
+      onTick?.((i + 1) / count);
+      const tq = performance.now();
+      if (hasDequeue) { while (enc.encodeQueueSize > 4 && !failed) await roomInQueue(); }
+      else { while (enc.encodeQueueSize > 6 && !failed) await enc.flush(); }
+      perfAdd('encoderWait', performance.now() - tq);
+      if ((i + 1) % 10 === 0) await perfAwait('yield', yieldNow()); // let the progress badge repaint
+      if (failed) throw failed;
+    }
+    await perfAwait('encoderDrain', enc.flush());
+  } catch (e) { try { enc.close(); } catch { /* already closed */ } throw e; }
+  enc.close();
   if (failed) throw failed;
+  perfAdd('frameLoop', performance.now() - loopT0);
+  const ach = await perfAwait('audioWait', audioJob);
+  checkCancel(signal);
+  const target = new ArrayBufferTarget();
+  const muxer = new Muxer({ target, video: { codec: 'avc', width: W, height: H, frameRate: FPS },
+    ...(ach ? { audio: { codec: 'aac' as const, numberOfChannels: 2, sampleRate: SAMPLE_RATE } } : {}),
+    fastStart: 'in-memory', firstTimestampBehavior: 'offset' });
+  if (ach) for (const [c, m] of ach) muxer.addAudioChunk(c, m);
+  for (const [c, m] of vch) muxer.addVideoChunk(c, m);
   muxer.finalize();
-  return { blob: new Blob([target.buffer], { type: 'video/mp4' }), ext: 'mp4', audio: !!abuf, voice: !!abuf && !!voiced };
+  perfLog(`${W}x${H} ${config.codec} ${config.hardwareAcceleration} audio=${!!ach} voice=${!!voiced}`);
+  return { blob: new Blob([target.buffer], { type: 'video/mp4' }), ext: 'mp4', audio: !!ach, voice: !!ach && !!voiced };
 }
 
 /** step(minute) must set the day position and render one 1/30 s frame of the 3D scene synchronously.
@@ -334,7 +374,8 @@ export async function recordFrames(source: HTMLCanvasElement, format: Format, ov
   // WebCodecs without an H.264 encoder (some Firefox / Linux builds): film the same plan in real time instead;
   // `step` renders each frame itself, so this works while the 3D view is paused for recording
   try { await h264Config(W, H); } catch (e) { if (pickMime()) return record(source, format, overlay, step, plan, opts); throw e; }
-  await opts.prepare?.();
+  perfReset().renderer = glRenderer(source.getContext('webgl2'));
+  await perfAwait('prepare', opts.prepare?.() ?? Promise.resolve());
   const out = document.createElement('canvas');
   out.width = W; out.height = H;
   const ctx = out.getContext('2d')!;
@@ -342,12 +383,12 @@ export async function recordFrames(source: HTMLCanvasElement, format: Format, ov
   return encodeMp4(out, plan.frames.length, (i) => {
     // settle (after the encoder setup, when the 3D view has its recording size): the liquid fades in; then the
     // camera is put at its opening shot
-    if (i === 0) { for (let f = 0; f < 60; f++) step(0, plan.frames[0]); opts.onSettled?.(); }
+    if (i === 0) { perfTime('warmup', () => { for (let f = 0; f < 60; f++) step(0, plan.frames[0]); }); opts.onSettled?.(); }
     const fr = plan.frames[i];
-    step(fr.m, fr);
-    drawFrame(ctx, W, H, source, overlay(), format, fr, plan, first);
+    perfTime('step', () => step(fr.m, fr));
+    perfTime('compose', () => drawFrame(ctx, W, H, source, overlay(), format, fr, plan, first));
     if (!first) first = snapshot(out); // the hook frame, for the loop back at the very end
-  }, soundOf(plan, opts), opts.onTick);
+  }, soundOf(plan, opts), opts.onTick, opts.signal);
 }
 
 /** One video frame of the plan: the main picture, plus the hook card (intro) or the end card (outro). */
@@ -427,18 +468,19 @@ export interface CmpOverlay { hook: string; clock: string; progress: number; han
 export async function recordCompare(canvA: HTMLCanvasElement, overlay: () => CmpOverlay,
   step: (minute: number, fr?: VFrame) => void, plan: Plan, opts: RecOpts = { sound: true }): Promise<{ blob: Blob; ext: string; audio: boolean; voice?: boolean }> {
   await loadFonts();
-  await opts.prepare?.();
+  perfReset().renderer = glRenderer(canvA.getContext('webgl2'));
+  await perfAwait('prepare', opts.prepare?.() ?? Promise.resolve());
   const W = 1080, H = 1920;
   const out = document.createElement('canvas'); out.width = W; out.height = H;
   const ctx = out.getContext('2d')!;
   let first: HTMLCanvasElement | null = null;
   return encodeMp4(out, plan.frames.length, (i) => {
-    if (i === 0) { for (let f = 0; f < 60; f++) step(0, plan.frames[0]); opts.onSettled?.(); }
+    if (i === 0) { perfTime('warmup', () => { for (let f = 0; f < 60; f++) step(0, plan.frames[0]); }); opts.onSettled?.(); }
     const fr = plan.frames[i];
-    step(fr.m, fr);
-    drawCmpFrame(ctx, W, H, canvA, overlay(), fr, plan, first);
+    perfTime('step', () => step(fr.m, fr));
+    perfTime('compose', () => drawCmpFrame(ctx, W, H, canvA, overlay(), fr, plan, first));
     if (!first) first = snapshot(out);
-  }, soundOf(plan, opts), opts.onTick);
+  }, soundOf(plan, opts), opts.onTick, opts.signal);
 }
 
 /** One comparison frame: main picture + hook card (intro) or end card (outro), as drawFrame for the single video. */
