@@ -5,8 +5,11 @@ import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { beatLines, eventMin, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
+import { seedOf } from './video-hook';
 import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
-import { inText, mainGauge, whereCard, whereGauge, type BuiltLike } from './video-body';
+import { bacPlain, DEFAULT_BAC_BODY, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, whereCard, whereGauge, type BuiltLike } from './video-body';
+import { at as atMin } from '../science/espressoSim';
+import { ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
 import { analyze, verdictOf, type Analysis } from './analyze';
 import { parseMeal } from './food/parse';
@@ -135,7 +138,8 @@ export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { m
   const cm = climaxFx(b, sugarKnown, chapters, hook).peakMin;
   // (round 18, critic T-3: "2 mg caffeine · 8 h 33 min in" for hot chocolate): a few mg of caffeine is never the hero
   const g = cm === undefined ? undefined : gaugesAt(b, cm, unit, sugarKnown).find((x) => x.curve && !(/caffeine/.test(x.big) && b.caffeine.doseMg < 10));
-  if (g && cm !== undefined) return { big: `${g.big} · ${inText(cm)}`, small: g.small.split(' · ')[0] };
+  // (phase 4b: the climax is the PEAK, labelled so on the end card; a BAC keeps its body, "for a 70 kg man", B1)
+  if (g && cm !== undefined) return { big: `${g.big} · ${inText(cm)}`, small: g.small === 'still in your body' ? 'at its highest' : g.small.split(' · ').filter((x) => !/\blimit\b/.test(x)).join(' · ') };
   // round 17 (critic G-7: brie and cod ended without a number): the hook's own number ("41 g · protein")
   const m = /^(\d+(?:[.,]\d+)?)\s*(g|mg|kcal)\b(?:\s+of)?\s*([^.:,]*)/.exec(hook?.lead ?? '');
   if (m) return { big: `${m[1]} ${m[2]}`, small: m[3].trim() || 'in total' };
@@ -145,6 +149,24 @@ export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { m
   const kid = chapters.find((c) => /Kidneys|Bladder/.test(c.title));
   const w = whereGauge(b, kid?.min ?? cm ?? 120);
   return w ? { big: `${w.big} · ${inText(kid?.min ?? cm ?? 120)}`, small: w.small } : undefined;
+}
+/** Phase 4b (critique M2: "AFTER 24 HOURS / 58 mg caffeine · 45 min in / still in your body" was the PEAK): what the
+ *  model has at minute 1440, for the line under "AFTER 24 HOURS". The same order as the main gauge (alcohol, a clear
+ *  blood sugar curve, caffeine, blood fat), else where the rest of it is, from the route model. */
+export function after24Of(b: BuiltLike & PeakIn, sugarKnown: boolean): { big: string; small: string } {
+  const M = 1440;
+  if ((b.alcoholG ?? 0) > 1 && b.bac) {
+    const v = atMin(b.bac, M);
+    return v > ANY_GL ? { big: 'Alcohol is still in your blood', small: bacPlain(v, undefined, b.bacBody) } : { big: 'Blood alcohol: back to zero', small: `For a ${b.bacBody ?? DEFAULT_BAC_BODY}; livers differ` };
+  }
+  const gs = sugarKnown ? b.effects.glucoseMgDl : undefined;
+  let gMax = 0; if (gs) for (let i = 0; i <= Math.min(M, gs.length - 1); i++) gMax = Math.max(gMax, Math.abs(gs[i]) / 18.016);
+  if (gs && gMax >= 0.5) { const g = atMin(gs, M) / 18.016; return Math.abs(g) < 0.3 ? { big: 'Blood sugar: back to usual', small: 'Long after its peak' } : { big: `Blood sugar ${g > 0 ? 'still up' : 'still down'}`, small: sugarPlain(g) }; }
+  if (b.caffeine.doseMg >= 10) { const c = atMin(b.caffeine.body, M); return { big: c >= 1 ? `${Math.round(c)} mg of caffeine left` : 'Under 1 mg of caffeine left', small: `Of the ${Math.round(b.caffeine.doseMg)} mg in it` }; }
+  const tgs = b.effects.tgMmol;
+  if (tgs && Math.max(...Array.from(tgs.subarray(0, M + 1))) >= TG_GAUGE) { const tg = atMin(tgs, M); return tg < TG_GAUGE ? { big: 'Blood fat: back to usual', small: 'Long after its peak' } : { big: 'Blood fat still up', small: `+${tg.toFixed(1)} mmol/L triglycerides` }; }
+  const w = presentAt(b, M).length ? whereGauge(b, M) : null;
+  return w ? { big: w.big, small: w.small } : { big: 'Nothing of it left to show', small: 'It has all passed through' };
 }
 /** The minute of the sugar curve's top (for climaxFx, which then prefers the story's own moment). */
 const peakOfSugar = (b: PeakIn) => { const g = b.effects.glucoseMgDl; if (!g) return undefined; let k = 0; for (let i = 1; i <= Math.min(1440, g.length - 1); i++) if (g[i] > g[k]) k = i; return k; };
@@ -257,7 +279,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // round 4: the question this pair answers clearly (out of the stomach / out of the blood / bigger sugar rise),
   // or none; its race bars and its answer come from the same model
   const bedMin = ((((profile.bedtimeMin - profile.drinkAtMin) % 1440) + 1440) % 1440);
-  const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)), { bedMin });
+  const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)), { bedMin, seed: seedOf(`${a.label} vs ${b.label}`) }); // (phase 4b, M5: the question in its own words)
   const race = gq && gq.kind !== 'bedtime' ? { a: gq.progress[0], b: gq.progress[1] } : null; // (no race for "still in you at bedtime")
   const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
   const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit, gq && { tie: /^Almost the same/.test(gq.answer1) });
@@ -388,7 +410,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       const f = plan.frames.find((x) => x.t >= want);
       if (f && f.phase === 'main' && (f.beat === 'hold' || f.beat === 'end') && f.stop === pk.data?.v) {
         const dt = want - pk.t;
-        plan = { ...plan, cues: plan.cues.map((c) => (c === pk || (c.kind === 'riser' && Math.abs(c.t - (pk.t - 1.6)) < 1.7 && c.t <= pk.t) ? { ...c, t: c.t + dt } : c)).sort((x, y) => x.t - y.t), peakT: want };
+        plan = { ...plan, cues: plan.cues.map((c) => (c === pk || (c.kind === 'riser' && Math.abs(c.t - (pk.t - 1.6)) < 1.7 && c.t <= pk.t) || (c.kind === 'surge' && (c.data?.v ?? 0) > 0 && Math.abs(c.t + (c.data?.v ?? 0) - pk.t) < 1e-6) ? { ...c, t: c.t + dt } : c) /* (phase 4b: a surge riding the riser moves with it) */).sort((x, y) => x.t - y.t), peakT: want };
       }
     }
   }

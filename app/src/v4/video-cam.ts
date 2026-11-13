@@ -204,8 +204,45 @@ export function camStyle(cls: StoryClass, seed = 0): CamStyle {
 export interface CamPlan { style: CamStyle; /** when the camera pulls back to the whole body, video seconds [from, to) */ wide: [number, number][] }
 /** A glide this long can carry the orientation shot; the shot lasts at least ORIENT_S (into the next moment's first
  *  second when the glide is short: the camera then pushes in from the whole body to the organ). */
-export const ORIENT_MIN_S = 0.9, ORIENT_S = 2.0;
-export function camPlanOf(frames: { beat?: string; stop?: number; from?: number; t: number }[], style: CamStyle): CamPlan {
+export const ORIENT_MIN_S = 0.9, ORIENT_S = 2.0, ORIENT_SPILL_S = 1.0;
+/** Phase 4b (critique M5: lentils kept the large intestine in frame for ~27 s, pizza ~22 s): the camera holds one
+ *  organ for at most SHOT_MAX_S; a glide that would carry the same organ on after SHOT_BREAK_S pulls back to the whole
+ *  body instead (a real cut in what is seen, between two moments, never over a card being read). */
+export const SHOT_BREAK_S = 5, SHOT_MAX_S = 16, SHOT_HOLD_S = 6, HOLD_BREAK_S = 1.0;
+type ShotFrame = { beat?: string; phase?: string; stop?: number; from?: number; t: number; m?: number; title?: string; cap?: string };
+/** The organs a frame is filmed on, as a key ('' = none: the end, the cold open, the whole body). */
+export function organKey(fr: ShotFrame, chapters: { min: number; title: string; focus?: string | null }[]): string {
+  if (fr.phase === 'outro' || fr.beat === 'end' || fr.beat === 'teaser' || fr.beat === 'rewind' || fr.phase === 'intro') return '';
+  const ch = beatChapter(chapters, { stop: fr.stop, m: fr.m ?? fr.stop ?? 0, title: fr.title });
+  return beatOrgans(fr.title, ch.focus).organs.slice().sort().join('+');
+}
+export function camPlanOf(frames: ShotFrame[], style: CamStyle, chapters?: { min: number; title: string; focus?: string | null }[]): CamPlan {
+  const base = camPlanBase(frames, style);
+  if (!chapters) return base;
+  const wide = base.wide.slice(), inWide = (t: number) => wide.some(([a, b]) => t >= a - 1e-6 && t < b);
+  let key = '', since = 0;
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i];
+    if (f.beat === 'end' || f.phase === 'outro') break;
+    if (inWide(f.t)) { key = ''; continue; }
+    const k = organKey(f, chapters);
+    const glideStart = f.beat === 'glide' && frames[i - 1]?.beat !== 'glide' && (f.stop ?? 0) < 1440;
+    if (glideStart && k && k === key && f.t - since >= SHOT_BREAK_S) {
+      let j = i; while (j + 1 < frames.length && frames[j + 1].beat === 'glide') j++;
+      const t1 = Math.min(Math.max(frames[j].t + 1 / 30, f.t + ORIENT_S), frames[j].t + ORIENT_SPILL_S);
+      wide.push([f.t, t1]); key = ''; continue;
+    }
+    // a long moment (many cards on one organ): at a new card after SHOT_HOLD_S, a short pull-back (under the 1.2 s a
+    // shot needs to settle, so the card's organ is framed again right after)
+    const prev = frames[i - 1];
+    if (k && k === key && f.beat === 'hold' && prev?.beat === 'hold' && f.cap && prev.cap && f.cap !== prev.cap && f.t - since >= SHOT_HOLD_S) {
+      wide.push([f.t, f.t + HOLD_BREAK_S]); key = ''; continue;
+    }
+    if (k !== key) { key = k; since = f.t; }
+  }
+  return { style: base.style, wide: wide.sort((a, b) => a[0] - b[0]) };
+}
+function camPlanBase(frames: { beat?: string; stop?: number; from?: number; t: number }[], style: CamStyle): CamPlan {
   const glides: { stop: number; t0: number; s: number }[] = [];
   let endT = Infinity;
   for (const f of frames) {
@@ -221,7 +258,8 @@ export function camPlanOf(frames: { beat?: string; stop?: number; from?: number;
   if (!pool.length) return { style, wide: [] };
   const mid = (ok[0].t0 + ok[ok.length - 1].t0 + ok[ok.length - 1].s) / 2;
   const pick = style.orient === 'early' ? pool[0] : style.orient === 'late' ? pool[pool.length - 1] : pool.reduce((a, g) => (Math.abs(g.t0 - mid) < Math.abs(a.t0 - mid) ? g : a));
-  return { style, wide: [[pick.t0, pick.t0 + Math.max(pick.s, ORIENT_S)]] };
+  // (phase 4b: into the next moment by at most ORIENT_SPILL_S, so the organ its card names is framed before it is read on)
+  return { style, wide: [[pick.t0, Math.min(pick.t0 + Math.max(pick.s, ORIENT_S), pick.t0 + pick.s + ORIENT_SPILL_S)]] };
 }
 
 type FrameLike = { beat?: string; phase?: string; t: number; stop?: number; from?: number; hk?: number; pg?: number };

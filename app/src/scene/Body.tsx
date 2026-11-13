@@ -119,12 +119,16 @@ interface BodyProps {
   liquid?: Liquid; liquidColor?: string; onBounds?: (b: Bounds) => void;
   /** Focus mode: every structure not listed in keep fades to this brightness (1 = off), so the liquid stands out. */
   dim?: number; keep?: string[];
+  /** Phase 4b (video, critique B2): organs in front of the organ a card names, faded hard (and their drink layer too),
+   *  so the named organ behind them is seen. Display only: the amounts are unchanged. */
+  hide?: string[];
   /** Video (2026-10-24): a colour per structure instead of its usual one, e.g. a calm emissive tint for the brain. */
   palette?: Partial<Record<string, string>>;
 }
 
-export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidColor = '#ffffff', onBounds, dim = 1, keep = [], palette }: BodyProps) {
+export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidColor = '#ffffff', onBounds, dim = 1, keep = [], palette, hide = [] }: BodyProps) {
   const keepSet = useMemo(() => new Set(keep), [keep.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hideSet = useMemo(() => new Set(hide), [hide.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
   const [scene, setScene] = useState<THREE.Group | null>(null);
   const bounds = useRef<Bounds>({});
   // each Body gets its own copy of the model (geometry shared), so two bodies can be shown side by side
@@ -209,14 +213,14 @@ export function Body({ glow, selected, onSelect, onError, liquid = {}, liquidCol
       const target = Math.max(glow[key as OrganKey] ?? 0, key === selected ? 0.8 : 0);
       m.uniforms.glow.value += (target - m.uniforms.glow.value) * k;
       m.uniforms.time.value = state.clock.elapsedTime;
-      const d = keepSet.has(key) || key === selected ? 1 : dim;
+      const d = hideSet.has(key) ? Math.min(dim, 0.15) : keepSet.has(key) || key === selected ? 1 : dim;
       m.uniforms.dimv.value += (d - m.uniforms.dimv.value) * (1 - Math.exp(-dt * 2.5));
     });
     liquids.forEach((m, key) => {
-      const l = liquid[key];
+      const l = liquid[key], lk = hideSet.has(key) ? 0.3 : 1;
       m.uniforms.time.value = state.clock.elapsedTime;
-      m.uniforms.fill.value += ((l?.fill ?? 0) - m.uniforms.fill.value) * k;
-      m.uniforms.tint.value += (Math.min(1, l?.tint ?? 0) - m.uniforms.tint.value) * k;
+      m.uniforms.fill.value += ((l?.fill ?? 0) * lk - m.uniforms.fill.value) * k;
+      m.uniforms.tint.value += (Math.min(1, l?.tint ?? 0) * lk - m.uniforms.tint.value) * k;
       (m.uniforms.liquid.value as THREE.Color).lerp(liquidCol, k);
     });
   });

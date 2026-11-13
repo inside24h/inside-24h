@@ -35,6 +35,8 @@ export interface Built {
   story: Story;
   /** Blood alcohol (g/L) per minute, for products with alcohol. */
   bac?: Float64Array;
+  /** Phase 4b (critique B1): the body that BAC is for, in words ("70 kg man"); every BAC number on screen says it. */
+  bacBody?: string;
   /** Grams of alcohol in the item (dose-aware sleep answer, science/daily.ts alcoholSleepTier). */
   alcoholG?: number;
   /** The meal itself has food in it, so its alcohol was absorbed "fed" (meal.ts; the drive answer must not say "empty stomach"). */

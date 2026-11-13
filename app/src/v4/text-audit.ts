@@ -18,7 +18,7 @@ import { amountPhrase, capFirst, distinctName, sharedBaseName } from './food/nam
 import { isTreat } from './analyze';
 import { isPluralName } from './video-names';
 import { ALCOHOL_FREE_MAX_G100, hasStarch } from './food/foodProduct';
-import { plainNote, inText, whereCard } from './video-body';
+import { plainNote, inText, riseOf, whereCard } from './video-body';
 import { FPS, readSeconds, type Cut, type Plan, type PlanFx, type StopIn } from './video-plan';
 import { BEAT_WORDS } from './video-beats';
 import { worstMoment } from './status';
@@ -67,7 +67,7 @@ export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AU
   const chapters = story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
   const solid = /bite/i.test(story.chapters[0]?.title ?? '');
   const hin = { name, chapters, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid, kcal: b.energy.total, grams: x.macros.grams,
-    pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p) };
+    pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p), sugarRise: x.glucose !== undefined ? riseOf(b.effects.glucoseMgDl) : undefined };
   const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
   const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
   const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
@@ -223,6 +223,32 @@ export function trophyIssues(v: string, a: Analysis, b: Analysis, where: string)
   return out;
 }
 
+/** Phase 4b (critique M6): the video shows the time since the first sip, never the clock, so a card never says a clock
+ *  time ("At 07:00, …"); and what a card says about when the alcohol is gone ("gone after about 1–4 h") is never
+ *  contradicted by a later card (still in the blood, a breath test may be positive) or an earlier one (already gone). */
+export function lintTimeline(pages: { stop: number; text: string; textB?: string }[], where: string): Issue[] {
+  const out: Issue[] = [];
+  const texts = pages.flatMap((p) => [p.text, p.textB ?? ''].filter(Boolean).map((t) => ({ stop: p.stop, t })));
+  for (const { t } of texts) if (/\b\d{1,2}:\d\d\b/.test(t)) out.push({ cls: 'clock time on a card', where, text: t });
+  const gone = texts.map((x) => ({ ...x, m: /gone after about (\d+)–(\d+) h/.exec(x.t) })).find((x) => x.m);
+  if (gone) {
+    const lo = Number(gone.m![1]) * 60, hi = Number(gone.m![2]) * 60;
+    for (const x of texts) {
+      if (x.stop > hi + 1 && /breath test (?:may|can)|still alcohol|alcohol is still|alcohol still/i.test(x.t)) out.push({ cls: 'temporal contradiction', where, text: `${gone.t} / +${Math.round(x.stop)} min: ${x.t}` });
+      if (x.stop < lo - 1 && /(?:alcohol|it) (?:is|should be) gone/i.test(x.t) && x !== gone) out.push({ cls: 'temporal contradiction', where, text: `${gone.t} / +${Math.round(x.stop)} min: ${x.t}` });
+    }
+  }
+  return out;
+}
+/** Phase 4b (critique M4: lentils' hook "about 6 teaspoons of sugar" and its payoff "+12–26 % over usual: a normal
+ *  rise"): a hook that counts teaspoons of sugar that are mostly starch never comes with an end card calling the rise a
+ *  normal one (the alarm and the answer would disagree). */
+export function lintHookPayoff(hook: { line1: string; line2: string }, hero: { big: string; small: string } | undefined, sugarsG: number, where: string): Issue[] {
+  const both = `${hook.line1} ${hook.line2}`, tsp = /about (\d+) teaspoons? of sugar|(\d+) teaspoons? of sugar/.exec(both);
+  const n = tsp ? Number(tsp[1] ?? tsp[2]) : 0;
+  if (tsp && hero && /a normal rise/.test(`${hero.big} ${hero.small}`) && sugarsG < 0.5 * n * 4) return [{ cls: 'hook contradicts its payoff', where, text: `${both} / ${hero.big}: ${hero.small}` }];
+  return [];
+}
 /** The chapter title a kicker names, and whether a card under it is shown at its own time. */
 export function lintMoment(title: string | undefined, stop: number, chapters: { min: number; title: string }[], where: string): Issue[] {
   if (!title) return [];
@@ -287,6 +313,7 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
         if (/^Coming up: .*\bsleep\b/.test(pg.text) && !chapters.some((c) => /bed|^Sleep\b|night/i.test(c.title))) res.issues.push({ cls: 'teaser promises the wrong thing', where: `${id} ${cut}`, text: pg.text });
       }
       for (const [st, t] of titleAt) res.issues.push(...lintMoment(t, st, chapters, `${id} ${cut} ${v}`));
+      res.issues.push(...lintTimeline(o.plan.pages, `${id} ${cut} ${v}`));
       // 2026-11-05: the voiceover script of this cut (video-narration.ts), as the app builds it
       const nin = singleNarrIn(x, o, solid), vo = narrationFor(nin);
       for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${id} ${cut} ${v} voice`, text: i.text });
@@ -296,6 +323,7 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       said.push(...o.plan.pages.map((q) => q.text), ...vo.map((l) => l.text));
     }
     if (!A.hero) res.issues.push({ cls: 'end card without a number', where: id, text: A.name });
+    for (const o of [A, B]) res.issues.push(...lintHookPayoff(o.hook, o.hero, x.macros.sugars, id));
     // master audit 2026-11-12 (C18, C2): the video's name is whole, and natural sugar is never "teaspoons of sugar"
     if (truncatedName(`${A.name}.`) || / (?:made|cooked|served|with|without|of|and)$/i.test(A.name)) res.issues.push({ cls: 'truncated name', where: id, text: A.name });
     // (a starchy food's "about N teaspoons of sugar" is its starch turned into glucose, said with "Watch the starch …"; its
@@ -382,6 +410,7 @@ export function auditCompares(pairs: { id: string; a: Analysis; b: Analysis; sam
         if (early) res.issues.push({ cls: 'answer said before the reveal', where, text: `${early.cap ?? ''} || ${early.capB ?? ''}` });
       }
       for (const [st, t] of tA) res.issues.push(...lintMoment(t, st, pr.a.built.story.chapters, `${where} A`));
+      res.issues.push(...lintTimeline(o.cp.plan.pages.map((q) => ({ stop: q.stop, text: q.text })), `${where} A`), ...lintTimeline(o.cp.plan.pages.map((q) => ({ stop: q.stop, text: q.textB ?? '' })), `${where} B`));
       const nin = compareNarrIn(pr.a, pr.b, o.cp), vo = narrationFor(nin);
       for (const i of lintNarration(vo, nin)) res.issues.push({ cls: i.cls, where: `${where} voice`, text: i.text });
       if (cut === 'long') res.dump.push(`  voice: ${vo.map((l) => `[${l.t.toFixed(1)} s] ${l.text}`).join('  ')}`);

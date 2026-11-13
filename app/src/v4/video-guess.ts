@@ -63,7 +63,23 @@ export function sameAmount(a: GuessSide, b: GuessSide): boolean {
 }
 
 /** The clearest question for this pair, or null when the model does not separate them clearly. */
-export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number } = {}): Guess | null {
+/** Phase 4b (critique M5: both comparisons opened on the same "Guess: which has more sugar?"): each question has a few
+ *  wordings with the same meaning; the pair's seed picks one (the same pair always asks it the same way). */
+export const QUESTION_POOL: Record<string, readonly string[]> = {
+  'Guess: which leaves your stomach first?': ['Guess: which leaves your stomach first?', 'Guess: which is out of your stomach first?', 'Guess: which one clears your stomach first?'],
+  'Guess: which leaves your blood first?': ['Guess: which leaves your blood first?', 'Guess: which is out of your blood first?', 'Guess: which one clears your blood first?'],
+  'Guess: which is still in you at bedtime?': ['Guess: which is still in you at bedtime?', 'Guess: which one lasts until bedtime?', 'Guess: which is still there at bedtime?'],
+  'Guess: which raises your blood sugar more?': ['Guess: which raises your blood sugar more?', 'Guess: which pushes your blood sugar higher?', 'Guess: which spikes your blood sugar more?'],
+  'Guess: which has more sugar?': ['Guess: which has more sugar?', 'Guess: which one hides more sugar?', 'Guess: which packs more sugar?', 'Guess: more sugar, left or right?'],
+  'Guess: which brings more alcohol?': ['Guess: which brings more alcohol?', 'Guess: which one has more alcohol?', 'Guess: more alcohol, left or right?'],
+  'Guess: which has more calories?': ['Guess: which has more calories?', 'Guess: which one packs more calories?', 'Guess: more calories, left or right?'],
+};
+export const askedAs = (q: string, seed = 0) => { const p = QUESTION_POOL[q]; return p ? p[Math.abs(Math.floor(seed)) % p.length] : q; };
+export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number; seed?: number } = {}): Guess | null {
+  const g = chooseGuess0(a, b, opts);
+  return g && opts.seed !== undefined ? { ...g, question: askedAs(g.question, opts.seed) } : g;
+}
+function chooseGuess0(a: GuessSide, b: GuessSide, opts: { bedMin?: number } = {}): Guess | null {
   const sides = [a, b];
   const anyAlcohol = !!(a.alcohol || b.alcohol);
   // 1) out of the stomach first

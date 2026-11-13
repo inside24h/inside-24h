@@ -3,6 +3,7 @@
 // readable captions, no card lingering, the length, numbers that agree with the gauges, no empty / NaN / Croatian
 // text, alcohol never winning, and every frame's text inside the platforms' safe zones without overlaps.
 import { describe, expect, it } from 'vitest';
+import { QUESTION_POOL } from './video-guess';
 import db from './food/fooddb.json';
 import { parseMeal } from './food/parse';
 import { analyze, verdictOf, type Analysis } from './analyze';
@@ -60,7 +61,7 @@ function checkPlan(plan: Plan, cut: Cut, label: string, bad: string[], gaugeAt: 
   if (!(plan.seconds >= (cut === 'long' ? 61.5 : lim.min) && plan.seconds <= lim.max + 0.5)) bad.push(`${label}: length ${plan.seconds.toFixed(1)} s`);
   if (cut === 'long' && !(plan.seconds >= 60.5)) bad.push(`${label}: a long cut under 60.5 s (owner: never)`);
   // round 11 (research R1): the end card is short (≤ 2.5 s short, ≤ 4 s long) and the 24 h beat has words
-  if (plan.outroS > OUTRO_S[cut] + 1e-6 || plan.outroS > (cut === 'short' ? 2.5 : 4) + 1e-6) bad.push(`${label}: end card ${plan.outroS.toFixed(2)} s`);
+  if (plan.outroS > OUTRO_S[cut] + 1e-6 || plan.outroS > 4 + 1e-6) bad.push(`${label}: end card ${plan.outroS.toFixed(2)} s`); // (phase 4b: the minimum is checked in video-4b.test.ts)
   if (!plan.frames.some((f) => f.celeb !== undefined)) bad.push(`${label}: no 24 h payoff beat`);
   if (plan.frames.length !== Math.round(plan.seconds * FPS)) bad.push(`${label}: frame count`);
   for (const key of ['text', 'textB'] as const) {
@@ -502,7 +503,7 @@ describe('round 13: one source of truth for every number and time; lively pacing
   });
   it('alcohol vs alcohol: a guess game, and the verdict never frames alcohol as a choice', () => {
     const a = run('red wine')!, b = run('beer')!, cp = comparePlan(a, b, P, 'medium');
-    expect(cp.guess?.question).toMatch(/^Guess: which (leaves your blood first|brings more alcohol)\?$/);
+    expect([...QUESTION_POOL['Guess: which leaves your blood first?'], ...QUESTION_POOL['Guess: which brings more alcohol?']]).toContain(cp.guess?.question); // (phase 4b: its wording varies per pair)
     expect(cp.verdict).not.toMatch(/choice|wins|🏆|better/i);
   });
   it('Shorts titles agree in number with the name, for every item', () => {
@@ -682,7 +683,7 @@ describe('round 15: Shorts within 30 s, one minute for every peak, hooks name th
   });
   it('cola vs orange juice, the same amount: a guess game about sugar, and short chips', () => {
     const a = run('cola')!, b = run('330 ml of orange juice')!, cp = comparePlan(a, b, P, 'long');
-    expect(cp.guess?.question).toBe('Guess: which has more sugar?');
+    expect(QUESTION_POOL['Guess: which has more sugar?']).toContain(cp.guess?.question); // (phase 4b: its wording varies per pair)
     for (const f of cp.plan.frames) if (f.next) expect(f.next.title.length).toBeLessThanOrEqual(CHIP_MAX + 16);
   });
 });

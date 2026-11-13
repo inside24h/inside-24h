@@ -250,7 +250,7 @@ describe('round 5: every beat renders, payoffs, safety, no dead ends', () => {
   it('beer at 19:00 (alcohol gone by morning): the hangover warning leads the morning and is in the short cut too', () => {
     const ch = { min: 720, title: 'Next morning', text: '07:00, waking up. The alcohol should be gone, but a hangover can still make you drive worse, even at 0 ‰. If you use insulin or diabetes tablets, watch for low blood sugar this morning: after an evening of drinking it can drop after breakfast.' };
     const lines = beatLines(ch, { name: 'beer' });
-    expect(lines.slice(0, 2)).toEqual(['At 07:00, the alcohol should be gone.', 'A hangover can still make you drive worse.']);
+    expect(lines.slice(0, 2)).toEqual(['The alcohol should be gone.', 'A hangover can still make you drive worse.']); // (phase 4b, M6: no clock time on a card)
     expect(mustCards(lines)).toBe(2);
     const stops = [...withLines('beer', FIX['beer-3-over-2h']).filter((s) => s.title !== 'Next morning'), { ...ch, lines }].sort((a, b) => a.min - b.min);
     const p = planVideo(stops, 'short', uFromMinutes, minutesFromU, { peakMin: 129 });
@@ -341,7 +341,7 @@ describe('round 7: the morning follows the range, cards name what is left, no te
       const lines = beatLines(morning, { drinkAtMin: drinkAt, bacPeak: { g, min: pm }, alcoholG: 60 });
       const wakeH = ((7 * 60 - drinkAt + 1440) % 1440) / 60, [, hi] = goneRange(g, pm);
       const all = lines.join(' ');
-      if (hi > wakeH) { expect(lines[0], `${drinkAt} ${g}`).toBe('At 07:00, a breath test may be positive.'); expect(all).not.toMatch(/should be gone/); }
+      if (hi > wakeH) { expect(lines[0], `${drinkAt} ${g}`).toBe('A breath test may be positive.'); /* (phase 4b, M6) */ expect(all).not.toMatch(/should be gone/); }
       else expect(all).toMatch(/should be gone/);
       expect(all).toMatch(/drive/); // a driving warning in every case
     }

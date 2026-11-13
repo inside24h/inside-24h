@@ -8,7 +8,7 @@
 import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { captionTrack, pageAt, placeCaption, duplicateOnScreen, punchTimes, CAP_FS, CAP_LH, CAP_PAD, PIN_R, type CapLine, type CapPage, type Pt } from './video-captions';
 import { aacConfig, encodeSoundtrack, lastVoiceMix, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
-import type { Gauge } from './video-body';
+import { DRIVE_WARN, SHOWS_BAC, type Gauge } from './video-body';
 import { numberConflict } from './video-beats';
 import { CARD_DELAY_S } from './video-narration';
 import { bodyMotion, drawBloodFlow, drawBreath, drawBubbles, drawGlowPulse, drawNight, drawOrganHit, drawRewindLines, drawShockwave, drawSparks, drawSpeedLines, drawSplash, drawSunrise, drawVignette, since, speedAlpha, surgeLevel, vignetteAlpha } from './video-fx';
@@ -26,7 +26,8 @@ export const VIDEO_COPY = {
   guess2: 'Comment A or B before the end.', // (round 11: not in the video any more, Meta counts it as comment bait)
   guessChip: 'Guess before the answer.', // round 11 (research R7): the question, without a command to comment
   // round 11 (research R1): the end card's last line hands over to frame 0 (the loop)
-  loop: (solid?: boolean, compare?: boolean) => (compare ? '↻ Watch both again from the first sip.' : solid ? '↻ Now watch the first bite again.' : '↻ Now watch the first sip again.'),
+  // (phase 4b, critique minor: a food comparison said "from the first sip"): bite, sip, or the start for a food vs a drink
+  loop: (solid?: boolean, compare?: boolean, mixed?: boolean) => (compare ? (mixed ? '↻ Watch both again from the start.' : solid ? '↻ Watch both again from the first bite.' : '↻ Watch both again from the first sip.') : solid ? '↻ Now watch the first bite again.' : '↻ Now watch the first sip again.'),
   answerAt: 'Answer at 24 h.',
   fasterOut: 'Faster out ≠ better for you.', // the race with alcohol on one side (spec §4.1)
   raceLabel: { stomach: 'Out of the stomach', blood: 'Out of the blood', sugar: 'Blood sugar rise', bedtime: 'Still in you at bedtime', alcohol: 'Blood alcohol', sugarG: 'Sugar in it', kcal: 'Calories' },
@@ -43,6 +44,7 @@ export interface Overlay {
   where?: string; color?: string; progress: number; lights: Light[];
   summary: (Light & { note: string })[]; handle: string;
   /** round 14 (critic G-3): the end card's one big number: the main gauge at the climax, its words and its range */ hero?: { big: string; small: string };
+  /** phase 4b (critique M2): the value AT 24 h, the line under "AFTER 24 HOURS" (the hero is then labelled as the peak) */ after24?: { big: string; small: string };
   stamp?: string; // big 'X MIN LATER' line
   pop?: { big: string; small: string; level: 0 | 1 | 2 }; // headline number of this moment
   // 2026-10-23 body-first video
@@ -459,7 +461,7 @@ export interface CmpSide { name: string; color: string; step: string; caption: s
   gauge?: PinnedGauge | null; // 2026-10-23 split screen: this body's number, pinned to its organ
   pins?: Record<string, { x: number; y: number } | null>; alcohol?: boolean; fizz?: number; foam?: boolean; flow?: number;
   /** round 5: how much ("330 ml", "1 shot · 30 ml"), shown under the name */ serving?: string }
-export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean;
+export interface CmpOverlay { hook: string; clock: string; progress: number; handle: string; a: CmpSide; b: CmpSide; stamp?: string; verdict?: string; solid?: boolean; /** phase 4b: a food vs a drink */ mixed?: boolean;
   /** 2026-10-24 game: the guess line, the race (0..1 per side); round 4: the answer, shown when it is decided */ guess?: boolean; race?: { a: number; b: number };
   answer?: { a1: string; a2: string; recap: string; kind: 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG' | 'kcal'; winner: 0 | 1 } }
 
@@ -591,7 +593,7 @@ function drawCmp(ctx: CanvasRenderingContext2D, W: number, H: number, src: Canva
   ctx.restore();
   // below the safe zone: small print and the day bar
   ctx.textAlign = 'left'; ctx.fillStyle = '#7a899d'; ctx.font = `500 22px ${SANS}`;
-  text(ctx, fit(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', R - L), L, S.bottom + 44, true);
+  text(ctx, shrink(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', R - L), L, S.bottom + 44, true);
   const py = S.bottom + 104;
   ctx.fillStyle = 'rgba(140,170,210,.22)'; roundRect(ctx, L, py, R - L, 10, 5); ctx.fill();
   ctx.fillStyle = '#5cd3ff'; roundRect(ctx, L, py, Math.max(10, (R - L) * Math.min(1, o.progress)), 10, 5); ctx.fill();
@@ -663,7 +665,7 @@ function drawCmpOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Cm
   ctx.fillStyle = '#5cd3ff'; ctx.font = `600 30px ${SANS}`;
   text(ctx, fit(ctx, o.handle ? `Follow ${o.handle} · a new comparison every day` : 'A new comparison every day', RL - L), L, y);
   ctx.fillStyle = '#7a899d'; ctx.font = `500 22px ${SANS}`;
-  text(ctx, fit(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', S.right - L), L, S.bottom + 44, true);
+  text(ctx, shrink(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', S.right - L), L, S.bottom + 44, true);
   ctx.restore(); ctx.textAlign = 'left';
 }
 
@@ -888,7 +890,7 @@ function drawMain(ctx: CanvasRenderingContext2D, W: number, H: number, src: Canv
 
   // below the safe zone: small print and the day bar (fine if a platform covers them; shown in full on X)
   ctx.textAlign = 'left'; ctx.fillStyle = '#7a899d'; ctx.font = `500 ${reel ? 22 : 19}px ${SANS}`;
-  text(ctx, fit(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', R - L), L, S.bottom + (reel ? 44 : 34), true);
+  text(ctx, shrink(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', R - L), L, S.bottom + (reel ? 44 : 34), true);
   if (reel) {
     const y = S.bottom + 104, x0 = L, x1 = R;
     ctx.fillStyle = 'rgba(140,170,210,.22)'; roundRect(ctx, x0, y, x1 - x0, 10, 5); ctx.fill();
@@ -965,12 +967,22 @@ function drawOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overl
   ctx.fillStyle = '#5cd3ff'; ctx.font = `600 ${reel ? 32 : 28}px ${SANS}`;
   text(ctx, fit(ctx, o.handle ? `Follow ${o.handle} · a new food every day` : 'A new food every day', RL - L), L, y);
   ctx.fillStyle = '#7a899d'; ctx.font = `500 ${reel ? 22 : 19}px ${SANS}`;
-  text(ctx, fit(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', S.right - L), L, S.bottom + (reel ? 44 : 34), true);
+  text(ctx, shrink(ctx, 'Simulation for a typical body · not medical advice · anatomy: BodyParts3D, CC BY 4.0', S.right - L), L, S.bottom + (reel ? 44 : 34), true);
   ctx.restore(); ctx.textAlign = 'left';
 }
 
+/** Phase 4b (M3): a one-line text that shrinks (to `min` px) before it is ever cut (the small print, names). */
+export function shrink(ctx: CanvasRenderingContext2D, t: string, w: number, min = 14) {
+  let px = fontPx(ctx);
+  while (px > min && ctx.measureText(t).width > w) { px -= 1; ctx.font = ctx.font.replace(/\d+(?:\.\d+)?px/, `${px}px`); }
+  return fit(ctx, t, w);
+}
 export function fit(ctx: CanvasRenderingContext2D, t: string, w: number) {
   if (ctx.measureText(t).width <= w) return t;
+  // (phase 4b, critique M3: "a nor…"): a cut is made between words, never inside one; only a single word that is
+  // too wide on its own is cut by letters (callers shrink or wrap first, so this is the last resort)
+  const ws = t.split(' ');
+  for (let k = ws.length - 1; k >= 1; k--) { const s = ws.slice(0, k).join(' ').replace(/[\s,:;·–—-]+$/, ''); if (s && ctx.measureText(`${s}…`).width <= w) return `${s}…`; }
   let s = t; while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
   return `${s}…`;
 }
@@ -1136,14 +1148,18 @@ function drawClock(ctx: CanvasRenderingContext2D, x: number, y: number, h: numbe
 /** One small gauge: big number, short label, optional curve of the day with a dot at "now". Returns its height. */
 const gaugeSmall = (ctx: CanvasRenderingContext2D, g: Gauge, w: number, reel: boolean) => {
   ctx.font = `600 ${reel ? 23 : 20}px ${SANS}`;
-  // (round 9: "BAC … % · US limit 0.08 % · EU limit 0.05 %" breaks at its dots, one thing per line, when each part fits)
-  const parts = g.small.split(' · '), room = w - 2 * (reel ? 18 : 14);
-  if (parts.length > 1 && parts.length <= 3 && parts.every((p) => ctx.measureText(p).width <= room)) return parts;
-  return wrap(ctx, g.small, room, 2);
+  // (round 9: "BAC … % · US limit 0.08 % · EU limit 0.05 %" breaks at its dots, one thing per line)
+  // (phase 4b: each part wraps on its own, never cut: "for a 70 kg man" and both limits always show whole)
+  const room = w - 2 * (reel ? 18 : 14);
+  return g.small.split(' · ').flatMap((p) => wrap(ctx, p, room, 4));
 };
+/** Phase 4b (critique B1): the gauge's warning line(s), in its own bold red, on the same card. */
+const WARN_COL = '#ff8a8a';
+const warnFont = (reel: boolean) => `700 ${reel ? 22 : 19}px ${SANS}`;
+const gaugeWarn = (ctx: CanvasRenderingContext2D, g: Gauge, w: number, reel: boolean) => { if (!g.warn) return []; ctx.font = warnFont(reel); return wrap(ctx, g.warn, w - 2 * (reel ? 18 : 14), 3); };
 function gaugeHeight(ctx: CanvasRenderingContext2D, g: Gauge, reel: boolean, w: number) {
-  const n = gaugeSmall(ctx, g, w, reel).length, lh = reel ? 27 : 24;
-  return (reel ? 14 + 46 + 4 : 12 + 40 + 4) + n * lh + (g.curve ? (reel ? 52 : 44) : 0) + (reel ? 12 : 10);
+  const n = gaugeSmall(ctx, g, w, reel).length, lh = reel ? 27 : 24, nw = gaugeWarn(ctx, g, w, reel).length;
+  return (reel ? 14 + 46 + 4 : 12 + 40 + 4) + n * lh + (nw ? 6 + nw * (reel ? 26 : 23) : 0) + (g.curve ? (reel ? 52 : 44) : 0) + (reel ? 12 : 10);
 }
 function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, w: number, reel: boolean, fx: { bounce?: number; flash?: number; count?: boolean } = {}) {
   const h = gaugeHeight(ctx, g, reel, w), col = g.level === 0 && !g.curve ? '#ffffff' : LIGHT[g.level];
@@ -1161,8 +1177,12 @@ function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: 
   ctx.font = `${fx.count ? 700 : 600} ${smFs}px ${SANS}`; ctx.fillStyle = fx.count ? LIGHT[g.level] : '#d5e0ec'; // counting up to the peak
   const sy = y + (reel ? 14 + 46 + 4 : 12 + 40 + 4);
   small.forEach((ln, i) => text(ctx, ln, x + pad, sy + i * lh + smFs * 0.86));
+  // (phase 4b, B1: the warning is part of the card, in every frame it is drawn)
+  const wl = gaugeWarn(ctx, g, w, reel), wlh = reel ? 26 : 23, wy = sy + small.length * lh + 6;
+  ctx.font = warnFont(reel); ctx.fillStyle = WARN_COL;
+  wl.forEach((ln, i) => text(ctx, ln, x + pad, wy + i * wlh + (reel ? 22 : 19) * 0.86));
   if (g.curve && g.curve.length > 1) {
-    const cy0 = sy + small.length * lh + 10, ch = reel ? 34 : 28, cx0 = x + pad, cw = w - 2 * pad;
+    const cy0 = sy + small.length * lh + (wl.length ? 6 + wl.length * wlh : 0) + 10, ch = reel ? 34 : 28, cx0 = x + pad, cw = w - 2 * pad;
     const lo = Math.min(0, ...g.curve), hi = Math.max(1e-6, ...g.curve);
     const P = (i: number) => [cx0 + (i / (g.curve!.length - 1)) * cw, cy0 + ch - ((g.curve![i] - lo) / (hi - lo || 1)) * ch] as const;
     ctx.beginPath(); g.curve.forEach((_v, i) => { const [px, py] = P(i); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
@@ -1218,7 +1238,7 @@ export function drawFloorGlow(ctx: CanvasRenderingContext2D, W: number, H: numbe
 function footer(ctx: CanvasRenderingContext2D, W: number, H: number, format: Format, u: number, stopsU?: number[]) {
   const S = SAFE[format], L = S.left, R = S.right, reel = format === 'reel';
   ctx.textAlign = 'left'; ctx.fillStyle = '#7a899d'; ctx.font = `500 ${reel ? 22 : 19}px ${SANS}`;
-  text(ctx, fit(ctx, VIDEO_COPY.smallPrint, R - L), L, S.bottom + (reel ? 44 : 34), true);
+  text(ctx, shrink(ctx, VIDEO_COPY.smallPrint, R - L), L, S.bottom + (reel ? 44 : 34), true);
   if (reel) {
     const y = S.bottom + 104;
     ctx.fillStyle = 'rgba(140,170,210,.22)'; roundRect(ctx, L, y, R - L, 10, 5); ctx.fill();
@@ -1269,8 +1289,9 @@ export function kineticWord(t: number, j: number): number {
  *  (0.4 s) → the first frame comes back (0.5 s, the loop). Outside the end card: main = 1, top = 1. */
 export function endTiming(fr: Pick<VFrame, 'phase' | 'k'>, outS: number) {
   if (fr.phase !== 'outro') return { main: 1, end: 0, top: 1, first: 0 };
-  const tt = fr.k * outS, leave = 1 - smooth((tt - (outS - 0.95)) / 0.4);
-  return { main: 1 - smooth(tt / 0.3), end: smooth((tt - 0.3) / 0.4) * leave, top: leave, first: smooth((tt - (outS - 0.5)) / 0.5) };
+  // (phase 4b, critique M7: quicker hand-overs, the same order, so the end card itself is on screen longer)
+  const tt = fr.k * outS, leave = 1 - smooth((tt - (outS - 0.6)) / 0.25);
+  return { main: 1 - smooth(tt / 0.2), end: smooth((tt - 0.2) / 0.25) * leave, top: leave, first: smooth((tt - (outS - 0.35)) / 0.35) };
 }
 
 /** Round 4 effects on one body: bubbles in a fizzy stomach (foam on beer), the bloodstream gut → liver → heart → brain
@@ -1393,7 +1414,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   if (fr.celeb !== undefined && fr.phase === 'main') drawCeleb(ctx, Lo, o, fr, cues);
   if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; footer(ctx, W, H, format, u, plan?.stopsU); ctx.restore(); }
   if (fr.phase === 'outro') {
-    drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= 2.6);
+    drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= OUTRO_S.short + 0.05);
     if (first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
   }
 }
@@ -1434,8 +1455,10 @@ function drawDayDone(ctx: CanvasRenderingContext2D, cues: Plan['cues'] | undefin
 
 /** "NEXT · +1:15 · The sugar dip": the moment ahead, in a glass chip (an open loop). */
 function drawNextChip(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, maxW: number, reel: boolean, center = false) {
-  const fs = reel ? 30 : 26;
+  let fs = reel ? 30 : 26;
   ctx.font = `700 ${fs}px ${SANS}`;
+  // (phase 4b, M3: "NEXT · +1:03 · Cola: when it hits…"): smaller before it is ever cut
+  while (fs > 18 && ctx.measureText(s).width > maxW - 36) { fs -= 1; ctx.font = `700 ${fs}px ${SANS}`; }
   const t = fit(ctx, s, maxW - 36), w = ctx.measureText(t).width + 36, h = fs + 26, x0 = center ? x - w / 2 : x;
   ctx.fillStyle = GLASS; roundRect(ctx, x0, y, w, h, h / 2); ctx.fill();
   ctx.strokeStyle = 'rgba(255,200,61,.7)'; ctx.lineWidth = 2.5; ctx.stroke();
@@ -1475,19 +1498,42 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
   ctx.fillStyle = '#ffffff'; ctx.font = `400 ${t.px}px ${SERIF}`;
   t.lines.forEach((ln, i) => text(ctx, ln, L, y + 12 + t.px * 0.9 + i * t.px * 1.02));
   y += 12 + t.px * 0.9 + (t.lines.length - 1) * t.px * 1.02 + (reel ? 24 : 16);
+  // phase 4b (critique M2: "AFTER 24 HOURS / 58 mg caffeine · 45 min in" read as 58 mg left after a day): the value AT
+  // 24 h comes first, under its heading; the climax follows, called the peak
+  if (o.after24) {
+    const ab = fitWrap(ctx, o.after24.big, RL - L, 2, reel ? 40 : 34, 24, (px) => `800 ${px}px ${SANS}`);
+    ctx.fillStyle = '#ffffff'; ctx.font = `800 ${ab.px}px ${SANS}`;
+    ab.lines.forEach((ln, i) => text(ctx, ln, L, y + ab.px * 0.9 + i * ab.px * 1.08));
+    y += ab.px * 0.9 + (ab.lines.length - 1) * ab.px * 1.08 + 10;
+    if (o.after24.small) {
+      const as = fitWrap(ctx, o.after24.small, RL - L, 2, reel ? 26 : 22, 18, (px) => `600 ${px}px ${SANS}`);
+      ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${as.px}px ${SANS}`; as.lines.forEach((ln, i) => text(ctx, ln, L, y + as.px * 0.9 + i * as.px * 1.15));
+      y += as.px * 0.9 + (as.lines.length - 1) * as.px * 1.15 + (reel ? 18 : 12);
+    }
+  }
   // round 14 (critic G-3): one highlighted number above the lights, the climax as the gauge showed it
   if (o.hero) {
-    const hb = fitWrap(ctx, o.hero.big, RL - L, 1, reel ? 40 : 34, 26, (px) => `800 ${px}px ${SANS}`);
-    ctx.fillStyle = '#ffd27a'; ctx.font = `800 ${hb.px}px ${SANS}`; text(ctx, hb.lines[0] ?? o.hero.big, L, y + hb.px * 0.9);
-    y += hb.px * 0.9 + 10;
-    const hs = fitWrap(ctx, o.hero.small, RL - L, 1, reel ? 26 : 22, 18, (px) => `600 ${px}px ${SANS}`);
-    ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${hs.px}px ${SANS}`; text(ctx, hs.lines[0] ?? o.hero.small, L, y + hs.px * 0.9);
-    y += hs.px * 0.9 + (reel ? 24 : 16);
+    const hb = fitWrap(ctx, o.after24 ? `Peak: ${o.hero.big}` : o.hero.big, RL - L, 2, reel ? (o.after24 ? 32 : 40) : (o.after24 ? 28 : 34), 22, (px) => `800 ${px}px ${SANS}`);
+    ctx.fillStyle = '#ffd27a'; ctx.font = `800 ${hb.px}px ${SANS}`; hb.lines.forEach((ln, i) => text(ctx, ln, L, y + hb.px * 0.9 + i * hb.px * 1.08));
+    y += hb.px * 0.9 + (hb.lines.length - 1) * hb.px * 1.08 + 10;
+    const hs = fitWrap(ctx, o.hero.small, RL - L, 2, reel ? 26 : 22, 18, (px) => `600 ${px}px ${SANS}`);
+    ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${hs.px}px ${SANS}`; hs.lines.forEach((ln, i) => text(ctx, ln, L, y + hs.px * 0.9 + i * hs.px * 1.15));
+    y += hs.px * 0.9 + (hs.lines.length - 1) * hs.px * 1.15 + (reel ? 24 : 16);
   }
-  const rows = short ? 0 : Math.max(1, o.summary.length); // (round 11: the short end card is ≤ 2.5 s: the name, the question, the loop)
-  const room = S.bottom - y - (reel ? 150 : 120);
-  const rh = Math.max(reel ? 70 : 58, Math.min(reel ? 92 : 78, room / rows));
-  o.summary.forEach((l, i) => {
+  // (phase 4b, critique B1: the end card repeated "BAC 0.012–0.031 %" with no warning): any blood alcohol number on it
+  // carries the warning, on the same card
+  if (SHOWS_BAC.test(`${o.hero?.big ?? ''} ${o.hero?.small ?? ''} ${o.after24?.big ?? ''} ${o.after24?.small ?? ''}`)) {
+    const wl = fitWrap(ctx, DRIVE_WARN, RL - L, 2, reel ? 28 : 24, 20, (px) => `700 ${px}px ${SANS}`);
+    ctx.fillStyle = WARN_COL; ctx.font = `700 ${wl.px}px ${SANS}`; wl.lines.forEach((ln, i) => text(ctx, ln, L, y + wl.px * 0.9 + i * wl.px * 1.15));
+    y += wl.px * 0.9 + (wl.lines.length - 1) * wl.px * 1.15 + (reel ? 22 : 14);
+  }
+  // (phase 4b: the 24 h line, the peak and the warning take room: the light rows get smaller, and when even that does
+  // not fit, the rows that flagged something come first and the rest are left out, never drawn over the call to action)
+  const room = S.bottom - y - (reel ? 150 : 120), RMIN = reel ? 50 : 44;
+  const rows = short ? 0 : Math.max(1, Math.min(o.summary.length, Math.floor(room / RMIN)));
+  const rh = rows ? Math.max(RMIN, Math.min(reel ? 92 : 78, room / rows)) : 0;
+  const shownRows = rows >= o.summary.length ? o.summary : [...o.summary].sort((a, b) => (b.unknown ? -1 : b.level) - (a.unknown ? -1 : a.level)).slice(0, rows);
+  shownRows.forEach((l, i) => {
     // each light comes on in turn (with its blip, video-plan 'lights' cues), a small pop
     const k = 1; // (round 11: the lights came on in the 24 h beat, with the body in frame)
     if (k <= 0.01 || short) return;
@@ -1499,8 +1545,9 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
     ctx.fillStyle = lightCol(l); ctx.beginPath(); ctx.arc(L + 18 + r, ry + hh / 2, r, 0, Math.PI * 2); ctx.fill();
     ctx.textAlign = 'center'; ctx.font = `${Math.round(r * 1.05)}px ${EMOJI}`; ctx.fillStyle = '#04070c'; ctx.fillText(l.icon, L + 18 + r, ry + hh / 2 + r * 0.38); ctx.textAlign = 'left';
     const tx = L + 18 + 2 * r + 18, tw = RL - tx - 16;
-    ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${reel ? 28 : 24}px ${SANS}`; text(ctx, fit(ctx, l.label, tw), tx, ry + hh * 0.44);
-    ctx.fillStyle = lightCol(l); ctx.font = `600 ${reel ? 24 : 21}px ${SANS}`; text(ctx, fit(ctx, l.note, tw), tx, ry + hh * 0.82);
+    const lf = Math.min(reel ? 28 : 24, Math.round(hh * 0.4)), nf = Math.min(reel ? 24 : 21, Math.round(hh * 0.34));
+    ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${lf}px ${SANS}`; text(ctx, shrink(ctx, l.label, tw, 14), tx, ry + hh * 0.44);
+    ctx.fillStyle = lightCol(l); ctx.font = `600 ${nf}px ${SANS}`; text(ctx, shrink(ctx, l.note, tw, 13), tx, ry + hh * 0.86);
     ctx.restore();
   });
   y += rows * rh + (reel ? 18 : 12);
@@ -1554,23 +1601,34 @@ function drawClockCompact(ctx: CanvasRenderingContext2D, x1: number, y: number, 
   ctx.restore();
 }
 
-/** A body's number as a compact chip next to its name: the value, and what it is underneath. Returns its width. */
+/** A body's number as a compact chip next to its name: the value, and what it is underneath. Returns its width.
+ *  (Phase 4b, critique M3: "+16–38 % over usual: a nor…": the words under the value wrap onto a second line and shrink,
+ *  never cut; B1: a blood alcohol chip says its body, "for a 70 kg man", and carries its warning, in red.) */
 function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, maxW: number, h: number, alignRight: boolean): number {
   ctx.save();
+  const room = maxW - 28;
   let bf = 30; ctx.font = `700 ${bf}px ${SANS}`;
-  while (bf > 22 && ctx.measureText(g.big).width > maxW - 28) { bf -= 2; ctx.font = `700 ${bf}px ${SANS}`; } // smaller, never cut
-  const bw = ctx.measureText(g.big).width;
-  // (round 5: the small line shrinks to fit, never cut to "0.12–…")
+  while (bf > 20 && ctx.measureText(g.big).width > room) { bf -= 2; ctx.font = `700 ${bf}px ${SANS}`; } // smaller, never cut
+  const big = wrap(ctx, g.big, room, 2), bw = Math.max(...big.map((l) => ctx.measureText(l).width));
   // (round 6: the chip has room for the range only; the limit anchor stays on the single video's gauge)
-  const gs = g.small.replace(/ · .*$/, '');
-  let sf = 20; ctx.font = `600 ${sf}px ${SANS}`; while (sf > 15 && ctx.measureText(gs).width > maxW - 28) { sf -= 1; ctx.font = `600 ${sf}px ${SANS}`; }
-  const small = fit(ctx, gs, maxW - 28); const sw = ctx.measureText(small).width;
-  const w = Math.min(maxW, Math.max(bw, sw) + 28), x0 = alignRight ? x - w : x;
-  ctx.fillStyle = GLASS; roundRect(ctx, x0, y, w, h, 16); ctx.fill();
+  const parts = g.small.split(' · ').filter((p, i) => i === 0 || !/\blimit\b/.test(p));
+  let sf = 20, small: string[] = [];
+  for (; sf >= 14; sf--) { ctx.font = `600 ${sf}px ${SANS}`; small = parts.flatMap((p) => wrap(ctx, p, room, 3)); if (small.length <= Math.max(2, parts.length)) break; }
+  ctx.font = `600 ${sf}px ${SANS}`; const sw = Math.max(0, ...small.map((l) => ctx.measureText(l).width));
+  const wf = 15; ctx.font = `700 ${wf}px ${SANS}`;
+  const warn = g.warn ? wrap(ctx, g.warn, room, 3) : [], ww = Math.max(0, ...warn.map((l) => ctx.measureText(l).width));
+  const bigH = bf * 0.98 * big.length, slh = sf + 4, wlh = wf + 3;
+  const hh = Math.max(h, 10 + bigH + 6 + small.length * slh + (warn.length ? 4 + warn.length * wlh : 0) + 6);
+  const w = Math.min(maxW, Math.max(bw, sw, ww) + 28), x0 = alignRight ? x - w : x;
+  ctx.fillStyle = GLASS; roundRect(ctx, x0, y, w, hh, 16); ctx.fill();
   ctx.strokeStyle = g.curve ? LIGHT[g.level] : 'rgba(220,235,250,.35)'; ctx.lineWidth = 3; ctx.stroke();
   ctx.textAlign = 'left';
-  ctx.font = `700 ${bf}px ${SANS}`; ctx.fillStyle = g.curve ? LIGHT[g.level] : '#ffffff'; text(ctx, fit(ctx, g.big, w - 28), x0 + 14, y + 29);
-  ctx.font = `600 ${sf}px ${SANS}`; ctx.fillStyle = '#d5e0ec'; text(ctx, small, x0 + 14, y + h - 12);
+  ctx.font = `700 ${bf}px ${SANS}`; ctx.fillStyle = g.curve ? LIGHT[g.level] : '#ffffff';
+  big.forEach((l, i) => text(ctx, l, x0 + 14, y + 6 + bf * 0.8 + i * bf * 0.98));
+  let ly = y + 10 + bigH + 6;
+  ctx.font = `600 ${sf}px ${SANS}`; ctx.fillStyle = '#d5e0ec';
+  small.forEach((l) => { text(ctx, l, x0 + 14, ly + sf * 0.8); ly += slh; });
+  if (warn.length) { ly += 4; ctx.font = `700 ${wf}px ${SANS}`; ctx.fillStyle = WARN_COL; warn.forEach((l) => { text(ctx, l, x0 + 14, ly + wf * 0.8); ly += wlh; }); }
   ctx.restore();
   return w;
 }
@@ -1632,7 +1690,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
       const tx = k ? nx0 : nx1;
       text(ctx, line, tx, Lo.nameY);
       // round 5 (critic: the servings were never said): how much, under the name ("1 can · 330 ml")
-      if (s.serving) { ctx.font = `600 24px ${SANS}`; ctx.fillStyle = '#c9d6e4'; text(ctx, fit(ctx, s.serving, nx1 - nx0), tx, Lo.nameY + 40); ctx.font = `400 ${nm.px}px ${SERIF}`; }
+      if (s.serving) { const sv = fitWrap(ctx, s.serving, nx1 - nx0, 2, 24, 15, (px) => `600 ${px}px ${SANS}`); ctx.font = `600 ${sv.px}px ${SANS}`; ctx.fillStyle = '#c9d6e4'; sv.lines.forEach((ln, i) => text(ctx, ln, tx, Lo.nameY + 40 + i * (sv.px + 4))); /* (phase 4b, M3: two lines before a cut) */ ctx.font = `400 ${nm.px}px ${SERIF}`; }
       shade(ctx, false);
       ctx.fillStyle = s.color; roundRect(ctx, k ? tx : tx - nw, Lo.nameY + 9, nw, 5, 2.5); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; ctx.stroke();
@@ -1819,7 +1877,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     ctx.fillStyle = '#ffffff'; ctx.font = `400 ${nm.px}px ${SERIF}`; text(ctx, fit(ctx, nm.lines[0] ?? s.name, cw - 40), x + 20, y + 54);
     ctx.fillStyle = '#e6edf5'; ctx.font = `700 30px ${SANS}`;
     text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 98);
-    const sg = fitWrap(ctx, `Blood sugar: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 22, (px) => `600 ${px}px ${SANS}`);
+    const sg = fitWrap(ctx, `${/^(?:steady|not tracked)/.test(s.summary.sugarPeak) ? 'Blood sugar' : 'Sugar peak'}: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 18, (px) => `600 ${px}px ${SANS}`); // (phase 4b, M2: a peak is called one)
     ctx.font = `600 ${sg.px}px ${SANS}`; ctx.fillStyle = '#b8c7d8';
     text(ctx, fit(ctx, sg.lines[0] ?? '', cw - 40), x + 20, y + 134);
     const rows = shown(s) ?? [{ icon: '✓', label: 'All lights green', level: 0 as const, note: 'Nothing flagged all day' }];
@@ -1866,7 +1924,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
   const cy = Math.min(y + cta.px * 0.9, S.bottom - 46);
   text(ctx, cta.lines[0] ?? '', L, cy);
   ctx.fillStyle = ACCENT; ctx.font = `600 26px ${SANS}`;
-  text(ctx, fit(ctx, VIDEO_COPY.loop(false, true), RL - L), L, Math.min(cy + 42, S.bottom - 4)); // (round 11: the loop)
+  text(ctx, fit(ctx, VIDEO_COPY.loop(o.solid, true, o.mixed), RL - L), L, Math.min(cy + 42, S.bottom - 4)); // (round 11: the loop)
   ctx.restore(); ctx.textAlign = 'left';
 }
 

@@ -275,6 +275,10 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
   // (round 13, critic P1-6: "Starch and sugar turn into blood sugar." next to an alcoholic drink whose end card says
   // blood sugar is not tracked): with alcohol, the small intestine's news is the alcohol
   if (ctx.alcoholG) { const k = out.indexOf('Starch and sugar turn into blood sugar.'); if (k >= 0) out.splice(k, 1, 'Alcohol passes into your blood here.'); }
+  // phase 4b (critique M6: "gone after about 1–4 h", then "At 07:00, the alcohol should be gone.", while the video
+  // shows only the time since the first sip): no clock time on a card; the moment's own kicker and timer say when
+  const noClock = out.map((c) => { const m = /^At \d\d:\d\d, (.+)$/.exec(c); return m ? cap(m[1]) : /^Waking up at \d\d:\d\d\.$/.test(c) ? 'Waking up.' : c; });
+  out.splice(0, out.length, ...noClock.filter((c, i) => noClock.indexOf(c) === i));
   return out.length ? out : [title];
 }
 function rule(sentence: string): string[] {

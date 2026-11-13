@@ -24,23 +24,25 @@ const NOOP = () => {};
 /** The cameras, for pinning gauges to organs (AppV4 projects organ centres with them). */
 export interface CmpCams { cams: THREE.PerspectiveCamera[]; w: number; h: number }
 
-function Side({ a, minute, x, focus, group }: { a: Analysis; minute: number; x: number; focus: string | null; group: (g: THREE.Group | null) => void }) {
+function Side({ a, minute, x, focus, named = [], group }: { a: Analysis; minute: number; x: number; focus: string | null; named?: string[]; group: (g: THREE.Group | null) => void }) {
   const story = a.built.story;
   // Phase 3 (C5): the drink colour only where the model has it now, as much as is there (the same map as the app)
   const soft = a.built.route ? bodyLiquidAt(a.built, minute) : story.liquid(minute);
   // the organs at work light up, the rest of the body dims (video-body.ts)
-  const { glow, keep } = bodyGlowAt(a.built, minute, focus, a.glucose !== undefined);
+  // (phase 4b, B2: the organ this side's card names is lit, the organs in front of it fade)
+  const { glow, keep, hide } = bodyGlowAt(a.built, minute, focus, a.glucose !== undefined, named);
   return (
     <group position={[x, 0, 0]} ref={group}>
-      <Body glow={glow} selected={null} onSelect={NOOP} onError={NOOP} liquid={soft} liquidColor={story.color} dim={0.42} keep={keep} palette={paletteAt(a.built, minute)} />
+      <Body glow={glow} selected={null} onSelect={NOOP} onError={NOOP} liquid={soft} liquidColor={story.color} dim={0.42} keep={keep} hide={hide} palette={paletteAt(a.built, minute)} />
       {a.built.route && <LiquidRoute route={a.built.route} color={story.color} minute={minute} labels={false} subtle={isLightDrink(story.color)} vivid />}
     </group>
   );
 }
 
-export function CompareScene({ a, b, minute, cue, cams, focus, only }: {
+export function CompareScene({ a, b, minute, cue, cams, focus, named, only }: {
   a: Analysis; b: Analysis; minute: number; cue?: MutableRefObject<ShotCue | null>; cams?: MutableRefObject<CmpCams | null>;
   /** the organ each side's current moment is about */ focus?: [string | null, string | null];
+  /** phase 4b (B2): the organs each side's card names */ named?: [string[], string[]];
   /** Phase 3 (C17, phones): one side over the whole canvas (the same camera), the other one hidden */ only?: 0 | 1;
 }) {
   const { controls } = useThree() as unknown as { controls: { enabled: boolean } | null };
@@ -83,7 +85,7 @@ export function CompareScene({ a, b, minute, cue, cams, focus, only }: {
     gl.autoClear = autoClear;
   }, 1);
   return (<>
-    <Side a={a} minute={minute} x={SIDE_X[0]} focus={focus?.[0] ?? null} group={(g) => { groups.current[0] = g; }} />
-    <Side a={b} minute={minute} x={SIDE_X[1]} focus={focus?.[1] ?? null} group={(g) => { groups.current[1] = g; }} />
+    <Side a={a} minute={minute} x={SIDE_X[0]} focus={focus?.[0] ?? null} named={named?.[0]} group={(g) => { groups.current[0] = g; }} />
+    <Side a={b} minute={minute} x={SIDE_X[1]} focus={focus?.[1] ?? null} named={named?.[1]} group={(g) => { groups.current[1] = g; }} />
   </>);
 }

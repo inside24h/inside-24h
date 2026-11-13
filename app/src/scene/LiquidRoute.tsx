@@ -216,7 +216,7 @@ export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3
         return (
           <Html key={id} position={at} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
             <div className={`rlabel ${i === 0 ? 'main' : ''}`}>
-              <i style={{ background: color }} />{SEG_LABEL[id]} <b>{v.text ?? `${fmt(v.amount)} ${v.unit ?? route.unit}`}</b>
+              <i style={{ background: color }} />{SEG_LABEL[id]} <b>{v.text ?? `${fmt(v.frac > 1 && (id === 'stomach' || id === 'duodenum' || id === 'small') ? v.amount / v.frac : v.amount)} ${v.unit ?? route.unit}`}</b>
             </div>
           </Html>
         );

@@ -44,6 +44,11 @@ function labelClaims(parts: Part[], field?: string): string[] {
   return [...ids].filter(Boolean);
 }
 
+/** Phase 4b (critique M1): a drink's volume in ml, from each part's own serving ("500 ml", "glass (≈ 150 ml)" for its
+ *  grams): the model runs on grams, the screen says ml. A part whose serving has no ml counts 1 ml per gram. */
+export function servingMlOf(parts: Part[]): number {
+  return parts.reduce((acc, p) => { const m = /(\d+(?:[.,]\d+)?)\s*ml\b/i.exec(p.food.serving.label), ml = m ? Number(m[1].replace(',', '.')) : 0; return acc + (ml > 0 && p.food.serving.grams > 0 ? (p.grams * ml) / p.food.serving.grams : p.grams); }, 0);
+}
 export function describe(parts: Part[]): string {
   return parts.map((p) => distinctName(p.food.name)).join(' + '); // (round 18: "Fruit yogurt", "Fried egg", "Mozzarella")
 }
@@ -127,10 +132,11 @@ export function makeFoodProduct(parts: Part[], id: string, overMin = 0): Product
       ],
       journeyUnit: 'g',
       story,
-      route: foodRoute(s, meal.grams, meal.waterG, isDrink, meal.alcoholG > 1),
+      route: foodRoute(s, meal.grams, meal.waterG, isDrink, meal.alcoholG > 1, isDrink ? servingMlOf(parts) : undefined),
       t50: s.t50,
       traits: { drink: isDrink, fat: m.fat >= 10, sugar: m.sugars >= 10, alcohol: meal.alcoholG > 1, caffeine: meal.caffeineMg >= 10, fibre: m.fiber >= 1 },
       bac: meal.alcoholG > 1 ? s.bac : undefined,
+      bacBody: meal.alcoholG > 1 ? `${Math.round(p.weightKg)} kg ${p.sex === 'female' ? 'woman' : 'man'}` : undefined, // (video-body bodyWords)
       alcoholG: meal.alcoholG > 1 ? meal.alcoholG : undefined,
       alcoholFed: meal.alcoholG > 1 && !!meal.fed,
       waterMl: meal.waterG,

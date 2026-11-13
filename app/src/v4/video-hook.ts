@@ -14,6 +14,7 @@ export interface HookIn {
   /** round 5: the caffeine dose (mg): "still in you at bedtime" is said as a share of it */ caffeineMg?: number;
   /** round 13: a surprising comparison the model shows (video-story surpriseOf): "More blood sugar than cow's milk." */ surprise?: { than: string; ratio?: number };
   /** round 14 (critic DC-1): decaf: its own caffeine (mg), a regular cup's, and the minute of its caffeine peak */ decaf?: { mg: number; regularMg: number; min: number };
+  /** phase 4b (critique M4): how its blood sugar peak is said (video-body riseOf), so the hook never promises more */ sugarRise?: 'normal' | 'fast' | 'big';
 }
 /** `payoff`: the title of the chapter that pays the hook off (round 5: it is in every cut, near the end of the short).
  *  Round 14 (critic: "every question must be answered on screen"): `payoffMin` when the payoff is a moment of its own
@@ -149,7 +150,9 @@ export function hookFor(h: HookIn): Hook {
   // round 12 (critic P1-1: "1 kaiser roll. Watch where it goes." had no number): a starchy food leads with what its
   // starch becomes, the teaspoons the small-intestine moment says (foodProduct: available carbohydrate / 4 g)
   const st = h.chapters.map((c) => ({ c, m: /In all, about (\d+) teaspoons of sugar reach your blood/.exec(c.text) })).find((x) => x.m);
-  if (h.solid && st && !h.alcohol) {
+  // (phase 4b, critique M4: lentils opened on "about 6 teaspoons of sugar" and paid off with "a normal rise"): starch
+  // said as teaspoons of sugar only when its rise is more than a normal one; else the food leads with its calories
+  if (h.solid && st && !h.alcohol && h.sugarRise !== 'normal') {
     const n = st.m![1];
     return { line1: named(`about ${n} teaspoons of sugar.`), line2: poolLine('starch', h.name), payoff: st.c.title, answer: `About ${n} teaspoons of sugar, from starch.` };
   }
@@ -163,7 +166,7 @@ export function hookFor(h: HookIn): Hook {
     const colon = h.chapters.find((c) => /1 in 3 people coffee makes the lower bowel start moving/.test(c.text));
     if (colon && (!fw || Number(mg) / (h.caffeineMg ?? 1) < 0.3)) return { line1, line2: 'It sends 1 in 3 to the toilet.', payoff: colon.title };
     // (round 18, critic T-8: "Almost all is still in you": all of what?): its caffeine
-    if (bed && fw) return { line1, line2: rot(bedLines(fw)), payoff: bed.title };
+    if (bed && fw) return { line1, line2: rot(bedLines(fw).filter((l) => words(l) <= 10)), payoff: bed.title }; // (phase 4b: never over 10 words, "almost all")
     const pk = h.chapters.find((c) => /caffeine/i.test(c.title) && c.min > 0);
     // (round 17, critic G-4: green tea): the caffeine's own number, and when it hits
     if (pk && h.caffeineMg && h.caffeineMg >= 20 && fit(`${cap(name)}: ${Math.round(h.caffeineMg)} mg of caffeine.`)) return { line1: `${cap(name)}: ${Math.round(h.caffeineMg)} mg of caffeine.`, line2: 'When does it hit?', payoff: pk.title };

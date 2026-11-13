@@ -45,21 +45,21 @@ type VideoKit = typeof import('./video-kit');
 let narrationFor!: VideoKit['narrationFor'], arcFor!: VideoKit['arcFor'], compareDiffs!: VideoKit['compareDiffs'], compareFacts!: VideoKit['compareFacts'], factInOf!: VideoKit['factInOf'], factLines!: VideoKit['factLines'];
 let canEncode!: VideoKit['canEncode'], composeCmpFrame!: VideoKit['composeCmpFrame'], composeCover!: VideoKit['composeCover'], composeFrame!: VideoKit['composeFrame'], recordCompare!: VideoKit['recordCompare'], stampFor!: VideoKit['stampFor'], record!: VideoKit['record'], recordFrames!: VideoKit['recordFrames'], saveFile!: VideoKit['saveFile'], SIZE!: VideoKit['SIZE'], VIDEO_COPY!: VideoKit['VIDEO_COPY'], videoSupportHere!: VideoKit['videoSupportHere'];
 let planVideo!: VideoKit['planVideo'];
-let beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], heroOf!: VideoKit['heroOf'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
+let after24Of!: VideoKit['after24Of'], beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], heroOf!: VideoKit['heroOf'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
 let compareHookB!: VideoKit['compareHookB'], hookB!: VideoKit['hookB'], hookFor!: VideoKit['hookFor'], hookForCompare!: VideoKit['hookForCompare'], seedOf!: VideoKit['seedOf'];
 let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor'], PLATFORM_CUT!: VideoKit['PLATFORM_CUT'], PLATFORM_LABEL!: VideoKit['PLATFORM_LABEL'], PLATFORM_LENGTH!: VideoKit['PLATFORM_LENGTH'], PLATFORMS!: VideoKit['PLATFORMS'];
 let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
 let beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'];
-let bodyGlowAt!: VideoKit['bodyGlowAt'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
+let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
 let kitP: Promise<void> | null = null;
 /** Loads the video engine once (later calls share the same promise; a failed load is tried again next time). */
 const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((k) => {
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
-    planVideo, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf,
+    planVideo, after24Of, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf,
     compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot,
-    bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
+    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
 const NO_HOOK: Hook = { line1: '', line2: '' };
@@ -625,13 +625,13 @@ export default function AppV4() {
     : share?.state === 'rec' && reelStops.current ? reelStops.current.find((x) => x >= minute - 0.01) ?? 1440 : minute;
   const recChapter = story.chapters.reduce((acc, c) => (recStop + 1e-6 >= c.min ? c : acc), story.chapters[0]);
   // while the video is made: the organs at work light up, the rest dims (video-body.ts)
-  const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null) : null;
+  const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null, cardNamed(recFr.current)) : null; // (phase 4b, B2: the organ the card names is lit)
   const hookIn = !kitReady ? null : { name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
     alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
     pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
     grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg,
     surprise: productId === 'food' && foodParts.length === 1 ? surpriseOf(videoName, peakNow, profile) : undefined,
-    decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined };
+    decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined, sugarRise: peakNow !== null ? riseOf(built.effects.glucoseMgDl) : undefined };
   const vSeed = hookIn ? seedOf(shortName(videoName)) : 0, hookPair = hookIn ? hookPairOf(hookIn, vSeed) : [NO_HOOK, NO_HOOK];
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
   // (round 12: the story's own signal: espresso is #caffeine; round 18: a pljeskavica is #protein, not #bloodsugar)
@@ -661,7 +661,7 @@ export default function AppV4() {
     where: (() => {
       const top = present[0];
       if (!top || !built.route) return undefined;
-      const v = top[1].amount;
+      const v = top[1].frac > 1 && ['stomach', 'duodenum', 'small'].includes(top[0]) ? top[1].amount / top[1].frac : top[1].amount; // (phase 4b, M1: never more than the serving)
       return `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? built.route.unit}`}`;
     })(),
     lights: systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2 })),
@@ -670,6 +670,7 @@ export default function AppV4() {
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     // round 14 (critic G-3): the end card's hero number, the main gauge at the video's climax (the same numbers)
     hero: heroOf(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), profile.glucoseUnit, hookNow), // (round 17: one source, video-story heroOf)
+    after24: after24Of(built, peakNow !== null), // (phase 4b, M2: the value at 24 h under "AFTER 24 HOURS")
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
       // plain words (round 4); round 5: the time as on the video's clock ("at +0:20"), never a bare "13:13"; not tracked = grey
@@ -726,7 +727,7 @@ export default function AppV4() {
     // same plan (video-plan.ts: reading-speed captions, 62-75 s or ≤ 30 s)
     const plan = reelPlan();
     // phase 4: the camera's plan (its class's style and the whole-body orientation shot), the same the tests film
-    const camPlan = camPlanOf(plan.frames, camStyle(classOf(built), vSeed));
+    const camPlan = camPlanOf(plan.frames, camStyle(classOf(built), vSeed), story.chapters); // (phase 4b, M5: no organ held over SHOT_MAX_S)
     vcue.current = { shot: OPENING, start: OPENING, seed: vSeed, style: camPlan.style };
     const opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
       soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: recTick,
@@ -766,7 +767,22 @@ export default function AppV4() {
         msg: vidSound !== 'none' && !audio ? 'This browser couldn’t add our soundtrack, so the video is silent. Add a sound when you post it.' : vidVoice && audio && !voice ? voiceMsg : undefined }))
       .catch((e: Error) => { if (e.message === CANCELLED) { setVideoOpen(true); setVStep(2); setShare({ state: 'choose', msg: 'Video cancelled. Nothing was saved.' }); } else setShare({ state: 'error', msg: e.message }); })
       .finally(() => { recRef.current = false; reelStops.current = null; recFr.current = null; vcue.current = null; setRecBox(null); });
-  };  // QA only: #frame=<reel|feed>-<intro|main|outro> paints one composed video frame over the page after 6 s
+  };
+  // QA only (phase 4b, render harness scripts/render-sample.mjs): #render=<tiktok|reels|shorts|facebook> picks that cut;
+  // without #vs= it then makes this food's video by itself once the 3D body is up (a comparison is started by the
+  // harness from its own panel). The finished file stays in the page (window.__i24render, a blob: URL), nothing leaves it.
+  const qaRender = useRef(false);
+  useEffect(() => {
+    const pf = HASH.get('render');
+    if (!pf || !kitReady || !(PLATFORMS as string[]).includes(pf)) return;
+    if (platform !== pf) { setPlatform(pf as Platform); return; }
+    if (qaRender.current || RESOLVED.vs) return;
+    qaRender.current = true;
+    const id = setInterval(() => { if (document.querySelector('.stage canvas') && r3f.current) { clearInterval(id); setTimeout(() => startShare('reel'), 6000); } }, 500);
+    return () => clearInterval(id);
+  }, [kitReady, platform]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (HASH.get('render') && share?.state === 'ready' && share.url) (window as unknown as { __i24render?: string }).__i24render = share.url; }, [share?.state, share?.url]);
+  // QA only: #frame=<reel|feed>-<intro|main|outro> paints one composed video frame over the page after 6 s
   useEffect(() => {
     const spec = HASH.get('frame');
     if (!spec) return;
@@ -797,7 +813,7 @@ export default function AppV4() {
       const en = x.systems.find((s) => s.key === 'energy')!;
       return {
         name: cmpName(x.label), color: x.color, step: ch.title, caption: captionOf(chapterText(ch, mStop), 95),
-        where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${top[1].amount >= 10 ? Math.round(top[1].amount) : top[1].amount.toFixed(1)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
+        where: top ? `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${((v) => (v >= 10 ? String(Math.round(v)) : v.toFixed(1)))(top[1].frac > 1 && ['stomach', 'duodenum', 'small'].includes(top[0]) ? top[1].amount / top[1].frac : top[1].amount)} ${top[1].unit ?? x.built.route!.unit}`}` : undefined,
         sugar: x.sugarPeak === null ? 'Blood sugar ?' : Math.abs(dg) < 0.15 ? 'Blood sugar steady' : `Blood sugar ${sugarDeltaText(dg, profile.glucoseUnit)}`, sugarLevel: en.levels[mi] as 0 | 1 | 2,
         lights: x.systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[mi] as 0 | 1 | 2 })),
         // split screen (2026-10-23): this body's number (else where its drink is), pinned to the organ
@@ -812,7 +828,8 @@ export default function AppV4() {
     const race = cmpRace.current;
     const gq = cmpGuess.current;
     cmpOverlayRef.current = { hook: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(cmpRec.a.label), cmpName(cmpRec.b.label)) : gq.question) : hookForCompare(cmpName(cmpRec.a.label), cmpName(cmpRec.b.label), false).line1, guess: !!gq, race: race ? { a: race.a[mi], b: race.b[mi] } : undefined,
-      answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit, gq && { tie: /^Almost the same/.test(gq.answer1) }), a: side(cmpRec.a), b: side(cmpRec.b) };
+      answer: gq ? { a1: gq.answer1, a2: gq.answer2, recap: gq.recap, kind: gq.kind, winner: gq.winner } : undefined, clock: hhmm(profile.drinkAtMin + mStop), progress: cmpRec.u, handle, stamp: stampFor(mStop), verdict: verdictOf(cmpRec.a, cmpRec.b, profile.glucoseUnit, gq && { tie: /^Almost the same/.test(gq.answer1) }), a: side(cmpRec.a), b: side(cmpRec.b),
+      ...(() => { const bite = [cmpRec.a, cmpRec.b].map((x) => /bite/i.test(x.built.story.chapters[0]?.title ?? '')); return { solid: bite[0] && bite[1], mixed: bite[0] !== bite[1] }; })() }; // (phase 4b: "first bite" / "first sip" / "the start")
   }
   // the organ each body's current moment is about (the split-screen cameras frame both, the organs light up)
   const cmpFocus: [string | null, string | null] | undefined = cmpRec ? (() => {
@@ -1065,10 +1082,10 @@ export default function AppV4() {
                 }}>
                 <ExposeState into={r3f} />
                 <Suspense fallback={null}>
-                  {cmpRec ? <CompareScene a={cmpRec.a} b={cmpRec.b} minute={minutesFromU(cmpRec.u)} cue={vcue} cams={cmpCams} focus={cmpFocus} /> : <>
+                  {cmpRec ? <CompareScene a={cmpRec.a} b={cmpRec.b} minute={minutesFromU(cmpRec.u)} cue={vcue} cams={cmpCams} focus={cmpFocus} named={cmpRec ? [cardNamed(recFr.current, 0), cardNamed(recFr.current, 1)] : undefined} /> : <>
                   <Body glow={vGlow ? vGlow.glow as Glow : mode === 'simple' && started && built.route ? presenceGlow(pNow) as Glow : mode === 'simple' || !started ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
                     liquid={mode === 'simple' && started ? (built.route ? presenceLiquid(pNow, true) : softenTubes(story.liquid(minute), false)) : {}} liquidColor={story.color} onBounds={setBounds}
-                    dim={vGlow ? 0.42 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])] : keepOrgans} palette={vGlow ? paletteAt(built, Math.min(1440, minute)) : undefined} />
+                    dim={vGlow ? 0.42 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])].filter((k) => !vGlow.hide.includes(k)) : keepOrgans} hide={vGlow?.hide} palette={vGlow ? paletteAt(built, Math.min(1440, minute)) : undefined} />
                   {/* first screen (nothing chosen yet): the body on its own, no liquid */}
                   {started && mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}
                   {started && mode === 'simple' && (built.route

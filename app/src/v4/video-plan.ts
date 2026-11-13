@@ -214,7 +214,7 @@ export const moveS = (toU: (m: number) => number, from: number, to: number) => M
 export const INTRO_S = { long: 3.0, medium: 2.7, short: 2.4 } as const; // big hook card (it then stays at the top as the headline)
 /** The 24 h beat before the end card. Round 11 (research R1): the payoff beat with the body in frame: "AFTER 24
  *  HOURS", the day's lights come on one by one (and the comparison's verdict lands), then a "day done" ring. */
-export const CELEB_S = { long: 2.2, medium: 2.0, short: 1.4 } as const;
+export const CELEB_S = { long: 2.2, medium: 2.0, short: 0.8 } as const; // (phase 4b: short 0.8 s, so the longer end card fits in 30 s)
 export const END_HOLD_S = CELEB_S.long; // (the longest)
 /** The glide to +24:00 names where it goes (a chip, so the end of the day is never a stretch without words). */
 export const DAY_END_TITLE = '24 hours later';
@@ -227,7 +227,12 @@ export const PEAK_BY_S = 15;
 /** Round 15: the latest the long cut's impact may move to keep every card short (a sparse story, critic SA-2). */
 export const PEAK_BY_MAX_S = 33;
 /** End card: summary + call to action + a loop back to the start. Round 11 (research R1): ≤ 4 s long, ≤ 2.5 s short. */
-export const OUTRO_S = { long: 4.0, medium: 3.0, short: 2.3 } as const; // (round 15: short 2.3 s, so the climax and the hook's answer both fit in 30 s)
+// (round 15: short 2.3 s, so the climax and the hook's answer both fit in 30 s)
+// phase 4b (critique M7: the comparison Short's end card was readable for ~1.2 s): every cut's end card is readable for
+// at least END_CARD_MIN_S (share.ts endTiming: it fades in over 0.2-0.45 s and out from 0.6 s before the end, so it is
+// at least half visible for outroS - 0.8 s); the Short still ends by 30 s
+export const OUTRO_S = { long: 4.0, medium: 3.4, short: 3.3 } as const;
+export const END_CARD_MIN_S = 2.5;
 
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
@@ -500,9 +505,22 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
         // that would stay longer than CMP_REPEAT_S leaves; that side is quiet until it has something new
         if (ca && ca === pa && ra + s > CMP_REPEAT_S) ca = '';
         if (cb && cb === pb && rb + s > CMP_REPEAT_S) cb = '';
-        ra = ca && ca === pa ? ra + s : ca ? s : 0; rb = cb && cb === pb ? rb + s : cb ? s : 0;
-        out.push({ cap: ca, capB: cb, s });
-        pa = ca; pb = cb;
+        // phase 4b (critique M8: two different captions on screen at once, left and right, in a Short): one caption track
+        // at a time. Two new cards are read one after the other; a card already read leaves when the other side has news
+        if (ca && cb && ca !== cb) {
+          const fa = ca !== pa, fb = cb !== pb;
+          if (fa && fb) {
+            const s1 = readChars(ca.length, k === 0), s2 = readChars(cb.length);
+            out.push({ cap: ca, capB: '', s: s1 }, { cap: '', capB: cb, s: s2 });
+            ra = 0; rb = s2; pa = ca; pb = cb;
+            continue;
+          }
+          if (fa) cb = ''; else ca = '';
+        }
+        const s1 = readChars((ca !== pa ? ca.length : 0) + (cb !== pb && cb !== ca ? cb.length : 0), k === 0) || s;
+        ra = ca && ca === pa ? ra + s1 : ca ? s1 : 0; rb = cb && cb === pb ? rb + s1 : cb ? s1 : 0;
+        out.push({ cap: ca, capB: cb, s: s1 });
+        pa = ca || pa; pb = cb || pb;
       }
       return out;
     });

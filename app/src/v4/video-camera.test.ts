@@ -61,7 +61,7 @@ const inside = (r: { l: number; r: number; t: number; b: number } | null, z: { l
 export function filmSingle(it: AuditItem, cut: Cut, fmt: Fmt = 'reel', v: 'A' | 'B' = 'A'): Film & { cam: CamPlan } {
   const x = it.x, b = x.built, o = auditSingle(x, cut, v, AUDIT_PROFILE, it.vname), plan = o.plan, chapters = b.story.chapters;
   const seed = seedOf(o.name), style = camStyle(classOf(b), seed);
-  const cam = camPlanOf(plan.frames, style), [W, H] = SIZE[fmt], zone = ORGAN_SAFE[fmt];
+  const cam = camPlanOf(plan.frames, style, chapters), [W, H] = SIZE[fmt], zone = ORGAN_SAFE[fmt];
   let lead: SegId | null = null, leadM = -1;
   const bad: string[] = [];
   let checked = 0;

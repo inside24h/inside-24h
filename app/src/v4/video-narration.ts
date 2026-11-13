@@ -138,7 +138,8 @@ export function heroLines(hero: { big: string; small: string } | undefined, alco
   let m: RegExpExecArray | null;
   if (/^Blood sugar up/.test(big) && (m = /\+?(\d+)–(\d+) %/.exec(small))) return [`The peak? Blood sugar up ${m[1]}–${m[2]} %.`, `Blood sugar: up ${m[1]}–${m[2]} %.`, `Sugar: up ${m[1]}–${m[2]} %.`];
   if ((m = /^Blood fat up · (\d+) h/.exec(big))) return [`The slowest part? The fat.`, `The fat took longest.`, `The slowest part took ${m[1]} hours.`];
-  if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body/.test(small)) return [`A day later? ${m[1]} mg of caffeine, still in you.`, `A day later, ${m[1]} mg is still in you.`, `${m[1]} mg, still there a day later.`];
+  // (phase 4b, critique M2: the hero is the PEAK, never "a day later")
+  if ((m = /^(\d+) mg caffeine/.exec(big)) && /still in your body|at its highest/.test(small)) return [`At its peak, ${m[1]} mg of caffeine.`, `The caffeine peaked at ${m[1]} mg.`, `${m[1]} mg at its peak.`];
   // alcohol: the BAC range is too long to say well ("zero point zero one one to …"): the safety line instead
   if (/BAC/.test(small) || alcohol) return ['Remember: never drink and drive.', 'Never drink and drive.'];
   if ((m = /^(\d+) kcal$/.exec(big))) return [`The total? ${m[1]} kcal.`, `${m[1]} kcal in total.`];
@@ -509,7 +510,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       // v23d: a card whose numbers the hook said in part says only the rest ("Plus 32 mg of caffeine.")
       const parts = sp.a.replace(/\.$/, '').split(/,\s+/), fresh1 = parts.filter((x) => !qtyOf(x).some((v) => hookNums.has(v)));
       const plus = fresh1.length && fresh1.length < parts.length && fresh1.every((x) => qtyOf(x).length > 0) ? [`Plus ${lc1(fresh1.join(', '))}.`] : [];
-      cands.push({ id: 'card', t, until: isPay ? Math.max(until, sp.t1 + 0.3) : until, delay: isPay ? 99 : late, options: [...pay, ...anch, ...rise, ...(wl ? [] : said), ...plus, ...beats(), ...(isPay && wl ? said : [])], source: `${sp.title} ${sp.a} ${wl}`, ...(onTop ? {} : { card: sp.a, side: 0 as const }), ...(isPay ? { must: true } : {}) });
+      cands.push({ id: 'card', t, until: isPay ? Math.max(until, sp.t1 + 0.3) : until, delay: isPay ? 99 : late, options: [...pay, ...anch, ...rise, ...(wl ? [] : said), ...plus, ...(isPay ? [] : beats()), ...(isPay && wl ? said : [])] /* (phase 4b: the hook's answer is never swapped for a filler) */, source: `${sp.title} ${sp.a} ${wl}`, ...(onTop ? {} : { card: sp.a, side: 0 as const }), ...(isPay ? { must: true } : {}) });
       return;
     }
     // comparison: a card both sides show is said once; the two names as "Left: … Right: …"; else each side whose card
