@@ -48,7 +48,8 @@ let planVideo!: VideoKit['planVideo'];
 let beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], heroOf!: VideoKit['heroOf'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
 let compareHookB!: VideoKit['compareHookB'], hookB!: VideoKit['hookB'], hookFor!: VideoKit['hookFor'], hookForCompare!: VideoKit['hookForCompare'], seedOf!: VideoKit['seedOf'];
 let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor'], PLATFORM_CUT!: VideoKit['PLATFORM_CUT'], PLATFORM_LABEL!: VideoKit['PLATFORM_LABEL'], PLATFORM_LENGTH!: VideoKit['PLATFORM_LENGTH'], PLATFORMS!: VideoKit['PLATFORMS'];
-let idleDrift!: VideoKit['idleDrift'], ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
+let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
+let beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'];
 let bodyGlowAt!: VideoKit['bodyGlowAt'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
@@ -57,7 +58,7 @@ let kitP: Promise<void> | null = null;
 const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((k) => {
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
     planVideo, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf,
-    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, idleDrift, ORGAN_AT, project, SIDE_X, splitPose,
+    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot,
     bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
@@ -214,36 +215,10 @@ function softenTubes(l: Record<string, { fill?: number; tint?: number }>, on: bo
 
 // ---- body-first video (2026-10-23): what the video camera films and what is pinned to the body ----
 // (round 9: shortName and beatCtx moved to video-story.ts, so tests build the same video for every food)
-/** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
- *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end. */
-function shotOf(fr: VFrame | null | undefined, organs: (string | null | undefined)[], union = false): Shot {
-  if (!fr || fr.beat === 'end' || fr.phase === 'outro') return { focus: [], zoom: 'wide', tight: idleDrift(fr) ?? 0 }; // (round 10b: a slow breath, never still)
-  // the cold open: on the organ of the peak (the chapter's focus at that minute)
-  if (fr.beat === 'teaser') return { focus: organs.filter((x): x is string => !!x && !!ORGAN_AT[x]).slice(0, 1), zoom: 'mid' };
-  // the first sip / bite: follow it down, mouth → food pipe → stomach (the hook is the first part of it)
-  if ((fr.stop ?? 0) === 0 && (fr.beat === 'hook' || fr.beat === 'hold')) {
-    const h = fr.hk ?? 0;
-    return h < 0.28 ? { focus: ['tongue'], zoom: 'mid' } : { focus: [h < 0.55 ? 'esophagus' : 'stomach'], zoom: union ? 'mid' : 'close', tight: Math.max(0, (h - 0.55) / 0.45) };
-  }
-  // the moment's organ; where the drink is joins it only when it is close by (else the organ would leave the window
-  // between the words at the top and the caption at the bottom)
-  const known = organs.filter((x): x is string => !!x && !!ORGAN_AT[x]);
-  // (the comparison frames both bodies' organs: `union`)
-  const main = known[0], focus = union ? known : main ? [main, ...known.slice(1).filter((x) => Math.abs(ORGAN_AT[x][1] - ORGAN_AT[main][1]) < 0.22)] : known.slice(0, 1);
-  // (split screen: each half is narrow, so never closer than 'mid')
-  if (fr.beat === 'glide') return { focus: [...new Set(focus)], zoom: union || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid' };
-  // round 5 (critic: up to 13 s of the same shot): every new card, and every 2.6 s of a long one (fr.pg), reframes:
-  // close on the organ, then wider with where the drink is, in turn
-  // (round 6: a big organ - brain, colon, liver - is never closer than 'mid', so its other framing is 'wide')
-  if ((fr.pg ?? 0) % 2 === 1) { const f2 = [...new Set(known.length ? known : focus)]; return { focus: f2, zoom: f2.every((k) => BIG_V.has(k)) ? 'wide' : 'mid', tight: 0.5 * (fr.hk ?? 0) }; }
-  return { focus: [...new Set(focus)], zoom: union ? 'mid' : 'close', tight: fr.hk ?? 0 };
-}
+// (phase 4, 2026-11-13: shotOf moved to video-cam.ts, with the organ the card names, the class's camera style and an
+// orientation shot; the tests film every video with it)
 const OPENING: Shot = { focus: [], zoom: 'wide' }; // the first frame: the whole body
-/** Organs the camera never frames closer than 'mid' (video-cam.ts BIG). */
-const BIG_V = new Set(['jejunum', 'ileum', 'colon_asc', 'colon_trans', 'colon_desc', 'cecum', 'aorta', 'vena_cava', 'liver', 'brain']);
-/** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
- *  moment is read and out again for the quiet hours and the end. */
-const splitShot = (fr: VFrame | null | undefined): Shot => ({ focus: [], zoom: 'wide', pose: splitPose(!fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62 - 0.1 * (idleDrift(fr) ?? 0)) }); // (round 5: breathes in and out with each card)
+// (phase 4: splitShot moved to video-cam.ts; it pans down when a card is about a low organ)
 // (audit C3: SPLIT_OPENING is set when the video kit loads, see loadVideoKit)
 // (round 9: gaugesAt moved to video-story.ts)
 /** A pixel of a canvas of cw×ch drawn cover-cropped into a fw×fh frame (share.ts drawCover). */
@@ -745,19 +720,25 @@ export default function AppV4() {
     setMode('simple'); setSelected(null); setWholeBody(false); setFlightKey((k) => k + 1); setEvidence(null); setPanel(null);
     recRef.current = true; setU(0); setPlaying(false); setShare({ state: 'rec', format }); setRecPct(0);
     // body-first (2026-10-23): the 3D canvas takes the video's size and the video camera films the plan's shots
-    setRecBox(format); recFr.current = null; vcue.current = { shot: OPENING, start: OPENING, seed: vSeed };
+    setRecBox(format); recFr.current = null;
     const [FW, FH] = SIZE[format];
     // frame-exact encoder where available (smooth on any computer), screen recording as a fallback; both follow the
     // same plan (video-plan.ts: reading-speed captions, 62-75 s or ≤ 30 s)
-    const plan = reelPlan(), opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
+    const plan = reelPlan();
+    // phase 4: the camera's plan (its class's style and the whole-body orientation shot), the same the tests film
+    const camPlan = camPlanOf(plan.frames, camStyle(classOf(built), vSeed));
+    vcue.current = { shot: OPENING, start: OPENING, seed: vSeed, style: camPlan.style };
+    const opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
       soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: recTick,
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
       prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = vcue.current.shot; },
       voice: vidVoice && vidSound !== 'none' ? voiceFor(singleNarr(plan)) : undefined, signal: recAbort.current.signal };
     const cue = (fr?: VFrame) => {
       if (!fr || !vcue.current) return;
-      const ch = story.chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), story.chapters[0]);
-      vcue.current.shot = shotOf(fr, [ch.focus, leadRef.current ? SEG_FOCUS_V[leadRef.current] : null]);
+      // (phase 4: the organs the card names, "Kidneys" → the kidneys, else its chapter's organ; where the drink is joins
+      // when close by)
+      const bo = beatOrgans(fr.title, beatChapter(story.chapters, fr).focus);
+      vcue.current.shot = shotOf(fr, bo.organs, leadRef.current ? SEG_FOCUS_V[leadRef.current] : null, false, camPlan);
     };
     // the gauges' organs, in pixels of the video frame (after the 3D frame is drawn)
     const pinned = (): Overlay => {
@@ -854,7 +835,8 @@ export default function AppV4() {
         cmpStops.current = plan.stops;
         if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ seconds: plan.seconds, stops: plan.stops, guess: gq && { kind: gq.kind, q: gq.question, a: `${gq.answer1} ${gq.answer2}`, at: gq.decidedMin }, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, `${p.text} | ${p.textB ?? ''}`]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
         const [FW, FH] = SIZE.reel;
-        const chapAt = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
+        // (phase 4: the organs both cards are about stay in the safe frame: the split camera pans down for a low one)
+        const cardOrgans = (fr: VFrame) => (fr.beat === 'hold' || fr.beat === 'hook' ? ([[a, fr.title], [b, fr.titleB]] as const).flatMap(([x, title]) => beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs) : []);
         // each body's gauge, pinned to its organ in its own half (the cameras of CompareScene)
         const pinned = (): CmpOverlay => {
           const o = cmpOverlayRef.current!, cc = cmpCams.current;
@@ -870,7 +852,7 @@ export default function AppV4() {
         const { blob, ext, audio, voice } = await recordCompare(ca, pinned, (m, fr) => {
           recFr.current = fr ?? null;
           perfTime('react', () => flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r))));
-          if (vcue.current && fr) { const st0 = fr.stop ?? fr.m; vcue.current.shot = splitShot(fr); void chapAt(a, st0); }
+          if (vcue.current && fr) vcue.current.shot = splitShot(fr, cardOrgans(fr));
           const st = r3f.current; if (st) perfTime('gl', () => advance(st.clock.elapsedTime + 1 / 30, true, st));
         }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
           onTick: recTick, signal: recAbort.current.signal, prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },

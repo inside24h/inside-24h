@@ -9,7 +9,7 @@ export { planVideo } from './video-plan';
 export { beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf } from './video-story';
 export { compareHookB, hookB, hookFor, hookForCompare, seedOf } from './video-hook';
 export { captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS } from './video-caption';
-export { idleDrift, ORGAN_AT, project, SIDE_X, splitPose } from './video-cam';
+export { beatChapter, beatOrgans, camPlanOf, camStyle, classOf, idleDrift, ORGAN_AT, project, shotOf, SIDE_X, splitPose, splitShot } from './video-cam';
 export { bodyGlowAt, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard } from './video-body';
 export { drawMomentCard } from './shareCard';
 export { srtOf } from './srt';

@@ -32,6 +32,35 @@ export const timesText = (r: number) => (r >= 1.95 ? `${Math.round(r)}×` : `${(
 /** Round 14: a hook must carry a number (or a number word) or a question. */
 export const HOOK_NUMBER = /\d|\b(half|a third|a quarter|a fifth|a tenth|two thirds|three quarters|almost all)\b/i;
 
+/** Phase 4 (master audit 2026-11-12, Faza 4: the commonest hook line on <= 5 % of the videos, it was ~10-19 %): the
+ *  generic lines of a hook (the question or promise, the line without the food's name or number) come from a pool per
+ *  story class. Every line of a pool asks or promises the same thing, so the moment that answers it (the payoff) is
+ *  unchanged. Data, not code: a new phrasing is one more string here (video-hook.test.ts checks the shares). */
+export const HOOK_POOL = {
+  day: ['Where is it 24 hours later?', 'What is left of it a day later?', 'Where has it gone after a day?', 'How much is left after 24 hours?', 'Where is it the next day?', 'How far has it got after a day?', 'Has it left your body after 24 hours?', 'How much has left you a day later?'],
+  blood: ['How fast does it reach your blood?', 'When does it reach your blood?', 'How soon is it in your blood?', 'When does it get into your blood?', 'How long until it is in your blood?', 'How quickly does it hit your blood?', 'When does your blood pick it up?'],
+  water: ['Where does the water go?', 'Where does all that water go?', 'When does the water leave you?', 'What do your kidneys do with it?', 'How does the water leave your body?', 'Where does the water end up?', 'What happens to all that water?'],
+  stomach: ['How long does it stay in your stomach?', 'When does your stomach let it go?', 'How long does your stomach hold it?', 'How long does it sit in your stomach?', 'When does it leave your stomach?', 'How slowly does your stomach empty?', 'How long before your stomach passes it on?', 'When is your stomach half empty again?'],
+  protein: ['Watch your body use it.', 'Watch where the protein goes.', 'Watch your body take it apart.', 'Follow the protein through you.', 'See what your body builds with it.', 'Watch the protein become building blocks.', 'Watch your gut break it down.'],
+  sugarGo: ['Watch where it goes.', 'Follow it through your body.', 'See where it all ends up.', 'Watch where the sugar goes.', 'Follow the sugar through your body.', 'See where all that sugar ends up.', 'Watch your body deal with it.'],
+  natural: ['Watch your blood sugar respond.', 'See how your blood handles it.', 'Watch your body use it.', 'Watch your blood sugar react.', 'See what it does to your blood sugar.', 'Follow the sugar into your blood.', 'Watch the sugar reach your blood.'],
+  starch: ['Watch the starch become blood sugar.', 'See the starch turn into blood sugar.', 'Watch it turn into blood sugar.', 'Follow the starch into your blood.', 'See how the starch becomes sugar.', 'Watch your gut turn starch into sugar.', 'Watch the starch reach your blood.'],
+  alcoholGone: ['How long does it stay in your blood?', 'How long until it is out of your blood?', 'When is the alcohol gone?', 'How long does your body need to clear it?', 'When is your blood alcohol back to zero?', 'How long does the alcohol last?', 'When has your liver cleared it?'],
+  // (hook B: the question first)
+  sugarHit: ['How fast does it hit your blood sugar?', 'How high does your blood sugar go?', 'How far does your blood sugar climb?', 'When does your blood sugar peak?', 'How much does your blood sugar rise?', 'How high does it push your blood sugar?', 'How quickly does your blood sugar climb?', 'What does it do to your blood sugar?', 'What happens to your blood sugar?'],
+  /** natural sugar: the height its peak card shows (never "how fast does it hit") */
+  sugarHigh: ['How high does your blood sugar go?', 'How far does your blood sugar climb?', 'How much does your blood sugar rise?', 'How high does it push your blood sugar?', 'What does it do to your blood sugar?', 'When does your blood sugar peak?', 'What happens to your blood sugar?', 'How big is your blood sugar rise?'],
+  sugarWhere: ['Where does all that sugar go?', 'Where does that sugar end up?', 'Where does the sugar go next?', 'What does your body do with that sugar?', 'What happens to all that sugar?', 'Where does the sugar go in you?'],
+  bedtimeQ: ['How much caffeine is left at bedtime?', 'Is it still in you at bedtime?', 'Will it still be in you at bedtime?', 'How much is left when you go to bed?', 'Does it last until bedtime?', 'What is left of it at bedtime?'],
+  alcoholWhere: ['Where does the alcohol go?', 'What does your liver do with it?', 'How does your body clear it?', 'How does your liver deal with it?', 'Where does all that alcohol go?', 'What does your body do with the alcohol?'],
+} as const satisfies Record<string, readonly string[]>;
+export type HookClass = keyof typeof HOOK_POOL;
+/** The line of a class's pool for this food: its own on every export (the seed of its name and the class, so two
+ *  classes never move in step). */
+export const poolLine = (cls: HookClass, name: string): string => { const xs = HOOK_POOL[cls]; return xs[seedOf(`${cls}|${name}`) % xs.length]; };
+/** "Almost all of its caffeine is left at bedtime.": the bedtime share, said one of several ways. */
+const bedLines = (fw: string) => [`${cap(fw)} of its caffeine is left at bedtime.`, `At bedtime, ${fw} of its caffeine remains.`, `${cap(fw)} of its caffeine lasts until bedtime.`, `${cap(fw)} of its caffeine is still there at bedtime.`, `By bedtime, ${fw} of its caffeine is left.`, `At bedtime, ${fw} of its caffeine is still in you.`];
+
 /** The hook for a single video. */
 export function hookFor(h: HookIn): Hook {
   const first = h.chapters[0]?.text ?? '';
@@ -51,7 +80,7 @@ export function hookFor(h: HookIn): Hook {
     // round 14 (critic G-2: "500 ml of beer. Watch what alcohol does." had no question and no number): one drink asks
     // how long it stays, and its "gone" moment answers ("The alcohol is gone after about 1–4 h.")
     const gone = h.chapters.find((c) => c.title === 'Alcohol gone');
-    if (gone) return { line1: rot(['How long does it stay in your blood?', 'How long until it is out of your blood?', 'When is the alcohol gone?']), line2: fit(beers) ? beers : 'One drink.', payoff: gone.title };
+    if (gone) return { line1: poolLine('alcoholGone', h.name), line2: fit(beers) ? beers : 'One drink.', payoff: gone.title };
     return { line1: fit(beers) ? beers : 'One drink, 24 hours.', line2: 'Watch what alcohol does.' };
   }
   // round 14 (critic DC-1: decaf had no story): is there still caffeine in it? The model's mg answers, next to a regular cup
@@ -74,7 +103,7 @@ export function hookFor(h: HookIn): Hook {
   const day = h.chapters.find((c) => /% has left your body so far/.test(c.text));
   // round 17 (critic G-3: "Brie: 95 kcal. Watch it for 24 hours." asked nothing): else a question its own moments answer
   const fq = fallbackQ(h);
-  const promise = day ? { line2: rot(['Where is it 24 hours later?', 'What is left of it a day later?', 'Where has it gone after a day?']), payoff: day.title } : fq.payoff ? { line2: fq.line1, payoff: fq.payoff } : fq.payoffMin !== undefined ? { line2: fq.line1, payoffMin: fq.payoffMin } : { line2: 'Watch it for 24 hours.' };
+  const promise = day ? { line2: poolLine('day', h.name), payoff: day.title } : fq.payoff ? { line2: fq.line1, payoff: fq.payoff } : fq.payoffMin !== undefined ? { line2: fq.line1, payoffMin: fq.payoffMin } : { line2: 'Watch it for 24 hours.' };
   // (round 15, critic H-1: "4 teaspoons of sugar." did not say crepes): the name, short if need be ("2 crepes")
   // (master audit 2026-11-12, C18: "250 ml of hot chocolate made: …"): a participle before "with" goes with it
   const core = cap(name.replace(/(?: (?:made|cooked|served|topped|filled|mixed|fried|baked))? with .*$/i, ''));
@@ -85,7 +114,7 @@ export function hookFor(h: HookIn): Hook {
   const named = (rest: string, max = 9) => [`${cap(name)}: ${rest}`, `${bareN}: ${rest}`, `${bareOne}: ${rest}`, `${core}: ${rest}`].find((x) => fit(x, max)) ?? `${core}: ${rest}`;
   // round 13 (critic P0-2c: salmon opened with "Watch it for 24 hours."): protein-led food leads with its protein
   const prot = Number(/(\d+) g protein/.exec(first)?.[1] ?? 0), carbs = Number(/(\d+) g carbohydrate/.exec(first)?.[1] ?? 0);
-  if (h.solid && prot >= 20 && carbs < 15) { const l1 = named(`${prot} g of protein.`); return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: rot(['Watch your body use it.', 'Watch where the protein goes.', 'Watch your body take it apart.']), lead: `${prot} g of protein.` }; }
+  if (h.solid && prot >= 20 && carbs < 15) { const l1 = named(`${prot} g of protein.`); return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: poolLine('protein', h.name), lead: `${prot} g of protein.` }; }
   // round 17 (critic G-3: brie): a small, fatty food leads with its fat (the number it is about), and asks what its
   // own moments answer
   const fat = Number(/(\d+) g fat/.exec(first)?.[1] ?? 0), kc = Number(/(\d+) kcal/.exec(first)?.[1] ?? 0);
@@ -98,14 +127,14 @@ export function hookFor(h: HookIn): Hook {
   // (round 6, critic: "Watch where it goes" was never paid off in the short): the moment that says where the sugar
   // ends up pays it off
   const where = h.chapters.find((c) => /burns about half of the fructose/.test(c.text) && c.min > 0);
-  const tspHook = (): Hook => ({ line1: named(`${tsp![2]} teaspoons of sugar.`), line2: rot(['Watch where it goes.', 'Follow it through your body.', 'See where it all ends up.']), ...(where ? { payoff: where.title } : {}), lead: `${tsp![1]} g of sugar: about ${tsp![2]} teaspoons.` });
+  const tspHook = (): Hook => ({ line1: named(`${tsp![2]} teaspoons of sugar.`), line2: poolLine('sugarGo', h.name), ...(where ? { payoff: where.title } : {}), lead: `${tsp![1]} g of sugar: about ${tsp![2]} teaspoons.` });
   // (master audit 2026-11-12, C2: natural sugar, milk's lactose or whole fruit, says so, "13 g of natural milk sugar",
   // never "teaspoons of sugar", which reads as added sugar; its blood sugar moment pays it off)
   const nat = /(\d+) g (natural (?:milk |fruit )?sugar)/.exec(first);
   const natPk = h.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title));
   // (the whole name with "milk sugar" before a cut name: "Oatmeal made with milk: 11 g of milk sugar.")
   const natLine = () => { for (const w of [nat![2], nat![2].replace(/^natural /, '')]) for (const nm of [cap(name), bareN, bareOne]) { const x = `${nm}: ${nat![1]} g of ${w}.`; if (fit(x, 9)) return x; } return named(`${nat![1]} g of ${nat![2]}.`); };
-  const natHook = (): Hook => ({ line1: natLine(), line2: rot(['Watch your blood sugar respond.', 'See how your blood handles it.', 'Watch your body use it.']),
+  const natHook = (): Hook => ({ line1: natLine(), line2: poolLine('natural', h.name),
     ...(natPk ? { payoff: natPk.title } : {}), lead: `${nat![1]} g of ${nat![2]}.` });
   if (h.solid) {
     const k = /(\d+) kcal/.exec(first)?.[1];
@@ -122,7 +151,7 @@ export function hookFor(h: HookIn): Hook {
   const st = h.chapters.map((c) => ({ c, m: /In all, about (\d+) teaspoons of sugar reach your blood/.exec(c.text) })).find((x) => x.m);
   if (h.solid && st && !h.alcohol) {
     const n = st.m![1];
-    return { line1: named(`about ${n} teaspoons of sugar.`), line2: 'Watch the starch become blood sugar.', payoff: st.c.title, answer: `About ${n} teaspoons of sugar, from starch.` };
+    return { line1: named(`about ${n} teaspoons of sugar.`), line2: poolLine('starch', h.name), payoff: st.c.title, answer: `About ${n} teaspoons of sugar, from starch.` };
   }
   if (h.caffeine) {
     // "still in you at bedtime" as the share the model says (critic: it promised a problem the end card then denied)
@@ -134,7 +163,7 @@ export function hookFor(h: HookIn): Hook {
     const colon = h.chapters.find((c) => /1 in 3 people coffee makes the lower bowel start moving/.test(c.text));
     if (colon && (!fw || Number(mg) / (h.caffeineMg ?? 1) < 0.3)) return { line1, line2: 'It sends 1 in 3 to the toilet.', payoff: colon.title };
     // (round 18, critic T-8: "Almost all is still in you": all of what?): its caffeine
-    if (bed && fw) return { line1, line2: rot([`${cap(fw)} of its caffeine is left at bedtime.`, `At bedtime, ${fw} of its caffeine remains.`, `${cap(fw)} of its caffeine lasts until bedtime.`]), payoff: bed.title };
+    if (bed && fw) return { line1, line2: rot(bedLines(fw)), payoff: bed.title };
     const pk = h.chapters.find((c) => /caffeine/i.test(c.title) && c.min > 0);
     // (round 17, critic G-4: green tea): the caffeine's own number, and when it hits
     if (pk && h.caffeineMg && h.caffeineMg >= 20 && fit(`${cap(name)}: ${Math.round(h.caffeineMg)} mg of caffeine.`)) return { line1: `${cap(name)}: ${Math.round(h.caffeineMg)} mg of caffeine.`, line2: 'When does it hit?', payoff: pk.title };
@@ -159,11 +188,11 @@ function fallbackQ(h: HookIn, not = ''): { line1: string; payoff?: string; payof
   // round 17: how long it stays in the stomach, answered by the stomach's own half time ("Half has moved on after 61 minutes.")
   const half = Number(/half has moved on after about (\d+) minutes/.exec(h.chapters.find((c) => c.title === 'In your stomach')?.text ?? '')?.[1] ?? 0);
   type Q = { line1: string; payoff?: string; payoffMin?: number };
-  const rot = <T,>(xs: T[]) => xs[seedOf(h.name) % xs.length]; // (round 18, critic T-7)
-  const all = ([day ? { line1: rot(['Where is it 24 hours later?', 'What is left of it a day later?', 'Where has it gone after a day?']), payoff: day.title } : null,
-    blood ? { line1: rot(['How fast does it reach your blood?', 'When does it reach your blood?', 'How soon is it in your blood?']), payoff: blood.title } : null,
-    kid ? { line1: rot(['Where does the water go?', 'Where does all that water go?', 'When does the water leave you?']), payoff: kid.title } : null,
-    h.solid && half >= 20 ? { line1: rot(['How long does it stay in your stomach?', 'When does your stomach let it go?', 'How long does your stomach hold it?']), payoffMin: half } : null] as (Q | null)[]).filter((x): x is Q => !!x && x.line1 !== not);
+  // (round 18, critic T-7; phase 4: a pool per class, HOOK_POOL)
+  const all = ([day ? { line1: poolLine('day', h.name), payoff: day.title } : null,
+    blood ? { line1: poolLine('blood', h.name), payoff: blood.title } : null,
+    kid ? { line1: poolLine('water', h.name), payoff: kid.title } : null,
+    h.solid && half >= 20 ? { line1: poolLine('stomach', h.name), payoffMin: half } : null] as (Q | null)[]).filter((x): x is Q => !!x && x.line1 !== not);
   return all[0] ?? { line1: 'What does it do inside you?' };
 }
 
@@ -189,18 +218,18 @@ export function hookB(h: HookIn, a: Hook): Hook {
   const name = cap(h.name.replace(/\s*\([^)]*\)/g, '').trim());
   if (h.alcohol) {
     const g = /(\d+) g (?:of )?alcohol/.exec(h.chapters[0]?.text ?? '')?.[1];
-    if (/\?$/.test(a.line1) || !morning) return g ? { line1: fit(`${name}: ${g} g of alcohol.`) ? `${name}: ${g} g of alcohol.` : `${g} g of alcohol.`, line2: 'Watch what alcohol does.', ...keep } : { line1: ['Where does the alcohol go?', 'What does your liver do with it?', 'How does your body clear it?'][seedOf(h.name) % 3], line2: a.line2, ...keep };
+    if (/\?$/.test(a.line1) || !morning) return g ? { line1: fit(`${name}: ${g} g of alcohol.`) ? `${name}: ${g} g of alcohol.` : `${g} g of alcohol.`, line2: 'Watch what alcohol does.', ...keep } : { line1: poolLine('alcoholWhere', h.name), line2: a.line2, ...keep };
     return { line1: 'Is it gone by the next morning?', line2: a.line1, ...keep };
   }
   // (round 17: "Ice cream: 4 teaspoons of sugar." had no moment for "Where does it go?"): its blood sugar peak answers
   const sugarPk = h.chapters.find((c) => /^(Blood sugar peak|Sugar rises)$/.test(c.title));
   // (v23b, editor: "Where does that sugar end up?" was never answered out loud): the peak, which the model times, answers
   const natA = / g of (?:natural )?(?:milk |fruit )?sugar\.$/.test(a.line1);
-  if ((/teaspoons of sugar/.test(a.line1) || natA) && a.payoffMin === undefined && sugarPk) return { line1: natA ? 'How high does your blood sugar go?' /* (natural sugar: the height its peak card shows) */ : ["How fast does it hit your blood sugar?", "How high does your blood sugar go?"][seedOf(h.name) % 2], line2: a.line1, ...keep, payoff: sugarPk.title };
-  const q = /teaspoons of sugar/.test(a.line1) || natA ? ['Where does all that sugar go?', 'Where does that sugar end up?'][seedOf(h.name) % 2]
+  if ((/teaspoons of sugar/.test(a.line1) || natA) && a.payoffMin === undefined && sugarPk) return { line1: natA ? poolLine('sugarHigh', h.name) /* (natural sugar: the height its peak card shows) */ : poolLine('sugarHit', h.name), line2: a.line1, ...keep, payoff: sugarPk.title };
+  const q = /teaspoons of sugar/.test(a.line1) || natA ? poolLine('sugarWhere', h.name)
     : /mg of caffeine\.$/.test(a.line1) && /\?$/.test(a.line2) ? `When does its caffeine hit?`
     : /toilet/.test(a.line2) ? 'Does coffee send you to the toilet?'
-      : /bedtime/.test(a.line2) ? ['How much caffeine is left at bedtime?', 'Is it still in you at bedtime?'][seedOf(h.name) % 2]
+      : /bedtime/.test(a.line2) ? poolLine('bedtimeQ', h.name)
         : /\?$/.test(a.line1) ? null
           : /\?$/.test(a.line2) ? a.line2 : null;
   if (q && (a.payoff || a.payoffMin !== undefined)) return { line1: q, line2: a.line1, ...keep };
@@ -233,3 +262,14 @@ export const commentLine = (a: string, b: string) => `Comment: ${a.toLowerCase()
 
 /** Numbers in a hook (for the honesty test: each must appear in the video's own chapters or name). */
 export const numbersIn = (s: string) => s.match(/\d+(?:[.,:]\d+)?/g) ?? [];
+
+/** Phase 4 (master audit Faza 4, the hook-template share): a hook's templates. `lines`: its generic lines (no number,
+ *  not the food's name: the question or promise a template repeats); `pair`: both lines with the name and the numbers
+ *  taken out ("{name}: # kcal. | When does your stomach let it go?"). */
+export function hookTemplates(h: { line1: string; line2: string }, name: string): { lines: string[]; pair: string } {
+  const nm = name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+  const bare = nm.replace(AMOUNT_PREFIX, '');
+  const tpl = (l: string) => l.replace(/\d+(?:[.,]\d+)?/g, '#').split(/(?=[:.?])/)[0].toLowerCase().includes(bare) || l.toLowerCase().includes(nm) ? `{name}${l.slice(l.search(/[:.?]/) >= 0 ? l.search(/[:.?]/) : l.length)}`.replace(/\d+(?:[.,]\d+)?/g, '#') : l.replace(/\d+(?:[.,]\d+)?/g, '#');
+  const generic = [h.line1, h.line2].filter((l) => l && !HOOK_NUMBER.test(l) && !/\d/.test(l) && !l.toLowerCase().includes(bare) && !l.toLowerCase().includes(nm));
+  return { lines: generic, pair: `${tpl(h.line1)} | ${tpl(h.line2)}` };
+}
