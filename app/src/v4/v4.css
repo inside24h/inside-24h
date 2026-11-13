@@ -714,3 +714,23 @@ button.brand:hover em { text-decoration: underline; }
 
 /* Full view: the step row scrolls to the current step, so Play stays pinned at its left edge (never scrolled away) */
 .moments > .play { position: sticky; left: 0; z-index: 1; flex: none; box-shadow: -20px 0 0 var(--bg), 0 0 0 6px var(--bg), 16px 0 12px 6px var(--bg); }
+
+/* Phase 3 (C17): the two bodies in the comparison, the same minute side by side (one canvas, two viewports) */
+.cmpbodies { display: grid; gap: 8px; margin-bottom: 14px; }
+.cmpcanvas { position: relative; height: clamp(300px, 46vh, 460px); border-radius: 14px; border: 1px solid var(--line2); background: radial-gradient(ellipse at 50% 40%, #0b1a2c, #04070c 75%); overflow: hidden; }
+.cmpcanvas > div:first-child { position: absolute !important; inset: 0; }
+.cmpwhere { position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: 8px; padding: 8px 10px; pointer-events: none; background: linear-gradient(transparent, rgba(4,7,12,.85)); }
+.cmpwhere.two { grid-template-columns: 1fr 1fr; }
+.cmpwhere div { display: grid; gap: 2px; text-align: center; min-width: 0; }
+.cmpwhere b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmpwhere span { font: 12px var(--mono); color: #9fd7ff; }
+.cmptime { display: flex; align-items: center; gap: 10px; }
+.cmptime input { flex: 1; min-width: 0; }
+.cmptime .cmpwhen { font: 600 13px var(--mono); min-width: 84px; text-align: right; }
+.cmptime button { min-width: 44px; min-height: 40px; }
+.cmpmarks { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmpmarks button { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
+.cmpside button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 40px; }
+.cmpbtn { background: none; border: 1px solid var(--line2); color: var(--mute); cursor: pointer; border-radius: 10px; }
+.cmpbtn:hover { color: inherit; }
+@media (max-width: 720px) { .cmpbody > .cmpbodies { order: -3; } }

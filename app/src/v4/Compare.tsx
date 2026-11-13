@@ -6,6 +6,7 @@ import { useModal } from './a11y';
 import type { Profile } from '../science/profile';
 import { analyze, sugarPeakText, verdictOf, type Analysis } from './analyze';
 import { SmartSearch } from './SmartSearch';
+import { CompareBodies } from './CompareBodies';
 import { parseMeal, type Part } from './food/parse';
 import { worstMoment } from './status';
 import { PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Platform } from './video-caption';
@@ -123,6 +124,8 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
             <button aria-pressed={!same} onClick={() => setSame(false)}>A typical serving each</button>
             <button aria-pressed={same} onClick={() => setSame(true)}>Same amount</button></div>}
           <div className="cmpverdict">{verdictOf(a, b, profile.glucoseUnit)}</div>
+          {/* Phase 3 (C17): the two bodies, the same minute side by side, as in the comparison video */}
+          <CompareBodies a={a} b={b} />
           <SugarChart a={a} b={b} unit={profile.glucoseUnit} />
           <div className="cmpcols"><Column a={a} k={0} unit={profile.glucoseUnit} /><Column a={b} k={1} unit={profile.glucoseUnit} /></div>
         </>) : <p className="note big">Choose something for the right side, or tap one of the popular pairs above.</p>}

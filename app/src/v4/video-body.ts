@@ -12,6 +12,7 @@ import { alcoholTier, ANY_GL } from '../science/alcoholClock';
 import { minutesFromU } from '../time';
 import { roundMin } from './timeWords';
 import { SEG_LABEL, type Route, type SegId, type SegState } from '../scene/segments';
+import { presenceAt, presenceGlow, presenceLiquid, presentOrgans } from '../scene/presence';
 
 /** Organs each part of the drink's route runs through (as AppV4 SEG_ORGANS) and where its gauge points. */
 export const SEG_ORGANS_V: Record<SegId, string[]> = {
@@ -47,12 +48,17 @@ export function bodyGlowAt(b: BuiltLike, m: number, focus?: string | null, sugar
   if (brain > 0) glow.brain = brain;
   const g = sugarKnown && b.effects.glucoseMgDl ? at(b.effects.glucoseMgDl, mi) / 18.016 : 0;
   if (g >= 0.5) glow.pancreas = Math.min(0.75, 0.25 + g / 4);
-  const present = presentAt(b, mi);
-  if (present.some(([id]) => id === 'portal')) glow.liver = Math.max(glow.liver ?? 0, 0.3);
-  if (focus) glow[focus] = Math.max(glow[focus] ?? 0, focus === 'brain' ? 0.15 : 0.5);
-  const keep = [...new Set([...present.flatMap(([id]) => SEG_ORGANS_V[id]), ...Object.keys(glow)])].filter((k) => k !== 'brain');
+  // Phase 3 (C5): the organs that have the food or drink now glow in proportion to how much they have (or hold: the
+  // liver clearing alcohol), the same numbers as the app (scene/presence.ts); nothing else of the tract lights up
+  const p = presenceAt(b.route, mi);
+  for (const [k, v] of Object.entries(presenceGlow(p))) glow[k] = Math.max(glow[k] ?? 0, v);
+  if (focus) glow[focus] = Math.max(glow[focus] ?? 0, focus === 'brain' ? 0.15 : 0.3);
+  const keep = [...new Set([...presentOrgans(p), ...Object.keys(glow)])].filter((k) => k !== 'brain');
   return { glow, keep };
 }
+
+/** The drink colour in each organ on the video at minute m (the stream is drawn on top): the app's own map. */
+export const bodyLiquidAt = (b: BuiltLike, m: number) => presenceLiquid(presenceAt(b.route, Math.max(0, Math.min(1440, m))), true);
 
 /** A gauge pinned to an organ: a big number, a short label, and (for the main number) its curve over the day. */
 export interface Gauge {

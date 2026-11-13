@@ -12,6 +12,7 @@ function inflow(a: Float64Array) { let max = 1e-9; for (let i = 0; i + 1 < a.len
 // Bladder: people empty it every few hours, so show only urine made in the last 3 h (C), not the day's total.
 const recent = (a: Float64Array, m: number) => at(a, m) - at(a, Math.max(0, m - 180));
 const st = (amount: number, total: number, flow: number, unit?: string): SegState => ({ amount, frac: total > 0 ? Math.max(0, amount) / total : 0, flow: Math.max(0, Math.min(1, flow)), ...(unit ? { unit } : {}) });
+const peakOf = (a: Float64Array) => a.reduce((x, v) => Math.max(x, v), 0);
 const swallow = (m: number, total: number, unit: string) => (m < 0.8 ? st(total * (1 - m / 0.8) * 0.6, total, 1, unit) : st(0, total, 0));
 
 export function waterRoute(w: WaterSim, ml: number): Route {
@@ -33,7 +34,7 @@ export function waterRoute(w: WaterSim, ml: number): Route {
 
 export function espressoRoute(sim: Timeline, dose: number, ml = 30): Route {
   const e = rate(sim.stomach), a = rate(sim.intestine), k = inflow(sim.cleared);
-  const toMl = ml / dose;
+  const toMl = ml / dose, peakC = peakOf(sim.conc);
   return {
     unit: 'ml',
     segs: (m) => ({
@@ -45,11 +46,13 @@ export function espressoRoute(sim: Timeline, dose: number, ml = 30): Route {
       blood: st(at(sim.body, m), dose, 0.5, 'mg caffeine'),
       kidney: st(k(m) * dose * 0.1, dose, k(m), 'mg'),
     }),
+    // caffeine in the body is broken down by the liver and reaches the brain (share of the dose / of its peak there)
+    held: (m) => ({ liver: at(sim.body, m) / dose, brain: at(sim.conc, m) / peakC }),
   };
 }
 
 export function colaRoute(s: ColaSim, ml = 330): Route {
-  const hex = s.sugarG, e = rate(s.stomach), a = rate(s.intestine);
+  const hex = s.sugarG, e = rate(s.stomach), a = rate(s.intestine), peakCaf = peakOf(s.caffeine.conc);
   return {
     unit: 'ml',
     segs: (m) => ({
@@ -60,6 +63,8 @@ export function colaRoute(s: ColaSim, ml = 330): Route {
       portal: st(at(s.liverFructose, m), hex, a(m), 'g fructose'),
       blood: st(at(s.bloodGlucose, m), hex * 0.3, 0.5 + 0.5 * a(m), 'g sugar'),
     }),
+    // fructose is taken up and processed by the liver (the same amount the "To the liver" label shows)
+    held: (m) => ({ liver: at(s.liverFructose, m) / hex, ...(peakCaf > 0.01 ? { brain: at(s.caffeine.conc, m) / peakCaf } : {}) }),
   };
 }
 
@@ -78,15 +83,30 @@ export function foodRoute(s: FoodSim, grams: number, waterMl: number, isDrink: b
   const peakCarb = s.carbsInBlood.reduce((x, v) => Math.max(x, v), 1e-9);
   const peakBac = s.bac ? s.bac.reduce((x, v) => Math.max(x, v), 1e-6) : 1e-6;
   const unit = isDrink ? 'ml' : 'g';
+  const R = Math.max(1e-6, s.residueG), peakTg = s.tgDelta.reduce((x, v) => Math.max(x, v), 0), peakCaf = peakOf(s.caffeine.conc), peakCafMg = peakOf(s.caffeine.body);
   return {
     unit,
+    // Phase 3 (C5): what organs hold, from the same model: the liver clearing alcohol (blood alcohol against its peak),
+    // fibre in each part of the colon (share of what reaches it, as the colon segment), fat in the blood vessels
+    // (triglyceride rise against its peak, from 0.05 mmol/L), caffeine in the brain. No glycogen: the model has none.
+    held: (m) => {
+      const out: Partial<Record<string, number>> = {};
+      if (alcohol && s.bac) out.liver = at(s.bac, m) / peakBac;
+      if (s.residueG > 0.3) {
+        const c0 = at(s.colonG[0], m) / (0.8 * R), c1 = at(s.colonG[1], m) / (0.8 * R), c2 = at(s.colonG[2], m) / (0.8 * R);
+        Object.assign(out, { cecum: c0, colon_asc: c0, colon_trans: c1, colon_desc: Math.max(0.6 * c1, c2), rectum: c2 });
+      }
+      if (peakTg >= 0.05) { const f = at(s.tgDelta, m) / peakTg; out.aorta = f; out.vena_cava = f; }
+      if (peakCaf > 0.01 && peakCafMg >= 8) out.brain = at(s.caffeine.conc, m) / peakCaf;
+      return out;
+    },
     segs: (m) => ({
       swallow: swallow(m, grams, unit),
       stomach: st(at(s.stomachG, m), grams, e(m)),
       duodenum: st(0.25 * at(s.intestineG, m), grams, abs(m)),
       small: st(0.75 * at(s.intestineG, m), grams, abs(m)),
       portal: st(abs(m) * grams * 0.08, grams, abs(m)),
-      blood: alcohol && s.bac && at(s.bac, m) >= 0.01 ? { ...st(Math.max(at(s.carbsInBlood, m), abs(m) * grams * 0.08), peakCarb > 0.3 ? peakCarb * 2 : grams, 0.4 + 0.6 * abs(m)), frac: Math.max(0.3, Math.min(1, at(s.bac, m) / peakBac)), text: `alcohol ${bacRangeText(at(s.bac, m))}` }
+      blood: alcohol && s.bac && at(s.bac, m) >= 0.01 ? { ...st(Math.max(at(s.carbsInBlood, m), abs(m) * grams * 0.08), peakCarb > 0.3 ? peakCarb * 2 : grams, 0.4 + 0.6 * abs(m)), frac: Math.min(1, at(s.bac, m) / peakBac), text: `alcohol ${bacRangeText(at(s.bac, m))}` }
         : peakCarb > 0.3 ? st(at(s.carbsInBlood, m), peakCarb * 2, 0.4 + 0.6 * abs(m), 'g sugar') : st(abs(m) * grams * 0.08, grams, abs(m)),
       ...(waterMl >= 50 ? { kidney: st(k(m) * waterMl * 0.1, waterMl, k(m), 'ml'), bladder: st(recent(s.bladder, m), waterMl, k(m), 'ml urine') } : {}),
       ...(s.residueG > 0.3 ? { colon: { ...st(colon(m), s.residueG * 0.8, Math.max(cIn(m), cOut(m), colon(m) > 0.05 ? 0.15 : 0), 'g fiber'), front: colonFront(m) } } : {}),

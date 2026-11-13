@@ -13,6 +13,7 @@ const PTS = pointsJson as Record<string, number[]>;
 
 // Types and labels live in ./segments (no three.js) so the UI can use them before the 3D chunk loads.
 import { SEG_LABEL, type SegId, type SegState, type Route } from './segments';
+import { presence, streamFill, streamThick } from './presence';
 export { SEG_LABEL, type SegId, type SegState, type Route };
 
 // ---------- route geometry from organ interior points ----------
@@ -178,17 +179,19 @@ export function LiquidRoute({ route, color, minute, labels = true, maxLabels = 3
       u.time.value = st.clock.elapsedTime;
       u.vivid.value = vivid ? 1 : 0;
       (u.color.value as THREE.Color).lerp(col, k);
-      const target = (x && x.frac > 0.002 ? Math.min(1, 0.6 + x.frac * 3) : 0) * (subtle ? 0.6 : 1); // any liquid present is clearly visible
+      // Phase 3 (C5, owner 2026-11-12): as strong as the share of it that is here now, linear (scene/presence.ts), so at
+      // +36 min after a pizza the stomach stream is bright and the rest of the tract is not; a small share is a thin trace
+      const target = streamFill(x, subtle);
       u.fill.value += (target - u.fill.value) * k;
       u.flow.value += ((x?.flow ?? 0) - u.flow.value) * k;
-      u.thick.value = subtle ? -RADIUS[s.id] * 0.45 : RADIUS[s.id] * (0.1 + Math.min(0.35, (x?.frac ?? 0) * 1.5)); // always clearly thick once present
+      u.thick.value = RADIUS[s.id] * streamThick(x, subtle);
       u.bead.value = RADIUS[s.id] * (subtle ? 0.25 : 0.4) * Math.min(1, 0.3 + (x?.flow ?? 0));
       if (x?.front !== undefined) s.seen += (x.front - s.seen) * k; // progress known from the model
       else {
         // the front advances while liquid is in the segment (fast for drinks), and stays once reached
         if (back) s.seen = 0;
-        if (x && x.frac > 0.002) s.seen = Math.min(1.02, s.seen + dt * (0.6 + 2.5 * (x.flow ?? 0)));
-        else if (!x || x.frac <= 0.0005) s.seen = Math.max(0, s.seen - dt * 0.4);
+        if (presence(x?.frac) > 0) s.seen = Math.min(1.02, s.seen + dt * (0.6 + 2.5 * (x?.flow ?? 0)));
+        else s.seen = Math.max(0, s.seen - dt * 0.4);
       }
       u.front.value = s.seen;
     }

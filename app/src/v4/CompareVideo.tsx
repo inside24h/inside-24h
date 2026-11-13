@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Body } from '../scene/Body';
 import { LiquidRoute } from '../scene/LiquidRoute';
 import type { Analysis } from './analyze';
-import { bodyGlowAt, isLightDrink, paletteAt } from './video-body';
+import { bodyGlowAt, bodyLiquidAt, isLightDrink, paletteAt } from './video-body';
 import { cameraOf, poseOf, rigAt, SIDE_X, stepRig, type Rig } from './video-cam';
 import type { ShotCue } from './VideoCam';
 
@@ -26,9 +26,8 @@ export interface CmpCams { cams: THREE.PerspectiveCamera[]; w: number; h: number
 
 function Side({ a, minute, x, focus, group }: { a: Analysis; minute: number; x: number; focus: string | null; group: (g: THREE.Group | null) => void }) {
   const story = a.built.story;
-  const liquid = story.liquid(minute);
-  const soft: typeof liquid = {};
-  for (const [k, v] of Object.entries(liquid)) soft[k] = k === 'stomach' || k === 'bladder' ? v : { ...v, tint: Math.min(0.18, (v.tint ?? 0) * 0.25) };
+  // Phase 3 (C5): the drink colour only where the model has it now, as much as is there (the same map as the app)
+  const soft = a.built.route ? bodyLiquidAt(a.built, minute) : story.liquid(minute);
   // the organs at work light up, the rest of the body dims (video-body.ts)
   const { glow, keep } = bodyGlowAt(a.built, minute, focus, a.glucose !== undefined);
   return (
@@ -39,9 +38,10 @@ function Side({ a, minute, x, focus, group }: { a: Analysis; minute: number; x: 
   );
 }
 
-export function CompareScene({ a, b, minute, cue, cams, focus }: {
+export function CompareScene({ a, b, minute, cue, cams, focus, only }: {
   a: Analysis; b: Analysis; minute: number; cue?: MutableRefObject<ShotCue | null>; cams?: MutableRefObject<CmpCams | null>;
   /** the organ each side's current moment is about */ focus?: [string | null, string | null];
+  /** Phase 3 (C17, phones): one side over the whole canvas (the same camera), the other one hidden */ only?: 0 | 1;
 }) {
   const { controls } = useThree() as unknown as { controls: { enabled: boolean } | null };
   const groups = useRef<(THREE.Group | null)[]>([null, null]);
@@ -58,7 +58,7 @@ export function CompareScene({ a, b, minute, cue, cams, focus }: {
     if (c?.start) { rig.current = rigAt(poseOf(c.start)); c.start = null; }
     const goal = poseOf(c?.shot ?? { focus: [], zoom: 'wide' });
     rig.current = rig.current ? stepRig(rig.current, goal, Math.min(0.1, Math.max(0, dt))) : rigAt(goal);
-    const w = size.width / 2, h = size.height;
+    const w = only === undefined ? size.width / 2 : size.width, h = size.height;
     const { pos, look } = cameraOf(rig.current, 33, 0); // split screen: framed exactly (video-cam splitPose)
     cameras.forEach((cam, k) => {
       cam.aspect = w / h; cam.updateProjectionMatrix();
@@ -72,8 +72,10 @@ export function CompareScene({ a, b, minute, cue, cams, focus }: {
     gl.setScissorTest(false); gl.clear(true, true, true);
     gl.setScissorTest(true);
     for (let k = 0; k < 2; k++) {
+      if (only !== undefined && k !== only) continue;
+      const x0 = only === undefined ? k * w : 0;
       groups.current.forEach((g, j) => { if (g) g.visible = j === k; });
-      gl.setViewport(k * w, 0, w, h); gl.setScissor(k * w, 0, w, h);
+      gl.setViewport(x0, 0, w, h); gl.setScissor(x0, 0, w, h);
       gl.render(scene, cameras[k]);
     }
     groups.current.forEach((g) => { if (g) g.visible = true; });

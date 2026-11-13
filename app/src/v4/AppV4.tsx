@@ -25,6 +25,7 @@ import { StoryPanel } from './StoryPanel';
 import { chapterText } from './stories';
 import { useModal, prefersReducedMotion } from './a11y';
 import { SEG_LABEL, type SegId, type SegState } from '../scene/segments';
+import { presenceAt, presenceGlow, presenceLiquid, presentOrgans } from '../scene/presence';
 import type { Bounds } from '../scene/Body';
 import { RULES, type Habits } from './healthBars';
 import { bodyStatus } from './status';
@@ -531,7 +532,9 @@ export default function AppV4() {
   // Where the liquid is now: its organs stay lit, the rest of the body dims, and the camera follows the main place.
   const segNow = built.route && mode === 'simple' ? built.route.segs(minute) : null;
   const present = segNow ? (Object.entries(segNow) as [SegId, SegState][]).filter(([, v]) => v.frac >= 0.04).sort((a, b) => b[1].frac - a[1].frac) : [];
-  const keepOrgans = present.flatMap(([id]) => SEG_ORGANS[id]);
+  // Phase 3 (C5): what the body shows comes from one map of where the food is and what organs hold (scene/presence.ts)
+  const pNow = presenceAt(segNow ? built.route : null, minute);
+  const keepOrgans = [...new Set([...present.flatMap(([id]) => SEG_ORGANS[id]), ...presentOrgans(pNow)])];
   const leadRef = useRef<SegId | null>(null);
   if (present.length) {
     const cur = leadRef.current, best = present[0];
@@ -995,7 +998,7 @@ export default function AppV4() {
   const body2d = (reason: NoGlReason, error?: unknown, action?: ReactNode) => {
     const segs = started && built.route ? (Object.entries(built.route.segs(minute)) as [SegId, SegState][]).filter(([, v]) => v.frac >= 0.04).sort((a, b) => b[1].frac - a[1].frac) : [];
     return <Body2D reason={reason === 'error' && /webgl/i.test(errorText(error)) ? 'nogl' : reason} details={error === undefined ? undefined : errorText(error)}
-      color={story.color} liquid={started ? story.liquid(minute) : {}} present={segs} unit={built.route?.unit}
+      color={story.color} liquid={started ? (built.route ? presenceLiquid(presenceAt(built.route, minute), false) : story.liquid(minute)) : {}} present={segs} unit={built.route?.unit}
       selected={selected} onSelect={(o) => { setSelected(o); setTouched(true); }} action={action} />;
   };
 
@@ -1073,7 +1076,7 @@ export default function AppV4() {
           onPointerDown={(e) => { down.current = [e.clientX, e.clientY]; setTouched(true); }}>
           <ErrorBoundary fallback={(e) => body2d('error', e)}>
             {sceneError ? body2d('error', sceneError) : !show3d ? null : (
-              <Suspense fallback={null}><SafeCanvas rec={!!recBox} noGl={(r, action) => body2d(r, undefined, action)} camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : !started ? 'demand' : 'always'}
+              <Suspense fallback={null}><SafeCanvas rec={!!recBox} noGl={(r, action) => body2d(r, undefined, action)} camera={{ position: [0.05, 1.22, 2.05], fov: 33 }} frameloop={share?.state === 'rec' && canEncode() && (!cmpRec || cmpNever) ? 'never' : compare && !cmpRec ? 'never' /* (C17: the comparison draws its own two bodies; this body waits behind it) */ : !started ? 'demand' : 'always'}
                 onPointerMissed={(e) => {
                   const d = down.current;
                   if (!d || Math.hypot(e.clientX - d[0], e.clientY - d[1]) < 5) setSelected(null);
@@ -1081,8 +1084,8 @@ export default function AppV4() {
                 <ExposeState into={r3f} />
                 <Suspense fallback={null}>
                   {cmpRec ? <CompareScene a={cmpRec.a} b={cmpRec.b} minute={minutesFromU(cmpRec.u)} cue={vcue} cams={cmpCams} focus={cmpFocus} /> : <>
-                  <Body glow={vGlow ? vGlow.glow as Glow : mode === 'simple' || !started ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
-                    liquid={mode === 'simple' && started ? softenTubes(story.liquid(minute), !!built.route) : {}} liquidColor={story.color} onBounds={setBounds}
+                  <Body glow={vGlow ? vGlow.glow as Glow : mode === 'simple' && started && built.route ? presenceGlow(pNow) as Glow : mode === 'simple' || !started ? {} : glow} selected={selected} onSelect={setSelected} onError={setSceneError}
+                    liquid={mode === 'simple' && started ? (built.route ? presenceLiquid(pNow, true) : softenTubes(story.liquid(minute), false)) : {}} liquidColor={story.color} onBounds={setBounds}
                     dim={vGlow ? 0.42 : keepOrgans.length && started ? 0.32 : 1} keep={vGlow ? [...new Set([...keepOrgans, ...vGlow.keep])] : keepOrgans} palette={vGlow ? paletteAt(built, Math.min(1440, minute)) : undefined} />
                   {/* first screen (nothing chosen yet): the body on its own, no liquid */}
                   {started && mode === 'detailed' && <Flow layers={built.layers} minute={minute} />}

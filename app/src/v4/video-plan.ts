@@ -173,6 +173,10 @@ export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
 export const CARD_MAX_S = 5, GLIDE_K_MAX = 6, GLIDE_MAX_S = 3.8; // (round 15, critic SA-2: 6 s cards at 0.8 w/s read slow)
 /** Round 14 (critic DC-1, owner): never longer than this without a card on screen (the 24 h beat and the end card aside). */
 export const WORDLESS_MAX_S = 4;
+/** Phase 3 (audit C13): a Short never jumps this many minutes of the day with nothing said, when the story has a moment
+ *  in between (the large intestine: MID_FIRST). */
+export const MID_GAP_MIN = 600;
+export const MID_FIRST = /large intestine|colon/i;
 /** Round 14: the short cut's glides take this share of the usual time (room for the peak AND the hook's answer). */
 export const SHORT_GLIDE_K = 0.55;
 export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, LIGHTS_FROM_S = 0.3, LIGHTS_STEP_S = 0.25, MICRO_GAP_S = 2.9;
@@ -286,6 +290,34 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       if (chosen.length >= 5 && !forced(c)) break;
       const next = [...chosen, c].sort((a, b) => a.min - b.min);
       if (len(next) <= lim.max || forced(c)) chosen = next;
+    }
+    // Phase 3 (master audit C13): a Short must not skip the middle of the day. When the clock would jump 10 h or more
+    // with nothing said (e.g. a pizza: +1:08 â†’ 24 h), the model's own large-intestine moment from inside that stretch
+    // comes in, its first card only (where a food with fibre really is then), if the Short
+    // still fits in 30 s, else in place of the least telling moment that is not needed (never the start, the peak,
+    // the payoff or a safety moment).
+    const gapOf = (list: StopIn[]) => { const ms = [...list.map((s) => s.min), 1440]; let a = 0, b = 0; for (let i = 1; i < ms.length; i++) if (ms[i] - ms[i - 1] > b - a) { a = ms[i - 1]; b = ms[i]; } return [a, b] as const; };
+    const mids = new Set<number>(); // (a moment brought in for the middle is never swapped out for another)
+    for (let guard = 0; guard < 3; guard++) {
+      const [ga, gb] = gapOf(chosen);
+      if (gb - ga < MID_GAP_MIN) break;
+      const before = chosen;
+      const mid = toU(ga) + (toU(gb) - toU(ga)) / 2;
+      // (only where the food really goes on: the large intestine. Other stories end at their payoff, round 5)
+      const cands = story.filter((s) => MID_FIRST.test(s.title) && s.min >= ga + 60 && s.min <= gb - 60 && !chosen.some((c) => c.min === s.min) && linesOf(s).length)
+        .sort((x, y) => Math.abs(toU(x.min) - mid) - Math.abs(toU(y.min) - mid));
+      const sorted = (list: StopIn[]) => list.sort((x, y) => x.min - y.min);
+      const fits = (list: StopIn[]) => len(list) <= lim.max && (() => { const [a, b] = gapOf(list); return b - a < gb - ga; })();
+      outer: for (const c0 of cands) {
+        const c = { ...c0, lines: linesOf(c0).slice(0, 1) };
+        if (fits(sorted([...chosen, c]))) { chosen = sorted([...chosen, c]); mids.add(c.min); break; }
+        const spare = chosen.map((_s, i) => i).filter((i) => i > 0 && !forced(chosen[i]) && !mids.has(chosen[i].min)).sort((i, j) => val(chosen[i]) - val(chosen[j]));
+        for (const i of spare) {
+          const next = sorted([...chosen.filter((_s, k) => k !== i), c]);
+          if (fits(next)) { chosen = next; mids.add(c.min); break outer; }
+        }
+      }
+      if (chosen === before) break;
     }
   } else chosen = story.slice();
   let sents = chosen.map(linesOf);
