@@ -90,7 +90,7 @@ export type FactKind = keyof typeof FACT_WORDINGS;
 export const FACT_SHORT: Record<FactKind, readonly string[]> = {
   kcal: ["That's {n} kcal.", '{n} kcal in all.', 'Energy: {n} kcal.', '{n} kcal, total.', 'All in: {n} kcal.', '{n} kcal inside.', 'It brings {n} kcal.'],
   sugar: ['{n} g of sugar.', 'Sugar: {n} g.', '{n} g of sugar, total.', 'It has {n} g of sugar.', '{n} g of sugar inside.', 'Sugar, {n} g.'],
-  protein: ['{n} g of protein.', 'Protein: {n} g.', '{n} g of protein, total.', 'It has {n} g of protein.', '{n} g of protein inside.', 'Protein, {n} g.'],
+  protein: ['{n} g of protein.', 'Protein: {n} g.', '{n} g of protein, total.', 'It has {n} g of protein.', '{n} g of protein inside.', 'Protein, {n} g.', 'Protein comes to {n} g.', 'Protein adds up to {n} g.'],
   fat: ['{n} g of fat.', 'Fat: {n} g.', '{n} g of fat, total.', 'It has {n} g of fat.', '{n} g of fat inside.', 'Fat, {n} g.'],
   fiber: ['{n} g of fiber.', 'Fiber: {n} g.', '{n} g of fiber, total.', 'It has {n} g of fiber.', '{n} g of fiber inside.'],
   alcohol: ['{n} g of alcohol.', 'Alcohol: {n} g.', '{n} g of alcohol, total.', 'It has {n} g of alcohol.', '{n} g of alcohol inside.'],

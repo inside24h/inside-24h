@@ -432,9 +432,90 @@ export function wholeBody(cam: { pos: V3; look: V3 }, fovDeg: number, W: number,
   return ['brain', 'bladder', 'liver', 'stomach'].every((o) => { const r = organRect(o, cam, fovDeg, W, H, dx); return !!r && r.l >= 0 && r.r <= W && r.t >= 0 && r.b <= H; });
 }
 
+// ---- Phase 4d (2026-11-14, owner decision): paired close-ups in comparisons. With both bodies always whole the
+// camera had nothing to cut to (one lit region held up to 35.7 s). Now both halves cut together to the same region
+// of the body (one framing for both, each half's named organs inside its safe frame), alternating with whole-body
+// pairs; each stay on one region is held to regionMaxS like a single's (a view elsewhere under REGION_BREAK_S does
+// not end it). The opening (the first sip) and the end card stay whole-body. ----
+const SPLIT_W = 540, SPLIT_H = 1920, SPLIT_FOV = 33;
+/** Both halves' safe frames at once (side A from 80 px, side B up to 460 px: the platforms' edge strips), with a margin. */
+const SPLIT_ZONE = { l: ORGAN_SAFE.reel.l + 24, r: ORGAN_SAFE.reel.r - SPLIT_W - 24, t: ORGAN_SAFE.reel.t + 30, b: ORGAN_SAFE.reel.b - 30 };
+/** The close framings tried, tightest first (the whole pair is ~1.5-1.6 m). */
+export const SPLIT_CLOSE_H = [0.86, 0.95, 1.05, 1.15] as const;
+/** The framing of a paired close-up on `organs` (both sides' organs, in body coordinates), or null when they do not
+ *  all fit inside both halves' safe frames at the split camera's sway (cameraOf, lift 0: ±0.21 rad). */
+export function splitClosePose(organs: readonly string[]): Pose | null {
+  const ks = [...new Set(organs)].filter((k) => ORGAN_BOX[k]);
+  if (!ks.length || ks.length < new Set(organs).size) return null;
+  const bx = ks.map((k) => ORGAN_BOX[k]), mid = (i: number) => (Math.min(...bx.map((b) => b[0][i])) + Math.max(...bx.map((b) => b[1][i]))) / 2;
+  for (const viewH of SPLIT_CLOSE_H) {
+    const pose: Pose = { target: [mid(0), mid(1), mid(2)], viewH };
+    const fits = [0, 3, 9].every((t) => {
+      const cam = cameraOf({ ...rigAt(pose), t }, SPLIT_FOV, 0);
+      return ks.every((k) => { const r = organRect(k, cam, SPLIT_FOV, SPLIT_W, SPLIT_H); return !!r && r.l >= SPLIT_ZONE.l && r.r <= SPLIT_ZONE.r && r.t >= SPLIT_ZONE.t && r.b <= SPLIT_ZONE.b; });
+    });
+    if (fits) return pose;
+  }
+  return null;
+}
+/** The longest stay on one region in a list of views ('body' = the whole body, which is never a stay): a view
+ *  elsewhere shorter than REGION_BREAK_S does not end a stay. (video-camera.test.ts measures it on its own.) */
+function stayMaxOf(rs: { t: number; r: string }[], dt: number): number {
+  let reg = '', since = 0, other = '', otherSince = 0, left: number | null = null, best = 0;
+  const close = (t: number) => { if (reg && reg !== 'body' && t - since > best) best = t - since; };
+  for (const { t, r } of rs) {
+    if (r === reg) { other = ''; left = null; continue; }
+    if (left === null) left = t;
+    if (r !== other) { other = r; otherSince = t; }
+    if (!reg || t - otherSince >= REGION_BREAK_S - 1e-6) { close(left); reg = r; since = otherSince; other = ''; left = null; }
+  }
+  if (rs.length) close(left ?? rs[rs.length - 1].t + dt);
+  return best;
+}
+export interface SplitClose { t0: number; t1: number; region: string; organs: string[]; pose: Pose }
+export interface SplitPlan { close: SplitClose[] }
+/** Phase 4d: the paired close-ups of a comparison. A moment's card (each shot of it, `pg`) whose two sides are about
+ *  organs of one region, which fit one framing, is filmed close on both halves unless that would hold the region
+ *  over regionMaxS; then the pair is filmed whole until the stay is broken (REGION_BREAK_S). `organsOf`: each side's
+ *  organs at a frame (its card's, as the cards are lit). */
+export function splitPlanOf<F extends ShotFrame & { pg?: number }>(frames: F[], organsOf: (fr: F) => [string[], string[]]): SplitPlan {
+  const close: SplitClose[] = [], seconds = frames[frames.length - 1]?.t ?? 0, cap = regionMaxS(seconds) - 0.15;
+  const endT = frames.find((f) => f.beat === 'end' || f.phase === 'outro')?.t ?? seconds;
+  const dt = frames.length > 1 ? frames[1].t - frames[0].t : 1 / 30;
+  // (the frames the stay is measured on: the main part, not the cold open or the rewind)
+  const counted = (f: ShotFrame) => f.phase === 'main' && f.t < endT && f.beat !== 'teaser' && f.beat !== 'rewind';
+  const rs: { t: number; r: string }[] = [];
+  let i = 0;
+  while (i < frames.length) {
+    const f = frames[i], cand = f.phase === 'main' && f.beat === 'hold' && (f.stop ?? 0) > 0 && f.t < endT;
+    const [a, b] = cand ? organsOf(f) : [[], []], key = cand ? `${a.join('+')}|${b.join('+')}|${f.pg ?? 0}|${f.stop}` : '';
+    let j = i + 1;
+    while (j < frames.length && key) {
+      const g = frames[j];
+      if (!(g.phase === 'main' && g.beat === 'hold' && (g.stop ?? 0) > 0 && g.t < endT)) break;
+      const [a2, b2] = organsOf(g);
+      if (`${a2.join('+')}|${b2.join('+')}|${g.pg ?? 0}|${g.stop}` !== key) break;
+      j++;
+    }
+    const seg = frames.slice(i, j).filter(counted);
+    let shot: SplitClose | null = null;
+    if (key && a.length && b.length && regionOf(a) === regionOf(b) && regionOf(a) !== 'body' && seg.length) {
+      const pose = splitClosePose([...a, ...b]), region = regionOf(a);
+      if (pose && stayMaxOf([...rs, ...seg.map((x) => ({ t: x.t, r: region }))], dt) <= cap) shot = { t0: f.t, t1: frames[j]?.t ?? f.t + (j - i) * dt, region, organs: [...new Set([...a, ...b])], pose };
+    }
+    if (shot) close.push(shot);
+    for (const x of seg) rs.push({ t: x.t, r: shot ? shot.region : 'body' });
+    i = j;
+  }
+  return { close };
+}
+
 /** Split screen: heads, brains and stomachs of both bodies in view all the time; it breathes in a little while a
- *  moment is read and out again for the quiet hours and the end. (Moved from AppV4, 2026-11-13.) */
-export function splitShot(fr: FrameLike | null | undefined, organs: string[] = []): Shot {
+ *  moment is read and out again for the quiet hours and the end. (Moved from AppV4, 2026-11-13.) Phase 4d: with the
+ *  comparison's SplitPlan, its paired close-ups (both halves on one region, framed alike). */
+export function splitShot(fr: FrameLike | null | undefined, organs: string[] = [], plan?: SplitPlan): Shot {
+  const c = fr && plan ? plan.close.find((x) => fr.t >= x.t0 - 1e-6 && fr.t < x.t1 - 1e-6) : undefined;
+  if (c) return { focus: c.organs, zoom: 'close', pose: c.pose };
   const viewH = !fr || fr.beat === 'hold' || fr.beat === 'hook' ? ((fr?.pg ?? 0) % 2 ? 1.47 : 1.6) - 0.06 * (fr?.hk ?? 0) : 1.62 - 0.1 * (idleDrift(fr) ?? 0); // (round 5: breathes in and out with each card)
   // phase 4: the organs the two cards are about stay inside the safe frame: for a low one (the intestine, the
   // bladder) the camera pans down, the heads slide up under the names (never out of the picture)

@@ -8,10 +8,13 @@
 //   2. every video has at least one whole-body shot for orientation before its 24 h beat;
 //   3. the camera never jumps: its speed, turn rate and their changes per frame stay under fixed limits;
 //   4. phase 4c (2026-11-14): no stay on one region of the body over regionMaxS (a pull-back under REGION_BREAK_S does
-//      not end it), and two foods of a class are not filmed shot for shot alike (shotSimilarity).
+//      not end it), and two foods of a class are not filmed shot for shot alike (shotSimilarity);
+//   5. phase 4d (2026-11-14): comparisons cut to paired close-ups (both halves on one region, framed alike, each
+//      half's named organs in its safe frame) between whole-body pairs, under the same region cap, every pair × cut;
+//      the opening and the end card stay whole-body.
 import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, type AuditItem } from './text-audit';
-import { beatChapter, beatOrgans, cameraOf, camPlanOf, camStyle, classOf, FOV, nextLead, ORGAN_SAFE, organRect, poseOf, REGION_BREAK_S, regionMaxS, regionOf, rigAt, SIDE_X, shotOf, splitShot, stepRig, wholeBody, type CamPlan, type Rig, type Shot, type V3 } from './video-cam';
+import { beatChapter, beatOrgans, cameraOf, camPlanOf, camStyle, classOf, FOV, nextLead, ORGAN_SAFE, organRect, poseOf, REGION_BREAK_S, regionMaxS, regionOf, rigAt, SIDE_X, shotOf, splitPlanOf, splitShot, stepRig, wholeBody, type CamPlan, type Rig, type Shot, type V3 } from './video-cam';
 import { presentAt, SEG_FOCUS_V } from './video-body';
 import { seedOf } from './video-hook';
 import { FPS, type Cut, type Plan } from './video-plan';
@@ -123,14 +126,20 @@ export function filmCompare(a: Analysis, b: Analysis, cut: Cut, id: string): Fil
   const cp = auditCompare(a, b, cut).cp, plan = cp.plan, W = 540, H = 1920, bad: string[] = [];
   const zones = [{ l: ORGAN_SAFE.reel.l, r: W, t: ORGAN_SAFE.reel.t, b: ORGAN_SAFE.reel.b }, { l: 0, r: ORGAN_SAFE.reel.r - W, t: ORGAN_SAFE.reel.t, b: ORGAN_SAFE.reel.b }];
   let checked = 0;
-  const organsAt = (fr: Plan['frames'][number]) => ([[a, fr.title], [b, fr.titleB]] as const).flatMap(([x, title]) => beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs);
-  // (phase 4c: what the split screen is on: both whole bodies always, the region lit and framed per side)
+  const sides = (fr: Plan['frames'][number]) => ([[a, fr.title], [b, fr.titleB]] as const).map(([x, title]) => beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs) as [string[], string[]];
+  const organsAt = (fr: Plan['frames'][number]) => sides(fr).flat();
+  // phase 4d: the paired close-ups (both halves on one region), as AppV4 plans them
+  const split = splitPlanOf(plan.frames, sides);
+  // (what the split screen is on, per frame of the main part: the region of a paired close-up, else 'body', both
+  // bodies whole; the opening and the end card must be whole)
   const regions: { t: number; r: string }[] = [], endT = plan.frames.find((f) => f.beat === 'end' || f.phase === 'outro')?.t ?? plan.seconds;
-  for (const fr of plan.frames) if (fr.phase === 'main' && fr.t < endT && (fr.beat === 'hold' || fr.beat === 'glide')) {
-    const os = ([[a, fr.title], [b, fr.titleB]] as const).map(([x, title]) => regionOf(beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs));
-    regions.push({ t: fr.t, r: os.join('|') });
-  }
-  const r = film(plan, (fr) => splitShot(fr, fr.beat === 'hold' || fr.beat === 'hook' ? organsAt(fr) : []), 0.55, (fr) => `${fr.beat === 'hold' || fr.beat === 'hook'}${organsAt(fr).join()}` /* (the split pose breathes every frame: settled = the same organs for SETTLE_S) */, (rg) => cameraOf(rg, 33, 0), (fr, c, settled) => {
+  const shot = (fr: Plan['frames'][number]) => {
+    const s = splitShot(fr, fr.beat === 'hold' || fr.beat === 'hook' ? organsAt(fr) : [], split);
+    if (s.zoom === 'close' && (fr.phase !== 'main' || fr.t >= endT || (fr.stop ?? 0) === 0 || fr.beat === 'hook')) bad.push(`${id} ${cut} @${fr.t.toFixed(1)}s: a close-up in the opening or the end`);
+    if (fr.phase === 'main' && fr.t < endT && fr.beat !== 'teaser' && fr.beat !== 'rewind') regions.push({ t: fr.t, r: s.zoom === 'close' ? regionOf(s.focus) : 'body' });
+    return s;
+  };
+  const r = film(plan, shot, 0.55, (fr, s) => `${fr.beat === 'hold' || fr.beat === 'hook'}${organsAt(fr).join()}${s.zoom}` /* (the split pose breathes every frame: settled = the same organs and the same view for SETTLE_S) */, (rg) => cameraOf(rg, 33, 0), (fr, c, settled) => {
     if (!settled || (fr.beat !== 'hold' && fr.beat !== 'hook')) return;
     ([[a, fr.title], [b, fr.titleB]] as const).forEach(([x, title], k) => {
       const ch = beatChapter(x.built.story.chapters, { ...fr, title }), bo = beatOrgans(title, ch.focus);
@@ -147,9 +156,9 @@ export function filmCompare(a: Analysis, b: Analysis, cut: Cut, id: string): Fil
 
 const ITEMS = auditItems();
 /** Phase 4c: the most two same-class videos may be filmed alike (shotSimilarity), for pizza vs lentils and on average. */
-/** Phase 4c: a guard, not the goal (measured 35.7 s, walnuts vs chocolate milk): the split screen's rule (both whole
- *  bodies, heads always in view) leaves no other view to cut to; a shorter stay needs the comparison's moments changed. */
-const CMP_STAY_MAX_S = 36;
+/** Phase 4d: the share of comparisons with at least one paired close-up must not fall under this (a guard that the
+ *  close-ups are really used, not only allowed). */
+const CMP_CLOSE_MIN = 0.5;
 const SAME_MAX = 0.6, SAME_MEAN_MAX = 0.45, SAME_WORST_MAX = 0.75; // (before phase 4c: lentils vs pizza 72 %, mean 40 %, worst 90 %)
 const summary = (label: string, fs: Film[]) => {
   const n = fs.length, bad = fs.flatMap((f) => f.bad), noOrient = fs.filter((f) => !f.orient).length;
@@ -189,15 +198,18 @@ describe('phase 4: the camera frames what the card names, orients, never jumps',
     expect(s.turn).toBeLessThanOrEqual(CAM_LIMITS.turn);
     expect(s.accel).toBeLessThanOrEqual(CAM_LIMITS.accel);
   }, 600_000);
-  it('comparisons, both sides of every pair × cut: organs in each half\'s safe frame, both whole bodies, no jumps', () => {
+  it('comparisons, both sides of every pair × cut: organs in each half\'s safe frame, paired close-ups under the region cap, no jumps', () => {
     const fs: Film[] = [];
     for (const pr of sweep(auditPairs(ITEMS, 120))) for (const cut of AUDIT_CUTS) fs.push(filmCompare(pr.a, pr.b, cut, pr.id));
     const s = summary('compare', fs);
-    // phase 4c: the split screen keeps both whole bodies in the picture (owner review 2026-10-24), so what changes is
-    // the region lit on each side; its longest stay is reported and held to CMP_STAY_MAX_S (a guard, see report)
+    // phase 4d (owner decision 2026-11-14): paired close-ups (both halves on one region, framed alike) alternate with
+    // whole-body pairs; every stay on one region is held to regionMaxS like a single's (12 s long, 9 s Reels, 6 s
+    // Shorts; a view elsewhere under REGION_BREAK_S does not end it), over every pair × cut
     const st = fs.map((f) => ({ f, st: longestStay(f.regions ?? []) })).sort((x, y) => y.st.s - x.st.s);
-    console.log(`[compare stays] longest lit-region stay ${st[0].st.s.toFixed(1)} s (${st[0].st.r}, ${st[0].f.id}); over the single cap: ${st.filter((x) => x.st.s > regionMaxS(x.f.seconds ?? 0) + 0.04).length} of ${fs.length}`);
-    expect(st[0].st.s).toBeLessThanOrEqual(CMP_STAY_MAX_S);
+    const over = st.filter((x) => x.st.s > regionMaxS(x.f.seconds ?? 0) + 1 / FPS + 1e-6), withClose = fs.filter((f) => (f.regions ?? []).some((x) => x.r !== 'body')).length;
+    console.log(`[compare stays] longest stay on one region ${st[0].st.s.toFixed(1)} s (${st[0].st.r}, ${st[0].f.id}); ${over.length} of ${fs.length} over their cap; ${withClose} with a paired close-up`);
+    expect(over.slice(0, 10).map(({ f, st: x }) => `${f.id} (${f.seconds?.toFixed(0)} s): ${x.s.toFixed(1)} s on ${x.r} @${x.at.toFixed(1)}`)).toEqual([]);
+    expect(withClose / fs.length).toBeGreaterThanOrEqual(CMP_CLOSE_MIN);
     expect(s.bad.slice(0, 20)).toEqual([]);
     expect(s.noOrient).toBe(0);
     expect(s.speed).toBeLessThanOrEqual(CAM_LIMITS.speed);

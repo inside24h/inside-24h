@@ -49,7 +49,7 @@ let after24Of!: VideoKit['after24Of'], beatCtx!: VideoKit['beatCtx'], CMP_SHORT!
 let compareHookB!: VideoKit['compareHookB'], hookB!: VideoKit['hookB'], hookFor!: VideoKit['hookFor'], hookForCompare!: VideoKit['hookForCompare'], seedOf!: VideoKit['seedOf'];
 let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor'], PLATFORM_CUT!: VideoKit['PLATFORM_CUT'], PLATFORM_LABEL!: VideoKit['PLATFORM_LABEL'], PLATFORM_LENGTH!: VideoKit['PLATFORM_LENGTH'], PLATFORMS!: VideoKit['PLATFORMS'];
 let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
-let beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'];
+let beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
 let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
@@ -58,7 +58,7 @@ let kitP: Promise<void> | null = null;
 const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((k) => {
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
     planVideo, after24Of, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf,
-    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot,
+    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
     bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
@@ -855,13 +855,17 @@ export default function AppV4() {
         if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ seconds: plan.seconds, stops: plan.stops, guess: gq && { kind: gq.kind, q: gq.question, a: `${gq.answer1} ${gq.answer2}`, at: gq.decidedMin }, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, `${p.text} | ${p.textB ?? ''}`]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
         const [FW, FH] = SIZE.reel;
         // (phase 4: the organs both cards are about stay in the safe frame: the split camera pans down for a low one)
-        const cardOrgans = (fr: VFrame) => (fr.beat === 'hold' || fr.beat === 'hook' ? ([[a, fr.title], [b, fr.titleB]] as const).flatMap(([x, title]) => beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs) : []);
+        const sideOrgans = (fr: VFrame) => ([[a, fr.title], [b, fr.titleB]] as const).map(([x, title]) => beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs) as [string[], string[]];
+        const cardOrgans = (fr: VFrame) => (fr.beat === 'hold' || fr.beat === 'hook' ? sideOrgans(fr).flat() : []);
+        // (phase 4d: paired close-ups, both halves on one region of the body, each stay under the region cap)
+        const split = splitPlanOf(plan.frames, sideOrgans);
         // each body's gauge, pinned to its organ in its own half (the cameras of CompareScene)
         const pinned = (): CmpOverlay => {
           const o = cmpOverlayRef.current!, cc = cmpCams.current;
           if (!cc) return o;
           const pin = (sd: CmpOverlay['a'], k: number) => {
-            const at = (organ: string) => { const p = pinTo(organ, cc.cams[k] as unknown as CamLike, FW / 2, FH, SIDE_X[k]); return p && { x: p.x + k * FW / 2, y: p.y }; };
+            // (phase 4d: in a paired close-up an organ can be out of its half: no pin there, never one drawn on the other half)
+            const at = (organ: string) => { const p = pinTo(organ, cc.cams[k] as unknown as CamLike, FW / 2, FH, SIDE_X[k]); return p && p.x >= 0 && p.x <= FW / 2 && p.y >= 0 && p.y <= FH ? { x: p.x + k * FW / 2, y: p.y } : null; };
             const pins: Record<string, { x: number; y: number } | null> = {};
             for (const o2 of ['tongue', 'stomach', 'pancreas', 'jejunum', 'portal_vein', 'liver', 'heart', 'brain']) pins[o2] = at(o2);
             return { ...sd, pins, gauge: sd.gauge ? { ...sd.gauge, at: at(sd.gauge.organ) } : sd.gauge };
@@ -871,7 +875,7 @@ export default function AppV4() {
         const { blob, ext, audio, voice } = await recordCompare(ca, pinned, (m, fr) => {
           recFr.current = fr ?? null;
           perfTime('react', () => flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r))));
-          if (vcue.current && fr) vcue.current.shot = splitShot(fr, cardOrgans(fr));
+          if (vcue.current && fr) vcue.current.shot = splitShot(fr, cardOrgans(fr), split);
           const st = r3f.current; if (st) perfTime('gl', () => advance(st.clock.elapsedTime + 1 / 30, true, st));
         }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
           onTick: recTick, signal: recAbort.current.signal, prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
