@@ -48,7 +48,7 @@ describe('hooks', () => {
     // (phase 4e: a meal asks about its own telling number, fat or fiber, else what is left of it: the moment that
     // answers is its fat in the blood or its 24 h moment)
     const asks = (cls: keyof typeof HOOK_POOL) => HOOK_POOL[cls].some((x) => new RegExp(`^${x.replace(/[.?()]/g, '\\$&').replace('{n}', '\\d+')}$`).test(k.line2));
-    expect(k.line1).toMatch(/^A whole pizza(?: \(1104 g\))?: (?:2572 kcal|\d+ g of fat)\.$/);
+    expect(k.line1).toMatch(/^A whole pizza(?: \(1104 g\))?: (?:2572 kcal|\d+ g of (?:fat|fiber))\.$/);
     expect(asks('day') || asks('dayN') || asks('fiberDay') || asks('fatBlood'), k.line2).toBe(true);
     expect(k.payoff).toBe(asks('fatBlood') ? 'Fat in your blood' : '24 hours later'); // (round 18: rotating phrasings)
   });

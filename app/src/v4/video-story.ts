@@ -151,6 +151,13 @@ export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { m
   const w = whereGauge(b, kid?.min ?? cm ?? 120);
   return w ? { big: `${w.big} · ${inText(kid?.min ?? cm ?? 120)}`, small: w.small } : undefined;
 }
+/** Phase 4e (critique M-A: a comparison with alcohol showed its BAC without the driving limits): a drink's blood alcohol
+ *  peak as the gauge says it (bacPlain: the range, the body, the US 0.08 % and EU 0.05 % limits); undefined without alcohol. */
+export function bacPeakText(b: BuiltLike & { alcoholG?: number }): string | undefined {
+  if (!b.bac || (b.alcoholG ?? 0) <= 1) return undefined;
+  let pk = 0; for (let m = 0; m <= Math.min(1440, b.bac.length - 1); m++) pk = Math.max(pk, b.bac[m]);
+  return pk > ANY_GL ? bacPlain(pk, undefined, b.bacBody) : undefined;
+}
 /** Phase 4e (critique M-C: lentils and pizza asked "How much has left you a day later?" and the end card said "Blood
  *  sugar: back to usual"): the end card answers the hook's own question, from the model. A question about what is left
  *  a day later: what is still in you at 24 h (the route model) and the share that has left (the 24 h moment); when its
@@ -172,7 +179,8 @@ export function endCardOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: 
     hero = { big: `Half out of your stomach · ${inText(hook.payoffMin)}`, small: 'The rest follows over the next hours' };
   } else if (cls === 'blood' || cls === 'bloodN') {
     const ch = atCh(hook.payoff);
-    if (ch) hero = { big: `In your blood · ${inText(ch.min)}`, small: hero?.big ? `Then: ${hero.big}` : 'Within minutes of reaching it' };
+    // (a blood gauge at its peak answers it already: the sugar, fat or alcohol in the blood, with when)
+    if (ch && !(hero && /\bblood\b|\bBAC\b/i.test(`${hero.big} ${hero.small}`))) hero = { big: `In your blood · ${inText(ch.min)}`, small: hero?.big ? `Then: ${hero.big}` : 'Within minutes of reaching it' };
   } else if (cls === 'alcoholGone' || cls === 'alcoholGoneN') {
     // (the model's typical body: "the alcohol is gone by now, about 3 h after the first sip")
     const gone = atCh(hook.payoff), r = /about (\d+(?:[.,]\d+)?) h after the first (?:sip|drink|bite)/.exec(gone?.text ?? '')?.[1];

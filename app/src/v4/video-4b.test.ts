@@ -15,7 +15,7 @@ import { bodyGlowAt, cardNamed, CONTENT_SEGS, DRIVE_WARN, FRONT_OF, namedGlow, n
 import { after24Of, cmpName, gaugesAt } from './video-story';
 import { drawCmpFrame, drawFrame, endTiming, fit, logText, VIDEO_COPY, type CmpOverlay, type Light, type Overlay } from './share';
 import { END_CARD_MIN_S, FPS, LENGTH, type Plan } from './video-plan';
-import { beatChapter, beatOrgans, camPlanOf, camStyle, classOf, organKey, REGION, SHOT_MAX_S } from './video-cam';
+import { beatChapter, beatOrgans, camPlanOf, camSeedOf, camStyle, classOf, organKey, REGION, SHOT_MAX_S } from './video-cam';
 import { seedOf } from './video-hook';
 import { servingMlOf } from './food/foodProduct';
 import { at } from '../science/espressoSim';
@@ -227,7 +227,7 @@ describe('phase 4b: M5 no template video: shots capped, comparison questions var
     const bad: string[] = [];
     for (const it of SAMPLE) for (const cut of AUDIT_CUTS) {
       const o = auditSingle(it.x, cut, 'A', AUDIT_PROFILE, it.vname), b = it.x.built, chs = b.story.chapters;
-      const cam = camPlanOf(o.plan.frames, camStyle(classOf(b), seedOf(o.name)), chs);
+      const cam = camPlanOf(o.plan.frames, camStyle(classOf(b), camSeedOf(seedOf(o.name), b.energy.total)), chs);
       let key = '', t0 = 0, worst = 0;
       for (const f of o.plan.frames) {
         const k = [...cam.wide, ...(cam.body ?? [])].some(([a, z]) => f.t >= a - 1e-6 && f.t < z) ? '' : organKey(f, chs);

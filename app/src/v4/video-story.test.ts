@@ -15,7 +15,7 @@ import { compareHookB, HOOK_NUMBER, hookB, hookFor, hookForCompare, numbersIn, s
 import { ALCOHOL_LINE, BANNED, captionsFor, foodTag, pluralName, DISCLAIMER, PLATFORM_CUT, PLATFORMS, SOURCES_LINE } from './video-caption';
 import { motifOf } from './video-audio';
 import { inText, plainNote, whereCard } from './video-body';
-import { CARD_MAX_S, CMP_REPEAT_S, TEASE_HUMAN, WORDLESS_MAX_S, FPS, LENGTH, OUTRO_S, READ, readSeconds, SURGE_CLEAR_S, teaseCard, type Cut, type Plan, type PlanFx } from './video-plan';
+import { CARD_MAX_S, CMP_OUTRO_EXTRA_S, CMP_REPEAT_S, TEASE_HUMAN, WORDLESS_MAX_S, FPS, LENGTH, OUTRO_S, READ, readSeconds, SURGE_CLEAR_S, teaseCard, type Cut, type Plan, type PlanFx } from './video-plan';
 const CUTS: Cut[] = ['long', 'medium', 'short']; // (round 11: TikTok, Reels, Shorts)
 import { HIT_S, surgeLevel, vesselLine, VESSEL_BEND } from './video-fx';
 import { frameMoves, idleDrift } from './video-cam';
@@ -61,7 +61,9 @@ function checkPlan(plan: Plan, cut: Cut, label: string, bad: string[], gaugeAt: 
   if (!(plan.seconds >= (cut === 'long' ? 61.5 : lim.min) && plan.seconds <= lim.max + 0.5)) bad.push(`${label}: length ${plan.seconds.toFixed(1)} s`);
   if (cut === 'long' && !(plan.seconds >= 60.5)) bad.push(`${label}: a long cut under 60.5 s (owner: never)`);
   // round 11 (research R1): the end card is short (≤ 2.5 s short, ≤ 4 s long) and the 24 h beat has words
-  if (plan.outroS > OUTRO_S[cut] + 1e-6 || plan.outroS > 4 + 1e-6) bad.push(`${label}: end card ${plan.outroS.toFixed(2)} s`); // (phase 4b: the minimum is checked in video-4b.test.ts)
+  // (phase 4e, M7: a comparison's end card gets CMP_OUTRO_EXTRA_S more, so it is fully shown >= 2.5 s)
+  const extra = / vs /.test(label) ? CMP_OUTRO_EXTRA_S : 0;
+  if (plan.outroS > OUTRO_S[cut] + extra + 1e-6 || plan.outroS > 4 + extra + 1e-6) bad.push(`${label}: end card ${plan.outroS.toFixed(2)} s`); // (phase 4b: the minimum is checked in video-4b.test.ts)
   if (!plan.frames.some((f) => f.celeb !== undefined)) bad.push(`${label}: no 24 h payoff beat`);
   if (plan.frames.length !== Math.round(plan.seconds * FPS)) bad.push(`${label}: frame count`);
   for (const key of ['text', 'textB'] as const) {

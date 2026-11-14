@@ -205,6 +205,10 @@ export function camStyle(cls: StoryClass, seed = 0): CamStyle {
   return { cls, ...b, half: b.half * (0.94 + (0.12 * ((s >>> 3) % 11)) / 10), arc: (s >>> 1) % 2 ? -b.arc : b.arc, wideFirst: (h >>> 27) % 2 ? !b.wideFirst : b.wideFirst, orient };
 }
 
+/** Phase 4e (two foods of one story, ham and bacon, were filmed 96 % alike once the perceived stays were capped): the
+ *  camera style's seed mixes the food's name seed with its own energy (kcal), so foods that tell the same story are
+ *  framed apart by what they are. */
+export const camSeedOf = (seed: number, kcal: number) => Math.imul((seed ^ Math.round(kcal * 7919)) >>> 0, 0x9e3779b1) >>> 0;
 /** The camera's plan for a video: its style and the glides (by the moment they lead to) filmed whole-body for
  *  orientation. A glide over a long quiet stretch is wide anyway; one more falls where the class wants it. */
 export interface CamPlan { style: CamStyle; /** when the camera pulls back to the whole body, video seconds [from, to) */ wide: [number, number][]; /** phase 4c: whole-body beats that break a long stay on one region of the body, video seconds [from, to) (the organs the card is about stay in the safe frame) */ body?: [number, number][] }

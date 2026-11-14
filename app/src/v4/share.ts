@@ -457,7 +457,7 @@ function drawStamp(ctx: CanvasRenderingContext2D, x: number, y: number, s: strin
 
 // ---------- side-by-side comparison Reel ----------
 export interface CmpSide { name: string; color: string; step: string; caption: string; where?: string; sugar: string; sugarLevel: 0 | 1 | 2; lights: Light[];
-  summary: { kcal: number; sugarPeak: string; worst: (Light & { note: string })[] };
+  summary: { kcal: number; sugarPeak: string; worst: (Light & { note: string })[]; /** phase 4e (critique M-A): its blood alcohol peak, as the gauge says it (video-story bacPeakText: range, body, both limits) */ bac?: string };
   gauge?: PinnedGauge | null; // 2026-10-23 split screen: this body's number, pinned to its organ
   pins?: Record<string, { x: number; y: number } | null>; alcohol?: boolean; fizz?: number; foam?: boolean; flow?: number;
   /** round 5: how much ("330 ml", "1 shot · 30 ml"), shown under the name */ serving?: string }
@@ -1615,6 +1615,12 @@ function drawClockCompact(ctx: CanvasRenderingContext2D, x1: number, y: number, 
   ctx.restore();
 }
 
+/** Phase 4e (critique M-A): the lines under a chip's number: every part of its words, the two driving limits as one
+ *  part ("US limit 0.08 % · EU limit 0.05 %") that wraps on its own. */
+export function chipParts(small: string): string[] {
+  const raw = small.split(' · '), lim = raw.filter((p) => /\blimit\b/.test(p));
+  return [...raw.filter((p) => !/\blimit\b/.test(p)), ...(lim.length ? [lim.join(' · ')] : [])];
+}
 /** A body's number as a compact chip next to its name: the value, and what it is underneath. Returns its width.
  *  (Phase 4b, critique M3: "+16–38 % over usual: a nor…": the words under the value wrap onto a second line and shrink,
  *  never cut; B1: a blood alcohol chip says its body, "for a 70 kg man", and carries its warning, in red.) */
@@ -1624,8 +1630,9 @@ function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: n
   let bf = 30; ctx.font = `700 ${bf}px ${SANS}`;
   while (bf > 20 && ctx.measureText(g.big).width > room) { bf -= 2; ctx.font = `700 ${bf}px ${SANS}`; } // smaller, never cut
   const big = wrap(ctx, g.big, room, 2), bw = Math.max(...big.map((l) => ctx.measureText(l).width));
-  // (round 6: the chip has room for the range only; the limit anchor stays on the single video's gauge)
-  const parts = g.small.split(' · ').filter((p, i) => i === 0 || !/\blimit\b/.test(p));
+  // (phase 4e, critique M-A: the comparison's chip dropped both driving limits; round 6 had left room for the range
+  // only): every part is kept, the two limits as one part that wraps on its own
+  const parts = chipParts(g.small);
   let sf = 20, small: string[] = [];
   for (; sf >= 14; sf--) { ctx.font = `600 ${sf}px ${SANS}`; small = parts.flatMap((p) => wrap(ctx, p, room, 3)); if (small.length <= Math.max(2, parts.length)) break; }
   ctx.font = `600 ${sf}px ${SANS}`; const sw = Math.max(0, ...small.map((l) => ctx.measureText(l).width));
@@ -1891,7 +1898,9 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     ctx.fillStyle = '#ffffff'; ctx.font = `400 ${nm.px}px ${SERIF}`; text(ctx, fit(ctx, nm.lines[0] ?? s.name, cw - 40), x + 20, y + 54);
     ctx.fillStyle = '#e6edf5'; ctx.font = `700 30px ${SANS}`;
     text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 98);
-    const sg = fitWrap(ctx, `${/^(?:steady|not tracked)/.test(s.summary.sugarPeak) ? 'Blood sugar' : 'Sugar peak'}: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 18, (px) => `600 ${px}px ${SANS}`); // (phase 4b, M2: a peak is called one)
+    // (phase 4e, critique M-A: an alcohol side shows its blood alcohol peak here, not "Blood sugar: not tracked here")
+    const bacRange = s.summary.bac ? s.summary.bac.split(' · ')[0].replace(/^BAC /, '') : '';
+    const sg = fitWrap(ctx, bacRange ? `BAC peak: ${bacRange}` : `${/^(?:steady|not tracked)/.test(s.summary.sugarPeak) ? 'Blood sugar' : 'Sugar peak'}: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 18, (px) => `600 ${px}px ${SANS}`); // (phase 4b, M2: a peak is called one)
     ctx.font = `600 ${sg.px}px ${SANS}`; ctx.fillStyle = '#b8c7d8';
     text(ctx, fit(ctx, sg.lines[0] ?? '', cw - 40), x + 20, y + 134);
     const rows = shown(s) ?? [{ icon: '✓', label: 'All lights green', level: 0 as const, note: 'Nothing flagged all day' }];
@@ -1908,6 +1917,18 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     });
   });
   y += ch + 16;
+  // (phase 4e, critique M-A: a blood alcohol number on the end card keeps its body, both driving limits and the warning,
+  // on the same card, B1)
+  const bacSide = [o.a, o.b].find((s) => s.summary.bac);
+  if (bacSide) {
+    const rest = bacSide.summary.bac!.split(' · ').slice(1).join(' · ');
+    const bl = fitWrap(ctx, rest, RL - L - 8, 2, 26, 20, (px) => `600 ${px}px ${SANS}`);
+    ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${bl.px}px ${SANS}`; bl.lines.forEach((ln, i) => text(ctx, ln, L + 4, y + bl.px * 0.9 + i * bl.px * 1.15));
+    y += bl.px * 0.9 + (bl.lines.length - 1) * bl.px * 1.15 + 12;
+    const wl = fitWrap(ctx, DRIVE_WARN, RL - L - 8, 2, 28, 20, (px) => `700 ${px}px ${SANS}`);
+    ctx.fillStyle = WARN_COL; ctx.font = `700 ${wl.px}px ${SANS}`; wl.lines.forEach((ln, i) => text(ctx, ln, L + 4, y + wl.px * 0.9 + i * wl.px * 1.15));
+    y += wl.px * 0.9 + (wl.lines.length - 1) * wl.px * 1.15 + 20;
+  }
   // the guess's answer first ("Did you guess right?" is about this), the overall verdict on its own line below
   if (o.answer) {
     const r = fitWrap(ctx, `✓ ${o.answer.recap}`, RL - L - 20, 2, 34, 26, (px) => `700 ${px}px ${SANS}`);

@@ -45,11 +45,11 @@ type VideoKit = typeof import('./video-kit');
 let narrationFor!: VideoKit['narrationFor'], arcFor!: VideoKit['arcFor'], compareDiffs!: VideoKit['compareDiffs'], compareFacts!: VideoKit['compareFacts'], factInOf!: VideoKit['factInOf'], factLines!: VideoKit['factLines'];
 let canEncode!: VideoKit['canEncode'], composeCmpFrame!: VideoKit['composeCmpFrame'], composeCover!: VideoKit['composeCover'], composeFrame!: VideoKit['composeFrame'], recordCompare!: VideoKit['recordCompare'], stampFor!: VideoKit['stampFor'], record!: VideoKit['record'], recordFrames!: VideoKit['recordFrames'], saveFile!: VideoKit['saveFile'], SIZE!: VideoKit['SIZE'], VIDEO_COPY!: VideoKit['VIDEO_COPY'], videoSupportHere!: VideoKit['videoSupportHere'];
 // (phase 4e: the single video is planned with singlePlan, the same call as the audit)
-let endCardOf!: VideoKit['endCardOf'], beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singlePlan!: VideoKit['singlePlan'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
+let endCardOf!: VideoKit['endCardOf'], bacPeakText!: VideoKit['bacPeakText'], beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singlePlan!: VideoKit['singlePlan'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
 let compareHookB!: VideoKit['compareHookB'], hookB!: VideoKit['hookB'], hookFor!: VideoKit['hookFor'], hookForCompare!: VideoKit['hookForCompare'], seedOf!: VideoKit['seedOf'];
 let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor'], PLATFORM_CUT!: VideoKit['PLATFORM_CUT'], PLATFORM_LABEL!: VideoKit['PLATFORM_LABEL'], PLATFORM_LENGTH!: VideoKit['PLATFORM_LENGTH'], PLATFORMS!: VideoKit['PLATFORMS'];
 let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
-let quietFrame!: VideoKit['quietFrame'], beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
+let quietFrame!: VideoKit['quietFrame'], camSeedOf!: VideoKit['camSeedOf'], beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
 let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
@@ -57,8 +57,8 @@ let kitP: Promise<void> | null = null;
 /** Loads the video engine once (later calls share the same promise; a failed load is tried again next time). */
 const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((k) => {
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
-    endCardOf, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf,
-    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, quietFrame, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
+    endCardOf, bacPeakText, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf,
+    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, quietFrame, camSeedOf, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
     bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
@@ -730,7 +730,7 @@ export default function AppV4() {
     // same plan (video-plan.ts: reading-speed captions, 62-75 s or ≤ 30 s)
     const plan = reelPlan();
     // phase 4: the camera's plan (its class's style and the whole-body orientation shot), the same the tests film
-    const camPlan = camPlanOf(plan.frames, camStyle(classOf(built), vSeed), story.chapters); // (phase 4b, M5: no organ held over SHOT_MAX_S)
+    const camPlan = camPlanOf(plan.frames, camStyle(classOf(built), camSeedOf(vSeed, built.energy.total)), story.chapters); // (phase 4b, M5: no organ held over SHOT_MAX_S)
     vcue.current = { shot: OPENING, start: OPENING, seed: vSeed, style: camPlan.style };
     const opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
       soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: recTick,
@@ -823,7 +823,7 @@ export default function AppV4() {
         gauge: (() => { const g = gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined); return g.find((y) => y.curve) ?? g[0] ?? null; })(),
         alcohol: (x.built.alcoholG ?? 0) > 1,
         ...lifeOf(x.label, x.built, m, gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined)),
-        summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)),
+        summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)), bac: bacPeakText(x.built), // (phase 4e, M-A)
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, unknown: !!s.unknown, note: plainNote(s.key, l, w, x.built, inText(w), !!s.unknown) }; }) },
         serving: servingAmount(x), // (round 18, critic V-3: "28 g 23 whole ker…" was cut off: the amount only)
       };

@@ -200,7 +200,8 @@ export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, L
  *  lights come on, left and right in turn, faster. */
 // (round 11, research R1: the lights and the verdict land in the 24 h beat, with the body in frame; the end card is
 // short, so the comparison adds nothing to it)
-export const CMP_OUTRO_EXTRA_S = 0, CMP_LIGHTS_FROM_S = 0.55, CMP_LIGHTS_STEP_S = 0.15;
+// (phase 4e, critique M7: the comparison end card was fully on screen only ~2.25 s: 0.4 s more, so its full view lasts ≥ END_CARD_MIN_S)
+export const CMP_OUTRO_EXTRA_S = 0.4, CMP_LIGHTS_FROM_S = 0.55, CMP_LIGHTS_STEP_S = 0.15;
 export const outroSeconds = (cut: Cut, compare = false) => OUTRO_S[cut] + (compare ? CMP_OUTRO_EXTRA_S : 0);
 export const TEASE_PREFIX = 'Coming up: ', TEASE_PREFIX2 = 'Still to come: ';
 /** "Coming up: the sugar dip." (≤ 5 words), from a chapter title. */
@@ -493,7 +494,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // in turn: the stay's moments are not stretched; a moment of the story from another region that falls inside the
   // stay comes in (one card); a stay's moment says one card less; a moment that is not needed is left out. A change is
   // kept only when the time over the cap shrinks and the length stays in its range.
-  const pc = fx.perceive, DBG = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env?.P4E_DBG;
+  const pc = fx.perceive;
   const overOf = (pl: Plan) => {
     if (!pc) return { sum: 0, runs: [] as { s: number; r: string; at: number }[], cap: 0 };
     const cap = pc.maxS(pl.seconds) - 0.3, runs = pc.runs(pl.frames.filter((f) => f.phase === 'main').map((f) => ({ t: f.t, rs: pc.seen(f) })));
@@ -669,7 +670,6 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           for (let k = 0; k < 3 && next.seconds < lo; k++) { bump += lo - next.seconds + 0.2; fill(base, o.cap); next = relay(); }
           bump = 0;
           const n = overOf(next);
-          if (DBG) console.log(`[p4e] ${cut} worst ${w.r} ${w.s.toFixed(1)}@${w.at.toFixed(1)} try: sum ${o.sum.toFixed(1)} -> ${n.sum.toFixed(1)}, ${next.seconds.toFixed(1)} s [${lo.toFixed(1)}, ${hi.toFixed(1)}] pipe ${pipe} lulls ${[...lulls].join('/')} runs ${n.runs.filter((x) => x.s > n.cap).map((x) => `${x.r}${x.s.toFixed(1)}`).join(',')} ${chosen.map((c, i) => `${c.min}:${pages[i].length}${calm.has(c.min) ? 'c' : ''}`).join(' ')}`);
           if (n.sum < o.sum - 0.05 && next.seconds >= lo && next.seconds <= hi && (!best || n.sum < best.sum - 1e-6)) best = { sum: n.sum, plan: next, st: { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], want, pipe } };
           restore();
           if (best && best.sum <= 1e-6) break;

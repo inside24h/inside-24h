@@ -44,6 +44,8 @@ export const HOOK_POOL = {
   stomach: ['How long does it stay in your stomach?', 'When does your stomach let it go?', 'How long does your stomach hold it?', 'How long does it sit in your stomach?', 'When does it leave your stomach?', 'How slowly does your stomach empty?', 'How long before your stomach passes it on?', 'When is your stomach half empty again?'],
   protein: ['Watch your body use it.', 'Watch where the protein goes.', 'Watch your body take it apart.', 'Follow the protein through you.', 'See what your body builds with it.', 'Watch the protein become building blocks.', 'Watch your gut break it down.'],
   // (phase 4e: the food's own grams of sugar, {n}, as its lead card says them, so two sweet foods part)
+  /** (the teaspoons, when the first card says them with the caffeine: "9 teaspoons of sugar, 32 mg of caffeine.") */
+  sugarGoT: ['Watch where those {n} teaspoons go.', 'Follow those {n} teaspoons through you.', 'See where all {n} teaspoons end up.', 'Watch where the {n} teaspoons go.', 'Follow the {n} teaspoons through your body.', 'See where those {n} teaspoons end up.', 'Watch your body deal with {n} teaspoons.'],
   sugarGo: ['Watch where those {n} g of sugar go.', 'Follow {n} g of sugar through you.', 'See where {n} g of sugar end up.', 'Watch {n} g of sugar reach your blood.', 'Follow {n} g of sugar into your blood.', 'Watch your body handle {n} g of sugar.', 'See what {n} g of sugar do.', 'Watch where {n} g of sugar go.', 'Follow those {n} g of sugar.', 'See {n} g of sugar travel through you.'],
   /** phase 4e: natural sugar with its own grams ("Apple: 19 g of natural fruit sugar." / "Watch those 19 g reach your blood.") */
   naturalN: ['Watch those {n} g reach your blood.', 'See how your blood handles {n} g.', 'Watch your body use those {n} g.', 'Watch your blood sugar react to {n} g.', 'See what {n} g do to blood sugar.', 'Follow those {n} g into your blood.', 'Watch {n} g of sugar reach your blood.'],
@@ -59,11 +61,12 @@ export const HOOK_POOL = {
   /** phase 4e: a meal whose fat is its telling number ("1 slice of pizza: 10 g of fat.") asks when those grams, {n},
    *  reach the blood ("Fat in your blood" answers) */
   fatBlood: ['When do those {n} g reach your blood?', 'When are those {n} g in your blood?', 'When does your blood get those {n} g?', 'When do those {n} g join your blood?', 'When do those {n} g enter your blood?', 'When will those {n} g reach your blood?', 'How late do those {n} g reach you?', 'When does your blood pick up {n} g?', 'How long until those {n} g arrive?', 'When do those {n} g show in blood?'],
-  /** phase 4e: a meal whose fiber is its telling number asks where its {n} g of fiber are a day later (the 24 h moment answers) */
-  fiberDay: ['Where are its {n} g of fiber tomorrow?', 'Are {n} g of fiber gone by tomorrow?', 'Where is its {n} g of fiber tomorrow?', 'Is its {n} g of fiber gone tomorrow?', 'Where will {n} g of fiber be tomorrow?', 'Where are {n} g of fiber tomorrow?'],
+  /** phase 4e: a meal whose fiber is its telling number ("1 portion of lentils: 16 g of fiber.") asks where those grams,
+   *  {n}, are a day later (the 24 h moment answers) */
+  fiberDay: ['Where are those {n} g tomorrow?', 'Are those {n} g gone by tomorrow?', 'Where will those {n} g be tomorrow?', 'What is left of those {n} g tomorrow?', 'Where do those {n} g end up tomorrow?', 'Are those {n} g still in you tomorrow?'],
   // phase 4e (critique M5: two foods of a class asked the same question): the same questions with the food's own
   // number ({n}: its kcal, its grams of alcohol or protein, as its first moment says them), used when it has one
-  dayN: ['Where is that {n} kcal serving tomorrow?', 'How far has that {n} kcal serving got?', 'What is left of that {n} kcal serving?', 'Has that {n} kcal serving left you tomorrow?', 'Where has that {n} kcal serving gone?'],
+  dayN: ['Where is that {n} kcal serving tomorrow?', 'How far have {n} kcal got by tomorrow?', 'How much of {n} kcal is left tomorrow?', 'Has that {n} kcal serving left you tomorrow?', 'Has that {n} kcal serving gone by tomorrow?'],
   stomachN: ['When do {n} kcal leave your stomach?', 'How long does your stomach hold {n} kcal?', 'When is your stomach done with {n} kcal?', 'How long do {n} kcal stay in your stomach?', 'When does your stomach pass on {n} kcal?', 'How slowly do {n} kcal leave your stomach?', 'How long do {n} kcal sit in your stomach?'],
   bloodN: ['When do its {n} kcal reach your blood?', 'How fast are {n} kcal in your blood?', 'When does your blood get its {n} kcal?', 'How soon do {n} kcal reach your blood?', 'When do {n} kcal hit your blood?', 'How long until {n} kcal are in your blood?'],
   alcoholGoneN: ['How long do those {n} ml stay in you?', 'When has your liver cleared {n} ml?', 'How long until {n} ml are out of you?', 'When is your blood clear of {n} ml?', 'How long does your body need for {n} ml?', 'How long do those {n} ml last in you?', 'When are those {n} ml gone?'],
@@ -105,8 +108,27 @@ export const FIBER_TELLS = 6, FAT_SHARE_TELLS = 0.3;
 /** "Almost all of its caffeine is left at bedtime.": the bedtime share, said one of several ways. */
 const bedLines = (fw: string, mg?: number) => { const of = mg ? `its ${Math.round(mg)} mg` : 'its caffeine'; return [`${cap(fw)} of ${of} is left at bedtime.`, `At bedtime, ${fw} of ${of} remains.`, `${cap(fw)} of ${of} lasts until bedtime.`, `${cap(fw)} of ${of} is still there at bedtime.`, `By bedtime, ${fw} of ${of} is left.`, `At bedtime, ${fw} of ${of} is still in you.`]; }; // (phase 4e: with the dose, its own number)
 
-/** The hook for a single video. */
+/** The hook for a single video. Phase 4e: a pool line's own number is one a card of the video says (the first card's
+ *  lead, the first line, the name); else the line the same pool says without a number. */
 export function hookFor(h: HookIn): Hook {
+  const k = hookForRaw(h), cls = hookClassOf(k);
+  if (!cls || !HOOK_POOL[cls][0].includes('{n}')) return k;
+  const sugarLead = !!k.lead && /g of sugar: about \d+ teaspoons/.test(k.lead);
+  const leadShown = k.lead && !(sugarLead && (h.caffeineMg ?? 0) >= 20 && !h.alcohol) ? k.lead : ''; // (applyHook folds the caffeine in, the grams then go)
+  const ok = new Set([...numbersIn(k.lead && leadShown ? leadShown : ''), ...numbersIn(h.name)]);
+  const fixLine = (l: string) => {
+    if (hookClassOf({ line1: l, line2: '' }) !== cls) return l;
+    const nums = numbersIn(l);
+    if (nums.every((n) => ok.has(n) || n === '24')) return l;
+    const key = factKey(h);
+    if (cls === 'sugarGo') { const t = /(\d+) teaspoons of sugar/.exec(k.line1)?.[1]; return t ? poolLine('sugarGoT', key, t) : l; }
+    const plain = cls.replace(/N$/, '') as HookClass;
+    return plain !== cls && HOOK_POOL[plain] ? poolLine(plain, key) : l;
+  };
+  const line1 = /\?$|\.$/.test(k.line1) && hookClassOf({ line1: k.line1, line2: '' }) === cls ? fixLine(k.line1) : k.line1;
+  return { ...k, line1, line2: fixLine(k.line2) };
+}
+function hookForRaw(h: HookIn): Hook {
   const first = h.chapters[0]?.text ?? '';
   const name = h.name.replace(/\s*\([^)]*\)/g, '').trim();
   // round 18 (critic T-7: "Watch where it goes." on 62 items, every alcohol hook the same): each formula has a few
@@ -163,8 +185,9 @@ export function hookFor(h: HookIn): Hook {
   const bareOne = bareN.replace(/( with [^,&]+?)(?:,.*| & .*)$/, '$1');
   const named = (rest: string, max = 9) => [`${cap(name)}: ${rest}`, `${bareN}: ${rest}`, `${bareOne}: ${rest}`, `${core}: ${rest}`].find((x) => fit(x, max)) ?? `${core}: ${rest}`;
   // (phase 4e: a meal whose fat asks the question leads with its fat: "1 slice of pizza: 10 g of fat.")
-  const fatLead = fatTells && fit(named(`${mac.fat} g of fat.`), 8) ? { line1: named(`${mac.fat} g of fat.`, 8), lead: `${mac.fat} g of fat.` } : null;
-  const ownPromise = fatTells && !fatLead ? (day ? { line2: ownLine('day', key, mac.kcal, factsOf(first)), payoff: day.title } : promise) : promise;
+  const fatLead = fatTells && fit(named(`${mac.fat} g of fat.`), 8) ? { line1: named(`${mac.fat} g of fat.`, 8), lead: `${mac.fat} g of fat.` }
+    : fibTells && fit(named(`${mac.fiber} g of fiber.`), 8) ? { line1: named(`${mac.fiber} g of fiber.`, 8), lead: `${mac.fiber} g of fiber.` } : null; // (and its fiber, the same way)
+  const ownPromise = (fatTells || fibTells) && !fatLead ? (day ? { line2: ownLine('day', key, mac.kcal, factsOf(first)), payoff: day.title } : promise) : promise;
   // round 13 (critic P0-2c: salmon opened with "Watch it for 24 hours."): protein-led food leads with its protein
   const prot = Number(/(\d+) g protein/.exec(first)?.[1] ?? 0), carbs = Number(/(\d+) g carbohydrate/.exec(first)?.[1] ?? 0);
   if (h.solid && prot >= 20 && carbs < 15) { const l1 = named(`${prot} g of protein.`); return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: ownLine('protein', factKey(h), prot, factsOf(first)), lead: `${prot} g of protein.` }; }
@@ -265,6 +288,17 @@ export const GUESS_LINE = 'Guess before the answer.';
 /** Round 11 (research R2): the second hook, from another formula: the question first, the fact second (A leads
  *  with the number). It only reuses A's own words and numbers, so it is as honest as A. */
 export function hookB(h: HookIn, a: Hook): Hook {
+  // (phase 4e: B says only A's numbers: a pool line with another number of the food says its pool's plain line)
+  const b = hookBRaw(h, a), ok = new Set([...numbersIn(`${a.line1} ${a.line2}`), '24']);
+  const fixLine = (l: string) => {
+    const cls = hookClassOf({ line1: l, line2: '' });
+    if (!cls || numbersIn(l).every((n) => ok.has(n))) return l;
+    const plain = cls.replace(/N$/, '') as HookClass;
+    return plain !== cls && HOOK_POOL[plain] ? poolLine(plain, factKey(h)) : l;
+  };
+  return { ...b, line1: fixLine(b.line1), line2: fixLine(b.line2) };
+}
+function hookBRaw(h: HookIn, a: Hook): Hook {
   const morning = h.chapters.find((c) => c.title === 'Next morning');
   const keep = { ...(a.payoff ? { payoff: a.payoff } : {}), ...(a.payoffMin !== undefined ? { payoffMin: a.payoffMin } : {}), ...(a.answer ? { answer: a.answer } : {}), ...(a.extra ? { extra: a.extra } : {}), ...(a.lead ? { lead: a.lead } : {}) };
   // (round 13: a surprise stays a surprise in B, as a question)

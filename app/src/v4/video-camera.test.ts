@@ -14,7 +14,7 @@
 //      the opening and the end card stay whole-body.
 import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, type AuditItem } from './text-audit';
-import { beatChapter, beatOrgans, cameraOf, camPlanOf, camStyle, classOf, FOV, nextLead, ORGAN_SAFE, organRect, perceivedStay, poseOf, REGION_BREAK_S, regionMaxS, regionOf, rigAt, SIDE_X, shotOf, splitPlanOf, splitShot, stepRig, topicRegion, wholeBody, type CamPlan, type Rig, type Seen, type Shot, type V3 } from './video-cam';
+import { beatChapter, beatOrgans, cameraOf, camPlanOf, camSeedOf, camStyle, classOf, FOV, nextLead, ORGAN_SAFE, organRect, perceivedStay, poseOf, REGION_BREAK_S, regionMaxS, regionOf, rigAt, SIDE_X, shotOf, splitPlanOf, splitShot, stepRig, topicRegion, wholeBody, type CamPlan, type Rig, type Seen, type Shot, type V3 } from './video-cam';
 import { cardNamed } from './video-body';
 import { litRegion } from './video-story';
 import { presentAt, SEG_FOCUS_V } from './video-body';
@@ -95,7 +95,7 @@ const inside = (r: { l: number; r: number; t: number; b: number } | null, z: { l
 /** The single video of an item, filmed as AppV4 films it (startShare → cue). */
 export function filmSingle(it: AuditItem, cut: Cut, fmt: Fmt = 'reel', v: 'A' | 'B' = 'A'): Film & { cam: CamPlan } {
   const x = it.x, b = x.built, o = auditSingle(x, cut, v, AUDIT_PROFILE, it.vname), plan = o.plan, chapters = b.story.chapters;
-  const seed = seedOf(o.name), style = camStyle(classOf(b), seed);
+  const seed = seedOf(o.name), style = camStyle(classOf(b), camSeedOf(seed, b.energy.total)); // (as AppV4: phase 4e)
   const cam = camPlanOf(plan.frames, style, chapters), [W, H] = SIZE[fmt], zone = ORGAN_SAFE[fmt];
   let lead: SegId | null = null, leadM = -1;
   const bad: string[] = [];

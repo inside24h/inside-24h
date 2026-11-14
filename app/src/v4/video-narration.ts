@@ -188,7 +188,7 @@ export const CLOCK = /\b\d{1,2}(?::\d\d)?\s?(?:AM|PM)\b|\b\d\d:\d\d\b/;
 export const CLEAR_TIME = /^(?!Half\b)(?:.*?)\b(?:gone|clear\w*|out of your blood|burns? it off|break it down)\b[^.]*\b\d+(?:[.,]\d+)?(?:–\d+)?\s*(?:hours?|minutes?|h)\b|\b\d+(?:–\d+)?\s*(?:hours?|h)\b[^.]*\b(?:to clear|cleared|gone|clear it|break it down|burns? it off|liver work)\b/i;
 /** v23b (editor: "About three quarters of the caffeine remains." had no when): a line about what is still there says when */
 export const STATE = /\b(?:remains?|still (?:in|there|working|here)|is left|left in you)\b/i;
-export const ANCHOR = /\b(?:bedtime|morning|night|tonight|now|at \d|after|hours?|minutes?|later|by|until|day|in)\b/i;
+export const ANCHOR = /\b(?:bedtime|morning|night|tonight|tomorrow|now|at \d|after|hours?|minutes?|later|by|until|day|in)\b/i; // (phase 4e: "tomorrow", the day-later hooks)
 export const unanchored = (x: string) => STATE.test(x) && !ANCHOR.test(x.replace(/\bstill in\b/gi, ''));
 /** v23b: the time a moment is at, said from the first sip ("5 hours in, …"; bedtime and morning by name) */
 export function whenLead(title: string, stop?: number): string {
