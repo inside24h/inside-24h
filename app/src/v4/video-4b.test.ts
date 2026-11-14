@@ -15,7 +15,7 @@ import { bodyGlowAt, cardNamed, CONTENT_SEGS, DRIVE_WARN, FRONT_OF, namedGlow, n
 import { after24Of, cmpName, gaugesAt } from './video-story';
 import { drawCmpFrame, drawFrame, endTiming, fit, logText, VIDEO_COPY, type CmpOverlay, type Light, type Overlay } from './share';
 import { END_CARD_MIN_S, FPS, LENGTH, type Plan } from './video-plan';
-import { beatOrgans, camPlanOf, camStyle, classOf, organKey, SHOT_MAX_S } from './video-cam';
+import { beatChapter, beatOrgans, camPlanOf, camStyle, classOf, organKey, REGION, SHOT_MAX_S } from './video-cam';
 import { seedOf } from './video-hook';
 import { servingMlOf } from './food/foodProduct';
 import { at } from '../science/espressoSim';
@@ -230,7 +230,7 @@ describe('phase 4b: M5 no template video: shots capped, comparison questions var
       const cam = camPlanOf(o.plan.frames, camStyle(classOf(b), seedOf(o.name)), chs);
       let key = '', t0 = 0, worst = 0;
       for (const f of o.plan.frames) {
-        const k = cam.wide.some(([a, z]) => f.t >= a - 1e-6 && f.t < z) ? '' : organKey(f, chs);
+        const k = [...cam.wide, ...(cam.body ?? [])].some(([a, z]) => f.t >= a - 1e-6 && f.t < z) ? '' : organKey(f, chs);
         if (k !== key) { if (key) worst = Math.max(worst, f.t - t0); key = k; t0 = f.t; }
       }
       if (worst > SHOT_MAX_S) bad.push(`${it.id} ${cut}: ${worst.toFixed(1)} s on one organ`);
@@ -275,4 +275,31 @@ describe('phase 4b: M7 / M8 the end card is readable, one caption track at a tim
     expect(VIDEO_COPY.loop(true, true)).toMatch(/first bite/);
     expect(VIDEO_COPY.loop(false, true, true)).toMatch(/from the start/);
   });
+});
+
+// Phase 4c (2026-11-14, critique minor: "0.6 g fiber" pinned next to "The fat joins your blood later." in pizza,
+// "80 ml urine" next to "In your stomach …" in lentils): while a card is read, the where-callout is only shown in the
+// card's region of the body (AppV4 passes the card's organs to gaugesAt, as here).
+describe('phase 4c: a callout never contradicts the card it stands next to', () => {
+  it('every item (sample), long cut: no where-callout outside the card region; both critic cases are hidden', () => {
+    const bad: string[] = [];
+    let hidden = 0;
+    for (const it of SAMPLE) {
+      const o = auditSingle(it.x, 'long', 'A', AUDIT_PROFILE, it.vname), b = it.x.built, chs = b.story.chapters;
+      o.plan.frames.forEach((fr, i) => {
+        if (fr.beat !== 'hold' || (fr.stop ?? 0) === 0 || i % 6) return;
+        const organs = beatOrgans(fr.title, beatChapter(chs, fr).focus).organs, regs = new Set(organs.map((k) => REGION[k]));
+        const w = whereGauge(b, Math.min(1440, fr.m)), gs = gaugesAt(b, Math.min(1440, fr.m), 'mmol/L', it.x.glucose !== undefined, false, organs);
+        if (!organs.length || !w) return;
+        const shown = gs.some((g) => g.big === w.big && g.organ === w.organ);
+        if (!regs.has(REGION[w.organ]) && shown) bad.push(`${it.id} @${fr.t.toFixed(1)} "${fr.cap}" next to ${w.big}`);
+        if (!regs.has(REGION[w.organ])) hidden++;
+      });
+    }
+    expect(bad.slice(0, 10)).toEqual([]);
+    expect(hidden).toBeGreaterThan(0);
+    const at = (id: string, re: RegExp) => { const it = by(id), o = auditSingle(it.x, 'long', 'A', AUDIT_PROFILE, it.vname), chs = it.x.built.story.chapters; const fr = o.plan.frames.find((f) => f.beat === 'hold' && re.test(f.cap ?? ''))!; return gaugesAt(it.x.built, Math.min(1440, fr.m), 'mmol/L', it.x.glucose !== undefined, false, beatOrgans(fr.title, beatChapter(chs, fr).focus).organs).map((g) => g.big).join(' | '); };
+    expect(at('pizza', /fat joins your blood/i)).not.toMatch(/fiber/);
+    expect(at('lentils', /^In your stomach|has moved on by/i)).not.toMatch(/urine/);
+  }, 600_000);
 });

@@ -665,7 +665,9 @@ export default function AppV4() {
       return `${SEG_LABEL[top[0]]} · ${top[1].text ?? `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${top[1].unit ?? built.route.unit}`}`;
     })(),
     lights: systems.map((s) => ({ icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: s.levels[Math.round(Math.min(1440, minute))] as 0 | 1 | 2 })),
-    gauges: gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null, /caffeine/i.test(recChapter.title)), // (round 16: the caffeine moment shows caffeine)
+    gauges: gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null, /caffeine/i.test(recChapter.title), // (round 16: the caffeine moment shows caffeine)
+      // (phase 4c: while a card is read, the where-callout only in the card's region of the body)
+      share?.state === 'rec' && recFr.current?.beat === 'hold' && (recFr.current.stop ?? 0) > 0 ? beatOrgans(recFr.current.title, beatChapter(story.chapters, recFr.current).focus).organs : undefined),
     ...lifeOf(PRODUCT.name, built, minute, gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null)),
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     // round 14 (critic G-3): the end card's hero number, the main gauge at the video's climax (the same numbers)

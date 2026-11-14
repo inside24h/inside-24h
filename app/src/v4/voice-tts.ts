@@ -19,7 +19,7 @@ export const VOICE_ID = 'af_heart';
 export const VOICE_SPEED = 0.92;
 /** 8-bit weights: 92 MB, the same file for WebGPU and WebAssembly. */
 export const VOICE_DTYPE = 'q8';
-export const VOICE_DOWNLOAD_NOTE = 'Downloads a voice model once, ~90 MB';
+export const VOICE_DOWNLOAD_NOTE = 'Downloads a voice model once (~90 MB, from Hugging Face). The voice is made on your device.'; // (phase 4c, audit C10: say where it comes from; VoicePick.tsx shows the same words)
 const LOAD_TIMEOUT_MS = 240_000, LINE_TIMEOUT_MS = 45_000;
 const READY_KEY = 'i24-voice-ready';
 

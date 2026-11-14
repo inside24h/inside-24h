@@ -10,6 +10,6 @@ export function VoicePick({ on, set, noSound = false }: { on: boolean; set: (v: 
       <button aria-pressed={!active} onClick={() => set(false)}>Off</button>
     </div>
     {noSound ? <p className="note">The voiceover comes with our sound; pick “Our music” or “Sound effects only” to hear it.</p>
-      : active && !voiceReady() && <p className="note">Downloads a voice model once, ~90 MB.</p>}
+      : active && !voiceReady() && <p className="note">Downloads a voice model once (~90 MB, from Hugging Face). The voice is made on your device.</p>}
   </>);
 }

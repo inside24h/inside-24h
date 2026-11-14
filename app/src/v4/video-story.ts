@@ -8,6 +8,7 @@ import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { seedOf } from './video-hook';
 import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
 import { bacPlain, DEFAULT_BAC_BODY, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, whereCard, whereGauge, type BuiltLike } from './video-body';
+import { REGION } from './video-cam';
 import { at as atMin } from '../science/espressoSim';
 import { ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
@@ -189,7 +190,10 @@ export function surgeOf(b: PeakIn, sugarKnown: boolean): { min: number; max: num
 }
 
 /** Where the drink is + the number that matters, at minute m (where is left out when it says the same). */
-export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKnown: boolean, caffeineMoment = false): PinnedGauge[] {
+/** `cardOrgans` (phase 4c, critique minor: "0.6 g fiber" pinned next to "The fat joins your blood later.", "80 ml
+ *  urine" next to "In your stomach …"): the organs of the card being read (video-cam beatOrgans); the where-gauge
+ *  is then shown only when it is in the same region of the body as the card, so a callout never contradicts it. */
+export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], sugarKnown: boolean, caffeineMoment = false, cardOrgans?: readonly string[]): PinnedGauge[] {
   const main = mainGauge(b, m, uFromMinutes(Math.min(1440, m)), unit, sugarKnown);
   // (round 16, critic E-1): at a caffeine moment of a sugary caffeinated drink the caffeine shows next to the sugar
   if (caffeineMoment && main && !/caffeine/.test(main.big) && b.caffeine.doseMg >= 20) {
@@ -199,7 +203,8 @@ export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], 
   // one number per thing (round 5, critic: "4.8 g sugar · Blood" next to "Blood sugar up"): no sugar where-gauge
   // while the blood sugar gauge is up
   // (round 7: never a "g sugar" gauge in a video whose blood sugar curve is known, even in a dip or between peaks)
-  const w0 = whereGauge(b, m), where = w0 && (main?.organ === 'pancreas' || (sugarKnown && !!b.effects.glucoseMgDl)) && /sugar/.test(w0.big) ? null : w0;
+  const w1 = whereGauge(b, m), w0 = w1 && cardOrgans?.length && !cardOrgans.some((o) => REGION[o] && REGION[o] === REGION[w1.organ]) ? null : w1;
+  const where = w0 && (main?.organ === 'pancreas' || (sugarKnown && !!b.effects.glucoseMgDl)) && /sugar/.test(w0.big) ? null : w0;
   // the same number twice (blood alcohol in "Blood", caffeine in "Blood"): only the main gauge
   const num = (s: string) => /[\d.,–]+/.exec(s)?.[0] ?? s;
   const same = !!main && !!where && ((/alcohol|BAC/.test(main.small) && /‰|BAC/.test(where.big)) || num(where.big) === num(main.big));

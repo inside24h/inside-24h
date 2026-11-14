@@ -23,9 +23,9 @@ export const FOV = 33; // the app's camera (AppV4 <SafeCanvas camera fov>)
 /** Comparison video: world x of the two bodies, far enough apart that neither shows up in the other's half. */
 export const SIDE_X = [-0.7, 0.7] as const;
 
-export type Zoom = 'wide' | 'far' | 'mid' | 'close';
+export type Zoom = 'wide' | 'far' | 'mid' | 'close' | 'body';
 /** Height of the picture in metres at each zoom (the frame is 9:16, the comparison halves narrower). */
-export const VIEW_H: Record<Zoom, number> = { wide: 1.25, far: 1.05, mid: 0.82, close: 0.56 }; // (phase 4: 'far' = wide, but on the organ: a big organ's other framing, with the body around it)
+export const VIEW_H: Record<Zoom, number> = { wide: 1.25, far: 1.05, mid: 0.82, close: 0.56, body: 1.25 }; // (phase 4: 'far' = wide, but on the organ: a big organ's other framing, with the body around it)
 /** Organs that are long or spread out: never closer than 'mid' (the whole coil stays in the picture). */
 const BIG = new Set(['jejunum', 'ileum', 'colon_asc', 'colon_trans', 'colon_desc', 'cecum', 'aorta', 'vena_cava', 'liver', 'brain']); // brain: the whole head, not a wall of grey matter
 
@@ -39,6 +39,7 @@ export function poseOf(shot: Shot): Pose {
   const pts = shot.focus.map((k) => ORGAN_AT[k]).filter(Boolean);
   if (shot.pose) return shot.pose;
   const push = 1 - 0.18 * Math.max(0, Math.min(1, shot.tight ?? 0)), yaw = shot.yaw ? { yaw: shot.yaw } : {};
+  if (shot.zoom === 'body') return { ...bodyPose(shot.focus), ...yaw };
   if (!pts.length || shot.zoom === 'wide') return { target: WIDE_AT, viewH: VIEW_H.wide * push, ...yaw };
   let zoom = shot.zoom;
   if (zoom === 'close' && shot.focus.some((k) => BIG.has(k))) zoom = 'mid';
@@ -196,12 +197,17 @@ const CLASS_STYLE: Record<StoryClass, Omit<CamStyle, 'cls'>> = {
  *  two foods of a class are kin, never copies; the same food films the same way on every export. */
 export function camStyle(cls: StoryClass, seed = 0): CamStyle {
   const s = Math.abs(Math.floor(seed)), b = CLASS_STYLE[cls];
-  return { cls, ...b, half: b.half * (0.94 + (0.12 * ((s >>> 3) % 11)) / 10), arc: (s >>> 1) % 2 ? -b.arc : b.arc };
+  // (phase 4c, structural sameness: pizza and lentils were filmed shot for shot alike; the seed also sets which framing
+  // a moment opens with and, for one food in three, moves the orientation shot to the class's neighbouring place)
+  const h = Math.imul(s ^ (s >>> 15), 0x2c1b3c6d) >>> 0; // (mixed: two foods' seeds that share low bits still part)
+  const ORDER = ['early', 'middle', 'late'] as const, oi = ORDER.indexOf(b.orient), shift = (h >>> 20) % 3;
+  const orient = shift === 1 ? ORDER[oi === 2 ? 1 : oi + 1] : b.orient;
+  return { cls, ...b, half: b.half * (0.94 + (0.12 * ((s >>> 3) % 11)) / 10), arc: (s >>> 1) % 2 ? -b.arc : b.arc, wideFirst: (h >>> 27) % 2 ? !b.wideFirst : b.wideFirst, orient };
 }
 
 /** The camera's plan for a video: its style and the glides (by the moment they lead to) filmed whole-body for
  *  orientation. A glide over a long quiet stretch is wide anyway; one more falls where the class wants it. */
-export interface CamPlan { style: CamStyle; /** when the camera pulls back to the whole body, video seconds [from, to) */ wide: [number, number][] }
+export interface CamPlan { style: CamStyle; /** when the camera pulls back to the whole body, video seconds [from, to) */ wide: [number, number][]; /** phase 4c: whole-body beats that break a long stay on one region of the body, video seconds [from, to) (the organs the card is about stay in the safe frame) */ body?: [number, number][] }
 /** A glide this long can carry the orientation shot; the shot lasts at least ORIENT_S (into the next moment's first
  *  second when the glide is short: the camera then pushes in from the whole body to the organ). */
 export const ORIENT_MIN_S = 0.9, ORIENT_S = 2.0, ORIENT_SPILL_S = 1.0;
@@ -216,6 +222,94 @@ export function organKey(fr: ShotFrame, chapters: { min: number; title: string; 
   const ch = beatChapter(chapters, { stop: fr.stop, m: fr.m ?? fr.stop ?? 0, title: fr.title });
   return beatOrgans(fr.title, ch.focus).organs.slice().sort().join('+');
 }
+// ---- Phase 4c (2026-11-14, critique M5 leftover: lentils' long cut still spent ~25 s on the large intestine, broken
+// only by a 1 s pull-back): the camera's time on one REGION of the body is capped, and a pull-back shorter than
+// REGION_BREAK_S does not reset the count. Past the cap, a whole-body beat (REGION_BREAK_S or longer, with the organs
+// the card is about kept in the safe frame and lit) is cut in between two cards, at a glide or at a reframe. ----
+/** The regions of the body the camera can stay on (organs that sit together and read as one place on a phone). */
+export const REGION: Record<string, string> = {
+  brain: 'head', tongue: 'head', esophagus: 'chest', heart: 'chest', aorta: 'chest', lung_l: 'chest', lung_r: 'chest',
+  stomach: 'upper', liver: 'upper', pancreas: 'upper', duodenum: 'upper', gallbladder: 'upper', portal_vein: 'upper', vena_cava: 'upper',
+  jejunum: 'small', ileum: 'small', cecum: 'large', colon_asc: 'large', colon_trans: 'large', colon_desc: 'large', rectum: 'large',
+  kidney_l: 'urinary', kidney_r: 'urinary', bladder: 'urinary',
+};
+/** The region a list of organs is in (the first one's; 'body' = none: the whole body). */
+export const regionOf = (organs: readonly string[]): string => (organs.length ? REGION[organs[0]] ?? 'body' : 'body');
+/** A view of another region (or the whole body) breaks a stay only when it lasts this long. */
+export const REGION_BREAK_S = 2.5;
+/** The longest stay on one region: ~12 s in the long cut, less in Reels (medium) and Shorts, by the video's length. */
+export const regionMaxS = (seconds: number) => (seconds > 56 ? 12 : seconds > 33 ? 9 : 6);
+/** Whole-body framing whose organs (the card's) sit inside the reel's safe frame: the picture's height grows from
+ *  the whole-body shot's until both fit (head to bladder in the picture, the organs between the headline and the
+ *  caption). Fractions of the picture from the top: the safe frame (ORGAN_SAFE.reel, with a margin) and the body. */
+function bodyPose(focus: readonly string[]): Pose {
+  const bx = focus.map((k) => ORGAN_BOX[k]).filter(Boolean);
+  const yt = bx.length ? Math.max(...bx.map((b) => b[1][1])) : 1.1, yb = bx.length ? Math.min(...bx.map((b) => b[0][1])) : 1.1;
+  const a = 300 / 1920, b = 1290 / 1920, m = 0.03, lift = 0.07;
+  let V = VIEW_H.wide, lo = 0, hi = 0;
+  for (; V <= 1.6; V += 0.025) {
+    lo = Math.max(yt - (0.5 - a) * V, 1.619 - (0.5 - m) * V); hi = Math.min(yb + (b - 0.5) * V, 0.796 + (0.5 - m) * V);
+    if (lo <= hi) break;
+  }
+  const look = lo <= hi ? (lo + hi) / 2 : hi;
+  return { target: [0, look + lift * V, WIDE_AT[2]], viewH: Math.min(V, 1.6) };
+}
+/** The region a frame is filmed on ('' = none: the cold open, the end). */
+const regionKey = (k: string) => (k ? regionOf(k.split('+')) : '');
+/** The region shotOf films a frame on: the first sip / bite follows the food down (mouth, food pipe, stomach). */
+const frameRegion = (f: ShotFrame & { hk?: number }, chapters: { min: number; title: string; focus?: string | null }[]) =>
+  (f.stop ?? 0) === 0 && (f.beat === 'hook' || f.beat === 'hold') && f.phase !== 'outro' ? ((f.hk ?? 0) < 0.28 ? 'head' : (f.hk ?? 0) < 0.55 ? 'chest' : 'upper') : regionKey(organKey(f, chapters));
+/** Phase 4c: the whole-body beats that keep every stay on one region under regionMaxS. `inView(t)`: the planned
+ *  whole-body shots already there. Candidate cut points: a glide's start, a new card, a reframe of a long one. */
+function regionBreaks(frames: ShotFrame[], chapters: { min: number; title: string; focus?: string | null }[], wide: [number, number][]): [number, number][] {
+  const out: [number, number][] = [], seconds = frames[frames.length - 1]?.t ?? 0, cap = regionMaxS(seconds);
+  const endT = frames.find((f) => f.beat === 'end' || f.phase === 'outro')?.t ?? seconds;
+  const wideAt = (t: number) => wide.find(([a, b]) => t >= a - 1e-6 && t < b), inOut = (t: number) => out.some(([a, b]) => t >= a - 1e-6 && t < b);
+  // (the first sip / bite follows the food down whatever the plan: shotOf films it before any pull-back)
+  const first = (f: ShotFrame) => (f.stop ?? 0) === 0 && (f.beat === 'hook' || f.beat === 'hold');
+  // (a card with no organ of its own is filmed where the food is, which the plan does not know: '?' counts as the
+  // region the camera is on, so the stay goes on)
+  const regs = frames.map((f) => (f.beat === 'end' || f.phase !== 'main' ? '' : !first(f) && wideAt(f.t) ? 'body' : frameRegion(f, chapters) || '?'));
+  const cand = frames.map((f, i) => {
+    const p = frames[i - 1] as (ShotFrame & { pg?: number }) | undefined, q = f as ShotFrame & { pg?: number };
+    return !!p && f.t < endT && !first(f) && ((f.beat === 'glide' && p.beat !== 'glide') || (f.beat === 'hold' && p.beat === 'hold' && (f.cap !== p.cap || q.pg !== p.pg)));
+  });
+  /** when the stay on `reg` running at frame i ends: the next cut point the camera can use, or the start of a view
+   *  elsewhere that lasts REGION_BREAK_S, whichever comes first */
+  const stayEnd = (i: number, reg: string) => {
+    let off: number | null = null;
+    for (let k = i + 1; k < frames.length; k++) {
+      const t = frames[k].t, r = regs[k] === '?' ? reg : regs[k];
+      if (t >= endT) return off ?? endT;
+      if (cand[k] && r !== 'body' && off === null && t <= endT - REGION_BREAK_S) return t; // (a cut point too close to the end has no room for the whole body)
+      if (r === reg) off = null; else { if (off === null) off = t; if (t - off >= REGION_BREAK_S - 1e-6) return off; }
+    }
+    return off ?? endT;
+  };
+  let reg = '', since = 0, other = '', otherSince = 0;
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i];
+    if (f.t >= endT) break;
+    const r = inOut(f.t) ? 'body' : regs[i] === '?' ? reg || '?' : regs[i];
+    if (!r) { reg = ''; other = ''; continue; }
+    // a cut point while a stay runs: would it pass the cap before it ends? then the whole body now (a pull-back
+    // already here is held on to REGION_BREAK_S)
+    if (cand[i] && reg && reg !== 'body' && !inOut(f.t) && stayEnd(i, reg) - since > cap) {
+      const w = wideAt(f.t), t0 = w ? w[0] : f.t, t1 = Math.min(t0 + REGION_BREAK_S + 0.2, endT);
+      if (t1 - t0 >= REGION_BREAK_S) {
+        if (!w) out.push([f.t, t1]); else if (t1 > w[1]) out.push([w[1], t1]);
+        reg = 'body'; since = t0; other = '';
+        continue;
+      }
+    }
+    // the stay: another region (or the whole body) counts only once it has lasted REGION_BREAK_S
+    if (r === reg) { other = ''; continue; }
+    if (r !== other) { other = r; otherSince = f.t; }
+    if (!reg || f.t - otherSince >= REGION_BREAK_S - 1e-6) { reg = r; since = otherSince; other = ''; }
+  }
+  return out;
+}
+
 export function camPlanOf(frames: ShotFrame[], style: CamStyle, chapters?: { min: number; title: string; focus?: string | null }[]): CamPlan {
   const base = camPlanBase(frames, style);
   if (!chapters) return base;
@@ -240,7 +334,8 @@ export function camPlanOf(frames: ShotFrame[], style: CamStyle, chapters?: { min
     }
     if (k !== key) { key = k; since = f.t; }
   }
-  return { style: base.style, wide: wide.sort((a, b) => a[0] - b[0]) };
+  const sorted = wide.sort((a, b) => a[0] - b[0]);
+  return { style: base.style, wide: sorted, body: regionBreaks(frames, chapters, sorted) };
 }
 function camPlanBase(frames: { beat?: string; stop?: number; from?: number; t: number }[], style: CamStyle): CamPlan {
   const glides: { stop: number; t0: number; s: number }[] = [];
@@ -285,6 +380,8 @@ export function shotOf(fr: FrameLike | null | undefined, beat: (string | null | 
   // glide per video pulls back to the whole body for orientation
   const arc = cam ? cam.style.arc * (Math.round(fr.stop ?? 0) % 2 ? 1 : -1) : 0;
   if (cam?.wide.some(([a, b]) => fr.t >= a - 1e-6 && fr.t < b)) return { focus: [], zoom: 'wide', yaw: fr.beat === 'glide' ? arc : 0 };
+  // phase 4c: a whole-body beat that breaks a long stay on one region (the card's organs stay in the safe frame, lit)
+  if (cam?.body?.some(([a, b]) => fr.t >= a - 1e-6 && fr.t < b)) return { focus: [...new Set(known)], zoom: 'body', yaw: fr.beat === 'glide' ? arc : 0 };
   if (fr.beat === 'glide') {
     return { focus: [...new Set(focus)], zoom: union || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid', yaw: arc };
   }

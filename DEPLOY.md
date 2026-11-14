@@ -37,8 +37,10 @@ Obje verzije i dalje rade:
 | jedna datoteka (offline, artifact, slanje datoteke) | `npx vite build --config vite.v4.config.ts` + `node scripts/make-site.mjs` | `site/index.html` (~2,6 MB, sve unutra) |
 | podijeljena (web hosting, brža) | `npx vite build --config vite.site.config.ts` + `node scripts/make-site-split.mjs` | `site/index.html` + `site/assets/` |
 
-Zadnja pokrenuta `make-site*` naredba određuje što je u `site/index.html`. Stare datoteke u `site/assets/` se ne
-brišu (ne smetaju). Veličine po dijelovima: `SITE_REPORT=1 npx vite build --config vite.site.config.ts`.
+Zadnja pokrenuta `make-site*` naredba određuje što je u `site/index.html`. `make-site-split.mjs` nakon svakog builda
+uklanja stare hashirane datoteke iz `site/assets/` koje ništa u `site/` više ne spominje: prvo ih kopira u
+`C:\claudework\inside-24h-backups\<vrijeme>-site-assets-prune\` (provjera bajt po bajt), tek onda briše
+(`--no-prune` = ništa ne briše). Nakon toga `node scripts/check-site.mjs` potvrđuje da svaka referenca postoji. Veličine po dijelovima: `SITE_REPORT=1 npx vite build --config vite.site.config.ts`.
 
 ## Napomene
 - Na vlastitoj domeni gumb „Save video“ sprema datoteku izravno (bez claude.ai potvrde).

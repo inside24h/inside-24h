@@ -58,7 +58,7 @@ const LIGHT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 const WORD = ['Fine', 'Mild stress', 'High stress'];
 // the app's own fonts (self-hosted, assets/fonts), with system fallbacks
 const SANS = '"Geist", system-ui, "Segoe UI", Roboto, sans-serif';
-const SERIF = '"Instrument Serif", Georgia, "Times New Roman", serif';
+const SERIF = '"I24 Figures", "Instrument Serif", Georgia, "Times New Roman", serif'; // (phase 4c: figures from Geist, fonts.css: the serif "1" read as "l")
 const EMOJI = `"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", ${SANS}`;
 export const SIZE: Record<Format, [number, number]> = { reel: [1080, 1920], feed: [1080, 1350] };
 /** Video bitrate: high enough that the platforms' own re-encode starts from a clean picture, small enough to upload
