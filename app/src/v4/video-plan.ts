@@ -126,6 +126,11 @@ export interface VFrame {
   next?: { min: number; title: string }; // glide: the moment ahead ("NEXT · +1:15 · The sugar dip")
   night?: number;     // 0..1 night tone (22:00–07:00 on the clock)
   tease?: boolean;    // this card is the mid-video "Coming up: …"
+  /** phase 4e: a wordless whole-body stretch of a glide (no card, no NEXT chip, no organ lit for a card): the viewer
+   *  leaves the region the moments before were on */
+  lull?: boolean;
+  /** phase 4e: the share of the first moment from which its camera is on the stomach (default 0.55: the food pipe before) */
+  pipe?: number;
   pg?: number;        // round 5: shot number while moments are read (a new one with every card and every 2.6 s of a long card): the camera reframes, so the picture never stands still for 3 s
 }
 /** One timeline for picture and sound (2026-10-24 creative spec §2.1): every effect and every sound effect is placed
@@ -165,11 +170,22 @@ export interface PlanFx {
   glideK0?: number;
   /** round 15: how many times the planner has moved the impact later to keep cards short (internal) */
   retry?: number;
+  /** Phase 4e: what the viewer perceives a frame to be about (video-cam seenOf: the card's region, the region filmed),
+   *  the stays that adds up to (video-cam perceivedRuns) and their cap by length (regionMaxS); `extra`: more of the
+   *  story's own moments the planner may bring in to break a stay. Without it, stays are not checked. */
+  /** phase 4e (internal): the minutes whose glide in is a lull; `pipe`: the first moment stays on the food pipe */
+  lulls?: number[]; pipe?: number;
+  perceive?: { seen: (fr: VFrame) => string[]; runs: (seq: { t: number; rs: string[] }[]) => { s: number; r: string; at: number }[]; maxS: (seconds: number) => number; extra?: StopIn[] };
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
 /** Round 10: the surge keeps this far from the sip, the riser and the impact (seconds), so no two big events overlap. */
 export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
 /** Round 13: the longest a single card stays (unless its own reading time is longer), and how much slower a glide may get. */
+/** Phase 4e: a lull (a glide that breaks a perceived stay): the card leaves (0.25 s), REGION_BREAK_S (video-cam) of the
+ *  whole body without words, then the NEXT chip for LULL_CHIP_S. Never longer than GLIDE_MAX_S. */
+/** Phase 4e: where the first moment's camera may reach the stomach (video-cam PIPE_TO). */
+export const PIPE_SHARES = [0.7, 0.8, 0.86, 0.92, 1];
+export const LULL_CHIP_S = 0.8, LULL_S = 0.25 + 2.5 + 0.05 + LULL_CHIP_S;
 export const CARD_MAX_S = 5, GLIDE_K_MAX = 6, GLIDE_MAX_S = 3.8; // (round 15, critic SA-2: 6 s cards at 0.8 w/s read slow)
 /** Round 14 (critic DC-1, owner): never longer than this without a card on screen (the 24 h beat and the end card aside). */
 export const WORDLESS_MAX_S = 4;
@@ -329,7 +345,11 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   let used = sents.map((x, i) => Math.min(firstNOf(chosen[i], i), x.length));
   const pagesFor = () => chosen.map((_s, i) => sents[i].slice(0, Math.max(1, used[i])));
   const stopS = (pp: string[]) => pp.reduce((a, p, j) => a + readSeconds(p, j === 0), 0);
-  const total = (pp: string[][]) => fixed + glides(chosen) + pp.reduce((acc, p) => acc + stopS(p), 0);
+  // (phase 4e: the glides made lulls, by the minute they lead to: they last at least LULL_S)
+  const lulls = new Set<number>();
+  let pipe = 0;
+  const lullX = () => { let x = 0; for (let i = 0; i <= chosen.length; i++) { const to = i < chosen.length ? chosen[i].min : 1440; if (i > 0 && lulls.has(to) && (i < chosen.length || chosen[i - 1].min < 1440)) x += Math.max(0, LULL_S - gk * moveS(toU, chosen[i - 1].min, to)); } return x; };
+  const total = (pp: string[][]) => fixed + glides(chosen) + lullX() + pp.reduce((acc, p) => acc + stopS(p), 0);
 
   // 1) as many moments as fit, one card each: if too long, leave out the moment that says the least
   //    (stopValue; ties: the one closest in time to the moment before it). Text is never sped up.
@@ -431,21 +451,26 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // too short (few, short chapters): every card gets proportionally more time. Calmer, never repeated; the long
   // cut must reach its minimum (platforms count 60 s+), the short cut stretches at most 1.6×.
   // (round 5: in the long cut only the words from the peak on are stretched, so the first impact stays early)
-  const from = isLongish(cut) && !sparse ? Math.max(0, peakIdx()) : 0;
-  const t0 = total(pages), reading = pages.slice(from).reduce((a, p) => a + stopS(p), 0);
+  // (phase 4e: a moment in `calm` is not stretched: it is in a perceived stay that is at its cap)
+  const calm = new Set<number>(), grows = (i: number) => i >= from && !calm.has(chosen[i].min);
+  let from = 0, t0 = 0, reading = 0;
   let want = lim.min + 0.3; // a little over, so frame rounding never lands under the minimum
   const lay = () => {
+    from = isLongish(cut) && !sparse ? Math.max(0, peakIdx()) : 0;
+    t0 = total(pages); reading = pages.reduce((a, p, i) => a + (grows(i) ? stopS(p) : 0), 0);
     const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
     // round 13 (critic P0-2: salmon held 3 cards for 12-15 s each): a card stays at most CARD_MAX_S (or its own reading
     // time); the rest of the time goes to the journey between moments (slower glides: the day and the body move)
     let lost = 0;
-    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0), w = r * (i >= from ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c; }));
+    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c; }));
     // first the glides after the impact, then the ones before it (as long as the impact still lands by PEAK_BY_S)
-    const pi = Math.max(0, peakIdx()), gl = glides(chosen.slice(pi));
+    const pi = Math.max(0, peakIdx()), calmG = (i: number) => (i < chosen.length ? calm.has(chosen[i].min) || lulls.has(chosen[i].min) : calm.has(chosen[chosen.length - 1].min) || lulls.has(1440));
+    // (phase 4e: the glides into a calm moment keep their own time)
+    let gl = 0; for (let i = pi + 1; i <= chosen.length; i++) if (!calmG(i) && (i < chosen.length || chosen[chosen.length - 1].min < 1440)) gl += gk * moveS(toU, chosen[i - 1].min, i < chosen.length ? chosen[i].min : 1440);
     let preG = 0; for (let i = 1; i <= pi; i++) preG += moveS(toU, chosen[i - 1].min, chosen[i].min);
     let tp = INTRO_S[cut]; for (let i = 0; i < pi; i++) tp += stopS(pages[i]); tp += preG;
     // (round 14: each glide may grow only up to GLIDE_MAX_S, so the room the glides can take is counted glide by glide)
-    const room = (list: StopIn[], from: number) => { let r = 0; for (let i = from + 1; i < list.length; i++) r += Math.max(0, GLIDE_MAX_S - moveS(toU, list[i - 1].min, list[i].min)); if (list[list.length - 1].min < 1440) r += Math.max(0, GLIDE_MAX_S - moveS(toU, list[list.length - 1].min, 1440)); return r; };
+    const room = (list: StopIn[], from: number) => { let r = 0; for (let i = from + 1; i < list.length; i++) if (!calmG(i)) r += Math.max(0, GLIDE_MAX_S - moveS(toU, list[i - 1].min, list[i].min)); if (list[list.length - 1].min < 1440 && !calmG(list.length)) r += Math.max(0, GLIDE_MAX_S - moveS(toU, list[list.length - 1].min, 1440)); return r; };
     const roomA = room(chosen, pi), useA = Math.min(lost, roomA);
     const glideK = Math.min(GLIDE_K_MAX, 1 + useA / Math.max(0.1, gl)), rem = Math.max(0, lost - useA);
     let roomB = 0; for (let i = 1; i <= pi; i++) roomB += Math.max(0, GLIDE_MAX_S - moveS(toU, chosen[i - 1].min, chosen[i].min));
@@ -453,18 +478,217 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     const glideK0 = pi > 0 && preG > 0.1 ? Math.min(GLIDE_K_MAX, 1 + useB / preG) : 1;
     const back = Math.max(0, rem - useB);
     // (what is left goes to the cards from the impact on, so the impact stays early)
-    const nCards = secs.slice(from).reduce((a, x) => a + x.length, 0);
-    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + (i >= from ? back / Math.max(1, nCards) : 0) })) })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0 });
+    const nCards = secs.reduce((a, x, i) => a + (grows(i) ? x.length : 0), 0);
+    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, calm: calm.has(s.min) && i > pi, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + (grows(i) ? (calm.size ? Math.min(back / Math.max(1, nCards), Math.max(0, CARD_MAX_S + 0.5 - secs[i][j])) : back / Math.max(1, nCards)) : 0) })) /* (phase 4e: with calm moments, a card is never held much over CARD_MAX_S) */ })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0, lulls: [...lulls], pipe });
   };
-  let out = lay();
-  for (let k = 0; k < 3 && out.seconds < lim.min + 0.1 && t0 < want + 5; k++) { want += lim.min + 0.3 - out.seconds; out = lay(); }
+  const relay = () => {
+    let o = lay();
+    for (let k = 0; k < 3 && o.seconds < lim.min + 0.1 && t0 < want + 5; k++) { want += lim.min + 0.3 - o.seconds; o = lay(); }
+    return o;
+  };
+  let out = relay();
+  // Phase 4e (critique 2026-11-14: lentils showed the large intestine for 27 s, pizza its stomach and pancreas for ~28 s,
+  // while the camera's own count said 9.9 s): every stay on one region of the body AS THE VIEWER PERCEIVES IT (the card's
+  // organ, lit, and the region filmed: fx.perceive) is held to its cap (12 s long, 9 s Reels, 6 s Shorts). Over the cap,
+  // in turn: the stay's moments are not stretched; a moment of the story from another region that falls inside the
+  // stay comes in (one card); a stay's moment says one card less; a moment that is not needed is left out. A change is
+  // kept only when the time over the cap shrinks and the length stays in its range.
+  const pc = fx.perceive, DBG = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env?.P4E_DBG;
+  const overOf = (pl: Plan) => {
+    if (!pc) return { sum: 0, runs: [] as { s: number; r: string; at: number }[], cap: 0 };
+    const cap = pc.maxS(pl.seconds) - 0.3, runs = pc.runs(pl.frames.filter((f) => f.phase === 'main').map((f) => ({ t: f.t, rs: pc.seen(f) })));
+    return { sum: runs.reduce((a, x) => a + Math.max(0, x.s - cap), 0), runs, cap };
+  };
+  if (pc) {
+    const lo = Math.min(lim.min, out.seconds) - 0.05, hi = Math.max(lim.max, out.seconds) + 0.05;
+    const regionAt = (st: { min: number; title: string }) => pc.seen({ phase: 'main', beat: 'hold', stop: st.min, m: st.min, title: st.title, cap: '.', t: 0, k: 0, hk: 1 } as VFrame)[0] ?? '';
+    const addCard = (i: number) => {
+      const p = pages[i], tease = p.length > 1 && (p[p.length - 1].startsWith(TEASE_PREFIX) || p[p.length - 1].startsWith(TEASE_PREFIX2));
+      const line = sents[i][used[i]];
+      pages = pages.map((q, k) => (k === i ? (tease ? [...q.slice(0, -1), line, q[q.length - 1]] : [...q, line]) : q)); used = used.map((u, k) => (k === i ? u + 1 : u));
+    };
+    const insert = (c: StopIn) => {
+      const k0 = chosen.findIndex((x) => x.min > c.min), k = k0 < 0 ? chosen.length : k0;
+      chosen = [...chosen.slice(0, k), c, ...chosen.slice(k)]; sents = [...sents.slice(0, k), linesOf(c), ...sents.slice(k)]; used = [...used.slice(0, k), 1, ...used.slice(k)]; pages = [...pages.slice(0, k), linesOf(c).slice(0, 1), ...pages.slice(k)];
+    };
+    // (the time a calm stay gives up goes to more words where the viewer has been least long, not to longer cards: a
+    // moment that is not calm says one more of its cards, or a left-out moment of the story comes back, wherever the
+    // stay it falls in has the most room under the cap; measured on the plan before the change, `base`)
+    // (a moment said in two parts, a few minutes apart, a lull between: its later cards become a moment of their own)
+    const split = (i: number) => {
+      const m = chosen[i].min, d = Math.min(5, ((chosen[i + 1]?.min ?? 1440) - m) / 3), k = Math.ceil(pages[i].length / 2), rest = pages[i].slice(k);
+      if (i <= 0 || pages[i].length < 2 || d < 0.5) return false;
+      const c2: StopIn = { min: Math.round((m + d) * 10) / 10, title: chosen[i].title, text: rest.join(' '), lines: rest };
+      pages = pages.map((p, q) => (q === i ? p.slice(0, k) : p)); used = used.map((u, q) => (q === i ? k : u)); sents = sents.map((x, q) => (q === i ? x.slice(0, k) : x));
+      chosen = [...chosen.slice(0, i + 1), c2, ...chosen.slice(i + 1)]; sents = [...sents.slice(0, i + 1), rest, ...sents.slice(i + 1)]; used = [...used.slice(0, i + 1), rest.length, ...used.slice(i + 1)]; pages = [...pages.slice(0, i + 1), rest, ...pages.slice(i + 1)];
+      lulls.add(c2.min); if (calm.has(m)) calm.add(c2.min);
+      return true;
+    };
+    let bump = 0;
+    const fill = (base: Plan, cap: number) => {
+      const runs = overOf(base).runs;
+      const holdT = (m: number) => base.frames.filter((f) => f.beat === 'hold' && f.stop === m).map((f) => f.t);
+      const lenAt = (m: number, r: string) => { const ts = holdT(m); return ts.length ? Math.max(0, ...runs.filter((x) => x.r === r && x.at <= ts[ts.length - 1] + 1e-6 && x.at + x.s >= ts[0] - 1e-6).map((x) => x.s)) : 0; };
+      const added = new Map<number, number>();
+      for (let g = 0; g < 16 && total(pages) < lim.min + 0.3 + bump; g++) {
+        let best: { slack: number; go: () => void } | null = null;
+        chosen.forEach((c, i) => {
+          if (calm.has(c.min) || used[i] >= sents[i].length) return;
+          const r = regionAt(c), sec = readSeconds(sents[i][used[i]]), slack = cap - lenAt(c.min, r) - (added.get(c.min) ?? 0) - sec;
+          if (slack > 0 && (!best || slack > best.slack)) best = { slack, go: () => { addCard(i); added.set(c.min, (added.get(c.min) ?? 0) + sec); } };
+        });
+        for (const c of story) {
+          if (chosen.some((x) => x.min === c.min) || !linesOf(c).length) continue;
+          const r = regionAt(c);
+          if (!r || r === 'body') continue;
+          const k0 = chosen.findIndex((x) => x.min > c.min), k = k0 < 0 ? chosen.length : k0, nb = [chosen[k - 1], chosen[k]].filter((x): x is StopIn => !!x && regionAt(x) === r);
+          const sec = readSeconds(linesOf(c)[0], true) + MOVE_S, slack = cap - nb.reduce((a, x) => a + lenAt(x.min, r) + (added.get(x.min) ?? 0), 0) - sec;
+          if (slack > 0 && (!best || slack > best.slack)) best = { slack, go: () => { insert(c); added.set(c.min, sec); } };
+        }
+        if (!best) {
+          // (no words left that fit: a glide becomes a lull, the whole body without words, which no stay counts)
+          const gl = chosen.slice(1).map((c) => c.min).filter((m) => !lulls.has(m)); // (never the 24 h glide: the voice has the least left to say there)
+          if (total(pages) + LULL_S - MOVE_S > lim.max) break;
+          // (the glide nearest the middle of the day)
+          if (gl.length) { const mid = toU(chosen[chosen.length - 1].min) / 2; lulls.add([...gl].sort((x, y) => Math.abs(toU(x) - mid) - Math.abs(toU(y) - mid))[0]); continue; }
+          // (and no glide left: the longest moment is said in two parts with a lull between)
+          const i = chosen.map((_s, k) => k).filter((k) => k > 0 && pages[k].length >= 2 && Math.min(5, ((chosen[k + 1]?.min ?? 1440) - chosen[k].min) / 3) >= 0.5).sort((x, y) => pages[y].length - pages[x].length)[0];
+          if (i === undefined || !split(i)) break;
+          continue;
+        }
+        (best as { go: () => void }).go();
+      }
+    };
+    // (a card a moment may give up: never its safety cards (SAFETY) or a tease, never the first card of the start, the
+    // peak, the payoff or a moment whose must-cards are not all safety cards; -1 = none)
+    const spare = (i: number) => {
+      const p = pages[i], c = chosen[i], keep0 = i === 0 || c.min === peakMin || c.min === payoffMin || !p.some((x) => SAFETY.test(x));
+      for (let j = p.length - 1; j >= 0; j--) {
+        if (SAFETY.test(p[j]) || ((p[j].startsWith(TEASE_PREFIX) || p[j].startsWith(TEASE_PREFIX2)) && p.length - 1 > j)) continue; // (a tease may go only as the moment's last card)
+        if (j === 0 && (keep0 || p.length < 2)) continue;
+        if (j > 0 && j < Math.max(i === 0 ? first1() : 1, mustOf(c)) && !p.slice(0, j + 1).some((x) => SAFETY.test(x))) continue;
+        return j;
+      }
+      return -1;
+    };
+    const dropCard = (i: number, j: number) => { pages = pages.map((p, k) => (k === i ? p.filter((_x, q) => q !== j) : p)); used = used.map((u, k) => (k === i ? Math.min(u, pages[i].length) : u)); };
+    const dropStop = (i: number) => { chosen = chosen.filter((_s, k) => k !== i); sents = sents.filter((_s, k) => k !== i); used = used.filter((_s, k) => k !== i); pages = pages.filter((_s, k) => k !== i); };
+    // (too long after a lull: the least telling moment outside the stay goes, else a spare card anywhere)
+    const trim = (avoid: number[]) => {
+      for (let g = 0; g < 8 && total(pages) > lim.max; g++) {
+        // (first a moment whose two neighbours are on different regions, so no two stays join, then a spare card
+        // outside the stay, then any moment outside it, then a spare card of the stay)
+        const joins = (i: number) => !!chosen[i - 1] && !!chosen[i + 1] && regionAt(chosen[i - 1]) === regionAt(chosen[i + 1]);
+        const d = chosen.map((_s, i) => i).filter((i) => i > 0 && !forced(chosen[i]) && !avoid.includes(chosen[i].min) && !joins(i)).sort((x, y) => val(chosen[x]) - val(chosen[y]))[0];
+        if (d !== undefined) { dropStop(d); continue; }
+        const out1 = chosen.map((_s, i) => i).filter((i) => spare(i) >= 0 && !avoid.includes(chosen[i].min)).sort((x, y) => pages[y].length - pages[x].length)[0];
+        if (out1 !== undefined) { dropCard(out1, spare(out1)); continue; }
+        const d2 = chosen.map((_s, i) => i).filter((i) => i > 0 && !forced(chosen[i]) && !avoid.includes(chosen[i].min)).sort((x, y) => val(chosen[x]) - val(chosen[y]))[0];
+        if (d2 !== undefined) { dropStop(d2); continue; }
+        const c = chosen.map((_s, i) => i).filter((i) => spare(i) >= 0).sort((x, y) => pages[y].length - pages[x].length)[0];
+        if (c !== undefined) { dropCard(c, spare(c)); continue; }
+        // (a Short, last: a kept moment that is neither the peak, the payoff nor a safety moment, e.g. the caffeine
+        // moment when the start already said the caffeine)
+        const k = cut === 'short' ? chosen.map((_s, i) => i).filter((i) => i > 0 && !!chosen[i].keep && chosen[i].min !== peakMin && chosen[i].min !== payoffMin && mustOf(chosen[i]) === 0)[0] : undefined; // (inside the stay too: it then gets shorter)
+        if (k === undefined) break;
+        dropStop(k);
+      }
+      return total(pages) <= lim.max + 0.05;
+    };
+    for (let guard = 0; guard < 30; guard++) {
+      const o = overOf(out);
+      if (o.sum <= 1e-6) break;
+      let better = false;
+      for (const w of o.runs.filter((x) => x.s > o.cap).sort((x, y) => y.s - x.s).slice(0, 3)) {
+        // the moments of the stay: some of their frames are seen on its region, inside it
+        const inRun = chosen.map((_s, i) => i).filter((i) => out.frames.some((f) => f.beat === 'hold' && f.stop === chosen[i].min && f.t >= w.at - 1e-6 && f.t <= w.at + w.s + 1e-6 && pc.seen(f).includes(w.r)));
+        const snap = { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], want, pipe }, base = out;
+        const restore = () => { ({ chosen, sents, used, pages, want, pipe } = snap); calm.clear(); for (const m of snap.calm) calm.add(m); lulls.clear(); for (const m of snap.lulls) lulls.add(m); };
+        const inRunMins = inRun.map((i) => chosen[i].min), calmRun = () => { for (const m of inRunMins) calm.add(m); };
+        const tries: (() => boolean)[] = [];
+        // 0) a glide inside the stay becomes a lull (the whole body, no words, REGION_BREAK_S), the middle one first
+        {
+          // (into the stay's later moments, into its first one, out of its last one)
+          const last = chosen[chosen.length - 1], endIn = last && inRunMins.includes(last.min) && last.min < 1440;
+          const li = chosen.findIndex((c) => c.min === inRunMins[inRunMins.length - 1]), after = li >= 0 && li + 1 < chosen.length ? [chosen[li + 1].min] : [];
+          const fi = chosen.findIndex((c) => c.min === inRunMins[0]), into = fi > 0 ? [inRunMins[0]] : [];
+          const gl = [...new Set([...inRunMins.slice(1), ...(endIn ? [1440] : []), ...after, ...into])].filter((m) => !lulls.has(m));
+          const mid = w.at + w.s / 2, tAt = (m: number) => out.frames.find((f) => f.beat === 'glide' && f.stop === m)?.t ?? 0;
+          for (const m of gl.sort((x, y) => Math.abs(tAt(x) - mid) - Math.abs(tAt(y) - mid)).slice(0, 3)) tries.push(() => { lulls.add(m); return trim(inRunMins); }, () => { lulls.add(m); calmRun(); return trim(inRunMins); }, () => { if (pipe === 1) return false; lulls.add(m); pipe = 1; return trim(inRunMins); });
+        }
+        // 0b) the first moment's camera stays on the food pipe (the stay began with the bite reaching the stomach)
+        for (const p of [0, ...PIPE_SHARES]) if (p !== pipe) tries.push(() => { pipe = p; return true; });
+        // 0c) a long moment of the stay is said in two parts, a few minutes apart, with a lull between (its later
+        // cards then speak a few minutes later: never a moment's first card, never the first moment)
+        for (const m of inRunMins) {
+          const i = chosen.findIndex((c) => c.min === m), nx = chosen[i + 1]?.min ?? 1440, d = Math.min(5, (nx - m) / 3);
+          if (i <= 0 || pages[i].length < 2 || d < 0.5) continue;
+          tries.push(() => { if (!split(i)) return false; calmRun(); calm.add(chosen[i + 1].min); return trim([...inRunMins, chosen[i + 1].min]); });
+        }
+        // 1) a moment of another region inside the stay comes in (one card)
+        if (inRun.length >= 2) {
+          const a = chosen[inRun[0]].min, z = chosen[inRun[inRun.length - 1]].min, mid = (toU(a) + toU(z)) / 2;
+          const cands = [...story, ...(pc.extra ?? [])].filter((c) => c.min > a && c.min < z && !chosen.some((x) => x.min === c.min) && linesOf(c).length && regionAt(c) && regionAt(c) !== w.r && regionAt(c) !== 'body')
+            .sort((x, y) => Math.abs(toU(x.min) - mid) - Math.abs(toU(y.min) - mid)).slice(0, 3);
+          const fit = () => {
+            // (too long now: the stay's extra cards go, then its moments that are not needed)
+            for (let g = 0; g < 8 && total(pages) > lim.max; g++) {
+              const run = chosen.map((_s, i) => i).filter((i) => inRunMins.includes(chosen[i].min));
+              const i = run.filter((x) => pages[x].length > Math.max(x === 0 ? first1() : 1, mustOf(chosen[x]))).sort((x, y) => pages[y].length - pages[x].length)[0];
+              if (i !== undefined) { pages = pages.map((p, k) => (k === i ? p.slice(0, -1) : p)); used = used.map((u, k) => (k === i ? Math.min(u, pages[i].length) : u)); continue; }
+              const d = run.filter((x) => x > 0 && !forced(chosen[x])).sort((x, y) => val(chosen[x]) - val(chosen[y]))[0];
+              if (d === undefined) break;
+              chosen = chosen.filter((_s, k) => k !== d); sents = sents.filter((_s, k) => k !== d); used = used.filter((_s, k) => k !== d); pages = pages.filter((_s, k) => k !== d);
+            }
+            return total(pages) <= lim.max;
+          };
+          for (const c of cands) tries.push(() => { insert(c); return fit(); }, () => { insert(c); calmRun(); fill(base, o.cap); return fit(); });
+        }
+        // 2) the stay's moments are not stretched (the time goes to words elsewhere)
+        if (inRun.some((i) => !calm.has(chosen[i].min))) tries.push(() => { calmRun(); fill(base, o.cap); return true; });
+        // 3) a moment of the stay says one card less; 4) a moment of the stay that is not needed is left out
+        for (const i of [...inRun].sort((x, y) => pages[y].length - pages[x].length).slice(0, 3)) tries.push(() => {
+          const j = spare(i);
+          if (j < 0) return false;
+          dropCard(i, j); calmRun(); fill(base, o.cap);
+          return true;
+        });
+        for (const i of [...inRun].filter((x) => x > 0 && !forced(chosen[x])).sort((x, y) => val(chosen[x]) - val(chosen[y])).slice(0, 2)) tries.push(() => {
+          const keep = inRun.filter((j) => j !== i).map((j) => chosen[j].min);
+          chosen = chosen.filter((_s, k) => k !== i); sents = sents.filter((_s, k) => k !== i); used = used.filter((_s, k) => k !== i); pages = pages.filter((_s, k) => k !== i);
+          for (const m of keep) calm.add(m);
+          fill(base, o.cap);
+          return true;
+        });
+        // (every way is tried; the one that leaves the least time over the caps is kept)
+        let best: { sum: number; plan: Plan; st: { chosen: StopIn[]; sents: string[][]; used: number[]; pages: string[][]; calm: number[]; lulls: number[]; want: number; pipe: number } } | null = null;
+        for (const tr of tries) {
+          if (!tr()) { restore(); continue; }
+          let next = relay();
+          // (laid out shorter than its range: more words or lulls, as much as is missing)
+          for (let k = 0; k < 3 && next.seconds < lo; k++) { bump += lo - next.seconds + 0.2; fill(base, o.cap); next = relay(); }
+          bump = 0;
+          const n = overOf(next);
+          if (DBG) console.log(`[p4e] ${cut} worst ${w.r} ${w.s.toFixed(1)}@${w.at.toFixed(1)} try: sum ${o.sum.toFixed(1)} -> ${n.sum.toFixed(1)}, ${next.seconds.toFixed(1)} s [${lo.toFixed(1)}, ${hi.toFixed(1)}] pipe ${pipe} lulls ${[...lulls].join('/')} runs ${n.runs.filter((x) => x.s > n.cap).map((x) => `${x.r}${x.s.toFixed(1)}`).join(',')} ${chosen.map((c, i) => `${c.min}:${pages[i].length}${calm.has(c.min) ? 'c' : ''}`).join(' ')}`);
+          if (n.sum < o.sum - 0.05 && next.seconds >= lo && next.seconds <= hi && (!best || n.sum < best.sum - 1e-6)) best = { sum: n.sum, plan: next, st: { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], want, pipe } };
+          restore();
+          if (best && best.sum <= 1e-6) break;
+        }
+        if (best) {
+          ({ chosen, sents, used, pages, want, pipe } = best.st); calm.clear(); for (const m of best.st.calm) calm.add(m); lulls.clear(); for (const m of best.st.lulls) lulls.add(m);
+          out = best.plan; better = true; break;
+        }
+      }
+      if (!better) break;
+    }
+  }
   // round 15 (critic SA-2: cards held 6-8 s): when the early impact left too few moments for the length, the impact
   // may come a little later (up to PEAK_BY_MAX_S), so the moments before it come back and every card stays short
   const longest = (pl: Plan) => Math.max(0, ...pl.pages.map((pg) => pg.s - readSeconds(pg.text, true)));
   const by0 = fx.peakByS ?? PEAK_BY_S;
   if (isLongish(cut) && (fx.retry ?? 0) < 3 && by0 < PEAK_BY_MAX_S && longest(out) > CARD_MAX_S - 2.4) {
     const alt = planVideo(stopsIn, cut, toU, fromU, { ...fx, peakByS: Math.min(PEAK_BY_MAX_S, by0 + 6), retry: (fx.retry ?? 0) + 1 });
-    if (longest(alt) < longest(out) - 0.2) return alt;
+    if (longest(alt) < longest(out) - 0.2 && overOf(alt).sum <= overOf(out).sum + 1e-6) return alt; // (phase 4e: never a longer perceived stay)
   }
   return out;
 }
@@ -559,7 +783,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
 /** Round 12 (critics 10-29 P1-1, 10-30 P1-6: "We can't tell when you're safe to drive." under ALCOHOL GONE read as a
  *  contradiction): that card's label is "After drinking". */
 const kicker = (title: string | undefined, cap: string | undefined) => (title && cap && /safe to drive/i.test(cap) && /gone/i.test(title) ? 'After drinking' : title);
-function layFrames(stops: { min: number; title?: string; titleB?: string; chip?: string; pages: { cap: string; capB?: string; s: number }[] }[], cut: Cut,
+function layFrames(stops: { min: number; title?: string; titleB?: string; chip?: string; /** phase 4e: the glide into it is not stretched */ calm?: boolean; pages: { cap: string; capB?: string; s: number }[] }[], cut: Cut,
   toU: (m: number) => number, fromU: (u: number) => number, fx: PlanFx = {}): Plan {
   const frames: VFrame[] = [], cues: Cue[] = [], pageList: Page[] = [];
   const F = (s: number) => Math.max(1, Math.round(s * FPS));
@@ -596,19 +820,21 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   // GLIDE: the words of the moment that ends leave (0.25 s), and while the day runs on, a "NEXT" chip names the
   // moment ahead (an open loop, §2.4). Its own words appear only when it is reached, so a card never says "now"
   // before its time.
-  const glide = (from: number, to: number, nextStop: { min: number; title?: string; chip?: string } | null) => {
+  const glide = (from: number, to: number, nextStop: { min: number; title?: string; chip?: string; calm?: boolean } | null) => {
     // (round 14, critic DC-1: a glide is never longer than GLIDE_MAX_S: it is a stretch without words)
     const base = moveS(toU, from, to) * (cut === 'short' ? SHORT_GLIDE_K : 1);
-    const n = F(Math.min(Math.max(GLIDE_MAX_S, base), base * (from >= (fx.peakMin ?? 0) ? fx.glideK ?? 1 : fx.glideK0 ?? 1))), out = F(0.25); // (round 13: only after the impact, which stays early)
+    const lull = !!nextStop && !!fx.lulls?.includes(nextStop.min);
+    const n = lull ? F(Math.max(base, LULL_S)) : F(Math.min(Math.max(GLIDE_MAX_S, base), base * (nextStop?.calm ? 1 : from >= (fx.peakMin ?? 0) ? fx.glideK ?? 1 : fx.glideK0 ?? 1))), out = F(0.25); // (phase 4e: never into a calm moment; a lull lasts LULL_S)
+    const chipFrom = lull ? n - F(LULL_CHIP_S) : 0; // (round 13: only after the impact, which stays early)
     const g0 = frames.length;
     cues.push({ t: tNow(), kind: 'move', data: { v: Math.round(to - from) } }); // (round 9: how much of the day this glide skips, for the sound)
     const chip = !!nextStop?.title && (n / FPS >= NEXT_MIN_S || nextStop.min >= 1440); // (the day's end is always named)
-    if (nextStop && chip) cues.push({ t: tNow() + 0.15, kind: 'next', data: { label: nextStop.title, v: nextStop.min } });
+    if (nextStop && chip) cues.push({ t: tNow() + 0.15 + chipFrom / FPS, kind: 'next', data: { label: nextStop.title, v: nextStop.min } });
     for (let i = 1; i <= n; i++) {
       const m = fromU(toU(from) + (toU(to) - toU(from)) * ease(i / n));
       frames.push({ phase: 'main', m, t: tNow(), cap: prevPage?.cap, capB: prevPage?.capB, title: prevStop?.title, titleB: prevStop?.titleB, capA: 1,
-        plateA: 1 - smooth01(i / out), k: 0, stop: nextStop?.min ?? to, beat: 'glide', from,
-        ...(nextStop?.title && chip ? { next: { min: nextStop.min, title: nextStop.chip ?? nextStop.title } } : {}) });
+        plateA: 1 - smooth01(i / out), k: 0, stop: nextStop?.min ?? to, beat: 'glide', from, ...(lull && i > out && i <= chipFrom ? { lull: true } : {}),
+        ...(nextStop?.title && chip && i > chipFrom ? { next: { min: nextStop.min, title: nextStop.chip ?? nextStop.title } } : {}) });
     }
     return g0;
   };
@@ -625,7 +851,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
       if (tease) cues.push({ t: tNow(), kind: 'next', data: { label: 'tease' } });
       pageList.push({ stop: s.min, text: p.cap, textB: p.capB, s: n / FPS });
       pg++;
-      for (let f = 0; f < n; f++, k++) frames.push({ phase: 'main', m: at(i, k), t: tNow(), cap: p.cap, capB: p.capB, title: kicker(s.title, p.cap), titleB: kicker(s.titleB, p.capB), capA: Math.min(1, (f + 1) / F(READ.fade)), k: 0, stop: s.min, beat: 'hold', hk: k / Math.max(1, holdN(i)), pg: pg + Math.floor(f / PG_N), ...(tease ? { tease: true } : {}) });
+      for (let f = 0; f < n; f++, k++) frames.push({ phase: 'main', m: at(i, k), t: tNow(), cap: p.cap, capB: p.capB, title: kicker(s.title, p.cap), titleB: kicker(s.titleB, p.capB), capA: Math.min(1, (f + 1) / F(READ.fade)), k: 0, stop: s.min, beat: 'hold', hk: k / Math.max(1, holdN(i)), pg: pg + Math.floor(f / PG_N), ...(tease ? { tease: true } : {}), ...(i === 0 && fx.pipe ? { pipe: fx.pipe } : {}) });
       pg += Math.floor((n - 1) / PG_N);
       prevPage = p;
     });
@@ -635,7 +861,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const lastStop = stops[stops.length - 1], last = lastStop?.pages.slice(-1)[0];
   const endsAtDay = (lastStop?.min ?? 0) >= 1440;
   if (!endsAtDay) {
-    const g0 = glide(prevMin, 1440, { min: 1440, title: DAY_END_TITLE }); cues.push({ t: tNow(), kind: 'stop' });
+    const g0 = glide(prevMin, 1440, { min: 1440, title: DAY_END_TITLE, calm: lastStop?.calm }); cues.push({ t: tNow(), kind: 'stop' });
     for (let i = g0; i < frames.length; i++) frames[i].stop = 1440;
   }
   // round 11 (research R1): the payoff beat at +24:00, body in frame: the last words leave for "AFTER 24 HOURS", the

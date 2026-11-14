@@ -1482,64 +1482,85 @@ function endDrift(ctx: CanvasRenderingContext2D, W: number, H: number, tt: numbe
 }
 /** End card over the body: what the day did (the lights come on one by one) and one line to comment on. The hook and
  *  the clock (+24:00) stay at the top; the body stays visible behind the glass. Wording: VIDEO_COPY. */
+/** Phase 4e (critique M-B: beer's end card drew "↻ Now watch the first sip again." over its call to action, and the
+ *  👇 fell onto the next line, over the small print): the end card is laid out before it is drawn, bottom up. The loop
+ *  line sits on the safe frame's bottom, the call to action above it (its 👇 kept on its last word), and the 24 h value,
+ *  the peak, the warning and the lights get only the room left above that: their type gets smaller, then the lights,
+ *  then the small lines are left out; nothing is ever drawn over another line. The tests take the same boxes. */
+export interface OutroText { kind: 'kicker' | 'title' | 'after24' | 'after24s' | 'hero' | 'heros' | 'warn' | 'cta' | 'loop'; lines: string[]; px: number; font: string; color: string; x: number; y: number; lh: number }
+export interface OutroLight { kind: 'light'; y: number; h: number; i: number }
+export interface OutroBox { kind: string; l: number; r: number; t: number; b: number }
+export function layoutBodyOutro(ctx: CanvasRenderingContext2D, o: Overlay, format: Format, topBot: number, short = false): { items: (OutroText | OutroLight)[]; boxes: OutroBox[]; y0: number } {
+  const reel = format === 'reel', S = SAFE[format], L = S.left, RL = S.rightLow;
+  const y0 = topBot + (reel ? 40 : 24);
+  // the bottom block: the loop line on the safe frame's bottom, the call to action above it
+  const loopPx = reel ? 30 : 26, loopY = S.bottom - 8;
+  const loop: OutroText = { kind: 'loop', lines: [fit((ctx.font = `600 ${loopPx}px ${SANS}`, ctx), VIDEO_COPY.loop(o.solid), RL - L)], px: loopPx, font: `600 ${loopPx}px ${SANS}`, color: ACCENT, x: L, y: loopY, lh: loopPx };
+  const ctaText = (o.alcohol || !o.solid ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle).replace(/ (\p{Extended_Pictographic})/u, '\u00a0$1'); // (the 👇 stays on its word)
+  const ctaFont = (px: number) => `700 ${px}px ${SANS}`, cf = fitWrap(ctx, ctaText, RL - L, 2, reel ? 46 : 38, reel ? 30 : 26, ctaFont);
+  const ctaLH = cf.px * 1.16, ctaLast = loopY - loopPx * 0.82 - (reel ? 30 : 22) - cf.px * 0.26;
+  const cta: OutroText = { kind: 'cta', lines: cf.lines, px: cf.px, font: ctaFont(cf.px), color: '#ffffff', x: L, y: ctaLast - (cf.lines.length - 1) * ctaLH, lh: ctaLH };
+  const ctaTop = cta.y - cf.px * 0.86, limit = ctaTop - (reel ? 22 : 16);
+  const bac = SHOWS_BAC.test(`${o.hero?.big ?? ''} ${o.hero?.small ?? ''} ${o.after24?.big ?? ''} ${o.after24?.small ?? ''}`);
+  // the top block at a type scale k, with or without its small lines
+  const top = (k: number, smalls: boolean) => {
+    const out: OutroText[] = [], sz = (n: number) => Math.round(n * k);
+    let y = y0 + (reel ? 40 : 30);
+    out.push({ kind: 'kicker', lines: ['AFTER 24 HOURS'], px: reel ? 30 : 26, font: `700 ${reel ? 30 : 26}px ${SANS}`, color: ACCENT, x: L, y, lh: 30 });
+    const t = fitWrap(ctx, o.title, S.right - L, 2, sz(reel ? 64 : 52), sz(40), (px) => `400 ${px}px ${SERIF}`);
+    out.push({ kind: 'title', lines: t.lines, px: t.px, font: `400 ${t.px}px ${SERIF}`, color: '#ffffff', x: L, y: y + 12 + t.px * 0.9, lh: t.px * 1.02 });
+    y += 12 + t.px * 0.9 + (t.lines.length - 1) * t.px * 1.02 + (reel ? 24 : 16);
+    const block = (kind: OutroText['kind'], s: string, max: number, min: number, weight: number, color: string, lhK: number, after: number) => {
+      const f = fitWrap(ctx, s, RL - L, 2, sz(max), sz(min), (px) => `${weight} ${px}px ${SANS}`);
+      out.push({ kind, lines: f.lines, px: f.px, font: `${weight} ${f.px}px ${SANS}`, color, x: L, y: y + f.px * 0.9, lh: f.px * lhK });
+      y += f.px * 0.9 + (f.lines.length - 1) * f.px * lhK + after;
+    };
+    // (phase 4b, M2: the value AT 24 h first, under its heading; the climax follows, called the peak)
+    if (o.after24) {
+      block('after24', o.after24.big, reel ? 40 : 34, 24, 800, '#ffffff', 1.08, o.after24.small && smalls ? 10 : reel ? 18 : 12);
+      if (o.after24.small && smalls) block('after24s', o.after24.small, reel ? 26 : 22, 18, 600, '#e6edf5', 1.15, reel ? 18 : 12);
+    }
+    if (o.hero) {
+      block('hero', o.after24 ? `Peak: ${o.hero.big}` : o.hero.big, reel ? (o.after24 ? 32 : 40) : (o.after24 ? 28 : 34), 22, 800, '#ffd27a', 1.08, smalls || bac ? 10 : reel ? 24 : 16);
+      // (a BAC number keeps its body and limits on the card, B1: never left out)
+      if (smalls || SHOWS_BAC.test(o.hero.small)) block('heros', o.hero.small, reel ? 26 : 22, 18, 600, '#e6edf5', 1.15, reel ? 24 : 16);
+    }
+    // (phase 4b, B1: any blood alcohol number on the card carries the warning, on the same card)
+    if (bac) block('warn', DRIVE_WARN, reel ? 28 : 24, 20, 700, WARN_COL, 1.15, reel ? 22 : 14);
+    return { out, y };
+  };
+  let tb = top(1, true);
+  for (const [k, sm] of [[0.92, true], [0.84, true], [0.84, false], [0.76, false]] as const) { if (tb.y <= limit) break; tb = top(k, sm); }
+  // the lights in the room that is left (none when there is none; the rows that flagged something first)
+  const room = limit - tb.y, RMIN = reel ? 50 : 44;
+  const rows = short ? 0 : Math.max(0, Math.min(o.summary.length, Math.floor(room / RMIN)));
+  const rh = rows ? Math.max(RMIN, Math.min(reel ? 92 : 78, room / rows)) : 0;
+  const order = rows >= o.summary.length ? o.summary.map((_l, i) => i) : o.summary.map((l, i) => ({ l, i })).sort((a, b) => (b.l.unknown ? -1 : b.l.level) - (a.l.unknown ? -1 : a.l.level)).slice(0, rows).map((x) => x.i);
+  const lights: OutroLight[] = order.map((i, k) => ({ kind: 'light', y: tb.y + k * rh, h: rh - 10, i }));
+  const items: (OutroText | OutroLight)[] = [...tb.out, ...lights, cta, loop];
+  const boxes: OutroBox[] = items.map((it) => {
+    if (it.kind === 'light') return { kind: 'light', l: L, r: RL, t: it.y, b: it.y + it.h };
+    ctx.font = it.font;
+    const w = Math.max(...it.lines.map((ln) => ctx.measureText(ln).width));
+    return { kind: it.kind, l: it.x, r: it.x + w, t: it.y - it.px * 0.86, b: it.y + (it.lines.length - 1) * it.lh + it.px * 0.26 };
+  });
+  return { items, boxes, y0 };
+}
 function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overlay, alpha: number, format: Format, topBot: number, tt = 9, short = false) {
   if (alpha <= 0.001) return;
   const reel = format === 'reel', S = SAFE[format], L = S.left, RL = S.rightLow;
   ctx.save(); ctx.globalAlpha = alpha;
   endDrift(ctx, W, H, tt);
-  const y0 = topBot + (reel ? 40 : 24);
+  const lay = layoutBodyOutro(ctx, o, format, topBot, short), y0 = lay.y0;
   const g = ctx.createLinearGradient(0, y0 - 60, 0, y0 + 40);
   g.addColorStop(0, 'rgba(4,7,12,0)'); g.addColorStop(1, 'rgba(4,7,12,.86)');
   ctx.fillStyle = g; ctx.fillRect(0, y0 - 60, W, 100); ctx.fillStyle = 'rgba(4,7,12,.86)'; ctx.fillRect(0, y0 + 40, W, H - y0 - 40);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  let y = y0 + (reel ? 40 : 30);
-  ctx.fillStyle = ACCENT; ctx.font = `700 ${reel ? 30 : 26}px ${SANS}`; text(ctx, 'AFTER 24 HOURS', L, y);
-  const t = fitWrap(ctx, o.title, S.right - L, 2, reel ? 64 : 52, 40, (px) => `400 ${px}px ${SERIF}`);
-  ctx.fillStyle = '#ffffff'; ctx.font = `400 ${t.px}px ${SERIF}`;
-  t.lines.forEach((ln, i) => text(ctx, ln, L, y + 12 + t.px * 0.9 + i * t.px * 1.02));
-  y += 12 + t.px * 0.9 + (t.lines.length - 1) * t.px * 1.02 + (reel ? 24 : 16);
-  // phase 4b (critique M2: "AFTER 24 HOURS / 58 mg caffeine · 45 min in" read as 58 mg left after a day): the value AT
-  // 24 h comes first, under its heading; the climax follows, called the peak
-  if (o.after24) {
-    const ab = fitWrap(ctx, o.after24.big, RL - L, 2, reel ? 40 : 34, 24, (px) => `800 ${px}px ${SANS}`);
-    ctx.fillStyle = '#ffffff'; ctx.font = `800 ${ab.px}px ${SANS}`;
-    ab.lines.forEach((ln, i) => text(ctx, ln, L, y + ab.px * 0.9 + i * ab.px * 1.08));
-    y += ab.px * 0.9 + (ab.lines.length - 1) * ab.px * 1.08 + 10;
-    if (o.after24.small) {
-      const as = fitWrap(ctx, o.after24.small, RL - L, 2, reel ? 26 : 22, 18, (px) => `600 ${px}px ${SANS}`);
-      ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${as.px}px ${SANS}`; as.lines.forEach((ln, i) => text(ctx, ln, L, y + as.px * 0.9 + i * as.px * 1.15));
-      y += as.px * 0.9 + (as.lines.length - 1) * as.px * 1.15 + (reel ? 18 : 12);
-    }
-  }
-  // round 14 (critic G-3): one highlighted number above the lights, the climax as the gauge showed it
-  if (o.hero) {
-    const hb = fitWrap(ctx, o.after24 ? `Peak: ${o.hero.big}` : o.hero.big, RL - L, 2, reel ? (o.after24 ? 32 : 40) : (o.after24 ? 28 : 34), 22, (px) => `800 ${px}px ${SANS}`);
-    ctx.fillStyle = '#ffd27a'; ctx.font = `800 ${hb.px}px ${SANS}`; hb.lines.forEach((ln, i) => text(ctx, ln, L, y + hb.px * 0.9 + i * hb.px * 1.08));
-    y += hb.px * 0.9 + (hb.lines.length - 1) * hb.px * 1.08 + 10;
-    const hs = fitWrap(ctx, o.hero.small, RL - L, 2, reel ? 26 : 22, 18, (px) => `600 ${px}px ${SANS}`);
-    ctx.fillStyle = '#e6edf5'; ctx.font = `600 ${hs.px}px ${SANS}`; hs.lines.forEach((ln, i) => text(ctx, ln, L, y + hs.px * 0.9 + i * hs.px * 1.15));
-    y += hs.px * 0.9 + (hs.lines.length - 1) * hs.px * 1.15 + (reel ? 24 : 16);
-  }
-  // (phase 4b, critique B1: the end card repeated "BAC 0.012–0.031 %" with no warning): any blood alcohol number on it
-  // carries the warning, on the same card
-  if (SHOWS_BAC.test(`${o.hero?.big ?? ''} ${o.hero?.small ?? ''} ${o.after24?.big ?? ''} ${o.after24?.small ?? ''}`)) {
-    const wl = fitWrap(ctx, DRIVE_WARN, RL - L, 2, reel ? 28 : 24, 20, (px) => `700 ${px}px ${SANS}`);
-    ctx.fillStyle = WARN_COL; ctx.font = `700 ${wl.px}px ${SANS}`; wl.lines.forEach((ln, i) => text(ctx, ln, L, y + wl.px * 0.9 + i * wl.px * 1.15));
-    y += wl.px * 0.9 + (wl.lines.length - 1) * wl.px * 1.15 + (reel ? 22 : 14);
-  }
-  // (phase 4b: the 24 h line, the peak and the warning take room: the light rows get smaller, and when even that does
-  // not fit, the rows that flagged something come first and the rest are left out, never drawn over the call to action)
-  const room = S.bottom - y - (reel ? 150 : 120), RMIN = reel ? 50 : 44;
-  const rows = short ? 0 : Math.max(1, Math.min(o.summary.length, Math.floor(room / RMIN)));
-  const rh = rows ? Math.max(RMIN, Math.min(reel ? 92 : 78, room / rows)) : 0;
-  const shownRows = rows >= o.summary.length ? o.summary : [...o.summary].sort((a, b) => (b.unknown ? -1 : b.level) - (a.unknown ? -1 : a.level)).slice(0, rows);
-  shownRows.forEach((l, i) => {
-    // each light comes on in turn (with its blip, video-plan 'lights' cues), a small pop
-    const k = 1; // (round 11: the lights came on in the 24 h beat, with the body in frame)
-    if (k <= 0.01 || short) return;
-    const ry = y + i * rh, hh = rh - 10, pop = 1 + 0.08 * Math.sin(Math.PI * k);
-    ctx.save(); ctx.globalAlpha *= k;
-    ctx.translate(L + (RL - L) / 2, ry + hh / 2); ctx.scale(pop, pop); ctx.translate(-(L + (RL - L) / 2), -(ry + hh / 2));
+  for (const it of lay.items) {
+    if (it.kind !== 'light') { ctx.fillStyle = it.color; ctx.font = it.font; it.lines.forEach((ln, i) => text(ctx, ln, it.x, it.y + i * it.lh)); continue; }
+    // each light row (round 11: the lights came on in the 24 h beat, with the body in frame)
+    const l = o.summary[it.i], ry = it.y, hh = it.h;
+    ctx.save();
     ctx.fillStyle = 'rgba(16,28,44,.92)'; roundRect(ctx, L, ry, RL - L, hh, 18); ctx.fill();
     const r = Math.min(24, hh * 0.32);
     ctx.fillStyle = lightCol(l); ctx.beginPath(); ctx.arc(L + 18 + r, ry + hh / 2, r, 0, Math.PI * 2); ctx.fill();
@@ -1549,14 +1570,7 @@ function drawBodyOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: O
     ctx.fillStyle = '#e6edf5'; ctx.font = `700 ${lf}px ${SANS}`; text(ctx, shrink(ctx, l.label, tw, 14), tx, ry + hh * 0.44);
     ctx.fillStyle = lightCol(l); ctx.font = `600 ${nf}px ${SANS}`; text(ctx, shrink(ctx, l.note, tw, 13), tx, ry + hh * 0.86);
     ctx.restore();
-  });
-  y += rows * rh + (reel ? 18 : 12);
-  const cta = fitWrap(ctx, o.alcohol || !o.solid ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle, RL - L, /* (round 13: a drink asks for the next drink) */ 2, reel ? 46 : 38, 32, (px) => `700 ${px}px ${SANS}`);
-  ctx.fillStyle = '#ffffff'; ctx.font = `700 ${cta.px}px ${SANS}`;
-  cta.lines.forEach((ln, i) => text(ctx, ln, L, y + cta.px * 0.9 + i * cta.px * 1.16));
-  y += cta.px * 0.9 + (cta.lines.length - 1) * cta.px * 1.16 + (reel ? 44 : 36);
-  ctx.fillStyle = ACCENT; ctx.font = `600 ${reel ? 30 : 26}px ${SANS}`;
-  text(ctx, fit(ctx, VIDEO_COPY.loop(o.solid), RL - L), L, Math.min(y, S.bottom - 8)); // (round 11: the loop, not "follow": the handle is at the top)
+  }
   ctx.restore(); ctx.textAlign = 'left';
 }
 

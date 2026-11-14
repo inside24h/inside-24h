@@ -229,7 +229,8 @@ export function organKey(fr: ShotFrame, chapters: { min: number; title: string; 
 /** The regions of the body the camera can stay on (organs that sit together and read as one place on a phone). */
 export const REGION: Record<string, string> = {
   brain: 'head', tongue: 'head', esophagus: 'chest', heart: 'chest', aorta: 'chest', lung_l: 'chest', lung_r: 'chest',
-  stomach: 'upper', liver: 'upper', pancreas: 'upper', duodenum: 'upper', gallbladder: 'upper', portal_vein: 'upper', vena_cava: 'upper',
+  stomach: 'upper', pancreas: 'upper', duodenum: 'upper', // (phase 4e: the liver, on the body's right, is a place of its own)
+  liver: 'liver', gallbladder: 'liver', portal_vein: 'liver', vena_cava: 'liver',
   jejunum: 'small', ileum: 'small', cecum: 'large', colon_asc: 'large', colon_trans: 'large', colon_desc: 'large', rectum: 'large',
   kidney_l: 'urinary', kidney_r: 'urinary', bladder: 'urinary',
 };
@@ -239,6 +240,68 @@ export const regionOf = (organs: readonly string[]): string => (organs.length ? 
 export const REGION_BREAK_S = 2.5;
 /** The longest stay on one region: ~12 s in the long cut, less in Reels (medium) and Shorts, by the video's length. */
 export const regionMaxS = (seconds: number) => (seconds > 56 ? 12 : seconds > 33 ? 9 : 6);
+// ---- Phase 4e (2026-11-14, critique: the planner's metric said lentils stayed 9.9 s on one region, the viewer saw the
+// large intestine for 27 s and pizza's stomach / pancreas for ~28 s). The whole-body beats changed only the zoom: the
+// card on screen and the organ lit for it stayed the same. A stay is now measured on what the viewer perceives: the
+// card's topic (the organs its title names, else its chapter's organ: the organ lit as the card's) joined by the
+// region the camera frames; a frame is on every one of those regions, and a stay ends only once the viewer has been
+// elsewhere on all of them for REGION_BREAK_S. ----
+/** The region of the card a frame shows ('' = no card: the opening, the end card; 'body' = a card about no organ). */
+/** Phase 4e: a card that is about the person, not an organ ("Don't drive after drinking."): it names no place, the
+ *  camera films the whole body (the card's organs kept in the safe frame) and no organ is lit for it. A lull (a
+ *  wordless whole-body glide, video-plan) is quiet as well. */
+/** Phase 4e: with `pipe` (a frame's share of its first moment, set by the planner), the first moment reaches the
+ *  stomach there instead of at 0.55: the planner's choices. */
+export const PIPE_TO = [0.7, 0.8, 0.86, 0.92, 1] as const;
+/** With `pipe` 1 the first moment never reaches the stomach (the glide does) and stays a little longer in the mouth. */
+export const PIPE_HEAD_S = 0.36;
+export const SAFETY_CARD = /breath test|\bdrive\b/i;
+export const quietFrame = (fr: { beat?: string; cap?: string; lull?: boolean } | null | undefined) => !!fr && (!!fr.lull || ((fr.beat === 'hold' || fr.beat === 'hook') && !!fr.cap && SAFETY_CARD.test(fr.cap)));
+/** In a glide the card has left and the NEXT chip names the moment ahead: that moment is the topic. */
+export function topicRegion(fr: ShotFrame & { hk?: number; pipe?: number; next?: { min: number; title: string } }, chapters: { min: number; title: string; focus?: string | null }[]): string {
+  if (fr.phase !== 'main' || fr.beat === 'teaser' || fr.beat === 'rewind' || fr.beat === 'end') return ''; // (the 24 h beat draws no card: plateA 0)
+  // (the first bite / sip names no organ: the food is followed down, mouth, food pipe, stomach, and lit where it is)
+  if ((fr.stop ?? 0) === 0 && (fr.beat === 'hold' || fr.beat === 'hook')) return frameRegion(fr, chapters);
+  if (quietFrame(fr)) return '';
+  const title = fr.beat === 'glide' ? fr.next?.title : fr.cap ? fr.title : undefined, stop = fr.beat === 'glide' ? fr.next?.min : fr.stop;
+  if (!title) return '';
+  // (a NEXT chip that is no moment of the story, "24 hours later" after a drink, names no organ)
+  if (fr.beat === 'glide' && !chapters.some((c) => c.title === title)) { const o = beatOrgans(title, null).organs; return o.length ? regionOf(o) : ''; }
+  const ch = beatChapter(chapters, { stop, m: stop ?? fr.m ?? 0, title });
+  return regionOf(beatOrgans(title, ch.focus).organs);
+}
+/** What a frame is seen to be about: its card's region and the region the camera frames ('body' / '' are no place). */
+export interface Seen { t: number; rs: string[] }
+/** The planner's view of a single video's frame (video-plan, before the camera is planned): the card's region and the
+ *  region the camera is on as shotOf films it without its whole-body beats (the first bite follows the food down; a
+ *  short glide stays on the moment that ends; the 24 h beat is wide). Never shorter a stay than the real camera's. */
+export function seenOf(fr: ShotFrame & { hk?: number; lull?: boolean; pipe?: number; next?: { min: number; title: string } }, chapters: { min: number; title: string; focus?: string | null }[]): string[] {
+  if (fr.phase !== 'main' || fr.beat === 'end') return [];
+  const topic = topicRegion(fr, chapters);
+  const cam = fr.beat === 'end' || quietFrame(fr) ? '' : fr.beat === 'glide' && (fr.stop ?? 0) - (fr.from ?? 0) > 120 ? '' : frameRegion(fr, chapters);
+  return cam && cam !== topic ? [topic, cam] : [topic];
+}
+/** The longest perceived stay on one region: from the first to the last frame on it, a time elsewhere shorter than
+ *  REGION_BREAK_S joined in. */
+export function perceivedStay(seq: readonly Seen[], dt = 1 / 30): { s: number; r: string; at: number } {
+  return perceivedRuns(seq, dt).reduce((b, x) => (x.s > b.s ? x : b), { s: 0, r: '', at: 0 });
+}
+/** Every perceived stay (see perceivedStay), in no particular order. */
+export function perceivedRuns(seq: readonly Seen[], dt = 1 / 30): { s: number; r: string; at: number }[] {
+  const open = new Map<string, { a: number; z: number }>(), runs: { s: number; r: string; at: number }[] = [];
+  const close = (r: string, x: { a: number; z: number }) => { runs.push({ s: x.z + dt - x.a, r, at: x.a }); };
+  for (const { t, rs } of seq) {
+    for (const r0 of rs) {
+      const r = r0.split(':')[0];
+      if (!r || r === 'body' || r === '?') continue;
+      const x = open.get(r);
+      if (x && t - x.z - dt < REGION_BREAK_S - 1e-6) x.z = t;
+      else { if (x) close(r, x); open.set(r, { a: t, z: t }); }
+    }
+  }
+  for (const [r, x] of open) close(r, x);
+  return runs;
+}
 /** Whole-body framing whose organs (the card's) sit inside the reel's safe frame: the picture's height grows from
  *  the whole-body shot's until both fit (head to bladder in the picture, the organs between the headline and the
  *  caption). Fractions of the picture from the top: the safe frame (ORGAN_SAFE.reel, with a margin) and the body. */
@@ -257,8 +320,8 @@ function bodyPose(focus: readonly string[]): Pose {
 /** The region a frame is filmed on ('' = none: the cold open, the end). */
 const regionKey = (k: string) => (k ? regionOf(k.split('+')) : '');
 /** The region shotOf films a frame on: the first sip / bite follows the food down (mouth, food pipe, stomach). */
-const frameRegion = (f: ShotFrame & { hk?: number }, chapters: { min: number; title: string; focus?: string | null }[]) =>
-  (f.stop ?? 0) === 0 && (f.beat === 'hook' || f.beat === 'hold') && f.phase !== 'outro' ? ((f.hk ?? 0) < 0.28 ? 'head' : (f.hk ?? 0) < 0.55 ? 'chest' : 'upper') : regionKey(organKey(f, chapters));
+const frameRegion = (f: ShotFrame & { hk?: number; pipe?: number }, chapters: { min: number; title: string; focus?: string | null }[]) =>
+  (f.stop ?? 0) === 0 && (f.beat === 'hook' || f.beat === 'hold') && f.phase !== 'outro' ? ((f.hk ?? 0) < (f.pipe === 1 ? PIPE_HEAD_S : 0.28) ? 'head' : (f.hk ?? 0) < (f.pipe || 0.55) ? 'chest' : 'upper') : regionKey(organKey(f, chapters));
 /** Phase 4c: the whole-body beats that keep every stay on one region under regionMaxS. `inView(t)`: the planned
  *  whole-body shots already there. Candidate cut points: a glide's start, a new card, a reframe of a long one. */
 function regionBreaks(frames: ShotFrame[], chapters: { min: number; title: string; focus?: string | null }[], wide: [number, number][]): [number, number][] {
@@ -357,7 +420,7 @@ function camPlanBase(frames: { beat?: string; stop?: number; from?: number; t: n
   return { style, wide: [[pick.t0, Math.min(pick.t0 + Math.max(pick.s, ORIENT_S), pick.t0 + pick.s + ORIENT_SPILL_S)]] };
 }
 
-type FrameLike = { beat?: string; phase?: string; t: number; stop?: number; from?: number; hk?: number; pg?: number };
+type FrameLike = { beat?: string; phase?: string; t: number; stop?: number; from?: number; hk?: number; pg?: number; lull?: boolean; pipe?: number; cap?: string };
 /** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end.
  *  (Moved from AppV4, 2026-11-13; `cam`: the video's CamPlan, phase 4.) */
@@ -369,7 +432,9 @@ export function shotOf(fr: FrameLike | null | undefined, beat: (string | null | 
   // the first sip / bite: follow it down, mouth → food pipe → stomach (the hook is the first part of it)
   if ((fr.stop ?? 0) === 0 && (fr.beat === 'hook' || fr.beat === 'hold')) {
     const h = fr.hk ?? 0;
-    return h < 0.28 ? { focus: ['tongue'], zoom: 'mid' } : { focus: [h < 0.55 ? 'esophagus' : 'stomach'], zoom: union ? 'mid' : 'close', tight: Math.max(0, (h - 0.55) / 0.45) };
+    // (phase 4e: `pipe`: the planner keeps the first moment longer on the food pipe, the stomach comes at its end)
+    const s0 = fr.pipe || 0.55, h0 = fr.pipe === 1 ? PIPE_HEAD_S : 0.28;
+    return h < h0 ? { focus: ['tongue'], zoom: 'mid' } : { focus: [h < s0 ? 'esophagus' : 'stomach'], zoom: union ? 'mid' : 'close', tight: Math.max(0, (h - s0) / (1 - s0)) };
   }
   // the moment's organs (named by its card, else its chapter's); where the drink is joins them only when it is close
   // to every one of them (phase 4: "close by" was 22 cm from the first one, which pushed beer's kidneys out of the
@@ -379,8 +444,10 @@ export function shotOf(fr: FrameLike | null | undefined, beat: (string | null | 
   // phase 4: the glide swings round the body a little (the class's arc, its side turning with each moment), and one
   // glide per video pulls back to the whole body for orientation
   const arc = cam ? cam.style.arc * (Math.round(fr.stop ?? 0) % 2 ? 1 : -1) : 0;
-  if (cam?.wide.some(([a, b]) => fr.t >= a - 1e-6 && fr.t < b)) return { focus: [], zoom: 'wide', yaw: fr.beat === 'glide' ? arc : 0 };
-  // phase 4c: a whole-body beat that breaks a long stay on one region (the card's organs stay in the safe frame, lit)
+  if (fr.lull || cam?.wide.some(([a, b]) => fr.t >= a - 1e-6 && fr.t < b)) return { focus: [], zoom: 'wide', yaw: fr.beat === 'glide' ? arc : 0 }; // (phase 4e: a lull is filmed whole-body)
+  // phase 4c: a whole-body beat that breaks a long stay on one region (the card's organs stay in the safe frame, lit);
+  // phase 4e: a card about the person ("Don't drive after drinking."), filmed the same way
+  if ((fr.stop ?? 0) > 0 && quietFrame(fr)) return { focus: [...new Set(known)], zoom: 'body', yaw: 0 };
   if (cam?.body?.some(([a, b]) => fr.t >= a - 1e-6 && fr.t < b)) return { focus: [...new Set(known)], zoom: 'body', yaw: fr.beat === 'glide' ? arc : 0 };
   if (fr.beat === 'glide') {
     return { focus: [...new Set(focus)], zoom: union || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid', yaw: arc };

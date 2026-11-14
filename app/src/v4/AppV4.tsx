@@ -44,12 +44,12 @@ import { captionOf } from './caption-text'; // (the calm bar needs it on the fir
 type VideoKit = typeof import('./video-kit');
 let narrationFor!: VideoKit['narrationFor'], arcFor!: VideoKit['arcFor'], compareDiffs!: VideoKit['compareDiffs'], compareFacts!: VideoKit['compareFacts'], factInOf!: VideoKit['factInOf'], factLines!: VideoKit['factLines'];
 let canEncode!: VideoKit['canEncode'], composeCmpFrame!: VideoKit['composeCmpFrame'], composeCover!: VideoKit['composeCover'], composeFrame!: VideoKit['composeFrame'], recordCompare!: VideoKit['recordCompare'], stampFor!: VideoKit['stampFor'], record!: VideoKit['record'], recordFrames!: VideoKit['recordFrames'], saveFile!: VideoKit['saveFile'], SIZE!: VideoKit['SIZE'], VIDEO_COPY!: VideoKit['VIDEO_COPY'], videoSupportHere!: VideoKit['videoSupportHere'];
-let planVideo!: VideoKit['planVideo'];
-let after24Of!: VideoKit['after24Of'], beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], heroOf!: VideoKit['heroOf'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
+// (phase 4e: the single video is planned with singlePlan, the same call as the audit)
+let endCardOf!: VideoKit['endCardOf'], beatCtx!: VideoKit['beatCtx'], CMP_SHORT!: VideoKit['CMP_SHORT'], CMP_STOPS!: VideoKit['CMP_STOPS'], cmpName!: VideoKit['cmpName'], applyHook!: VideoKit['applyHook'], climaxFx!: VideoKit['climaxFx'], servingAmount!: VideoKit['servingAmount'], comparePlan!: VideoKit['comparePlan'], decafOf!: VideoKit['decafOf'], gaugesAt!: VideoKit['gaugesAt'], payoffMinOf!: VideoKit['payoffMinOf'], plainLatin!: VideoKit['plainLatin'], shortName!: VideoKit['shortName'], singlePlan!: VideoKit['singlePlan'], singleStops!: VideoKit['singleStops'], surgeOf!: VideoKit['surgeOf'], surpriseOf!: VideoKit['surpriseOf'];
 let compareHookB!: VideoKit['compareHookB'], hookB!: VideoKit['hookB'], hookFor!: VideoKit['hookFor'], hookForCompare!: VideoKit['hookForCompare'], seedOf!: VideoKit['seedOf'];
 let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor'], PLATFORM_CUT!: VideoKit['PLATFORM_CUT'], PLATFORM_LABEL!: VideoKit['PLATFORM_LABEL'], PLATFORM_LENGTH!: VideoKit['PLATFORM_LENGTH'], PLATFORMS!: VideoKit['PLATFORMS'];
 let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
-let beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
+let quietFrame!: VideoKit['quietFrame'], beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
 let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
@@ -57,8 +57,8 @@ let kitP: Promise<void> | null = null;
 /** Loads the video engine once (later calls share the same promise; a failed load is tried again next time). */
 const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((k) => {
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
-    planVideo, after24Of, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singleStops, surgeOf, surpriseOf,
-    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
+    endCardOf, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf,
+    compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, quietFrame, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
     bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
@@ -625,7 +625,7 @@ export default function AppV4() {
     : share?.state === 'rec' && reelStops.current ? reelStops.current.find((x) => x >= minute - 0.01) ?? 1440 : minute;
   const recChapter = story.chapters.reduce((acc, c) => (recStop + 1e-6 >= c.min ? c : acc), story.chapters[0]);
   // while the video is made: the organs at work light up, the rest dims (video-body.ts)
-  const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), recChapter.focus, peakNow !== null, cardNamed(recFr.current)) : null; // (phase 4b, B2: the organ the card names is lit)
+  const vGlow = share?.state === 'rec' && !cmpOn.current ? bodyGlowAt(built, Math.min(1440, minute), quietFrame(recFr.current) ? null : recChapter.focus, peakNow !== null, cardNamed(recFr.current)) : null; // (phase 4b, B2: the organ the card names is lit)
   const hookIn = !kitReady ? null : { name: shortName(videoName), chapters: story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })),
     alcohol: (built.alcoholG ?? 0) > 1, caffeine: built.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: built.energy.total,
     pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
@@ -671,8 +671,9 @@ export default function AppV4() {
     ...lifeOf(PRODUCT.name, built, minute, gaugesAt(built, Math.min(1440, minute), profile.glucoseUnit, peakNow !== null)),
     solid: /bite/i.test(story.chapters[0]?.title ?? ''),
     // round 14 (critic G-3): the end card's hero number, the main gauge at the video's climax (the same numbers)
-    hero: heroOf(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), profile.glucoseUnit, hookNow), // (round 17: one source, video-story heroOf)
-    after24: after24Of(built, peakNow !== null), // (phase 4b, M2: the value at 24 h under "AFTER 24 HOURS")
+    // (round 17: one source, video-story heroOf; phase 4b, M2: the value at 24 h under "AFTER 24 HOURS"; phase 4e: both
+    // answer the hook's own question, video-story endCardOf)
+    ...(() => { const e = endCardOf(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), profile.glucoseUnit, hookNow); return { hero: e.hero, after24: e.after24 }; })(),
     summary: systems.map((s) => {
       const at0 = worstMoment(s), lvl = s.levels[at0] as 0 | 1 | 2;
       // plain words (round 4); round 5: the time as on the video's clock ("at +0:20"), never a bare "13:13"; not tracked = grey
@@ -922,7 +923,7 @@ export default function AppV4() {
     const payoff = payoffMinOf(stops, hookNow);
     const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
-    const plan = planVideo(stops, vidCut, uFromMinutes, minutesFromU, fx);
+    const plan = singlePlan(stops, vidCut, fx, story.chapters, built); // (phase 4e: the same planner call as the audit, perceived stays capped)
     reelStops.current = plan.stops;
     if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
     return plan;

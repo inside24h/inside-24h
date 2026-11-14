@@ -235,7 +235,7 @@ export interface CardSpan { t0: number; t1: number; a: string; b: string; title:
 export function cardSpans(frames: NonNullable<NarrIn['plan']['frames']>): CardSpan[] {
   const out: CardSpan[] = [];
   for (const f of frames) {
-    if (f.phase !== 'main') continue;
+    if (f.phase !== 'main' || (f as { lull?: boolean }).lull) continue; // (phase 4e: a lull shows no card)
     const a = (f.cap ?? '').trim(), b = (f.capB ?? '').trim();
     if (!a && !b) continue;
     const l = out[out.length - 1];

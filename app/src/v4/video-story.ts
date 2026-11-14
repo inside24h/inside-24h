@@ -5,10 +5,10 @@ import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
 import { beatLines, eventMin, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
-import { seedOf } from './video-hook';
-import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind } from './video-plan';
-import { bacPlain, DEFAULT_BAC_BODY, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, whereCard, whereGauge, type BuiltLike } from './video-body';
-import { REGION } from './video-cam';
+import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
+import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
+import { bacPlain, cardNamed, DEFAULT_BAC_BODY, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, whereCard, whereGauge, type BuiltLike } from './video-body';
+import { perceivedRuns, quietFrame, REGION, regionMaxS, seenOf } from './video-cam';
 import { at as atMin } from '../science/espressoSim';
 import { ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
@@ -151,6 +151,45 @@ export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { m
   const w = whereGauge(b, kid?.min ?? cm ?? 120);
   return w ? { big: `${w.big} · ${inText(kid?.min ?? cm ?? 120)}`, small: w.small } : undefined;
 }
+/** Phase 4e (critique M-C: lentils and pizza asked "How much has left you a day later?" and the end card said "Blood
+ *  sugar: back to usual"): the end card answers the hook's own question, from the model. A question about what is left
+ *  a day later: what is still in you at 24 h (the route model) and the share that has left (the 24 h moment); when its
+ *  fat reaches the blood: the blood fat peak, at its moment; how long in the stomach: its half time; when it reaches
+ *  the blood: that moment; how long the alcohol stays: the gone range under "back to zero"; its protein: its grams. The
+ *  hero and the 24 h line are otherwise heroOf and after24Of. */
+export function endCardOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[], unit: Profile['glucoseUnit'], hook: Hook): { hero?: { big: string; small: string }; after24: { big: string; small: string } } {
+  let hero = heroOf(b, sugarKnown, chapters, unit, hook), after24 = after24Of(b, sugarKnown);
+  const cls = hookClassOf(hook), atCh = (t: string | undefined) => (t ? chapters.find((c) => c.title === t && c.min > 0) : undefined);
+  if (cls === 'day' || cls === 'dayN' || cls === 'fiberDay') {
+    const day = chapters.find((c) => /% has left your body so far/.test(c.text ?? '')), pct = /(\d+)% has left your body so far/.exec(day?.text ?? '')?.[1];
+    const w = presentAt(b, 1440).length ? whereGauge(b, 1440) : null;
+    if (w) after24 = { big: `Still in you: ${w.big}`, small: pct ? `${w.small} · ${pct} % has left your body` : w.small };
+    else if (pct) after24 = { big: `${pct} % has left your body`, small: 'The rest is still on its way' };
+  } else if (cls === 'fatBlood') {
+    const ch = atCh(hook.payoff), tg = b.effects.tgMmol;
+    if (ch && tg) hero = { big: `Blood fat peak · ${inText(ch.min)}`, small: `+${atMin(tg, ch.min).toFixed(1)} mmol/L triglycerides` };
+  } else if ((cls === 'stomach' || cls === 'stomachN') && hook.payoffMin !== undefined) {
+    hero = { big: `Half out of your stomach · ${inText(hook.payoffMin)}`, small: 'The rest follows over the next hours' };
+  } else if (cls === 'blood' || cls === 'bloodN') {
+    const ch = atCh(hook.payoff);
+    if (ch) hero = { big: `In your blood · ${inText(ch.min)}`, small: hero?.big ? `Then: ${hero.big}` : 'Within minutes of reaching it' };
+  } else if (cls === 'alcoholGone' || cls === 'alcoholGoneN') {
+    // (the model's typical body: "the alcohol is gone by now, about 3 h after the first sip")
+    const gone = atCh(hook.payoff), r = /about (\d+(?:[.,]\d+)?) h after the first (?:sip|drink|bite)/.exec(gone?.text ?? '')?.[1];
+    if (r) after24 = { ...after24, small: `Gone after about ${r} h (typical) · ${after24.small}` };
+  } else if (cls === 'water') {
+    // (where the water goes: the kidneys' moment, with the model's own first sentence there)
+    const kid = atCh(hook.payoff), w = kid ? whereGauge(b, kid.min) : null, first = (kid?.text ?? '').split(/(?<=\.)\s/)[0];
+    if (kid) hero = w && /urine|bladder/i.test(`${w.big} ${w.small}`) ? { big: `${w.big} · ${inText(kid.min)}`, small: w.small } : { big: `Your kidneys · ${inText(kid.min)}`, small: first.length <= 70 ? first : 'They filter the extra water' };
+  } else if (cls === 'bedtimeQ') {
+    const bed = atCh(hook.payoff), mg = /(\d+) mg of caffeine is (?:still|left) in you/.exec(bed?.text ?? '')?.[1];
+    if (mg) hero = { big: `At bedtime: ${mg} mg of caffeine`, small: 'Still in you' };
+  } else if (cls === 'protein' || cls === 'proteinN') {
+    const g = /(\d+) g protein/.exec(chapters[0]?.text ?? '')?.[1];
+    if (g && !/protein/i.test(`${hero?.big} ${hero?.small}`)) hero = { big: `${g} g of protein`, small: 'Taken apart into building blocks' };
+  }
+  return { hero, after24 };
+}
 /** Phase 4b (critique M2: "AFTER 24 HOURS / 58 mg caffeine · 45 min in / still in your body" was the PEAK): what the
  *  model has at minute 1440, for the line under "AFTER 24 HOURS". The same order as the main gauge (alcohol, a clear
  *  blood sugar curve, caffeine, blood fat), else where the rest of it is, from the route model. */
@@ -213,6 +252,21 @@ export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], 
 
 type ChapterLike = { min: number; title: string; text: string; live?: (m: number) => string; focus?: string | null };
 /** The single video's moments: every chapter's words at its own minute and its caption cards. */
+/** Phase 4e (critique M5: pizza and lentils said the same cards in the same order): a moment's cards about a nutrient
+ *  ("Bile helps break down the fat.", "Fiber goes on undigested.") come in the order of how much of it this food has
+ *  (its share of a day's reference amount: fiber 28 g, fat 78 g, protein 50 g, carbohydrate 275 g); its first card and
+ *  every other card keep their place. */
+export const NUTRIENT_CARDS: [RegExp, (m: ReturnType<typeof macrosOf>) => number][] = [
+  [/\bfib(?:er|re)\b/i, (m) => m.fiber / 28], [/\bfat\b|\bbile\b|\blymph\b/i, (m) => m.fat / 78], [/\bprotein\b|building blocks/i, (m) => m.protein / 50], [/\bstarch\b|\bsugar\b/i, (m) => m.carbs / 275],
+];
+export function byNutrient(lines: readonly string[], mac: ReturnType<typeof macrosOf>): string[] {
+  const kind = (l: string) => { const k = NUTRIENT_CARDS.filter(([re]) => re.test(l)); return k.length === 1 ? k[0][1](mac) : null; };
+  const slots = lines.map((l, i) => (i > 0 && kind(l) !== null ? i : -1)).filter((i) => i >= 0);
+  const sorted = slots.map((i) => lines[i]).map((l, k) => ({ l, k, v: kind(l)! })).sort((a, b) => b.v - a.v || a.k - b.k).map((x) => x.l);
+  const out = [...lines];
+  slots.forEach((i, k) => { out[i] = sorted[k]; });
+  return out;
+}
 export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, where?: (m: number) => string | null): StopIn[] {
   // (round 9: a card is said once per video; "Fat takes a slower route, via the lymph." ended one moment and began
   // the next, 9 s in a row, for every fatty food)
@@ -222,6 +276,7 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
   // (round 15, critic P2-K: never its bare title "Down the food pipe" as a card, only a sentence)
   const pipeLines = (pipe ? beatLines({ min: pipe.min, title: pipe.title, text: chapterText(pipe as never, pipe.min) }, ctx) : []).filter((l) => /[.!?]$/.test(l));
   const sparse = story.chapters.filter((c) => c.min >= 1).length < 8;
+  const mac = macrosOf(story.chapters[0] ? chapterText(story.chapters[0] as never, 0) : '');
   const base: StopIn[] = story.chapters.filter((c) => c.min === 0 || c.min >= 1).map((c) => {
     const text = chapterText(c as never, c.min), all = beatLines({ min: c.min, title: c.title, text }, ctx);
     const fresh = all.filter((l) => !seen.has(l));
@@ -230,7 +285,7 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
     // (round 15: a sparse story also says where most of it is, after its own cards, used only when there is room)
     const w = sparse && c.min >= 1 && where ? where(c.min) : null;
     const ls2 = w && !ls.includes(w) && !seen.has(w) ? (seen.add(w), [...ls, w]) : ls;
-    return { min: c.min, title: c.title, text, lines: c.min === 0 ? [...ls2, ...pipeLines.filter((l) => !ls2.includes(l))] : ls2 };
+    return { min: c.min, title: c.title, text, lines: c.min === 0 ? [...ls2, ...pipeLines.filter((l) => !ls2.includes(l))] : byNutrient(ls2, mac) };
   });
   // round 12 (critic P0-3): a card that speaks of a later minute ("Half has moved on after 116 minutes.") is said when
   // the clock gets there, as its own moment under the same title (never while the clock still stands at +0:01)
@@ -422,7 +477,23 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   return { plan, guess: gq, race, fx, verdict: verdictNow };
 }
 
-/** The single video's plan inputs (AppV4 reelPlan) from a model run. */
-export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx): Plan {
-  return planVideo(stops, cut, uFromMinutes, minutesFromU, fx);
+/** Phase 4e: the region of the organs a card lights (namedOrgans): the one most of them are in ("small intestine" lights
+ *  the duodenum, jejunum and ileum: the small intestine, not the stomach's region); '' = none. */
+export function litRegion(organs: readonly string[]): string {
+  const n = new Map<string, number>();
+  for (const o of organs) if (REGION[o]) n.set(REGION[o], (n.get(REGION[o]) ?? 0) + 1);
+  return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+}
+/** The single video's plan inputs (AppV4 reelPlan) from a model run. Phase 4e: with the story's chapters, every stay
+ *  on one region of the body as the viewer perceives it (video-cam seenOf) is held to regionMaxS. */
+export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { min: number; title: string; focus?: string | null }[], built?: BuiltLike): Plan {
+  // (a card about no organ is filmed where the food or drink is: shotOf's `lead`, the part of the route with most of it)
+  const lead = (m: number) => { const p = built ? presentAt(built, m)[0] : undefined; return p ? REGION[SEG_FOCUS_V[p[0]]] ?? '' : ''; };
+  const seen = (fr: VFrame) => {
+    const r = seenOf(fr, chapters!), lit = litRegion(cardNamed(fr));
+    const where = (fr.stop ?? 0) > 0 && fr.beat !== 'end' && !quietFrame(fr) && r.every((x) => !x || x === 'body') ? lead(fr.m) : '';
+    return [...new Set([...r, lit, where])].filter(Boolean);
+  };
+  const perceive = chapters ? { seen, runs: perceivedRuns, maxS: regionMaxS } : undefined;
+  return planVideo(stops, cut, uFromMinutes, minutesFromU, perceive ? { ...fx, perceive } : fx);
 }

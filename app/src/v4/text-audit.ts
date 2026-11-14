@@ -28,7 +28,7 @@ import { seedOf } from './video-hook';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
 const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
-import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, decafOf, heroOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
+import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, decafOf, endCardOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
 
 export const AUDIT_PROFILE: Profile = { ...DEFAULT_PROFILE, drinkAtMin: 22 * 60 };
 export const AUDIT_CUTS: Cut[] = ['long', 'medium', 'short'];
@@ -60,7 +60,7 @@ export function auditItems(p: Profile = AUDIT_PROFILE): AuditItem[] {
   return out;
 }
 
-export interface SingleOut { hook: Hook; plan: Plan; stops: StopIn[]; payoff?: number; name: string; hero?: { big: string; small: string }; notes: string[]; caps: ReturnType<typeof captionsFor> }
+export interface SingleOut { hook: Hook; plan: Plan; stops: StopIn[]; payoff?: number; name: string; hero?: { big: string; small: string }; /** phase 4e */ after24?: { big: string; small: string }; notes: string[]; caps: ReturnType<typeof captionsFor> }
 /** The single video exactly as AppV4 builds it (reelPlan, overlay, captions). */
 export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AUDIT_PROFILE, vname = x.label): SingleOut {
   const b = x.built, story = b.story, name = shortName(vname);
@@ -72,10 +72,11 @@ export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AU
   const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
   const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
-  const plan = singlePlan(stops, cut, fx), payoff = fx.payoffMin;
+  const plan = singlePlan(stops, cut, fx, story.chapters, b), payoff = fx.payoffMin;
   const notes = x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return `${s.label}: ${plainNote(s.key as typeof SYS[number], l, w, b, inText(w), !!s.unknown)}`; });
   const caps = captionsFor({ name, hook, ...captionFlags({ alcoholG: b.alcoholG, caffeineMg: b.caffeine.doseMg, decaf: /\bdecaf/i.test(x.label), sugarPeak: x.sugarPeak, solid, macros: x.macros }) });
-  return { hook, plan, stops, payoff, name, hero: heroOf(b, x.glucose !== undefined, chapters, p.glucoseUnit, hook), notes, caps };
+  const end = endCardOf(b, x.glucose !== undefined, chapters, p.glucoseUnit, hook); // (phase 4e: the end card answers the hook)
+  return { hook, plan, stops, payoff, name, hero: end.hero, after24: end.after24, notes, caps };
 }
 
 export interface CompareOut { cp: ComparePlan; hook: string; hookB: string; caps: ReturnType<typeof captionsFor>; an: string; bn: string }

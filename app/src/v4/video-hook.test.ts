@@ -40,12 +40,17 @@ describe('hooks', () => {
   });
   it('round 5: espresso says how much is still in you at bedtime, and that moment pays it off', () => {
     const k = hookFor({ ...cases[1][1], caffeineMg: 63 });
-    expect(k.line2).toMatch(/^(Almost all of its caffeine (is left at|lasts until|is still there at) bedtime|At bedtime, almost all of its caffeine (remains|is still in you)|By bedtime, almost all of its caffeine is left)\.$/); // (round 18 / phase 4: rotating phrasings, "its caffeine")
+    expect(k.line2).toMatch(/^(Almost all of its (?:caffeine|63 mg) (is left at|lasts until|is still there at) bedtime|At bedtime, almost all of its (?:caffeine|63 mg) (remains|is still in you)|By bedtime, almost all of its (?:caffeine|63 mg) is left)\.$/); // (round 18 / phase 4: rotating phrasings, "its caffeine"; phase 4e: or its own dose)
     expect(k.payoff).toBe('Going to bed');
   });
   it('round 5: a big food number comes with its size; the 24 h moment answers the promise', () => {
     const k = hookFor({ ...cases[3][1], grams: 1104 });
-    expect(k.line1).toBe('A whole pizza (1104 g): 2572 kcal.'); expect(HOOK_POOL.day).toContain(k.line2); expect(k.payoff).toBe('24 hours later'); // (round 18: rotating phrasings)
+    // (phase 4e: a meal asks about its own telling number, fat or fiber, else what is left of it: the moment that
+    // answers is its fat in the blood or its 24 h moment)
+    const asks = (cls: keyof typeof HOOK_POOL) => HOOK_POOL[cls].some((x) => new RegExp(`^${x.replace(/[.?()]/g, '\\$&').replace('{n}', '\\d+')}$`).test(k.line2));
+    expect(k.line1).toMatch(/^A whole pizza(?: \(1104 g\))?: (?:2572 kcal|\d+ g of fat)\.$/);
+    expect(asks('day') || asks('dayN') || asks('fiberDay') || asks('fatBlood'), k.line2).toBe(true);
+    expect(k.payoff).toBe(asks('fatBlood') ? 'Fat in your blood' : '24 hours later'); // (round 18: rotating phrasings)
   });
   it('the comparison asks a question the race answers', () => {
     const k = hookForCompare('Espresso', 'Beer', true);

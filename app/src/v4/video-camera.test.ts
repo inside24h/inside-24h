@@ -14,7 +14,9 @@
 //      the opening and the end card stay whole-body.
 import { describe, expect, it } from 'vitest';
 import { AUDIT_CUTS, AUDIT_PROFILE, auditCompare, auditItems, auditPairs, auditSingle, type AuditItem } from './text-audit';
-import { beatChapter, beatOrgans, cameraOf, camPlanOf, camStyle, classOf, FOV, nextLead, ORGAN_SAFE, organRect, poseOf, REGION_BREAK_S, regionMaxS, regionOf, rigAt, SIDE_X, shotOf, splitPlanOf, splitShot, stepRig, wholeBody, type CamPlan, type Rig, type Shot, type V3 } from './video-cam';
+import { beatChapter, beatOrgans, cameraOf, camPlanOf, camStyle, classOf, FOV, nextLead, ORGAN_SAFE, organRect, perceivedStay, poseOf, REGION_BREAK_S, regionMaxS, regionOf, rigAt, SIDE_X, shotOf, splitPlanOf, splitShot, stepRig, topicRegion, wholeBody, type CamPlan, type Rig, type Seen, type Shot, type V3 } from './video-cam';
+import { cardNamed } from './video-body';
+import { litRegion } from './video-story';
 import { presentAt, SEG_FOCUS_V } from './video-body';
 import { seedOf } from './video-hook';
 import { FPS, type Cut, type Plan } from './video-plan';
@@ -31,7 +33,7 @@ const DT = 1 / FPS;
 type Fmt = 'reel' | 'feed';
 const SIZE: Record<Fmt, [number, number]> = { reel: [1080, 1920], feed: [1080, 1350] };
 
-interface Film { bad: string[]; orient: boolean; maxSpeed: number; maxTurn: number; maxAccel: number; checked: number; /** phase 4c: what the camera is on, per frame of the main part (the region, 'body' = whole body) */ regions?: { t: number; r: string }[]; seconds?: number; id?: string }
+interface Film { bad: string[]; orient: boolean; maxSpeed: number; maxTurn: number; maxAccel: number; checked: number; /** phase 4c: what the camera is on, per frame of the main part (the region, 'body' = whole body) */ regions?: { t: number; r: string }[]; seconds?: number; id?: string; /** phase 4e: what the viewer perceives each frame of the main part to be about (the card's region, the region of the organs lit for it, the region filmed) */ seen?: Seen[] }
 /** Phase 4c: the longest stay of the camera on one region of the body; a view of another region (or the whole body)
  *  shorter than REGION_BREAK_S does not end it (a pull-back is not a new view). */
 export function longestStay(rs: { t: number; r: string }[]): { s: number; r: string; at: number } {
@@ -106,8 +108,10 @@ export function filmSingle(it: AuditItem, cut: Cut, fmt: Fmt = 'reel', v: 'A' | 
     // (phase 4c: what the picture is on, the main part: the whole body for a wide or whole-body shot, else the region
     // of the shot's first organ, with its framing: near = close/mid, far = far)
     if (fr.phase === 'main' && fr.t < endT && fr.beat !== 'teaser' && fr.beat !== 'rewind') regions.push({ t: fr.t, r: s.zoom === 'wide' || s.zoom === 'body' || !s.focus.length ? 'body' : `${regionOf(s.focus)}${s.zoom === 'far' ? ':far' : ''}` });
+    if (fr.phase === 'main') seen.push({ t: fr.t, rs: [topicRegion(fr, chapters), litRegion(cardNamed(fr)), fr.t < endT && !(s.zoom === 'wide' || s.zoom === 'body') && s.focus.length ? regionOf(s.focus) : ''] });
     return s;
   };
+  const seen: Seen[] = [];
   const r = film(plan, shot, style.half, null, (rg) => cameraOf(rg, FOV, 0.07, seed, style), (fr, c, settled) => {
     if (!settled || (fr.beat !== 'hold' && fr.beat !== 'hook') || !fr.title) return;
     const ch = beatChapter(chapters, fr), bo = beatOrgans(fr.title, ch.focus);
@@ -118,7 +122,7 @@ export function filmSingle(it: AuditItem, cut: Cut, fmt: Fmt = 'reel', v: 'A' | 
       if (!inside(rc, zone)) { bad.push(`${it.id} ${cut} ${fmt} @${fr.t.toFixed(1)}s "${fr.title}" ${organ}: ${rc ? `${rc.l.toFixed(0)}-${rc.r.toFixed(0)} × ${rc.t.toFixed(0)}-${rc.b.toFixed(0)}` : 'off'}`); return; }
     }
   }, (c) => wholeBody(c, FOV, W, H));
-  return { ...r, bad, checked, cam, regions, seconds: plan.seconds, id: `${it.id} ${cut} ${fmt}` };
+  return { ...r, bad, checked, cam, regions, seen, seconds: plan.seconds, id: `${it.id} ${cut} ${fmt}` };
 }
 
 /** A comparison, filmed as AppV4 films it (startCompare: splitShot, the two cameras of CompareVideo.tsx). */
@@ -192,6 +196,13 @@ describe('phase 4: the camera frames what the card names, orients, never jumps',
     const worst = stays.reduce((a, x) => (x.st.s > a.st.s ? x : a), stays[0]);
     console.log(`[camera stays] longest stay on one region ${worst.st.s.toFixed(1)} s (${worst.st.r}); ${over.length} videos over their cap`);
     expect(over.slice(0, 10).map(({ f, st }) => `${f.id} (${f.seconds?.toFixed(0)} s): ${st.s.toFixed(1)} s on ${st.r} @${st.at.toFixed(1)}`)).toEqual([]);
+    // phase 4e (critique 2026-11-14: the camera's count said 9.9 s, the viewer saw lentils' large intestine for 27 s):
+    // the same cap on what the viewer PERCEIVES, every item × cut: the card's region, the organs lit for it and the
+    // region filmed, joined; a stay ends only once all three have been elsewhere for REGION_BREAK_S
+    const pst = fs.map((f) => ({ f, st: perceivedStay(f.seen ?? []) })), pover = pst.filter(({ f, st }) => st.s > regionMaxS(f.seconds ?? 0) + 1 / FPS + 1e-6);
+    const pworst = pst.reduce((a, x) => (x.st.s > a.st.s ? x : a), pst[0]);
+    console.log(`[perceived stays] longest ${pworst.st.s.toFixed(1)} s (${pworst.st.r}, ${pworst.f.id}); ${pover.length} of ${fs.length} videos over their cap`);
+    expect(pover.slice(0, 10).map(({ f, st }) => `${f.id} (${f.seconds?.toFixed(0)} s): seen ${st.s.toFixed(1)} s on ${st.r} @${st.at.toFixed(1)}`)).toEqual([]);
     expect(s.bad.slice(0, 20)).toEqual([]);
     expect(s.noOrient).toBe(0);
     expect(s.speed).toBeLessThanOrEqual(CAM_LIMITS.speed);
@@ -220,6 +231,12 @@ describe('phase 4: the camera frames what the card names, orients, never jumps',
     const len = filmSingle(by('lentils'), 'long'), piz = filmSingle(by('pizza'), 'long');
     const st = longestStay(len.regions ?? []);
     expect(st.s).toBeLessThanOrEqual(12 + 1 / FPS);
+    // phase 4e: and as the viewer perceives it (v27: large intestine 36-63 s; pizza Reels stomach / pancreas 2.5-31 s)
+    for (const [id, cut] of [['lentils', 'long'], ['lentils', 'medium'], ['pizza', 'long'], ['pizza', 'medium'], ['pizza', 'short']] as const) {
+      const f = filmSingle(by(id), cut), p = perceivedStay(f.seen ?? []);
+      console.log(`[perceived] ${id} ${cut}: longest ${p.s.toFixed(1)} s on ${p.r} @${p.at.toFixed(1)}`);
+      expect(p.s, `${id} ${cut}`).toBeLessThanOrEqual(regionMaxS(f.seconds ?? 0) + 1 / FPS);
+    }
     // structural sameness: pizza and lentils (both meals, the same story shape) share at most SAME_MAX of their shots
     const sim = shotSimilarity(len.regions ?? [], piz.regions ?? []);
     console.log(`[camera sameness] lentils vs pizza (long) ${(100 * sim).toFixed(0)} % of shots alike`);
@@ -227,10 +244,10 @@ describe('phase 4: the camera frames what the card names, orients, never jumps',
     // and over the database: same-class pairs of the same cut (a sample), the mean and the worst
     const byCls = new Map<string, ReturnType<typeof filmSingle>[]>();
     for (const it of sweep(ITEMS, 8)) { const f = filmSingle(it, 'long'); const k = f.cam.style.cls; if (!byCls.has(k)) byCls.set(k, []); byCls.get(k)!.push(f); }
-    const sims: number[] = [];
-    for (const fs of byCls.values()) for (let i = 0; i + 1 < fs.length; i++) sims.push(shotSimilarity(fs[i].regions ?? [], fs[i + 1].regions ?? []));
-    const mean = sims.reduce((a, x) => a + x, 0) / Math.max(1, sims.length);
-    console.log(`[camera sameness] ${sims.length} same-class neighbour pairs: mean ${(100 * mean).toFixed(0)} %, worst ${(100 * Math.max(0, ...sims)).toFixed(0)} %`);
+    const sims: number[] = [], who: string[] = [];
+    for (const fs of byCls.values()) for (let i = 0; i + 1 < fs.length; i++) { sims.push(shotSimilarity(fs[i].regions ?? [], fs[i + 1].regions ?? [])); who.push(`${fs[i].id} ~ ${fs[i + 1].id}`); }
+    const mean = sims.reduce((a, x) => a + x, 0) / Math.max(1, sims.length), wi = sims.indexOf(Math.max(0, ...sims));
+    console.log(`[camera sameness] ${sims.length} same-class neighbour pairs: mean ${(100 * mean).toFixed(0)} %, worst ${(100 * Math.max(0, ...sims)).toFixed(0)} % (${who[wi]})`);
     expect(mean).toBeLessThanOrEqual(SAME_MEAN_MAX);
     expect(Math.max(0, ...sims)).toBeLessThanOrEqual(SAME_WORST_MAX);
   }, 600_000);

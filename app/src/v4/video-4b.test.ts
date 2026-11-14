@@ -298,7 +298,7 @@ describe('phase 4c: a callout never contradicts the card it stands next to', () 
     }
     expect(bad.slice(0, 10)).toEqual([]);
     expect(hidden).toBeGreaterThan(0);
-    const at = (id: string, re: RegExp) => { const it = by(id), o = auditSingle(it.x, 'long', 'A', AUDIT_PROFILE, it.vname), chs = it.x.built.story.chapters; const fr = o.plan.frames.find((f) => f.beat === 'hold' && re.test(f.cap ?? ''))!; return gaugesAt(it.x.built, Math.min(1440, fr.m), 'mmol/L', it.x.glucose !== undefined, false, beatOrgans(fr.title, beatChapter(chs, fr).focus).organs).map((g) => g.big).join(' | '); };
+    const at = (id: string, re: RegExp) => { const it = by(id), o = auditSingle(it.x, 'long', 'A', AUDIT_PROFILE, it.vname), chs = it.x.built.story.chapters; const fr = o.plan.frames.find((f) => f.beat === 'hold' && re.test(f.cap ?? '')); if (!fr) return ''; /* (phase 4e: the card may be left out to keep a perceived stay under its cap) */ return gaugesAt(it.x.built, Math.min(1440, fr.m), 'mmol/L', it.x.glucose !== undefined, false, beatOrgans(fr.title, beatChapter(chs, fr).focus).organs).map((g) => g.big).join(' | '); };
     expect(at('pizza', /fat joins your blood/i)).not.toMatch(/fiber/);
     expect(at('lentils', /^In your stomach|has moved on by/i)).not.toMatch(/urine/);
   }, 600_000);
