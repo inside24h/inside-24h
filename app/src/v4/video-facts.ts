@@ -72,12 +72,15 @@ export const FACT_WORDINGS = {
   protKcal: ['{n} % of its energy is protein.', 'Protein makes up {n} % of its kcal.', 'By energy, {n} % protein.'],
   zeroKcal: ['Zero kcal: nothing for your body to burn.', 'No energy at all: zero kcal.', 'Not a single kcal to burn.'],
   absent: ['No {a}.', 'It has no {a}.', 'Inside: no {a}.'],
-  density: ['{n} kcal in every 100 g.', 'Per 100 g, that is {n} kcal.', 'Energy density: {n} kcal per 100 g.'],
+  // (phase 4f: as dvKcal, wordings of one length; the longest was said on 11 % of the videos)
+  density: ['There are {n} kcal per 100 g.', 'Per 100 g, that is {n} kcal.', 'Energy density: {n} kcal per 100 g.', 'In 100 g, you get {n} kcal.'],
   bodyWater: ['Your body already holds about {n} liters of water.', 'You carry about {n} liters of water already.', 'About {n} liters of water are in you already.'],
   waterShare: ['It tops up your body water by {n} %.', 'That adds {n} % to the water in you.', 'Your body water rises by just {n} %.'],
   walk: ['About {n} minutes of brisk walking would burn it.', 'Walking it off takes about {n} minutes.', 'To burn it: roughly {n} minutes of brisk walking.'],
   flatSugar: ['Your glucose barely moves.', 'Glucose stays nearly flat.', 'Barely a blip in glucose.', 'Your glucose line stays almost flat.', 'No real glucose spike from this.', 'Glucose hardly rises at all.'],
-  dvKcal: ['That is {n} % of a whole day of calories.', 'It covers {n} % of a day’s calories.', 'Of a full day’s energy, that is {n} %.'],
+  // (phase 4f, full tier: the longest wording was said on 18 % of the videos, the limit is 10 %, a pause taking the
+  // longest fact that fits: four wordings of one length, so the one picked for the food is the one said)
+  dvKcal: ['That is {n} % of a day’s calories.', 'It covers {n} % of your daily calories.', 'Of a day’s energy, that is {n} %.', 'That is roughly {n} % of daily energy.'],
   dvSodium: ['That is {n} % of a day’s sodium limit.', 'It uses up {n} % of your daily sodium.', 'Salt check: {n} % of a day’s sodium.'],
   dvFiber: ['{n} % of the fiber you need in a day.', 'It covers {n} % of a day’s fiber.', 'A day’s fiber? This is {n} % of it.'],
   dvProtein: ['{n} % of the protein you need in a day.', 'It covers {n} % of your daily protein.', 'Protein for the day: {n} % done.'],
@@ -391,7 +394,8 @@ export function arcFor(f: FactIn, seed: number): Arc {
     } else if (cls === 'meal') {
       if ((f.t50 ?? 0) >= 30) hook.push(`Your stomach needs ${minWords(f.t50!)} for just half.`);
       hook.push('Your gut has hours of work ahead.');
-      const dk = d('dvKcal'); if (dk?.n) setup.push(`That's ${dk.n} % of a whole day of calories.`);
+      // (phase 4f, full tier: one wording was on 18 % of the videos, the limit is 10 %: one of three, per food)
+      const dk = d('dvKcal'); if (dk?.n) setup.push(pick([`That's ${dk.n} % of a whole day of calories.`, `One meal, ${dk.n} % of a day’s calories.`, `That alone is ${dk.n} % of your daily calories.`], seed, 59));
       if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
       if (tg?.n) twist.push(`The fat arrives late: blood fat peaks about ${tg.n} hours in.`);
     } else if (cls === 'water') {
@@ -421,6 +425,9 @@ export function arcFor(f: FactIn, seed: number): Arc {
   if (m && m.protein >= 5) extra.push('Protein gets split into amino acids.');
   if (!f.drink && m && m.grams >= 5) extra.push('Your stomach churns it for a while first.');
   if ((f.alcoholG ?? 0) < 1) extra.push('Your blood carries it to every cell.');
+  // (phase 4f, full tier: a green salad, 8 kcal, long, had a 4.8 s silence: every fact said, every other line here
+  // said or saying "stomach" a third time)
+  if (f.kcal >= 1 && f.kcal < 30 && (f.alcoholG ?? 0) < 1) extra.push('Almost nothing here for your body to burn.');
   if (m && m.sugars >= 3 && (f.alcoholG ?? 0) < 1) extra.push('Your cells can burn this sugar right away.');
   const fastShort = pk?.n !== undefined ? `About ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
   return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}), ...(d('sugarDip') ? { dip: true } : {}), ...(extra.length ? { extra } : {}) };

@@ -185,6 +185,10 @@ export const SURGE_CLEAR_S = 1.4, SURGE_FROM = 0.25;
  *  whole body without words, then the NEXT chip for LULL_CHIP_S. Never longer than GLIDE_MAX_S. */
 /** Phase 4e: where the first moment's camera may reach the stomach (video-cam PIPE_TO). */
 export const PIPE_SHARES = [0.7, 0.8, 0.86, 0.92, 1];
+/** Phase 4f (full tier: pizza with everything, Reels, 9.4 s on the upper body: the blood sugar peak at minute 89 said
+ *  two cards, the next moment at 90, so it could not be said in two parts): a stay's moment may be said in two parts
+ *  this many minutes apart (a third of the way to the next moment), the clock then moving 0.3 min. */
+export const SPLIT_MIN_D = 0.3;
 export const LULL_CHIP_S = 0.8, LULL_S = 0.25 + 2.5 + 0.05 + LULL_CHIP_S;
 export const CARD_MAX_S = 5, GLIDE_K_MAX = 6, GLIDE_MAX_S = 3.8; // (round 15, critic SA-2: 6 s cards at 0.8 w/s read slow)
 /** Round 14 (critic DC-1, owner): never longer than this without a card on screen (the 24 h beat and the end card aside). */
@@ -518,7 +522,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     // (a moment said in two parts, a few minutes apart, a lull between: its later cards become a moment of their own)
     const split = (i: number) => {
       const m = chosen[i].min, d = Math.min(5, ((chosen[i + 1]?.min ?? 1440) - m) / 3), k = Math.ceil(pages[i].length / 2), rest = pages[i].slice(k);
-      if (i <= 0 || pages[i].length < 2 || d < 0.5) return false;
+      if (i <= 0 || pages[i].length < 2 || d < SPLIT_MIN_D) return false;
       const c2: StopIn = { min: Math.round((m + d) * 10) / 10, title: chosen[i].title, text: rest.join(' '), lines: rest };
       pages = pages.map((p, q) => (q === i ? p.slice(0, k) : p)); used = used.map((u, q) => (q === i ? k : u)); sents = sents.map((x, q) => (q === i ? x.slice(0, k) : x));
       chosen = [...chosen.slice(0, i + 1), c2, ...chosen.slice(i + 1)]; sents = [...sents.slice(0, i + 1), rest, ...sents.slice(i + 1)]; used = [...used.slice(0, i + 1), rest.length, ...used.slice(i + 1)]; pages = [...pages.slice(0, i + 1), rest, ...pages.slice(i + 1)];
@@ -623,7 +627,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
         // cards then speak a few minutes later: never a moment's first card, never the first moment)
         for (const m of inRunMins) {
           const i = chosen.findIndex((c) => c.min === m), nx = chosen[i + 1]?.min ?? 1440, d = Math.min(5, (nx - m) / 3);
-          if (i <= 0 || pages[i].length < 2 || d < 0.5) continue;
+          if (i <= 0 || pages[i].length < 2 || d < SPLIT_MIN_D) continue;
           tries.push(() => { if (!split(i)) return false; calmRun(); calm.add(chosen[i + 1].min); return trim([...inRunMins, chosen[i + 1].min]); });
         }
         // 1) a moment of another region inside the stay comes in (one card)

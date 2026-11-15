@@ -170,6 +170,8 @@ const CLIMAX = {
 } as const;
 const DAY = ['One full day later.', 'Twenty-four hours later.', 'A day later.', 'Fast forward a full day.', 'And a whole day later?', 'Next day.'] as const;
 const LOOP = { sip: ['From the first sip.', 'Back to the start.', 'Watch it again.', 'One more time?'], bite: ['From the first bite.', 'Back to the start.', 'Watch it again.', 'One more time?'] } as const;
+/** Phase 4f: the number-free close said another way, when "Every bite, accounted for." would say a word a third time. */
+const CLOSE_ALT = { sip: ['Every sip, traced to the end.', 'The whole journey, start to finish.'], bite: ['Every bite, traced to the end.', 'The whole journey, start to finish.'] } as const;
 const ANSWER_FALLBACK = { single: ["That's one full day inside you.", 'Now you know where it goes.', 'One day, inside you.'], compare: ['Now you know the difference.', 'Now you know.'] } as const;
 /** v19: the most words a line may have in each slot (short and spoken: a viewer hears it once). */
 export const SLOT_WORDS: Record<NarrId, number> = { hook: 18, card: 16, beat: 12, setup: 14, tease: 12, climax: 14, twist: 15, payoff: 14, day: 6, answer: 14, loop: 5 };
@@ -296,6 +298,7 @@ const fresh = (out: readonly NarrLine[], x: string, t: number, nameWords: Set<st
  *  variant; the original comes first. */
 const VARY: [RegExp, string][] = [
   [/\byour blood sugar\b/gi, 'it'], [/\bblood sugar\b/gi, 'glucose'], [/\bIn your stomach: /g, ''], [/\byour stomach churns it\b/gi, 'it gets churned'],
+  [/\babsorbs it within minutes\b/g, 'absorbs it quickly'], // (phase 4f: honey, Reels, said "minutes" three times in 15 s)
   [/\bThe food is mostly in your stomach\b/g, 'Most of it sits in your stomach'], [/\bHalf leaves your stomach within\b/g, 'Half moves on within'],
   [/\balmost all has moved on by\b/gi, 'almost all is out by'], [/\bthe alcohol is gone\b/gi, 'it clears'], [/\bthe alcohol should be gone\b/gi, 'it should be cleared'],
   [/\bwhen it is finally gone\b/gi, 'when it finally clears'], [/\bThere is still alcohol in your blood\b/g, 'Some of it is still in you'],
@@ -740,8 +743,29 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   if (!out.some((o) => o.id === 'answer') && last && last.id !== 'loop' && last.id !== 'hook' && last.id !== 'climax' && last.id !== 'payoff' && !(last.id === 'card' && last.card) && !cmp && n.arc && last.t > outro - 8) Object.assign(last, { id: 'loop' });
   if (!out.some((o) => o.id === 'answer') && out[out.length - 1]?.id === 'loop' && !cmp && n.arc) {
     const l = out[out.length - 1], room = end - TAIL_S - l.t;
-    const x = [...n.arc.answer, n.solid ? 'Every bite, accounted for.' : 'Every sip, accounted for.'].filter((y) => !out.some((o) => o.text === y)).sort((p, q) => speakS(p) - speakS(q)).find((y) => speakS(y) <= room);
+    const xs = [...n.arc.answer, n.solid ? 'Every bite, accounted for.' : 'Every sip, accounted for.'].filter((y) => !out.some((o) => o.text === y)).sort((p, q) => speakS(p) - speakS(q)).filter((y) => speakS(y) <= room);
+    // (phase 4f: the close is one that says no word a third time in its 15 s, when one fits)
+    const rest = out.filter((o) => o !== l), x = xs.find((y) => fresh(rest, y, l.t, nameWords)) ?? xs[0];
     if (x) Object.assign(l, { id: 'answer', text: shownText(x), say: speakable(x), source: '', slotS: room });
+  }
+  // phase 4f (full tier: "Every bite, accounted for." after "for hours" twice, "Sugar: up 12–26 %." after two sugar
+  // lines, the fills above having brought them into its 15 s): a close that says a word a third time has a line before
+  // it said another way ("Your blood sugar climbs to its peak." → "It climbs to its peak.", the card still read), else
+  // the close another way, one that keeps its number when it said one
+  if (!cmp) {
+    const k = out.findIndex((o) => o.id === 'answer'), l = out[k];
+    const overAt = () => [...new Set(out.flatMap((o, q) => (q >= k && o.t < l.t + VARIETY_S ? overused(out, q, nameWords) : [])))];
+    let over = l ? overAt() : [];
+    if (over.length) {
+      for (const o of out) if (o !== l && o.id !== 'hook' && o.t < l.t && l.t - o.t < VARIETY_S && [...stems(o.text)].some((w) => over.includes(w))) {
+        const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.includes(w)));
+        if (v) { Object.assign(o, { text: shownText(v), say: speakable(v) }); over = overAt(); if (!over.length) break; }
+      }
+      const nums = qtyOf(l.text);
+      const alt = over.length ? [...variants(l.text).slice(1), ...(nums.length ? [] : [...(n.arc?.answer ?? []), ...CLOSE_ALT[n.solid ? 'bite' : 'sip']])]
+        .find((y) => y !== l.text && speakS(y) <= l.slotS && ![...stems(y)].some((w) => over.includes(w)) && qtyOf(y).join() === nums.join()) : undefined;
+      if (alt) Object.assign(l, { text: shownText(alt), say: speakable(alt) });
+    }
   }
   // the loop line ends on the last frame (it hands over to frame 0)
   const loop = out[out.length - 1];

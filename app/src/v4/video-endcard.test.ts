@@ -64,7 +64,7 @@ describe('phase 4e: the end card never draws text over text (M-B)', () => {
 /** Phase 4e (M-C): what the end card must say for each hook pool (its 24 h line and its peak line, together). */
 export const ANSWER_OF: Record<HookClass, RegExp> = {
   day: /still in you|has left your body/i, dayN: /still in you|has left your body/i, fiberDay: /still in you|has left your body/i,
-  fatBlood: /blood fat peak · .+ in$/im, stomach: /out of your stomach · /i, stomachN: /out of your stomach · /i, blood: /in your blood|\bblood (?:sugar|fat|alcohol)\b|\bBAC\b/i, bloodN: /in your blood|\bblood (?:sugar|fat|alcohol)\b|\bBAC\b/i,
+  fatBlood: /blood fat peak · .+ in$/im, stomach: /out of your stomach · /i, stomachN: /out of your stomach · /i, stomachFat: /out of your stomach · /i, blood: /in your blood|\bblood (?:sugar|fat|alcohol)\b|\bBAC\b/i, bloodN: /in your blood|\bblood (?:sugar|fat|alcohol)\b|\bBAC\b/i,
   alcoholGone: /gone after about/i, alcoholGoneN: /gone after about/i, alcoholWhere: /alcohol/i,
   protein: /protein|blood fat/i, proteinN: /protein|blood fat/i,
   // (a sugar without a measured curve shows its grams of sugar: the card says what it can)

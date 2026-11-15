@@ -175,7 +175,7 @@ export function endCardOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: 
   } else if (cls === 'fatBlood') {
     const ch = atCh(hook.payoff), tg = b.effects.tgMmol;
     if (ch && tg) hero = { big: `Blood fat peak · ${inText(ch.min)}`, small: `+${atMin(tg, ch.min).toFixed(1)} mmol/L triglycerides` };
-  } else if ((cls === 'stomach' || cls === 'stomachN') && hook.payoffMin !== undefined) {
+  } else if ((cls === 'stomach' || cls === 'stomachN' || cls === 'stomachFat') && hook.payoffMin !== undefined) {
     hero = { big: `Half out of your stomach · ${inText(hook.payoffMin)}`, small: 'The rest follows over the next hours' };
   } else if (cls === 'blood' || cls === 'bloodN') {
     const ch = atCh(hook.payoff);

@@ -67,9 +67,16 @@ export const HOOK_POOL = {
   // phase 4e (critique M5: two foods of a class asked the same question): the same questions with the food's own
   // number ({n}: its kcal, its grams of alcohol or protein, as its first moment says them), used when it has one
   dayN: ['Where is that {n} kcal serving tomorrow?', 'How far have {n} kcal got by tomorrow?', 'How much of {n} kcal is left tomorrow?', 'Has that {n} kcal serving left you tomorrow?', 'Has that {n} kcal serving gone by tomorrow?'],
+  /** phase 4f (full tier: cheddar, gouda and a fried egg all asked "When does it leave your stomach?"): a small fatty
+   *  food that leads with its fat ("1 slice of cheddar: 9 g of fat.") asks the stomach question with those grams, {n}
+   *  (its half time answers, as for stomach) */
+  stomachFat: ['How long does your stomach hold those {n} g?', 'When do {n} g of fat leave your stomach?', 'How long do {n} g sit in your stomach?', 'When is your stomach done with {n} g?', 'How long do {n} g stay in your stomach?', 'When does your stomach pass on those {n} g?', 'How slowly do {n} g leave your stomach?'],
   stomachN: ['When do {n} kcal leave your stomach?', 'How long does your stomach hold {n} kcal?', 'When is your stomach done with {n} kcal?', 'How long do {n} kcal stay in your stomach?', 'When does your stomach pass on {n} kcal?', 'How slowly do {n} kcal leave your stomach?', 'How long do {n} kcal sit in your stomach?'],
   bloodN: ['When do its {n} kcal reach your blood?', 'How fast are {n} kcal in your blood?', 'When does your blood get its {n} kcal?', 'How soon do {n} kcal reach your blood?', 'When do {n} kcal hit your blood?', 'How long until {n} kcal are in your blood?'],
-  alcoholGoneN: ['How long do those {n} ml stay in you?', 'When has your liver cleared {n} ml?', 'How long until {n} ml are out of you?', 'When is your blood clear of {n} ml?', 'How long does your body need for {n} ml?', 'How long do those {n} ml last in you?', 'When are those {n} ml gone?'],
+  /** (phase 4f, full tier: "Red wine: how long until 150 ml are out of you?" takes 5.0 s to say, a Short's hook has
+   *  4.5 s before its first impact, so the question went unsaid: every line here is at most 7 words, about 4.2 s with
+   *  its name and "one hundred fifty milliliters") */
+  alcoholGoneN: ['How long do {n} ml stay?', 'When has your liver cleared {n} ml?', 'When are {n} ml out of you?', 'How long until {n} ml clear?', 'When does your liver finish {n} ml?', 'How long do {n} ml last?', 'When are those {n} ml gone?'],
   proteinN: ['Watch your body use {n} g of protein.', 'Watch where {n} g of protein go.', 'Watch your body take {n} g apart.', 'Follow {n} g of protein through you.', 'See what your body builds with {n} g.', 'Watch {n} g become building blocks.', 'Watch your gut break down {n} g.', 'See where {n} g of protein end up.', 'Watch your body sort out {n} g.', 'Follow those {n} g of protein.'],
   alcoholWhere: ['Where does the alcohol go?', 'What does your liver do with it?', 'How does your body clear it?', 'How does your liver deal with it?', 'Where does all that alcohol go?', 'What does your body do with the alcohol?'],
 } as const satisfies Record<string, readonly string[]>;
@@ -80,7 +87,12 @@ export const poolLine = (cls: HookClass, name: string, n?: number | string, fact
   const xs = HOOK_POOL[cls];
   // (phase 4e: a line with the food's own number is picked by the food's numbers, `facts` (its kcal and macros): two
   // foods that say the same grams but differ in what else they are get other lines; else by its name)
-  const i = facts && xs[0].includes('{n}') ? (seedOf(cls) + facts.reduce((a, x, k) => a + (k + 1) * Math.round(x), 0)) % xs.length : seedOf(`${cls}|${name}`) % xs.length;
+  // (phase 4f, full tier: by its macros only, carbohydrate + 4 × fat + 2 × protein + 3 × fiber, not its kcal: the kcal
+  // follow from the macros and only added their rounding, which put two salads of 14 g fat, 142 and 130 kcal, on the
+  // same line, their sums 20 apart, a multiple of the pool's length; two foods a few grams apart now sit a few lines
+  // apart. A hash of the numbers instead left 4-7 same-class pairs on one question, this none)
+  const [, c = 0, f = 0, p = 0, fb = 0] = (facts ?? []).map((x) => Math.round(x));
+  const i = facts && xs[0].includes('{n}') ? (seedOf(cls) + c + 4 * f + 2 * p + 3 * fb) % xs.length : seedOf(`${cls}|${name}`) % xs.length;
   return xs[i].replace('{n}', String(n ?? ''));
 };
 /** Phase 4e: the numbers a food's pool line is picked by (its first moment's kcal and macros). */
@@ -148,7 +160,7 @@ function hookForRaw(h: HookIn): Hook {
     const gone = h.chapters.find((c) => c.title === 'Alcohol gone');
     // (phase 4e: with its own amount, "How long do those 500 ml stay in you?", the amount line2 names)
     const ml = Number(/(\d+)\s*ml\b/.exec(name)?.[1] ?? 0);
-    if (gone) return { line1: ownLine('alcoholGone', factKey(h), ml, [ml, ...factsOf(first)]), line2: fit(beers) ? beers : 'One drink.', payoff: gone.title };
+    if (gone) return { line1: ownLine('alcoholGone', factKey(h), ml, factsOf(first) /* (phase 4f: its macros, as every pool; the ml is its line's own number) */), line2: fit(beers) ? beers : 'One drink.', payoff: gone.title };
     return { line1: fit(beers) ? beers : 'One drink, 24 hours.', line2: 'Watch what alcohol does.' };
   }
   // round 14 (critic DC-1: decaf had no story): is there still caffeine in it? The model's mg answers, next to a regular cup
@@ -196,7 +208,17 @@ function hookForRaw(h: HookIn): Hook {
   const fat = Number(/(\d+) g fat/.exec(first)?.[1] ?? 0), kc = Number(/(\d+) kcal/.exec(first)?.[1] ?? 0);
   if (h.solid && fat >= 5 && kc > 0 && kc < 300 && fat * 9 >= 0.5 * kc && !/teaspoons? of sugar/.test(first.replace(/about [01] teaspoons?/, ''))) {
     const l1 = named(`${fat} g of fat.`);
-    if (fit(l1, 9)) return { line1: l1, ...promise, lead: `${fat} g of fat.` };
+    // (phase 4f, full tier: 44 same-class pairs shared a hook question: its question carries those grams too, the
+    // number its first line says; a question with its kcal lost them, the kcal not being on its lead, and fell back
+    // to a line many fatty foods share. When they reach the blood, "Fat in your blood" answers; how long they stay
+    // in the stomach, its half time)
+    const sq = hookClassOf({ line1: fq.line1, line2: '' });
+    // (not for a sweet one, 10 g of sugar or more and most of its carbohydrate: its end card answers with its blood
+    // sugar, as every sugar-led food's does)
+    const sug = Number(/\((\d+) g (?:natural )?(?:milk |fruit )?sugar/.exec(first)?.[1] ?? 0), sweet = sug >= 10 && sug >= 0.5 * mac.carbs;
+    const own = day || sweet ? promise : fatCh ? { line2: poolLine('fatBlood', key, fat, factsOf(first)), payoff: fatCh.title }
+      : (sq === 'stomach' || sq === 'stomachN') && fq.payoffMin !== undefined && !fq.payoff ? { line2: poolLine('stomachFat', key, fat, factsOf(first)), payoffMin: fq.payoffMin } : promise;
+    if (fit(l1, 9)) return { line1: l1, ...own, lead: `${fat} g of fat.` };
   }
   // the surprise names what it is in (critic: "9 teaspoons of sugar." did not say cola)
   const tsp = /(\d+) g (?:of )?sugar[^.]*?about (\d+) teaspoons?/.exec(first);
