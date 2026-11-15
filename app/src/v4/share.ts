@@ -727,14 +727,18 @@ export interface TextBox { x0: number; y0: number; x1: number; y1: number; text:
 let textLog: TextBox[] | null = null;
 /** Tests: the box of every word drawn while `fn` runs (deco = small print allowed under the platform UI). */
 export function logText(fn: () => void): TextBox[] { textLog = []; try { fn(); return textLog; } finally { textLog = null; } }
+/** Phase 4g: every word of the frame being drawn (always on during a body or split frame), so the gauges' pins
+ *  (drawn last, flushPins) keep clear of every word. */
+let frameText: TextBox[] | null = null;
+const logBox = (b: TextBox) => { textLog?.push(b); frameText?.push(b); };
 const fontPx = (ctx: CanvasRenderingContext2D) => Number(/(\d+(?:\.\d+)?)px/.exec(ctx.font)?.[1] ?? 16);
 function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, deco = false) {
   if (!s) return;
   ctx.fillText(s, x, y);
-  if (textLog && ctx.globalAlpha > 0.02) {
+  if ((textLog || frameText) && ctx.globalAlpha > 0.02) {
     const w = ctx.measureText(s).width, px = fontPx(ctx), a = ctx.textAlign;
     const x0 = a === 'center' ? x - w / 2 : a === 'right' || a === 'end' ? x - w : x;
-    textLog.push({ x0, x1: x0 + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco });
+    logBox({ x0, x1: x0 + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco });
   }
 }
 /** Largest font (from `max` down to `min`) at which `s` wraps into at most `lines` lines of width `w`. */
@@ -1053,7 +1057,7 @@ function monoText(ctx: CanvasRenderingContext2D, s: string, x: number, y: number
   for (const ch of s) w += /\d/.test(ch) ? cell : ctx.measureText(ch).width;
   if (measureOnly) return w;
   // logged as one word (safe-zone tests), drawn cell by cell
-  if (textLog && ctx.globalAlpha > 0.02) { const px = fontPx(ctx); textLog.push({ x0: x, x1: x + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco: false }); }
+  if ((textLog || frameText) && ctx.globalAlpha > 0.02) { const px = fontPx(ctx); logBox({ x0: x, x1: x + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco: false }); }
   let cx = x;
   const a = ctx.textAlign; ctx.textAlign = 'center';
   for (const ch of s) { const cw = /\d/.test(ch) ? cell : ctx.measureText(ch).width; ctx.fillText(ch, cx + cw / 2, y); cx += cw; }
@@ -1198,14 +1202,77 @@ function drawGauge(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: 
   return h;
 }
 /** The pin: a thin line from the gauge to its organ, a dot and a soft pulsing ring on the organ. */
-function drawPin(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, col: string, t: number) {
+function drawPin(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, col: string, t: number, ring = true) {
   ctx.save();
   ctx.strokeStyle = col; ctx.globalAlpha *= 0.85; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
   ctx.fillStyle = col; ctx.beginPath(); ctx.arc(to.x, to.y, 8, 0, Math.PI * 2); ctx.fill();
   const pulse = (t * 0.9) % 1;
-  ctx.globalAlpha *= 0.6 * (1 - pulse); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(to.x, to.y, 10 + 22 * pulse, 0, Math.PI * 2); ctx.stroke();
+  if (ring) { ctx.globalAlpha *= 0.6 * (1 - pulse); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(to.x, to.y, 10 + 22 * pulse, 0, Math.PI * 2); ctx.stroke(); }
   ctx.restore();
+}
+
+// ---- Phase 4g (critique 4f: in beer vs red wine the BAC chip's pin line ran over its own words, the brain sat under
+// the chip): the pins are queued while a frame is drawn and drawn last, each only where its line, its dot and its
+// ring touch no word on the frame and no other gauge; a line that cannot get through is left out (the organ's glow
+// still shows where it is). ----
+export interface Rect { x0: number; y0: number; x1: number; y1: number }
+type P2 = { x: number; y: number };
+/** The organ's dot (8 px, kept 10 px clear) and its pulsing ring (up to 32 px, kept 34 px clear); a line keeps 4 px. */
+export const PIN_DOT_R = 10, PIN_RING_R = 34, PIN_PAD = 4;
+const grow = (r: Rect, d: number): Rect => ({ x0: r.x0 - d, y0: r.y0 - d, x1: r.x1 + d, y1: r.y1 + d });
+/** Does the segment a-b pass through the rectangle (Liang-Barsky)? */
+export function segHitsRect(a: P2, b: P2, r: Rect): boolean {
+  let t0 = 0, t1 = 1;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  for (const [p, q] of [[-dx, a.x - r.x0], [dx, r.x1 - a.x], [-dy, a.y - r.y0], [dy, r.y1 - a.y]] as const) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const u = q / p;
+    if (p < 0) { if (u > t1) return false; if (u > t0) t0 = u; } else { if (u < t0) return false; if (u < t1) t1 = u; }
+  }
+  return t0 < t1;
+}
+export const circleHitsRect = (c: P2, rad: number, r: Rect) => { const dx = c.x - Math.max(r.x0, Math.min(r.x1, c.x)), dy = c.y - Math.max(r.y0, Math.min(r.y1, c.y)); return dx * dx + dy * dy < rad * rad; };
+/** Where a gauge's pin may go: the line from the gauge's edge (its preferred point first, then the other edge points,
+ *  nearest the organ first) to the organ, never through its own gauge, another gauge or a word; null = no pin. */
+export function pinRoute(box: Rect, pref: P2, to: P2, texts: readonly Rect[], boxes: readonly Rect[]): { from: P2; ring: boolean } | null {
+  const words = texts.map((b) => grow(b, PIN_PAD)), cards = boxes.map((b) => grow(b, 2)), others = cards.filter((_, i) => boxes[i] !== box);
+  const blocks = [...words, ...cards];
+  if (blocks.some((r) => circleHitsRect(to, PIN_DOT_R, r))) return null;
+  const ring = !blocks.some((r) => circleHitsRect(to, PIN_RING_R, r));
+  const cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2, w = box.x1 - box.x0, d = (p: P2) => Math.hypot(p.x - to.x, p.y - to.y);
+  const edge = [{ x: cx, y: box.y1 }, { x: cx, y: box.y0 }, { x: box.x0, y: cy }, { x: box.x1, y: cy }, { x: box.x0 + w * 0.25, y: box.y1 }, { x: box.x0 + w * 0.75, y: box.y1 }].sort((p, q) => d(p) - d(q));
+  const own = grow(box, -3);
+  for (const f of [pref, ...edge]) {
+    if (segHitsRect(f, to, own) || words.some((r) => segHitsRect(f, to, r)) || others.some((r) => segHitsRect(f, to, r))) continue;
+    return { from: f, ring };
+  }
+  return null;
+}
+interface PinReq { box: Rect; pref: P2; to: P2; col: string; t: number; alpha: number }
+let pinQueue: PinReq[] | null = null;
+/** Tests: every pin drawn while `fn` runs (its line, its ring or not), with the words and gauges of its frame. */
+export interface PinDrawn { from: P2; to: P2; ring: boolean; words: TextBox[]; boxes: Rect[] }
+let pinLog: PinDrawn[] | null = null;
+export function logPins(fn: () => void): PinDrawn[] { pinLog = []; try { fn(); return pinLog; } finally { pinLog = null; } }
+/** A frame starts: its words are collected, its pins queued. */
+function beginPins() { frameText = []; pinQueue = []; }
+function queuePin(ctx: CanvasRenderingContext2D, box: Rect, pref: P2, to: P2, col: string, t: number) {
+  if (ctx.globalAlpha > 0.01) pinQueue?.push({ box, pref, to, col, t, alpha: ctx.globalAlpha });
+}
+/** The frame's words are all down: each pin is drawn where it touches none of them (and the spoken captions, drawn
+ *  after, keep clear of its line: its points join the frame's focus). */
+function flushPins(ctx: CanvasRenderingContext2D) {
+  const words = frameText ?? [], q = pinQueue ?? [], boxes = q.map((p) => p.box);
+  frameText = null; pinQueue = null;
+  for (const p of q) {
+    const r = pinRoute(p.box, p.pref, p.to, words, boxes);
+    if (!r) continue;
+    ctx.save(); ctx.globalAlpha = p.alpha; drawPin(ctx, r.from, p.to, p.col, p.t, r.ring); ctx.restore();
+    pinLog?.push({ from: r.from, to: p.to, ring: r.ring, words, boxes });
+    const n = Math.max(1, Math.ceil(Math.hypot(p.to.x - r.from.x, p.to.y - r.from.y) / 40));
+    for (let k = 0; k < n; k++) frameFocus.push({ x: r.from.x + ((p.to.x - r.from.x) * k) / n, y: r.from.y + ((p.to.y - r.from.y) * k) / n, r: 12 });
+  }
 }
 const onFrame = (p: { x: number; y: number } | null | undefined, W: number, top: number, bot: number) => !!p && p.x > 20 && p.x < W - 20 && p.y > top && p.y < bot;
 
@@ -1317,6 +1384,7 @@ const SURGE_COLOR: Record<string, string> = { sugar: '#ffd27a', caffeine: '#5ef0
  *  the peak (riser vignette → punch, shake, ring, PEAK), micro-beats, NEXT chips, the night tone (video-fx.ts). */
 export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
   o: Overlay, format: Format, fr: VFrame, plan: PlanView | null, first: HTMLCanvasElement | null) {
+  beginPins(); // (phase 4g)
   const introS = plan?.introS ?? INTRO_S.long, ti = fr.k * introS, cues = plan?.cues;
   const settle = fr.phase === 'intro' ? smooth((ti - (introS - 1.0)) / 0.9) : 1;
   const Lo = layoutBody(ctx, o, format, settle), { reel, S, L, R, RL } = Lo;
@@ -1371,7 +1439,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
       let y = pin ? pin.y - h / 2 : right ? top + (bot - top) * 0.15 : top + (bot - top) * 0.55;
       y = Math.max(top, Math.min(bot - h - (g.curve ? 44 : 0), y));
       const x = right ? (y + h > S.lowFrom ? RL : R) - gw : L;
-      if (pin && ctx.globalAlpha > 0.01) drawPin(ctx, { x: right ? x : x + gw, y: Math.max(y + 18, Math.min(y + h - 18, pin.y)) }, pin, g.curve ? LIGHT[g.level] : '#e6edf5', t + i * 0.45);
+      if (pin) queuePin(ctx, { x0: x, y0: y, x1: x + gw, y1: y + h }, { x: right ? x : x + gw, y: Math.max(y + 18, Math.min(y + h - 18, pin.y)) }, pin, g.curve ? LIGHT[g.level] : '#e6edf5', t + i * 0.45);
       // the peak: the main number bounces (×1.15) and gets a PEAK stamp for 1.4 s; it also shows on the cold open
       const isMain = g === main, pk = isMain ? (fr.beat === 'teaser' ? 0.6 : peak.age) : Infinity;
       const flash = isMain && micro.cue?.data?.v === 2 && micro.age < 0.5 ? 1 - micro.age / 0.5 : 0;
@@ -1413,10 +1481,9 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   }
   if (fr.celeb !== undefined && fr.phase === 'main') drawCeleb(ctx, Lo, o, fr, cues);
   if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; footer(ctx, W, H, format, u, plan?.stopsU); ctx.restore(); }
-  if (fr.phase === 'outro') {
-    drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= OUTRO_S.short + 0.05);
-    if (first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
-  }
+  if (fr.phase === 'outro') drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= OUTRO_S.short + 0.05);
+  flushPins(ctx); // (phase 4g: last, clear of every word)
+  if (fr.phase === 'outro' && first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
 }
 
 /** Round 11 (research R1): the 24 h payoff beat over the body: "AFTER 24 HOURS" and the day's lights, each coming on
@@ -1624,7 +1691,7 @@ export function chipParts(small: string): string[] {
 /** A body's number as a compact chip next to its name: the value, and what it is underneath. Returns its width.
  *  (Phase 4b, critique M3: "+16–38 % over usual: a nor…": the words under the value wrap onto a second line and shrink,
  *  never cut; B1: a blood alcohol chip says its body, "for a 70 kg man", and carries its warning, in red.) */
-function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, maxW: number, h: number, alignRight: boolean): number {
+function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: number, maxW: number, h: number, alignRight: boolean): Rect & { w: number } {
   ctx.save();
   const room = maxW - 28;
   let bf = 30; ctx.font = `700 ${bf}px ${SANS}`;
@@ -1651,12 +1718,13 @@ function drawChip(ctx: CanvasRenderingContext2D, g: PinnedGauge, x: number, y: n
   small.forEach((l) => { text(ctx, l, x0 + 14, ly + sf * 0.8); ly += slh; });
   if (warn.length) { ly += 4; ctx.font = `700 ${wf}px ${SANS}`; ctx.fillStyle = WARN_COL; warn.forEach((l) => { text(ctx, l, x0 + 14, ly + wf * 0.8); ly += wlh; }); }
   ctx.restore();
-  return w;
+  return { w, x0, y0: y, x1: x0 + w, y1: y + hh }; // (phase 4g: its real box; the pin starts on its edge)
 }
 
 /** Split-screen frame of the comparison video: two bodies, each with its colour, name, number and words. */
 export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: number, src: CanvasImageSource & { width: number; height: number },
   o: CmpOverlay, fr: VFrame, plan: PlanView | null, first: HTMLCanvasElement | null) {
+  beginPins(); // (phase 4g)
   const introS = plan?.introS ?? INTRO_S.long, ti = fr.k * introS, cues = plan?.cues;
   const settle = fr.phase === 'intro' ? smooth((ti - (introS - 1.0)) / 0.9) : 1;
   const Lo = layoutSplit(ctx, o, settle), { S, L, R } = Lo;
@@ -1701,7 +1769,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
       const x0 = k ? W / 2 + 34 : L, x1 = k ? R : W / 2 - 34, half = x1 - x0;
       const g = s.gauge && !numberConflict((k ? fr.capB : fr.cap) ?? '', [s.gauge.big]) ? s.gauge : null;
       ctx.save(); ctx.globalAlpha *= fr.phase === 'intro' && fr.beat !== 'teaser' ? smooth((ti - 0.8) / 0.5) : 1;
-      const cw = g ? drawChip(ctx, g, k ? x1 : x0, Lo.chipTop, Math.min(250, half * 0.55), Lo.chipH, !!k) : 0;
+      const chip = g ? drawChip(ctx, g, k ? x1 : x0, Lo.chipTop, Math.min(250, half * 0.55), Lo.chipH, !!k) : null, cw = chip?.w ?? 0;
       ctx.restore();
       const nx0 = k ? x0 : x0 + cw + 14, nx1 = k ? x1 - cw - 14 : x1;
       const nm = fitWrap(ctx, s.name, nx1 - nx0, 1, 40, 26, (px) => `400 ${px}px ${SERIF}`);
@@ -1718,7 +1786,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
       ctx.textAlign = 'left';
       // the number's pin to its organ, in this body's half
       const at = tf(g?.at), pin = g && onFrame(at, W, Lo.headerBot + 10, Lo.capTop - 10) && (k ? at!.x > W / 2 + 10 : at!.x < W / 2 - 10) ? at! : null;
-      if (g && pin && cw) drawPin(ctx, { x: k ? x1 - cw / 2 : x0 + cw / 2, y: Lo.chipTop + Lo.chipH }, pin, g.curve ? LIGHT[g.level] : '#e6edf5', t + k * 0.45);
+      if (g && pin && chip) queuePin(ctx, chip, { x: (chip.x0 + chip.x1) / 2, y: chip.y1 }, pin, g.curve ? LIGHT[g.level] : '#e6edf5', t + k * 0.45);
     });
     ctx.fillStyle = '#04070c'; ctx.beginPath(); ctx.arc(W / 2, Lo.nameY - 10, 24, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = ACCENT; ctx.lineWidth = 2.5; ctx.stroke();
@@ -1769,10 +1837,9 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     footer(ctx, W, H, 'reel', u, plan?.stopsU);
     ctx.restore();
   }
-  if (fr.phase === 'outro') {
-    drawSplitOutro(ctx, W, H, o, E.end, Lo.topBot, fr.k * outS, cues);
-    if (first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
-  }
+  if (fr.phase === 'outro') drawSplitOutro(ctx, W, H, o, E.end, Lo.topBot, fr.k * outS, cues);
+  flushPins(ctx); // (phase 4g: last, clear of every word)
+  if (fr.phase === 'outro' && first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
 }
 /** A drink colour light enough to read as text on the dark frame (cola is near black, water near white). */
 export function lighten(hex: string): string {
