@@ -15,6 +15,9 @@ const SITE = path.resolve(arg('site', '../site'));
 const OUT = path.resolve(arg('out', 'sample.mp4'));
 const Q = arg('q', 'beer'), RENDER = arg('render', 'reels'), VS = arg('vs', '');
 const LIMIT_MIN = Number(arg('minutes', '60'));
+// Phase 4g: the export runs on the real GPU (headless Chromium with ANGLE on D3D11). Software WebGL (SwiftShader) made a
+// long cut take 20+ minutes and run the PC out of memory, so it is refused unless --allow-swiftshader is passed.
+const ALLOW_SWIFTSHADER = process.argv.includes('--allow-swiftshader');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.glb': 'model/gltf-binary', '.woff2': 'font/woff2', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.txt': 'text/plain' };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -47,8 +50,11 @@ function findBrowser() {
   throw new Error('No headless browser found: set I24_BROWSER');
 }
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'i24-chk-'));
-const proc = spawn(findBrowser(), ['--headless', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--no-first-run', '--no-default-browser-check',
-  '--disable-extensions', '--mute-audio', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--js-flags=--max-old-space-size=1536', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', 'about:blank'], { stdio: 'ignore' });
+const GL_FLAGS = ALLOW_SWIFTSHADER ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+  : ['--use-angle=d3d11', '--use-gl=angle', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-features=Vulkan', '--enable-webgl', '--disable-software-rasterizer'];
+// (its own temp profile, never the user's: a separate browser process tree, killed at the end)
+const proc = spawn(findBrowser(), ['--headless=new', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--no-first-run', '--no-default-browser-check',
+  '--disable-extensions', '--mute-audio', ...GL_FLAGS, '--js-flags=--max-old-space-size=1536', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', 'about:blank'], { stdio: 'ignore' });
 let killed = false;
 function cleanup() {
   if (killed) return; killed = true;
@@ -80,6 +86,10 @@ async function openPage() {
 
 const page = await openPage();
 try {
+  // which WebGL the browser really got (fail fast on software WebGL)
+  const gl = await page.evaluate(`(() => { const c = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl'); if (!c) return 'no WebGL'; const e = c.getExtension('WEBGL_debug_renderer_info'); return e ? c.getParameter(e.UNMASKED_RENDERER_WEBGL) : c.getParameter(c.RENDERER); })()`);
+  console.log(`[render] WebGL renderer: ${gl}`);
+  if (!ALLOW_SWIFTSHADER && /swiftshader|no WebGL|llvmpipe|software/i.test(gl)) throw new Error(`software WebGL (${gl}): no GPU in the headless browser; pass --allow-swiftshader to render anyway (slow, memory hungry)`);
   await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   const hash = `#q=${encodeURIComponent(Q)}${VS ? `&vs=${encodeURIComponent(VS)}` : ''}&render=${RENDER}`;
   await page.send('Page.navigate', { url: BASE + hash });
