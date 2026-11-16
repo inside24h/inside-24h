@@ -655,7 +655,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
         // 0b) the first moment's camera stays on the food pipe (the stay began with the bite reaching the stomach)
         for (const p of [0, ...PIPE_SHARES]) if (p !== pipe) tries.push(() => { pipe = p; return true; });
         // 0d) a moment of the stay its lull's NEXT chip has just named: no new-moment time on its first card
-        for (const m of inRunMins) if (lulls.has(m) && !named.has(m)) tries.push(() => { named.add(m); return true; });
+        // (never the moment that answers the hook: it is read in full)
+        for (const m of inRunMins) if (lulls.has(m) && !named.has(m) && m !== payoffMin) tries.push(() => { named.add(m); return true; });
         // 0c) a long moment of the stay is said in two parts, a few minutes apart, with a lull between (its later
         // cards then speak a few minutes later: never a moment's first card, never the first moment)
         for (const m of inRunMins) {
@@ -694,7 +695,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
         }, peakKept(() => {
           // (phase 4i, full tier: an energy drink Short, 6.1 s on the stomach from its first sip: the opening's name card
           // gives way and the time goes to the cards outside the stay, no moment brought in for it; never when that
-          // brings the impact sooner: the hook's question is said before it)
+          // brings the impact before the hook's question is said, questionByS)
           const j = spare(i);
           if (j < 0) return false;
           dropCard(i, j); calmRun();
@@ -716,7 +717,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           for (let k = 0; k < 3 && next.seconds < lo; k++) { bump += lo - next.seconds + 0.2; fill(base, o.cap); next = relay(); }
           bump = 0;
           const n = overOf(next);
-          if (n.sum < o.sum - 0.05 && !(keepPeak.has(tr) && (next.peakT ?? 0) < (out.peakT ?? 0) - 0.05) && next.seconds >= lo && next.seconds <= hi && (!best || n.sum < best.sum - 1e-6)) best = { sum: n.sum, plan: next, st: { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], named: [...named], want, pipe } };
+          if (n.sum < o.sum - 0.05 && !(keepPeak.has(tr) && !!fx.questionByS && (next.peakT ?? 0) < Math.min(out.peakT ?? 0, fx.questionByS) - 0.05) && next.seconds >= lo && next.seconds <= hi && (!best || n.sum < best.sum - 1e-6)) best = { sum: n.sum, plan: next, st: { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], named: [...named], want, pipe } };
           restore();
           if (best && best.sum <= 1e-6) break;
         }

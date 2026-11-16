@@ -6,13 +6,13 @@
 // shards drift apart (nothing breaks if it is stale).
 import { BaseSequencer, type TestSpecification } from 'vitest/node';
 
-/** Seconds per file on a CI runner (Tests (full), 2026-11-16, before the phase 4i memo; relative sizes are what count). */
+/** Seconds per file on a CI runner (Tests (full) run 43953188042, 2026-11-16, phase 4i; relative sizes are what count). */
 const SECONDS: Record<string, number> = {
-  'src/v4/video-4b.test.ts': 1558, 'src/v4/text-audit.test.ts': 1046, 'src/v4/video-telemetry.test.ts': 727, 'src/v4/video-endcard.test.ts': 630,
-  'src/v4/video-variety.test.ts': 495, 'src/v4/video-retention.test.ts': 494, 'src/v4/video-narration.test.ts': 486, 'src/v4/video-camera.test.ts': 443,
-  'src/v4/tts-normalize.test.ts': 440, 'src/v4/video-captions.test.ts': 328, 'src/v4/video-compare-end.test.ts': 303, 'src/v4/video-sameness.test.ts': 214,
-  'src/v4/category-matrix.test.ts': 130, 'src/v4/video-story.test.ts': 78, 'src/v4/video-hook.test.ts': 55, 'src/science/fuzz.test.ts': 37,
-  'src/science/fuzzMeals.test.ts': 28, 'src/v4/video-pins.test.ts': 23, 'src/v4/variants.test.ts': 10,
+  'src/v4/text-audit.test.ts': 806, 'src/v4/video-telemetry.test.ts': 561, 'src/v4/video-retention.test.ts': 449, 'src/v4/tts-normalize.test.ts': 430,
+  'src/v4/video-variety.test.ts': 407, 'src/v4/video-narration.test.ts': 369, 'src/v4/video-4b.test.ts': 337, 'src/v4/video-camera.test.ts': 282,
+  'src/v4/video-endcard.test.ts': 252, 'src/v4/video-compare-end.test.ts': 187, 'src/v4/video-captions.test.ts': 164, 'src/v4/video-sameness.test.ts': 132,
+  'src/v4/category-matrix.test.ts': 81, 'src/v4/video-story.test.ts': 64, 'src/science/fuzz.test.ts': 48, 'src/v4/video-hook.test.ts': 35,
+  'src/science/fuzzMeals.test.ts': 28, 'src/v4/video-pins.test.ts': 19, 'src/v4/variants.test.ts': 16, 'src/v4/short-middle.test.ts': 5,
 };
 const DEFAULT_S = 3;
 
