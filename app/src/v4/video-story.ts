@@ -30,10 +30,11 @@ export { cmpName, plainLatin, shortName };
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
 /** Phase 4h (critique M1): an alcoholic drink or mix said as what was drunk: each part with its amount, a drink with
  *  alcohol with its strength (% ABV, from its own alcohol per 100 g: ethanol 0.789 g/ml), joined by "+"
- *  ("40 ml of rakija (40 % ABV) + 250 ml of lemonade."); undefined without alcohol. */
+ *  ("40 ml rakija (40% ABV), 250 ml lemonade."); undefined for a single part or without alcohol. */
 export function servingCard(parts: readonly Pick<Part, 'food' | 'amountLabel' | 'grams'>[]): string | undefined {
   const alc = (p: (typeof parts)[number]) => ((p.food.p?.alcoholG ?? 0) * p.grams) / 100;
-  if (!parts.length || !parts.some((p) => alc(p) > 0.5)) return undefined;
+  // (a mix only: a single drink's name card and hook already say its amount)
+  if (parts.length < 2 || !parts.some((p) => alc(p) > 0.5)) return undefined;
   const xs = parts.map((p) => {
     const ml = Number(/^(\d+(?:\.\d+)?)\s*ml\b/.exec(p.amountLabel.trim())?.[1] ?? 0) || p.grams, abv = (100 * alc(p)) / 0.789 / ml;
     const s = plainLatin(amountPhrase(p)).replace(/\s*\([^)]*\)/g, '').replace(/\s+\/\s+[^,+]*$/, ''), k = s.indexOf(' of ');
@@ -126,6 +127,8 @@ export function applyHook(stops: StopIn[], hook: { payoff?: string; payoffMin?: 
     const add = [lead, had, caf && !(lead ?? '').includes(caf) ? `${caf.charAt(0).toUpperCase()}${caf.slice(1)}.` : null].filter((x): x is string => !!x);
     // (phase 4h, critique M7: the opening read two to four first-bite cards while the clock stood at +0:00: the hook's
     // number, already in the headline above, is the first moment's one card; its name follows only where there is room)
+    // (phase 4h, critique M7: the opening read two to four first-bite cards while the clock stood at +0:00: the hook's
+    // number comes first and only it must be said; the name card may give way where a stay on one region is too long)
     if (add.length) { s0.lines = [...add, ...ls]; s0.must = Math.min(s0.lines.length, add.length); }
   }
   if (hook.extra) {

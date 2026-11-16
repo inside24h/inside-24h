@@ -482,7 +482,9 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       if (!said.length) return;
       if (atPeak) {
         const tp = peak! + IMPACT_POST_S + 0.05, ex = EXCL[calm ? 'calm' : 'std'];
-        cands.push({ id: 'climax', t: tp, until, delay: 0.3, options: [...(fastAtPeak(sp.a) ? said.map((x) => `${x} ${fastShort}`) : []), ...(hiAt && /sugar/i.test(sp.a) ? said.map((x) => `${x} Up ${hiAt[1]}–${hiAt[2]} %.`) : []), ...said.map((x) => `${pick(ex, s, 2)} ${x}`), ...said, pick(CLIMAX[ck], s, 2), ...CLIMAX[ck]], source: `${sp.title} ${sp.a} ${fastShort} ${hiAt ? `${n.hero!.big} ${n.hero!.small}` : ''}`, card: sp.a, side: 0 });
+        // (phase 4h: when this card answers the hook's question, the climax reads it, even if a word comes again)
+        const payNow = sp === paySpan;
+        cands.push({ id: 'climax', t: tp, until, delay: 0.3, ...(payNow ? { must: true } : {}), options: [...(fastAtPeak(sp.a) ? said.map((x) => `${x} ${fastShort}`) : []), ...(hiAt && /sugar/i.test(sp.a) ? said.map((x) => `${x} Up ${hiAt[1]}–${hiAt[2]} %.`) : []), ...said.map((x) => `${pick(ex, s, 2)} ${x}`), ...said, ...(payNow ? [] : [pick(CLIMAX[ck], s, 2), ...CLIMAX[ck]])], source: `${sp.title} ${sp.a} ${fastShort} ${hiAt ? `${n.hero!.big} ${n.hero!.small}` : ''}`, card: sp.a, side: 0 });
         return;
       }
       if (sp.tease) { cands.push({ id: 'tease', t, until, delay: late, options: [`${pick(TEASE_LEAD, s, 3)} ${sp.a}`, sp.a, pick(TEASE, s, 3)], source: sp.a, card: sp.a, side: 0 }); return; }

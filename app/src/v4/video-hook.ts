@@ -338,7 +338,8 @@ function hookBRaw(h: HookIn, a: Hook): Hook {
     // first at the moment the alcohol is gone)
     const gone = h.chapters.find((c) => c.title === 'Alcohol gone');
     const liver = gone ? { payoff: gone.title, answer: LIVER_ANSWER } : {};
-    if (/\?$/.test(a.line1) || !morning) return g ? { line1: fit(`${nm}: ${g} g of alcohol.`) ? `${nm}: ${g} g of alcohol.` : `${g} g of alcohol.`, ...(gone ? { line2: poolLine('alcoholWhere', h.name), ...keep, ...liver } : { line2: 'Watch what alcohol does.', ...keep }) }
+    // (a line with the name and its grams only where it fits: a hook always names the food)
+    if (/\?$/.test(a.line1) || !morning) return g && fit(`${nm}: ${g} g of alcohol.`) ? { line1: `${nm}: ${g} g of alcohol.`, ...(gone ? { line2: poolLine('alcoholWhere', h.name), ...keep, ...liver } : { line2: 'Watch what alcohol does.', ...keep }) }
       : { line1: poolLine('alcoholWhere', h.name), line2: a.line2, ...keep, ...liver };
     return { line1: 'Is it gone by the next morning?', line2: a.line1, ...keep };
   }

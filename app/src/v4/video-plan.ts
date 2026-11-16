@@ -206,7 +206,7 @@ export const TEASER_S = 0.45, REWIND_S = 0.5, RISER_S = 1.6, NEXT_MIN_S = 1.2, L
 // (round 11, research R1: the lights and the verdict land in the 24 h beat, with the body in frame; the end card is
 // short, so the comparison adds nothing to it)
 // (phase 4e, critique M7: the comparison end card was fully on screen only ~2.25 s: 0.4 s more, so its full view lasts ≥ END_CARD_MIN_S)
-export const CMP_OUTRO_EXTRA_S = 0.4, CMP_LIGHTS_FROM_S = 0.55, CMP_LIGHTS_STEP_S = 0.15;
+export const CMP_OUTRO_EXTRA_S = 0 /* (phase 4h: OUTRO_S itself now gives every end card >= 2.5 s fully shown) */, CMP_LIGHTS_FROM_S = 0.55, CMP_LIGHTS_STEP_S = 0.15;
 export const outroSeconds = (cut: Cut, compare = false) => OUTRO_S[cut] + (compare ? CMP_OUTRO_EXTRA_S : 0);
 export const TEASE_PREFIX = 'Coming up: ', TEASE_PREFIX2 = 'Still to come: ';
 /** "Coming up: the sugar dip." (≤ 5 words), from a chapter title. */
@@ -258,8 +258,9 @@ export const PEAK_BY_MAX_S = 33;
 // at least END_CARD_MIN_S (share.ts endTiming: it fades in over 0.2-0.45 s and out from 0.6 s before the end, so it is
 // at least half visible for outroS - 0.8 s); the Short still ends by 30 s
 // phase 4h (critique 2026-11-19, M5: the rendered Shorts and Reels end cards were fully on screen ~2.25-2.4 s, measured on
-// the video's own timeline: fade in 0.2-0.45 s, out from 0.6 s before the end): fully on screen for outroS - ~1.03 s
-export const OUTRO_S = { long: 4.0, medium: 3.7, short: 3.7 } as const;
+// the video's own timeline: fade in 0.2-0.45 s, out from 0.6 s before the end): quicker hand-overs (share.ts endTiming),
+// fully on screen for outroS - ~0.8 s
+export const OUTRO_S = { long: 4.0, medium: 3.4, short: 3.4 } as const;
 export const END_CARD_MIN_S = 2.5;
 
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
@@ -307,7 +308,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const fixed = INTRO_S[cut] + OUTRO_S[cut] + CELEB_S[cut]; // intro, the 24 h beat, end card (the glides are counted apart)
   // the start says what it is and its first number; a moment with safety cards shows all of them (round 5)
   // (phase 4h, critique M7: the first moment says one card, the clock then moves on: no 9-13 s at +0:00)
-  const firstNOf = (s: StopIn, _i: number) => Math.max(1, mustOf(s));
+  const firstNOf = (s: StopIn, i: number) => Math.max(i === 0 ? 2 : 1, mustOf(s));
   let chosen: StopIn[];
   if (cut === 'short') {
     // the start + the moments that must be there (peak, payoff, safety) + the most telling ones that fit in 30 s,
@@ -561,7 +562,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           if (chosen.some((x) => x.min === c.min) || !linesOf(c).length) continue;
           // (phase 4h: the long cut's quiet template moments before the impact come in for one food in two, by its own
           // seed, so two meals that hit the same cap are not mended into the same video)
-          if (isLongish(cut) && fx.seed !== undefined && (fx.seed >>> 5) % 2 === 1 && stopValue(c) <= 1 && c.min < (peakMin ?? 0)) continue;
+          // (a Short never spends its 30 s on them: its middle of the day comes first, MID_FIRST)
+          if ((cut === 'short' || (fx.seed !== undefined && (fx.seed >>> 5) % 2 === 1)) && stopValue(c) <= 1 && c.min < (peakMin ?? 0)) continue;
           const r = regionAt(c);
           if (!r || r === 'body') continue;
           const k0 = chosen.findIndex((x) => x.min > c.min), k = k0 < 0 ? chosen.length : k0, nb = [chosen[k - 1], chosen[k]].filter((x): x is StopIn => !!x && regionAt(x) === r);
@@ -651,7 +653,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
         // 1) a moment of another region inside the stay comes in (one card)
         if (inRun.length >= 2) {
           const a = chosen[inRun[0]].min, z = chosen[inRun[inRun.length - 1]].min, mid = (toU(a) + toU(z)) / 2;
-          const cands = [...story, ...(pc.extra ?? [])].filter((c) => c.min > a && c.min < z && !chosen.some((x) => x.min === c.min) && linesOf(c).length && regionAt(c) && regionAt(c) !== w.r && regionAt(c) !== 'body')
+          const cands = [...story, ...(pc.extra ?? [])].filter((c) => c.min > a && c.min < z && !chosen.some((x) => x.min === c.min) && linesOf(c).length && regionAt(c) && regionAt(c) !== w.r && regionAt(c) !== 'body'
+            && !(cut === 'short' && stopValue(c) <= 1 && c.min < (peakMin ?? 0))) // (phase 4h: a Short keeps its 30 s for the middle of the day)
             .sort((x, y) => Math.abs(toU(x.min) - mid) - Math.abs(toU(y.min) - mid)).slice(0, 3);
           const fit = () => {
             // (too long now: the stay's extra cards go, then its moments that are not needed)
@@ -797,13 +800,16 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
   // (phase 4h: a glide made a lull lasts at least LULL_S)
   const gkC = cut === 'short' ? SHORT_GLIDE_K : 1;
   const lullX = (ls: readonly number[]) => chosen.reduce((a, s, i) => a + (i > 0 && ls.includes(s.min) ? Math.max(0, LULL_S - gkC * moveS(toU, chosen[i - 1].min, s.min)) : 0), 0);
-  const layC = (ls: number[]) => {
+  // (phase 4h: a Short is too tight for wordless lulls and longer glides: its voice would cover too little; only the
+  // longer cuts mend their stays, and only within their length range)
+  const mend = !!fx.perceive && cut !== 'short';
+  const layC = (ls: number[], capCards = mend) => {
     const t0 = total(pages) + lullX(ls), reading = t0 - fixed - glides(chosen) - lullX(ls), want = lim.min + 0.7; // (round 14: frame rounding and the cut never land under the minimum)
     const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 2.2, /* (round 14: Shorts ≥ 24 s) */ 1 + (want - t0) / Math.max(0.1, reading)) : 1;
     // (phase 4h, with perceived stays: as a single's, a card is held at most CARD_MAX_S, or its own reading time; the
     // rest of the time goes to the journey between moments, glide by glide up to GLIDE_MAX_S, then back to the cards)
     let lost = 0;
-    const secs = pages.map((pp) => pp.map((p) => { const w = p.s * stretch, c = fx.perceive ? Math.min(w, Math.max(p.s, CARD_MAX_S)) : w; lost += w - c; return c; }));
+    const secs = pages.map((pp) => pp.map((p) => { const w = p.s * stretch, c = capCards ? Math.min(w, Math.max(p.s, CARD_MAX_S)) : w; lost += w - c; return c; }));
     let room = 0, gl = 0;
     for (let i = 1; i <= chosen.length; i++) { if (i === chosen.length && chosen[i - 1].min >= 1440) break; if (i < chosen.length && ls.includes(chosen[i].min)) continue; const g = gkC * moveS(toU, chosen[i - 1].min, i < chosen.length ? chosen[i].min : 1440); gl += g; room += Math.max(0, GLIDE_MAX_S - g); }
     const use = Math.min(lost, room), glideK = Math.min(GLIDE_K_MAX, 1 + use / Math.max(0.1, gl)), nCards = secs.reduce((a, x) => a + x.length, 0), back = (lost - use) / Math.max(1, nCards);
@@ -811,18 +817,19 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
       { ...fx, compare: true, peakMin, teaserMin: fx.teaserMin ?? peakMin ?? chosen[Math.min(1, chosen.length - 1)].min, lulls: ls, ...(use > 0 ? { glideK, glideK0: glideK } : {}) });
   };
   let lulls: number[] = [], out = layC(lulls);
+  if (mend && (out.seconds > lim.max + 0.05 || out.seconds < lim.min - 0.05)) out = layC(lulls, false); // (the length range first)
   // Phase 4h (critique 2026-11-19, M6: lemonade vs pear kept both stomachs, then both pancreases, ~28 s on the upper
   // body, as its rendered timeline measured it; the comparison had no cap on what the viewer perceives): every stay on
   // one region, both sides' cards and the organs lit for them (fx.perceive), is held to regionMaxS like a single's. Over
   // the cap, in turn: a glide inside the stay becomes a lull (a wordless whole-body stretch, LULL_S), or a moment in it
   // says one card a side. A change is kept only when the time over the cap shrinks and the length stays in its range.
   const pc = fx.perceive;
-  if (pc) {
+  if (pc && mend) {
     const overOf = (pl: Plan) => {
       const cap = pc.maxS(pl.seconds) - 0.3, runs = pc.runs(pl.frames.filter((f) => f.phase === 'main').map((f) => ({ t: f.t, rs: pc.seen(f) })));
       return { sum: runs.reduce((a, x) => a + Math.max(0, x.s - cap), 0), runs: runs.filter((x) => x.s > cap).sort((x, y) => x.at - y.at) };
     };
-    const hi = Math.max(lim.max, out.seconds) + 0.05;
+    const hi = lim.max + 0.05;
     for (let guard = 0; guard < 12; guard++) {
       const o = overOf(out);
       if (o.sum <= 1e-6) break;
@@ -833,7 +840,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
       let best: { plan: Plan; apply: () => void; sum: number } | null = null;
       const tryIt = (apply: () => void, undo: () => void, ls: number[]) => {
         apply(); const alt = layC(ls), sum = overOf(alt).sum; undo();
-        if (alt.seconds <= hi && alt.seconds >= Math.min(lim.min, out.seconds) - 0.05 && sum < o.sum - 1e-6 && (!best || sum < best.sum)) best = { plan: alt, apply: () => { apply(); lulls = ls; }, sum };
+        if (alt.seconds <= hi && alt.seconds >= lim.min - 0.05 && sum < o.sum - 1e-6 && (!best || sum < best.sum)) best = { plan: alt, apply: () => { apply(); lulls = ls; }, sum };
       };
       for (const x of inRun) {
         if (x.lull && !lulls.includes(x.s.min)) tryIt(() => {}, () => {}, [...lulls, x.s.min]);

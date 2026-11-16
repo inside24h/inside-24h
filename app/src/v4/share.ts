@@ -1358,8 +1358,9 @@ export function kineticWord(t: number, j: number): number {
 export function endTiming(fr: Pick<VFrame, 'phase' | 'k'>, outS: number) {
   if (fr.phase !== 'outro') return { main: 1, end: 0, top: 1, first: 0 };
   // (phase 4b, critique M7: quicker hand-overs, the same order, so the end card itself is on screen longer)
-  const tt = fr.k * outS, leave = 1 - smooth((tt - (outS - 0.6)) / 0.25);
-  return { main: 1 - smooth(tt / 0.2), end: smooth((tt - 0.2) / 0.25) * leave, top: leave, first: smooth((tt - (outS - 0.35)) / 0.35) };
+  // (phase 4h, critique M5: quicker still, so the end card is fully on screen for outroS - ~0.8 s within the Short's 30 s)
+  const tt = fr.k * outS, leave = 1 - smooth((tt - (outS - 0.45)) / 0.2);
+  return { main: 1 - smooth(tt / 0.15), end: smooth((tt - 0.15) / 0.2) * leave, top: leave, first: smooth((tt - (outS - 0.25)) / 0.25) };
 }
 
 /** Round 4 effects on one body: bubbles in a fizzy stomach (foam on beer), the bloodstream gut → liver → heart → brain
