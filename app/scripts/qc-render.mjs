@@ -10,11 +10,29 @@
 //   - black frames (blackdetect: ≥ 0.25 s of black) and frozen frames (freezedetect: ≥ 2 s without change);
 //   - loudness (ebur128): integrated -14 LUFS ± 1, true peak ≤ -1 dBTP;
 //   - silence over 3 s (silencedetect at -50 dB) is reported (a warning: a hush before an impact is allowed).
+//   - phase 4h: with <name>.timeline.json next to the video (scripts/render-sample.mjs writes it: what every frame drew),
+//     the same checks as the unit tests (src/v4/video-telemetry.ts checkTimeline, bundled with esbuild): perceived stays
+//     under the cut's cap, the end card fully on screen >= 2.5 s, no text over text, every BAC with the US 0.08 % and
+//     EU 0.05 % limits and the warning, the clock moving within 3 s, the hook's question answered. No timeline: a warning.
 // Writes <name>.qc.json and <name>.qc.md next to the file (or into --out) and prints a one-line verdict per file.
 // Exit code 1 when a check fails (unless --no-strict). ffmpeg/ffprobe come from PATH (or FFMPEG / FFPROBE).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+/** Phase 4h: the app's own timeline checks (src/v4/video-telemetry.ts), bundled once into a temp module. */
+let teleMod = null;
+async function telemetry() {
+  if (teleMod) return teleMod;
+  const { build } = await import('esbuild');
+  const src = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'v4', 'video-telemetry.ts');
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'i24-qc-')), 'telemetry.mjs');
+  await build({ entryPoints: [src], bundle: true, platform: 'node', format: 'esm', outfile: out, logLevel: 'error', loader: { '.json': 'json' } });
+  teleMod = await import(pathToFileURL(out).href);
+  return teleMod;
+}
 
 const args = process.argv.slice(2);
 const opt = (k) => args.find((a) => a.startsWith(`--${k}=`))?.slice(k.length + 3);
@@ -42,7 +60,7 @@ const cutOf = (f) => {
 const num = (x) => (x === undefined || x === null || x === 'N/A' ? null : Number(x));
 const frac = (s) => { const [a, b] = String(s ?? '0/1').split('/').map(Number); return b ? a / b : a; };
 
-function qc(file) {
+async function qc(file) {
   const checks = [];
   const add = (id, ok, value, rule, level = 'fail') => checks.push({ id, status: ok ? 'pass' : level, value, rule });
   const pr = run(FFPROBE, ['-v', 'error', '-show_streams', '-show_format', '-count_frames', '-of', 'json', file]);
@@ -83,20 +101,33 @@ function qc(file) {
     add('true peak', tp !== null && tp <= TP_MAX, tp === null ? 'unknown' : `${tp.toFixed(1)} dBTP`, `≤ ${TP_MAX} dBTP`);
     add('silence', !silences.length, silences.length ? silences.map((x) => `${x.start.toFixed(1)} s for ${x.s.toFixed(1)} s`).join(', ') : 'none', 'no silence (−50 dB) over 3 s', 'warn');
   }
+  // phase 4h: what was drawn, frame by frame
+  let timeline = null;
+  const tlFile = file.replace(/\.[^.]+$/, '') + '.timeline.json';
+  if (fs.existsSync(tlFile)) {
+    const tl = JSON.parse(fs.readFileSync(tlFile, 'utf8')), { checkTimeline, teleSummary } = await telemetry(), issues = checkTimeline(tl);
+    timeline = { summary: teleSummary(tl), issues };
+    const s = timeline.summary;
+    const KINDS = [['region cap', `longest perceived stay ${s.longestStay.s} s on ${s.longestStay.region || '-'} @${s.longestStay.at} s`, `≤ ${s.longestStay.cap} s on one region (perceived)`],
+      ['end card', `fully on screen ${s.endCardS} s`, 'end card fully visible ≥ 2.5 s'], ['text overlap', `${s.overlapFrames} frames`, 'no text box over another'],
+      ['BAC limits', `${s.bacFrames} frames with a BAC`, 'every BAC with US 0.08 % and EU 0.05 % and the warning'], ['clock', `moves after ${s.clockMovesAfterS ?? '-'} s`, 'the clock moves within 3 s of the story'],
+      ['hook answered', tl.hook.replace(/\n/g, ' / '), 'the hook\'s question answered on screen']];
+    for (const [k, v, rule] of KINDS) { const bad = issues.filter((i) => i.check === k); add(`timeline: ${k}`, !bad.length, bad.length ? bad.map((i) => i.text).join('; ') : v, rule); }
+  } else add('timeline', false, `no ${path.basename(tlFile)}`, 'a timeline from scripts/render-sample.mjs', 'warn');
   const fails = checks.filter((c) => c.status === 'fail').length, warns = checks.filter((c) => c.status === 'warn').length;
   return { file: path.resolve(file), checkedAt: new Date().toISOString(), cut, duration: dur, verdict: fails ? 'FAIL' : warns ? 'PASS with warnings' : 'PASS', fails, warns, checks,
-    raw: { blacks, freezes, silences, lufs, truePeak: tp, lra } };
+    raw: { blacks, freezes, silences, lufs, truePeak: tp, lra }, timeline };
 }
 
 const md = (r) => [`# Render QC: ${path.basename(r.file)}`, '', `**${r.verdict}** · ${r.cut ?? 'cut unknown'} · ${r.duration?.toFixed(2) ?? '?'} s · checked ${r.checkedAt}`, '',
   '| Check | Result | Value | Rule |', '|---|---|---|---|', ...r.checks.map((c) => `| ${c.id} | ${c.status.toUpperCase()} | ${String(c.value).replace(/\|/g, '/')} | ${c.rule} |`), '',
-  'Generated by `npm run qc:render` (app/scripts/qc-render.mjs): ffprobe for the format, ffmpeg blackdetect, freezedetect, ebur128 and silencedetect.', ''].join('\n');
+  'Generated by `npm run qc:render` (app/scripts/qc-render.mjs): ffprobe for the format, ffmpeg blackdetect, freezedetect, ebur128 and silencedetect; the timeline checks from src/v4/video-telemetry.ts on <name>.timeline.json.', ''].join('\n');
 
 let bad = 0;
 const all = [];
 for (const f of files) {
   if (!fs.existsSync(f)) { console.error(`missing: ${f}`); bad++; continue; }
-  const r = qc(f);
+  const r = await qc(f);
   all.push(r);
   const out = opt('out') ? path.resolve(opt('out')) : path.dirname(path.resolve(f)), base = path.join(out, path.basename(f).replace(/\.[^.]+$/, ''));
   fs.mkdirSync(out, { recursive: true });

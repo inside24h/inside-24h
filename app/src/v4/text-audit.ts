@@ -28,7 +28,7 @@ import { seedOf } from './video-hook';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
 const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
-import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, decafOf, endCardOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
+import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, servingCard, decafOf, endCardOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
 
 export const AUDIT_PROFILE: Profile = { ...DEFAULT_PROFILE, drinkAtMin: 22 * 60 };
 export const AUDIT_CUTS: Cut[] = ['long', 'medium', 'short'];
@@ -67,10 +67,10 @@ export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AU
   const chapters = story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
   const solid = /bite/i.test(story.chapters[0]?.title ?? '');
   const hin = { name, chapters, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid, kcal: b.energy.total, grams: x.macros.grams,
-    pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p), sugarRise: x.glucose !== undefined ? riseOf(b.effects.glucoseMgDl) : undefined };
+    pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p), sugarRise: x.glucose !== undefined ? riseOf(b.effects.glucoseMgDl) : undefined, alcoholG: b.alcoholG };
   const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
-  const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
+  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin, servingCard(x.parts)), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
+  const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), seed: seedOf(name), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   const plan = singlePlan(stops, cut, fx, story.chapters, b), payoff = fx.payoffMin;
   const notes = x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return `${s.label}: ${plainNote(s.key as typeof SYS[number], l, w, b, inText(w), !!s.unknown)}`; });

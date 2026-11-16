@@ -52,6 +52,8 @@ let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: Vid
 let quietFrame!: VideoKit['quietFrame'], camSeedOf!: VideoKit['camSeedOf'], beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
 let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
+// (phase 4h: the video's timeline, recorded only for the QA render harness, #render=; and the serving card)
+let teleScene!: VideoKit['teleScene'], teleStart!: VideoKit['teleStart'], teleStop!: VideoKit['teleStop'], sceneOf!: VideoKit['sceneOf'], servingCard!: VideoKit['servingCard'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
 let kitP: Promise<void> | null = null;
 /** Loads the video engine once (later calls share the same promise; a failed load is tried again next time). */
@@ -59,7 +61,7 @@ const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
     endCardOf, bacPeakText, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf,
     compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, quietFrame, camSeedOf, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
-    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf } = k);
+    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf, teleScene, teleStart, teleStop, sceneOf, servingCard } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
 const NO_HOOK: Hook = { line1: '', line2: '' };
@@ -631,7 +633,7 @@ export default function AppV4() {
     pace: built.pace ? { doses: built.pace.doses, round: 'drink' } : undefined,
     grams: productId === 'food' && foodParts.length ? foodParts.reduce((a, p) => a + p.grams, 0) : undefined, caffeineMg: built.caffeine.doseMg,
     surprise: productId === 'food' && foodParts.length === 1 ? surpriseOf(videoName, peakNow, profile) : undefined,
-    decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined, sugarRise: peakNow !== null ? riseOf(built.effects.glucoseMgDl) : undefined };
+    decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined, sugarRise: peakNow !== null ? riseOf(built.effects.glucoseMgDl) : undefined, alcoholG: built.alcoholG };
   const vSeed = hookIn ? seedOf(shortName(videoName)) : 0, hookPair = hookIn ? hookPairOf(hookIn, vSeed) : [NO_HOOK, NO_HOOK];
   const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
   // (round 12: the story's own signal: espresso is #caffeine; round 18: a pljeskavica is #protein, not #bloodsugar)
@@ -732,6 +734,9 @@ export default function AppV4() {
     // phase 4: the camera's plan (its class's style and the whole-body orientation shot), the same the tests film
     const camPlan = camPlanOf(plan.frames, camStyle(classOf(built), camSeedOf(vSeed, built.energy.total)), story.chapters); // (phase 4b, M5: no organ held over SHOT_MAX_S)
     vcue.current = { shot: OPENING, start: OPENING, seed: vSeed, style: camPlan.style };
+    // (phase 4h: QA renders record what every frame draws, scripts/render-sample.mjs writes it next to the video)
+    const tele = !!HASH.get('render');
+    if (tele) teleStart({ kind: 'single', cut: vidCut, seconds: plan.seconds, fps: 30, hook: `${hookNow.line1}\n${hookNow.line2}`, name: shortName(videoName) });
     const opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
       soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: recTick,
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
@@ -743,6 +748,7 @@ export default function AppV4() {
       // when close by)
       const bo = beatOrgans(fr.title, beatChapter(story.chapters, fr).focus);
       vcue.current.shot = shotOf(fr, bo.organs, leadRef.current ? SEG_FOCUS_V[leadRef.current] : null, false, camPlan);
+      if (tele) teleScene(sceneOf(fr, story.chapters, vcue.current.shot, leadRef.current));
     };
     // the gauges' organs, in pixels of the video frame (after the 3D frame is drawn)
     const pinned = (): Overlay => {
@@ -764,6 +770,7 @@ export default function AppV4() {
         }, plan, opts)
       : record(canvas, format, pinned, (m, fr) => { recFr.current = fr ?? null; setU(uFromMinutes(m)); cue(fr); }, plan, opts);
     job
+      .then((r) => { if (tele) (window as unknown as { __i24timeline?: unknown }).__i24timeline = teleStop(); return r; }, (e) => { if (tele) teleStop(); throw e; })
       .then(({ blob, ext, audio, voice }) => setShare({ state: 'ready', format, blob, ext, url: URL.createObjectURL(blob),
         caption: `${hookNow.line1} ${hookNow.line2} What happens in your body after ${hookWhat}, hour by hour 👀 ${(built.alcoholG ?? 0) > 1 ? VIDEO_COPY.ctaDrink : VIDEO_COPY.ctaSingle} #Inside24h #health #nutrition`, captions: captionsNow(), srt: voice && voiceLines.current?.length ? srtOf(voiceLines.current) : undefined,
         pin: pinnedIdea(),
@@ -860,6 +867,8 @@ export default function AppV4() {
         const cardOrgans = (fr: VFrame) => (fr.beat === 'hold' || fr.beat === 'hook' ? sideOrgans(fr).flat() : []);
         // (phase 4d: paired close-ups, both halves on one region of the body, each stay under the region cap)
         const split = splitPlanOf(plan.frames, sideOrgans);
+        const tele = !!HASH.get('render'); // (phase 4h: the QA render's timeline)
+        if (tele) teleStart({ kind: 'compare', cut: vidCut, seconds: plan.seconds, fps: 30, hook: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, name: `${cmpName(a.label)} vs ${cmpName(b.label)}` });
         // each body's gauge, pinned to its organ in its own half (the cameras of CompareScene)
         const pinned = (): CmpOverlay => {
           const o = cmpOverlayRef.current!, cc = cmpCams.current;
@@ -877,6 +886,7 @@ export default function AppV4() {
           recFr.current = fr ?? null;
           perfTime('react', () => flushSync(() => setCmpRec((r) => (r ? { ...r, u: uFromMinutes(m) } : r))));
           if (vcue.current && fr) vcue.current.shot = splitShot(fr, cardOrgans(fr), split);
+          if (tele && fr && vcue.current) { const sa = sceneOf(fr, a.built.story.chapters, vcue.current.shot, null), sb = sceneOf({ ...fr, title: fr.titleB, cap: fr.capB }, b.built.story.chapters, vcue.current.shot, null); teleScene({ ...sa, shotB: sb.shot, litB: sb.lit, topicB: sb.topic }); }
           const st = r3f.current; if (st) perfTime('gl', () => advance(st.clock.elapsedTime + 1 / 30, true, st));
         }, plan, { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' : 'music', soundFx: { fizzy: isFizzy(a.label) || isFizzy(b.label), seed: seedOf(`${a.label} vs ${b.label}`) },
           onTick: recTick, signal: recAbort.current.signal, prepare: () => canvasSized(FW, FH), onSettled: () => { if (vcue.current) vcue.current.start = SPLIT_OPENING; },
@@ -885,6 +895,7 @@ export default function AppV4() {
             hook: { line1: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, line2: '' }, names: [cmpName(a.label), cmpName(b.label)], answer: gq?.answer1,
             facts: compareFacts(factInOf(a), factInOf(b), [cmpName(a.label), cmpName(b.label)], seedOf(`${a.label} vs ${b.label}`)),
             lateFacts: compareDiffs(factInOf(a), factInOf(b), [cmpName(a.label), cmpName(b.label)], seedOf(`${a.label} vs ${b.label}`)), verdict: cp.verdict }) : undefined });
+        if (tele) (window as unknown as { __i24timeline?: unknown }).__i24timeline = teleStop();
         setShare({ state: 'ready', format: 'reel', blob, ext, url: URL.createObjectURL(blob), caption: `${cmpName(a.label)} vs ${cmpName(b.label)}: what happens inside you in 24 hours. ${VIDEO_COPY.ctaCompare} #Inside24h #health #nutrition`,
           captions: captionsFor({ name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, hook: { line1: cmpOverlayRef.current?.hook ?? '', line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), sugar: /sugar/i.test(cmpOverlayRef.current?.hook ?? ''), /* (round 16: "which has more sugar?" too) */ caffeine: [a, b].some((x) => x.built.caffeine.doseMg >= 20), compare: { a: cmpName(a.label), b: cmpName(b.label) } }),
           srt: voice && voiceLines.current?.length ? srtOf(voiceLines.current) : undefined,
@@ -917,11 +928,11 @@ export default function AppV4() {
   // every chapter's words at its own minute (as on screen); video-plan.ts picks the moments and the caption times
   const reelPlan = (): Plan => {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
-    const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin);
+    const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin, servingCard(currentParts)); // (phase 4h, M1: a drink with alcohol says its amount and strength)
     const stops = applyHook(singleStops(story, ctx, (m) => whereCard(built, m)), hookNow, (built.alcoholG ?? 0) > 1 ? 0 : built.caffeine.doseMg); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = payoffMinOf(stops, hookNow);
-    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
+    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
     const plan = singlePlan(stops, vidCut, fx, story.chapters, built); // (phase 4e: the same planner call as the audit, perceived stays capped)
     reelStops.current = plan.stops;

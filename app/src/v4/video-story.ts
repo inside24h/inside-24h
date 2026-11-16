@@ -9,11 +9,13 @@ import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
 import { DULL, planCompare, planVideo, stopValue, SURGE_FROM, TEASE_HUMAN, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
 import { bacPlain, cardNamed, DEFAULT_BAC_BODY, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, whereCard, whereGauge, type BuiltLike } from './video-body';
 import { perceivedRuns, quietFrame, REGION, regionMaxS, seenOf } from './video-cam';
+import { perceivedOf, sceneOf } from './video-telemetry';
 import { at as atMin } from '../science/espressoSim';
 import { ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
 import { analyze, verdictOf, type Analysis } from './analyze';
-import { parseMeal } from './food/parse';
+import { parseMeal, type Part } from './food/parse';
+import { amountPhrase } from './food/naming';
 import type { PinnedGauge } from './share';
 
 export const CMP_STOPS = [0, 20, 45, 90, 180, 360, 720, 1440]; // (round 6: the first minutes in one moment, so each side's stomach fact is never dropped with a short early stop)
@@ -26,13 +28,32 @@ import { cmpName, plainLatin, shortName } from './video-names';
 export { cmpName, plainLatin, shortName };
 
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
-export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number): BeatCtx {
+/** Phase 4h (critique M1): an alcoholic drink or mix said as what was drunk: each part with its amount, a drink with
+ *  alcohol with its strength (% ABV, from its own alcohol per 100 g: ethanol 0.789 g/ml), joined by "+"
+ *  ("40 ml of rakija (40 % ABV) + 250 ml of lemonade."); undefined without alcohol. */
+export function servingCard(parts: readonly Pick<Part, 'food' | 'amountLabel' | 'grams'>[]): string | undefined {
+  const alc = (p: (typeof parts)[number]) => ((p.food.p?.alcoholG ?? 0) * p.grams) / 100;
+  if (!parts.length || !parts.some((p) => alc(p) > 0.5)) return undefined;
+  const xs = parts.map((p) => {
+    const ml = Number(/^(\d+(?:\.\d+)?)\s*ml\b/.exec(p.amountLabel.trim())?.[1] ?? 0) || p.grams, abv = (100 * alc(p)) / 0.789 / ml;
+    const s = plainLatin(amountPhrase(p)).replace(/\s*\([^)]*\)/g, '').replace(/\s+\/\s+[^,+]*$/, ''), k = s.indexOf(' of ');
+    return { s, amt: k > 0 ? s.slice(0, k) : '', noun: k > 0 ? s.slice(k + 4) : s, abv: alc(p) > 0.5 ? (abv >= 10 ? Math.round(abv) : Math.round(abv * 10) / 10) : null };
+  });
+  // (a card is at most 8 words, video-beats isCard: "40 ml of rakija (40 % ABV) + 250 ml of lemonade." is said shorter)
+  const forms = [
+    xs.map((x) => `${x.s}${x.abv !== null ? ` (${x.abv}% ABV)` : ''}`).join(' + '),
+    xs.map((x) => `${x.amt ? `${x.amt} ` : ''}${x.noun}${x.abv !== null ? ` (${x.abv}% ABV)` : ''}`).join(', '),
+    xs.map((x) => `${x.amt ? `${x.amt} ` : ''}${x.noun}${x.abv !== null ? ` (${x.abv}%)` : ''}`).join(', '),
+  ].map((s) => `${s.charAt(0).toUpperCase()}${s.slice(1)}.`);
+  return forms.find((s) => s.trim().split(/\s+/).length <= 8);
+}
+export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
   const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
   // (round 6: the blood alcohol peak, so "gone" is said from the gauge's own range)
   let pk = 0, pm = 0; if (built.bac && (built.alcoholG ?? 0) > 1) for (let m = 0; m <= Math.min(1440, built.bac.length - 1); m++) if (built.bac[m] > pk) { pk = built.bac[m]; pm = m; }
   return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined,
     caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin,
-    ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}) };
+    ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}), ...(serving ? { serving } : {}) };
 }
 
 /** The minute of the main gauge's peak (alcohol, else a clear blood sugar rise, else caffeine), as mainGauge chooses:
@@ -103,7 +124,9 @@ export function applyHook(stops: StopIn[], hook: { payoff?: string; payoffMin?: 
   if (s0) {
     const ls = (s0.lines ?? []).filter((l) => l !== hook.lead && l !== lead && l !== had);
     const add = [lead, had, caf && !(lead ?? '').includes(caf) ? `${caf.charAt(0).toUpperCase()}${caf.slice(1)}.` : null].filter((x): x is string => !!x);
-    if (add.length) { s0.lines = [...ls.slice(0, 1), ...add, ...ls.slice(1)]; s0.must = Math.min(s0.lines.length, 1 + add.length); }
+    // (phase 4h, critique M7: the opening read two to four first-bite cards while the clock stood at +0:00: the hook's
+    // number, already in the headline above, is the first moment's one card; its name follows only where there is room)
+    if (add.length) { s0.lines = [...add, ...ls]; s0.must = Math.min(s0.lines.length, add.length); }
   }
   if (hook.extra) {
     const near = out.find((s) => Math.abs(s.min - hook.extra!.min) <= 5 && s.min > 0);
@@ -140,7 +163,7 @@ export function heroOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { m
   // (round 18, critic T-3: "2 mg caffeine · 8 h 33 min in" for hot chocolate): a few mg of caffeine is never the hero
   const g = cm === undefined ? undefined : gaugesAt(b, cm, unit, sugarKnown).find((x) => x.curve && !(/caffeine/.test(x.big) && b.caffeine.doseMg < 10));
   // (phase 4b: the climax is the PEAK, labelled so on the end card; a BAC keeps its body, "for a 70 kg man", B1)
-  if (g && cm !== undefined) return { big: `${g.big} · ${inText(cm)}`, small: g.small === 'still in your body' ? 'at its highest' : g.small.split(' · ').filter((x) => !/\blimit\b/.test(x)).join(' · ') };
+  if (g && cm !== undefined) return { big: `${g.big} · ${inText(cm)}`, small: g.small === 'still in your body' ? 'at its highest' : g.small }; // (phase 4h, critique B1: a BAC keeps both driving limits on the end card too)
   // round 17 (critic G-7: brie and cod ended without a number): the hook's own number ("41 g · protein")
   const m = /^(\d+(?:[.,]\d+)?)\s*(g|mg|kcal)\b(?:\s+of)?\s*([^.:,]*)/.exec(hook?.lead ?? '');
   if (m) return { big: `${m[1]} ${m[2]}`, small: m[3].trim() || 'in total' };
@@ -172,6 +195,10 @@ export function endCardOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: 
     const w = presentAt(b, 1440).length ? whereGauge(b, 1440) : null;
     if (w) after24 = { big: `Still in you: ${w.big}`, small: pct ? `${w.small} · ${pct} % has left your body` : w.small };
     else if (pct) after24 = { big: `${pct} % has left your body`, small: 'The rest is still on its way' };
+    // (phase 4h, critique M8: "How far have 378 kcal gotten by tomorrow?" was answered in grams of fiber): a question
+    // about its kcal is answered in kcal, the model's own absorbed energy at 24 h
+    const kq = cls === 'dayN' ? /(\d+) kcal/.exec(`${hook.line1} ${hook.line2}`)?.[1] : undefined, en = (b as { energy?: { total: number; absorbed?: (t: number) => number } }).energy;
+    if (kq && en?.absorbed) { const ab = Math.round(Math.min(Number(kq), en.absorbed(1440))); after24 = { big: ab >= Number(kq) - 1 ? `All ${kq} kcal taken up by your body` : `${ab} of ${kq} kcal taken up by your body`, small: after24.big.startsWith('Still in you') ? `${after24.big} · ${after24.small}` : after24.small }; }
   } else if (cls === 'fatBlood') {
     const ch = atCh(hook.payoff), tg = b.effects.tgMmol;
     if (ch && tg) hero = { big: `Blood fat peak · ${inText(ch.min)}`, small: `+${atMin(tg, ch.min).toFixed(1)} mmol/L triglycerides` };
@@ -246,6 +273,12 @@ export function gaugesAt(b: BuiltLike, m: number, unit: Profile['glucoseUnit'], 
   if (caffeineMoment && main && !/caffeine/.test(main.big) && b.caffeine.doseMg >= 20) {
     const caf = mainGauge({ ...b, bac: undefined, effects: {} }, m, uFromMinutes(Math.min(1440, m)), unit, false);
     if (caf && /caffeine/.test(caf.big)) return [{ ...caf, curve: undefined }, main];
+  }
+  // phase 4h (critique M2: rakija + lemonade showed a "Blood sugar dip" and never the lemonade's rise before it: the
+  // BAC gauge always won): a drink with alcohol whose blood sugar clearly moves shows that too, next to the BAC
+  if (main?.organ === 'brain' && /\bBAC\b/.test(main.small) && sugarKnown && b.effects.glucoseMgDl) {
+    const sg = mainGauge({ ...b, bac: undefined }, m, uFromMinutes(Math.min(1440, m)), unit, true);
+    if (sg && sg.organ === 'pancreas') return [{ ...sg, curve: undefined }, main];
   }
   // one number per thing (round 5, critic: "4.8 g sugar · Blood" next to "Blood sugar up"): no sugar where-gauge
   // while the blood sugar gauge is up
@@ -386,7 +419,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       prev = at;
       if (fresh.length) {
         // (round 12: a card that says "now" only under its own moment, never minutes later)
-        const lines = fresh.flatMap((c) => cards(x, c.min).filter((l) => !(/\bnow\b/i.test(l) && Math.abs(at - c.min) > Math.max(10, 0.15 * c.min)) && !tooEarly(l, at)));
+        // (phase 4h, critique M4: "IN YOUR STOMACH / Your small intestine absorbs it…": a card is said only under its own
+        // chapter's title, the first one here)
+        const lines = fresh.slice(0, 1).flatMap((c) => cards(x, c.min).filter((l) => !(/\bnow\b/i.test(l) && Math.abs(at - c.min) > Math.max(10, 0.15 * c.min)) && !tooEarly(l, at)));
         lastLines = lines; seen = Math.min(lines.length, perStop); lastCh = fresh0[fresh0.length - 1];
         return { lines, title: fresh[0].title, text: chapterText(fresh[0], fresh[0].min), isNew: true };
       }
@@ -394,10 +429,15 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       // round 17 (critic G-2: "INTO THE SMALL INTESTINE · Protein is broken into building blocks." under +24:00): a
       // chapter long past is never shown as this moment's; the side says where it is now, under the moment's own time
       if (staleAt(c, at)) { const wl = whereCard(x.built, at); return { lines: [wl ?? ''], title: at >= 1440 ? '24 hours later' : `${Math.round(at / 60)} hours later`, text: wl ?? '', isNew: false }; }
-      const rest = lastCh === c ? lastLines.slice(seen) : [];
+      // (phase 4h, critique M3: lemonade's "Your blood sugar climbs to its peak." was said at +1:30, an hour after its
+      // peak, merged with the pear's into "Both · Blood sugar peak": a card about a moment, its peak or "now", is said
+      // only near its own minute)
+      const timely = (l: string) => !(/\bnow\b|\bpeak\b|\bclimbs\b|\bhighest\b/i.test(l) && Math.abs(at - c.min) > Math.max(10, 0.15 * c.min));
+      const rest = lastCh === c ? lastLines.slice(seen).filter(timely) : [];
       seen = Math.min(lastLines.length, seen + perStop);
       // (round 8: nothing new = this side is quiet, never the same card again under a later moment)
-      return { lines: rest.length ? rest : lastCh === c ? [''] : cards(x, c.min).slice(-1), title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
+      const last1 = cards(x, c.min).slice(-1).filter(timely);
+      return { lines: rest.length ? rest : lastCh === c || !last1.length ? [''] : last1, title: c.title, text: chapterText(c, at), isNew: rest.length > 0 };
     });
   };
   // (the planner may leave moments out to fit: the words are then worked out again for the moments it kept, so
@@ -435,8 +475,10 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       // (round 15, critic J-3: "Cola: when your blood sugar …" was cut off): the short plain words when the long ones do not fit
       return long.length <= CHIP_MAX ? long : `${cmpName(x.label)}: ${CHIP_SHORT.find(([re]) => re.test(t))?.[1] ?? t.toLowerCase()}`;
     };
+    // (phase 4h, M6: the comparison's perceived stays, both sides' cards and the organs lit for them, video-telemetry)
+    const seen = (fr: VFrame) => { const W = { focus: [], zoom: 'wide' as const }, sa = sceneOf(fr, a.built.story.chapters, W, null), sb = sceneOf({ ...fr, title: fr.titleB, cap: fr.capB }, b.built.story.chapters, W, null); return [...new Set([...perceivedOf(sa), ...perceivedOf(sb)])]; };
     return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at) || at === midKeep, mid: at === midKeep, chip: chipOf(i) })),
-      cut, uFromMinutes, minutesFromU, fx);
+      cut, uFromMinutes, minutesFromU, { ...fx, perceive: { seen, runs: perceivedRuns, maxS: regionMaxS } });
   };
   let used = cmpMins0, plan = build(used);
   for (let k = 0; k < 3; k++) { const kept = cmpMins0.filter((m) => plan.stops.includes(m)); if (kept.length === used.length) break; used = kept; plan = build(used); }
@@ -500,7 +542,10 @@ export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { m
   const seen = (fr: VFrame) => {
     const r = seenOf(fr, chapters!), lit = litRegion(cardNamed(fr));
     const where = (fr.stop ?? 0) > 0 && fr.beat !== 'end' && !quietFrame(fr) && r.every((x) => !x || x === 'body') ? lead(fr.m) : '';
-    return [...new Set([...r, lit, where])].filter(Boolean);
+    // (phase 4h, critique M6: while the first bite goes down, the organ it is in glows with it: the stomach is seen from
+    // the first second, as the rendered video's timeline counts it, video-telemetry sceneOf)
+    const first = fr.phase === 'main' && (fr.stop ?? 0) === 0 && (fr.beat === 'hold' || fr.beat === 'hook') ? lead(fr.m) : '';
+    return [...new Set([...r, lit, where, first])].filter(Boolean);
   };
   const perceive = chapters ? { seen, runs: perceivedRuns, maxS: regionMaxS } : undefined;
   return planVideo(stops, cut, uFromMinutes, minutesFromU, perceive ? { ...fx, perceive } : fx);

@@ -175,6 +175,7 @@ export interface PlanFx {
    *  story's own moments the planner may bring in to break a stay. Without it, stays are not checked. */
   /** phase 4e (internal): the minutes whose glide in is a lull; `pipe`: the first moment stays on the food pipe */
   lulls?: number[]; pipe?: number;
+  /** phase 4h: the food's own seed (video-hook seedOf of its name), for choices that should differ between foods */ seed?: number;
   perceive?: { seen: (fr: VFrame) => string[]; runs: (seq: { t: number; rs: string[] }[]) => { s: number; r: string; at: number }[]; maxS: (seconds: number) => number; extra?: StopIn[] };
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
@@ -228,7 +229,11 @@ export const FILL_S = 68;
 export const fillS = (cut: Cut) => (cut === 'medium' ? 51 : FILL_S);
 /** While a moment's caption is read, the day keeps running slowly towards the next moment (this share of the way on
  *  the day axis), so the drink keeps moving and the clock keeps ticking. The first sip runs further: the swallow. */
-export const DRIFT = 0.12, DRIFT_FIRST = 0.6;
+export const DRIFT = 0.12, DRIFT_FIRST = 1; // (phase 4h, critique M7: the first bite runs on until the next moment, so the clock moves as its one card ends)
+/** Phase 4h: moments before this minute let the clock run a minute per second of reading. */
+export const EARLY_MIN = 10;
+/** Phase 4h: seconds into the story (after the hook) by which the clock has left +0:00. */
+export const FIRST_CLOCK_S = 2.7;
 export const MOVE_S = 1.0;        // glide between two moments (eased)
 /** 2026-10-24: a glide over a long quiet stretch takes longer (up to 1.8 s), so hours never flash past. */
 export const moveS = (toU: (m: number) => number, from: number, to: number) => MOVE_S + 0.8 * Math.max(0, Math.min(1, (toU(to) - toU(from)) / 0.35));
@@ -252,7 +257,9 @@ export const PEAK_BY_MAX_S = 33;
 // phase 4b (critique M7: the comparison Short's end card was readable for ~1.2 s): every cut's end card is readable for
 // at least END_CARD_MIN_S (share.ts endTiming: it fades in over 0.2-0.45 s and out from 0.6 s before the end, so it is
 // at least half visible for outroS - 0.8 s); the Short still ends by 30 s
-export const OUTRO_S = { long: 4.0, medium: 3.4, short: 3.3 } as const;
+// phase 4h (critique 2026-11-19, M5: the rendered Shorts and Reels end cards were fully on screen ~2.25-2.4 s, measured on
+// the video's own timeline: fade in 0.2-0.45 s, out from 0.6 s before the end): fully on screen for outroS - ~1.03 s
+export const OUTRO_S = { long: 4.0, medium: 3.7, short: 3.7 } as const;
 export const END_CARD_MIN_S = 2.5;
 
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
@@ -299,7 +306,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     + (list[list.length - 1].min < 1440 ? moveS(toU, list[list.length - 1].min, 1440) : 0));
   const fixed = INTRO_S[cut] + OUTRO_S[cut] + CELEB_S[cut]; // intro, the 24 h beat, end card (the glides are counted apart)
   // the start says what it is and its first number; a moment with safety cards shows all of them (round 5)
-  const firstNOf = (s: StopIn, i: number) => Math.max(i === 0 ? 2 : 1, mustOf(s));
+  // (phase 4h, critique M7: the first moment says one card, the clock then moves on: no 9-13 s at +0:00)
+  const firstNOf = (s: StopIn, _i: number) => Math.max(1, mustOf(s));
   let chosen: StopIn[];
   if (cut === 'short') {
     // the start + the moments that must be there (peak, payoff, safety) + the most telling ones that fit in 30 s,
@@ -354,7 +362,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const lulls = new Set<number>();
   let pipe = 0;
   const lullX = () => { let x = 0; for (let i = 0; i <= chosen.length; i++) { const to = i < chosen.length ? chosen[i].min : 1440; if (i > 0 && lulls.has(to) && (i < chosen.length || chosen[i - 1].min < 1440)) x += Math.max(0, LULL_S - gk * moveS(toU, chosen[i - 1].min, to)); } return x; };
-  const total = (pp: string[][]) => fixed + glides(chosen) + lullX() + pp.reduce((acc, p) => acc + stopS(p), 0);
+  // (phase 4h: the opening card has no new-moment bonus, see lay)
+  const total = (pp: string[][]) => fixed + glides(chosen) + lullX() + pp.reduce((acc, p) => acc + stopS(p), 0) - (pp[0]?.length ? READ.newStop : 0);
 
   // 1) as many moments as fit, one card each: if too long, leave out the moment that says the least
   //    (stopValue; ties: the one closest in time to the moment before it). Text is never sped up.
@@ -414,8 +423,9 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   //    (ties: the more telling one, then the later one), up to FILL_S (the rest of the minute is the body); never
   //    before the peak (round 5: the first impact stays early)
   for (let guard = 0; isLongish(cut) && guard < 100; guard++) {
+    // (phase 4h, critique M7: the opening says one card; it says more only when no other moment has room for one)
     const order = chosen.map((_s, i) => i).filter((i) => used[i] < sents[i].length && (peakIdx() <= 0 || i >= peakIdx() || sparse || (fx.peakByS ?? PEAK_BY_S) > PEAK_BY_S))
-      .sort((a, b) => pages[a].length - pages[b].length || val(chosen[b]) - val(chosen[a]) || chosen[b].min - chosen[a].min);
+      .sort((a, b) => Number(a === 0) - Number(b === 0) || pages[a].length - pages[b].length || val(chosen[b]) - val(chosen[a]) || chosen[b].min - chosen[a].min);
     let grew = false;
     for (const i of order) {
       used[i]++; const next = pagesFor();
@@ -462,12 +472,14 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   let want = lim.min + 0.3; // a little over, so frame rounding never lands under the minimum
   const lay = () => {
     from = isLongish(cut) && !sparse ? Math.max(0, peakIdx()) : 0;
-    t0 = total(pages); reading = pages.reduce((a, p, i) => a + (grows(i) ? stopS(p) : 0), 0);
+    t0 = total(pages); reading = pages.reduce((a, p, i) => a + (grows(i) ? stopS(p) - (i === 0 && p.length ? READ.newStop : 0) : 0), 0);
     const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 1.6, 1 + (want - t0) / Math.max(0.1, reading)) : 1;
     // round 13 (critic P0-2: salmon held 3 cards for 12-15 s each): a card stays at most CARD_MAX_S (or its own reading
     // time); the rest of the time goes to the journey between moments (slower glides: the day and the body move)
     let lost = 0;
-    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c; }));
+    // (phase 4h, critique M7: the first moment's first card is the "first bite" state: the hook just said what it is and
+    // the clock and the stamp are already up, so it has no new-moment bonus; its clock leaves +0:00 by FIRST_CLOCK_S)
+    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0 && i > 0), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c; }));
     // first the glides after the impact, then the ones before it (as long as the impact still lands by PEAK_BY_S)
     const pi = Math.max(0, peakIdx()), calmG = (i: number) => (i < chosen.length ? calm.has(chosen[i].min) || lulls.has(chosen[i].min) : calm.has(chosen[chosen.length - 1].min) || lulls.has(1440));
     // (phase 4e: the glides into a calm moment keep their own time)
@@ -530,6 +542,9 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       return true;
     };
     let bump = 0;
+    // (phase 4h: two foods of a class that hit the same cap are not mended the same way: their own seed tips the choice
+    // between candidates that fit, by up to 2 s of slack)
+    const jit = (m: number) => (fx.seed === undefined ? 0 : (((Math.imul((fx.seed ^ Math.round(m * 97)) >>> 0, 0x85ebca6b) >>> 0) % 1000) / 1000) * 2);
     const fill = (base: Plan, cap: number) => {
       const runs = overOf(base).runs;
       const holdT = (m: number) => base.frames.filter((f) => f.beat === 'hold' && f.stop === m).map((f) => f.t);
@@ -538,17 +553,20 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       for (let g = 0; g < 16 && total(pages) < lim.min + 0.3 + bump; g++) {
         let best: { slack: number; go: () => void } | null = null;
         chosen.forEach((c, i) => {
-          if (calm.has(c.min) || used[i] >= sents[i].length) return;
-          const r = regionAt(c), sec = readSeconds(sents[i][used[i]]), slack = cap - lenAt(c.min, r) - (added.get(c.min) ?? 0) - sec;
-          if (slack > 0 && (!best || slack > best.slack)) best = { slack, go: () => { addCard(i); added.set(c.min, (added.get(c.min) ?? 0) + sec); } };
+          if (i === 0 || calm.has(c.min) || used[i] >= sents[i].length) return; // (phase 4h, M7: the opening stays one card)
+          const r = regionAt(c), sec = readSeconds(sents[i][used[i]]), slack = cap - lenAt(c.min, r) - (added.get(c.min) ?? 0) - sec + jit(c.min);
+          if (slack - jit(c.min) > 0 && (!best || slack > best.slack)) best = { slack, go: () => { addCard(i); added.set(c.min, (added.get(c.min) ?? 0) + sec); } };
         });
         for (const c of story) {
           if (chosen.some((x) => x.min === c.min) || !linesOf(c).length) continue;
+          // (phase 4h: the long cut's quiet template moments before the impact come in for one food in two, by its own
+          // seed, so two meals that hit the same cap are not mended into the same video)
+          if (isLongish(cut) && fx.seed !== undefined && (fx.seed >>> 5) % 2 === 1 && stopValue(c) <= 1 && c.min < (peakMin ?? 0)) continue;
           const r = regionAt(c);
           if (!r || r === 'body') continue;
           const k0 = chosen.findIndex((x) => x.min > c.min), k = k0 < 0 ? chosen.length : k0, nb = [chosen[k - 1], chosen[k]].filter((x): x is StopIn => !!x && regionAt(x) === r);
-          const sec = readSeconds(linesOf(c)[0], true) + MOVE_S, slack = cap - nb.reduce((a, x) => a + lenAt(x.min, r) + (added.get(x.min) ?? 0), 0) - sec;
-          if (slack > 0 && (!best || slack > best.slack)) best = { slack, go: () => { insert(c); added.set(c.min, sec); } };
+          const sec = readSeconds(linesOf(c)[0], true) + MOVE_S, room = cap - nb.reduce((a, x) => a + lenAt(x.min, r) + (added.get(x.min) ?? 0), 0) - sec, slack = room + jit(c.min);
+          if (room > 0 && (!best || slack > best.slack)) best = { slack, go: () => { insert(c); added.set(c.min, sec); } };
         }
         if (!best) {
           // (no words left that fit: a glide becomes a lull, the whole body without words, which no stay counts)
@@ -776,10 +794,71 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
     if (total(np) <= lim.max) pages = np; else chosen = keep;
   }
   if (cut === 'short' && total(pages) < lim.min + 1) { shortTwo = true; const keepPer = new Map(perMin); perMin.clear(); const two = pagesOf(chosen); if (total(two) > lim.max) { perMin.clear(); keepPer.forEach((v, k) => perMin.set(k, v)); } if (total(two) <= lim.max) pages = two; else shortTwo = false; }
-  const t0 = total(pages), reading = t0 - fixed - glides(chosen), want = lim.min + 0.7; // (round 14: frame rounding and the cut never land under the minimum)
-  const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 2.2, /* (round 14: Shorts ≥ 24 s) */ 1 + (want - t0) / Math.max(0.1, reading)) : 1;
-  return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.titleA, titleB: s.titleB, chip: s.chip, pages: pages[i].map((p) => ({ ...p, s: p.s * stretch })) })), cut, toU, fromU,
-    { ...fx, compare: true, peakMin, teaserMin: fx.teaserMin ?? peakMin ?? chosen[Math.min(1, chosen.length - 1)].min });
+  // (phase 4h: a glide made a lull lasts at least LULL_S)
+  const gkC = cut === 'short' ? SHORT_GLIDE_K : 1;
+  const lullX = (ls: readonly number[]) => chosen.reduce((a, s, i) => a + (i > 0 && ls.includes(s.min) ? Math.max(0, LULL_S - gkC * moveS(toU, chosen[i - 1].min, s.min)) : 0), 0);
+  const layC = (ls: number[]) => {
+    const t0 = total(pages) + lullX(ls), reading = t0 - fixed - glides(chosen) - lullX(ls), want = lim.min + 0.7; // (round 14: frame rounding and the cut never land under the minimum)
+    const stretch = t0 < want ? Math.min(isLongish(cut) ? Infinity : 2.2, /* (round 14: Shorts ≥ 24 s) */ 1 + (want - t0) / Math.max(0.1, reading)) : 1;
+    // (phase 4h, with perceived stays: as a single's, a card is held at most CARD_MAX_S, or its own reading time; the
+    // rest of the time goes to the journey between moments, glide by glide up to GLIDE_MAX_S, then back to the cards)
+    let lost = 0;
+    const secs = pages.map((pp) => pp.map((p) => { const w = p.s * stretch, c = fx.perceive ? Math.min(w, Math.max(p.s, CARD_MAX_S)) : w; lost += w - c; return c; }));
+    let room = 0, gl = 0;
+    for (let i = 1; i <= chosen.length; i++) { if (i === chosen.length && chosen[i - 1].min >= 1440) break; if (i < chosen.length && ls.includes(chosen[i].min)) continue; const g = gkC * moveS(toU, chosen[i - 1].min, i < chosen.length ? chosen[i].min : 1440); gl += g; room += Math.max(0, GLIDE_MAX_S - g); }
+    const use = Math.min(lost, room), glideK = Math.min(GLIDE_K_MAX, 1 + use / Math.max(0.1, gl)), nCards = secs.reduce((a, x) => a + x.length, 0), back = (lost - use) / Math.max(1, nCards);
+    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.titleA, titleB: s.titleB, chip: s.chip, pages: pages[i].map((p, j) => ({ ...p, s: secs[i][j] + back })) })), cut, toU, fromU,
+      { ...fx, compare: true, peakMin, teaserMin: fx.teaserMin ?? peakMin ?? chosen[Math.min(1, chosen.length - 1)].min, lulls: ls, ...(use > 0 ? { glideK, glideK0: glideK } : {}) });
+  };
+  let lulls: number[] = [], out = layC(lulls);
+  // Phase 4h (critique 2026-11-19, M6: lemonade vs pear kept both stomachs, then both pancreases, ~28 s on the upper
+  // body, as its rendered timeline measured it; the comparison had no cap on what the viewer perceives): every stay on
+  // one region, both sides' cards and the organs lit for them (fx.perceive), is held to regionMaxS like a single's. Over
+  // the cap, in turn: a glide inside the stay becomes a lull (a wordless whole-body stretch, LULL_S), or a moment in it
+  // says one card a side. A change is kept only when the time over the cap shrinks and the length stays in its range.
+  const pc = fx.perceive;
+  if (pc) {
+    const overOf = (pl: Plan) => {
+      const cap = pc.maxS(pl.seconds) - 0.3, runs = pc.runs(pl.frames.filter((f) => f.phase === 'main').map((f) => ({ t: f.t, rs: pc.seen(f) })));
+      return { sum: runs.reduce((a, x) => a + Math.max(0, x.s - cap), 0), runs: runs.filter((x) => x.s > cap).sort((x, y) => x.at - y.at) };
+    };
+    const hi = Math.max(lim.max, out.seconds) + 0.05;
+    for (let guard = 0; guard < 12; guard++) {
+      const o = overOf(out);
+      if (o.sum <= 1e-6) break;
+      const arrive = (m: number) => out.frames.find((f) => f.phase === 'main' && f.stop === m && f.beat === 'hold')?.t ?? Infinity;
+      // (every moment whose words are on screen in a stay over its cap: its cards; a glide into one inside it: a lull)
+      const inRun = chosen.map((s, i) => ({ s, i, t: i === 0 ? INTRO_S[cut] : arrive(s.min) })).filter((x) => o.runs.some((run) => x.t > run.at - 0.6 && x.t < run.at + run.s + 0.5))
+        .map((x) => ({ ...x, lull: x.i > 0 && o.runs.some((run) => x.t > run.at + 1 && x.t < run.at + run.s + 0.5) }));
+      let best: { plan: Plan; apply: () => void; sum: number } | null = null;
+      const tryIt = (apply: () => void, undo: () => void, ls: number[]) => {
+        apply(); const alt = layC(ls), sum = overOf(alt).sum; undo();
+        if (alt.seconds <= hi && alt.seconds >= Math.min(lim.min, out.seconds) - 0.05 && sum < o.sum - 1e-6 && (!best || sum < best.sum)) best = { plan: alt, apply: () => { apply(); lulls = ls; }, sum };
+      };
+      for (const x of inRun) {
+        if (x.lull && !lulls.includes(x.s.min)) tryIt(() => {}, () => {}, [...lulls, x.s.min]);
+        const had = perMin.get(x.s.min);
+        if ((had ?? 2) > 1) {
+          const set = () => { perMin.set(x.s.min, 1); pages = pagesOf(chosen); }, back = () => { if (had === undefined) perMin.delete(x.s.min); else perMin.set(x.s.min, had); pages = pagesOf(chosen); };
+          tryIt(set, back, lulls);
+          if (x.lull && !lulls.includes(x.s.min)) tryIt(set, back, [...lulls, x.s.min]);
+        }
+        // (or a moment that is not needed is left out: never the start, a side's peak, its answer or the middle)
+        if (x.i > 0 && !x.s.keep && !x.s.mid && x.s.min !== peakMin && x.i < chosen.length - 1) {
+          const keepC = chosen, keepP = pages;
+          tryIt(() => { chosen = chosen.filter((c) => c !== x.s); pages = pagesOf(chosen); }, () => { chosen = keepC; pages = keepP; }, lulls.filter((m) => m !== x.s.min));
+        }
+      }
+      // (no one change helps: every moment of the stays says one card a side, and every glide inside them is a lull)
+      if (!best) {
+        const had = new Map(perMin), set = () => { for (const x of inRun) perMin.set(x.s.min, 1); pages = pagesOf(chosen); }, back = () => { perMin.clear(); had.forEach((v, k) => perMin.set(k, v)); pages = pagesOf(chosen); };
+        tryIt(set, back, [...new Set([...lulls, ...inRun.filter((x) => x.lull).map((x) => x.s.min)])]);
+      }
+      if (!best) break;
+      (best as { apply: () => void }).apply(); out = (best as { plan: Plan }).plan;
+    }
+  }
+  return out;
 }
 
 /** Lays out every frame: the hook, then for each moment a glide (the new caption fades in as it starts) and its
@@ -802,14 +881,20 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const driftTo = (i: number) => {
     const s = stops[i], next = stops[i + 1]?.min ?? 1440;
     if (s.min >= 1440) return s.min;
-    if (i === 0) return fromU(Math.min(toU(Math.min(next, 3)), toU(s.min) + DRIFT_FIRST * (toU(next) - toU(s.min))));
+    // (phase 4h, M7: a comparison's first moment says the servings and both first numbers: its clock runs a little
+    // further, so it never stands at +0:00 for long)
+    if (i === 0) return fromU(Math.min(toU(Math.min(next, fx.compare ? 6 : 3)), toU(s.min) + DRIFT_FIRST * (toU(next) - toU(s.min))));
     // (round 12, critic P0-3: the clock must not stand still under the cards): at least one minute of the day per
     // ~4.5 s of reading, never more than half the way to the next moment
     const share = fromU(toU(s.min) + DRIFT * (toU(next) - toU(s.min)));
-    return Math.max(share, s.min + Math.min(0.5 * (next - s.min), holdN(i) / FPS / 4.5));
+    // (phase 4h, critique M7: in the first minutes, a minute of the day per second of reading, so "+0:01" does not
+    // stand under a card for 4 s; still never more than half the way to the next moment)
+    return Math.max(share, s.min + Math.min(0.5 * (next - s.min), holdN(i) / FPS / (s.min < EARLY_MIN ? 1 : 4.5)));
   };
   // (round 12: even in minutes, so the clock ticks at an even pace while the cards are read)
-  const at = (i: number, k: number) => { const n = Math.max(1, holdN(i)); return stops[i].min + (driftTo(i) - stops[i].min) * Math.min(1, k / n); };
+  // (phase 4h, critique M7: the first moment's clock reaches its next minute FIRST_CLOCK_S into the story at the latest,
+  // even under a long first card: the "first bite" state never lasts longer)
+  const at = (i: number, k: number) => { const n = Math.max(1, i === 0 ? Math.min(holdN(0), nIntro - nPre + F(FIRST_CLOCK_S)) : holdN(i)); return stops[i].min + (driftTo(i) - stops[i].min) * Math.min(1, k / n); };
   cues.push({ t: 0, kind: 'start' });
   cues.push({ t: 0, kind: 'teaser' });
   for (let i = 0; i < nIntro; i++) {

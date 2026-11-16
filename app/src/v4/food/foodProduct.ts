@@ -265,7 +265,9 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
         // (an alcoholic drink's few carbohydrates are not starch to digest: it is absorbed too)
         const sugarOnly = steps.length === 1 && (/passes into your blood/.test(String(steps[0])) || (isDrink && meal.alcoholG > 1));
         const parts = [...(what ? what.split(' and ') : []), 'sugar'], absorbed = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-        if (sugarOnly) return `Your small intestine absorbs the ${absorbed} into your blood within minutes.${alcNote}`;
+        // (phase 4h, critique M4: a whole pear with 5 g of fiber "absorbed within minutes", the words for sugar water): a
+        // food, or anything with fiber, is absorbed bit by bit
+        if (sugarOnly) return !isDrink || hasFibre ? `Your small intestine absorbs the ${absorbed} into your blood bit by bit.${hasFibre ? ' Fiber goes on undigested.' : ''}${alcNote}` : `Your small intestine absorbs the ${absorbed} into your blood within minutes.${alcNote}`;
         return steps.length
           ? `In the small intestine it is taken apart: ${steps.join(', ')}. ${m.fat >= 3 ? 'Sugars and amino acids pass into your blood; the fat goes into the lymph first and joins the blood later.' : steps.length === 1 && /passes into your blood/.test(String(steps[0])) ? '' : 'The pieces pass into your blood.'}${hasFibre ? ' Fiber goes on undigested.' : ''}${starchTsp ? ` In all, about ${starchTsp} teaspoons of sugar reach your blood, over a few hours.` : ''}${alcNote}`
           : `Your small intestine absorbs the ${what || 'drink'} into your blood within minutes.${alcNote}`;

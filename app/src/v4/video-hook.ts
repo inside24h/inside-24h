@@ -15,6 +15,7 @@ export interface HookIn {
   /** round 13: a surprising comparison the model shows (video-story surpriseOf): "More blood sugar than cow's milk." */ surprise?: { than: string; ratio?: number };
   /** round 14 (critic DC-1): decaf: its own caffeine (mg), a regular cup's, and the minute of its caffeine peak */ decaf?: { mg: number; regularMg: number; min: number };
   /** phase 4b (critique M4): how its blood sugar peak is said (video-body riseOf), so the hook never promises more */ sugarRise?: 'normal' | 'fast' | 'big';
+  /** phase 4h (critique M1: "Rakija." alone, its grams were never in a mix's first chapter): the grams of alcohol */ alcoholG?: number;
 }
 /** `payoff`: the title of the chapter that pays the hook off (round 5: it is in every cut, near the end of the short).
  *  Round 14 (critic: "every question must be answered on screen"): `payoffMin` when the payoff is a moment of its own
@@ -66,7 +67,7 @@ export const HOOK_POOL = {
   fiberDay: ['Where are those {n} g tomorrow?', 'Are those {n} g gone by tomorrow?', 'Where will those {n} g be tomorrow?', 'What is left of those {n} g tomorrow?', 'Where do those {n} g end up tomorrow?', 'Are those {n} g still in you tomorrow?'],
   // phase 4e (critique M5: two foods of a class asked the same question): the same questions with the food's own
   // number ({n}: its kcal, its grams of alcohol or protein, as its first moment says them), used when it has one
-  dayN: ['Where is that {n} kcal serving tomorrow?', 'How far have {n} kcal got by tomorrow?', 'How much of {n} kcal is left tomorrow?', 'Has that {n} kcal serving left you tomorrow?', 'Has that {n} kcal serving gone by tomorrow?'],
+  dayN: ['Where is that {n} kcal serving tomorrow?', 'How far have {n} kcal gotten by tomorrow?', 'How much of {n} kcal is left tomorrow?', 'Has that {n} kcal serving left you tomorrow?', 'Has that {n} kcal serving gone by tomorrow?'],
   /** phase 4f (full tier: cheddar, gouda and a fried egg all asked "When does it leave your stomach?"): a small fatty
    *  food that leads with its fat ("1 slice of cheddar: 9 g of fat.") asks the stomach question with those grams, {n}
    *  (its half time answers, as for stomach) */
@@ -151,7 +152,9 @@ function hookForRaw(h: HookIn): Hook {
     const morning = h.chapters.find((c) => c.title === 'Next morning');
     const wake = morning && /still has about/.test(morning.text) ? /^(\d\d:\d\d)/.exec(morning.text)?.[1] : undefined;
     // (round 18, critic: "Rakija 45%." was a fragment): the drink with its grams of alcohol
-    const ag = /(\d+) g (?:of )?alcohol/.exec(first)?.[1], nm = cap(name.replace(/ over .+$/, ''));
+    // (phase 4h, critique M1: a mix says both, "Rakija + lemonade", and its grams from the model when its first chapter has none)
+    const ag = /(\d+) g (?:of )?alcohol/.exec(first)?.[1] ?? ((h.alcoholG ?? 0) >= 1 ? String(Math.round(h.alcoholG!)) : undefined);
+    const nm = cap(name.replace(/ over .+$/, '').split(' + ').map((x, i) => (i ? lowerName(x) : x)).join(' + '));
     const beers = h.pace && /beer/i.test(name) ? `${h.pace.doses} beers in one evening.` : ag && fit(`${nm}: ${ag} g of alcohol.`) ? `${nm}: ${ag} g of alcohol.` : `${nm}.`;
     if (wake) return { line1: `Still in your blood at ${wake}.`, line2: fit(beers) ? beers : 'Watch what alcohol does.', payoff: 'Next morning' };
     if (h.pace) return { line1: fit(beers) ? beers : 'One drink, 24 hours.', line2: 'Watch what alcohol does.' };
@@ -329,8 +332,14 @@ function hookBRaw(h: HookIn, a: Hook): Hook {
   if (h.decaf) return { line1: 'Is decaf really caffeine-free?', line2: a.line2, ...keep };
   const name = cap(h.name.replace(/\s*\([^)]*\)/g, '').trim());
   if (h.alcohol) {
-    const g = /(\d+) g (?:of )?alcohol/.exec(h.chapters[0]?.text ?? '')?.[1];
-    if (/\?$/.test(a.line1) || !morning) return g ? { line1: fit(`${name}: ${g} g of alcohol.`) ? `${name}: ${g} g of alcohol.` : `${g} g of alcohol.`, line2: 'Watch what alcohol does.', ...keep } : { line1: poolLine('alcoholWhere', h.name), line2: a.line2, ...keep };
+    const g = /(\d+) g (?:of )?alcohol/.exec(h.chapters[0]?.text ?? '')?.[1] ?? ((h.alcoholG ?? 0) >= 1 ? String(Math.round(h.alcoholG!)) : undefined);
+    const nm = name.split(' + ').map((x, i) => (i ? lowerName(x) : x)).join(' + ');
+    // (phase 4h, critique M8: "Where does all that alcohol go?" was never answered: its answer names the liver, said
+    // first at the moment the alcohol is gone)
+    const gone = h.chapters.find((c) => c.title === 'Alcohol gone');
+    const liver = gone ? { payoff: gone.title, answer: LIVER_ANSWER } : {};
+    if (/\?$/.test(a.line1) || !morning) return g ? { line1: fit(`${nm}: ${g} g of alcohol.`) ? `${nm}: ${g} g of alcohol.` : `${g} g of alcohol.`, ...(gone ? { line2: poolLine('alcoholWhere', h.name), ...keep, ...liver } : { line2: 'Watch what alcohol does.', ...keep }) }
+      : { line1: poolLine('alcoholWhere', h.name), line2: a.line2, ...keep, ...liver };
     return { line1: 'Is it gone by the next morning?', line2: a.line1, ...keep };
   }
   // (round 17: "Ice cream: 4 teaspoons of sugar." had no moment for "Where does it go?"): its blood sugar peak answers
@@ -384,4 +393,24 @@ export function hookTemplates(h: { line1: string; line2: string }, name: string)
   const tpl = (l: string) => l.replace(/\d+(?:[.,]\d+)?/g, '#').split(/(?=[:.?])/)[0].toLowerCase().includes(bare) || l.toLowerCase().includes(nm) ? `{name}${l.slice(l.search(/[:.?]/) >= 0 ? l.search(/[:.?]/) : l.length)}`.replace(/\d+(?:[.,]\d+)?/g, '#') : l.replace(/\d+(?:[.,]\d+)?/g, '#');
   const generic = [h.line1, h.line2].filter((l) => l && !HOOK_NUMBER.test(l) && !/\d/.test(l) && !l.toLowerCase().includes(bare) && !l.toLowerCase().includes(nm));
   return { lines: generic, pair: `${tpl(h.line1)} | ${tpl(h.line2)}` };
+}
+/** Phase 4h: the card that answers "Where does the alcohol go?" (the liver breaks down nearly all of it). */
+export const LIVER_ANSWER = 'Your liver breaks down almost all of it.';
+/** Phase 4h (critique 2026-11-19, M8: rakija asked "Where does all that alcohol go?" and no card named the liver; the
+ *  chicken meal asked "How far have 378 kcal gotten by tomorrow?" and was answered in grams of fiber): the words a
+ *  video's answer must have, by what its hook asks. `said`: every word on screen after the opening, the headline
+ *  (the hook itself) left out. Returns what is missing, or null. Shared by the timeline check (video-telemetry) and
+ *  the text tests. */
+export function hookAnswerIssue(hook: string, said: string, end = said): string | null {
+  const h = hook.replace(/\s+/g, ' ');
+  if (!/\?/.test(h)) return null;
+  // [what the hook asks, the words that answer it, where (the end card: `end`, else anywhere after the opening), what]
+  const need: [RegExp, RegExp, 'end' | 'any', string][] = [
+    [/where does (?:all )?(?:that |the )?alcohol go|liver do with it|body clear it|liver deal with it|body do with the alcohol/i, /\bliver\b/i, 'any', 'the liver'],
+    [/\b\d+ kcal\b[^?]*\b(?:tomorrow|left|gone|got|gotten)\b[^?]*\?/i, /\b(?:kcal|calories)\b/i, 'end', 'its calories on the end card'],
+    [/bedtime|go to bed/i, /\bbedtime\b|\bbed\b/i, 'any', 'bedtime'],
+    [/stomach/i, /\bstomach\b/i, 'any', 'the stomach'],
+  ];
+  for (const [ask, answer, where, what] of need) if (ask.test(h) && !answer.test(where === 'end' ? end : said)) return `"${h}" is not answered: nothing on screen names ${what}`;
+  return null;
 }

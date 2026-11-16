@@ -48,7 +48,8 @@ export function analyze(parts: Part[], p: Profile, overMin = 0) {
     // "3 × 500 ml of beer"), so "Beer vs Beer" or "Espresso … 127 mg" never hides how much (QA 2026-10-23)
     label: one && Math.abs(one.grams - one.food.serving.grams) > 1 ? capFirst(amountPhrase(one).replace(/ \([^)]*\)/g, '')) : def.content.name,
     // how much, in a few words, for the comparison video (round 5: "1 can · 330 ml" vs "330 ml")
-    serving: one ? servingText(one.amountLabel) : `${Math.round(parts.reduce((a, x) => a + x.grams, 0))} g` };
+    serving: one ? servingText(one.amountLabel) : `${Math.round(parts.reduce((a, x) => a + x.grams, 0))} g`,
+    /** phase 4h: what it is made of (the video's serving card, video-story servingCard) */ parts };
 }
 export type Analysis = ReturnType<typeof analyze>;
 /** "1 × can (≈ 330 ml)" → "1 can · 330 ml"; "330 ml" stays; "Whole · 1104 g" stays. */

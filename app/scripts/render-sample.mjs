@@ -3,6 +3,7 @@
 // for a single food, starts the export by itself; for a comparison, #vs=<food>, this script presses the panel's
 // "Make this a Reel" button), waits for the finished file (window.__i24render) and writes it to --out.
 //   node scripts/render-sample.mjs --q=beer --render=reels --out=<file.mp4> [--vs=croissant] [--site=../site]
+// Phase 4h: also writes <out>.timeline.json, what every frame drew (video-telemetry.ts), for npm run qc:render.
 // No voiceover (a fresh profile has it off: nothing is downloaded), music on. One headless browser, killed at the end;
 // nothing leaves the machine (a local static server on 127.0.0.1).
 import { spawn, execSync } from 'node:child_process';
@@ -119,6 +120,15 @@ try {
   }
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, Buffer.concat(parts));
+  // phase 4h: what every frame drew (video-telemetry.ts, recorded only for #render=), next to the video, for qc:render
+  const tlLen = await page.evaluate('(() => { const t = window.__i24timeline; if (!t) return 0; window.__i24tl = JSON.stringify(t); return window.__i24tl.length; })()');
+  if (tlLen) {
+    let tl = '';
+    for (let off = 0; off < tlLen; off += 1 << 20) tl += await page.evaluate(`window.__i24tl.slice(${off}, ${off + (1 << 20)})`);
+    const tlFile = OUT.replace(/\.[^.]+$/, '') + '.timeline.json';
+    fs.writeFileSync(tlFile, tl);
+    console.log(`[render] wrote ${tlFile} (${(tlLen / 1e6).toFixed(1)} MB)`);
+  } else console.log('[render] no timeline in the page (an older build?)');
   console.log(`[render] wrote ${OUT} (${(size / 1e6).toFixed(1)} MB) in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
 } finally {
   await page.close();

@@ -212,10 +212,13 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
   const big = (top[1].text ?? `${amountText(top[0], top[1])} ${top[1].unit ?? b.route.unit}`).replace(/\b(?:fructose|glucose)\b/g, 'sugar')
     // (round 7: one unit in the video, BAC %, never ‰ next to it)
     .replace(/alcohol ([\d.]+)–([\d.]+) ‰/, (_m, a: string, c: string) => bacPlain(0, [Number(a), Number(c)]).replace(/ · .*$/, ''));
+  // phase 4h (critique 2026-11-19, B1: the "In your blood" chip showed a BAC with neither driving limit): the limits as
+  // bacPlain says them, under the number, with the body and the warning
+  const lim = /alcohol ([\d.]+)–([\d.]+) ‰/.exec(top[1].text ?? ''), limits = lim ? bacPlain(0, [Number(lim[1]), Number(lim[2])]).split(' · ').slice(2).join(' · ') : '';
   // the bladder number is the urine made in the last 3 h (routes.ts recent()); over a bladderful it says so
   // (critic: "857 ml in the bladder" is not possible: people pee before that)
   const small = top[0] === 'bladder' ? (v > 500 ? 'Made in 3 h: more than one pee' : 'Urine made in the last 3 h') : WHERE_SMALL[top[0]] ?? SEG_LABEL[top[0]];
-  return { big, small, level: 0, organ: SEG_FOCUS_V[top[0]], ...(SHOWS_BAC.test(big) ? { small: `${small} · for a ${b.bacBody ?? DEFAULT_BAC_BODY}`, warn: DRIVE_WARN } : {}) };
+  return { big, small, level: 0, organ: SEG_FOCUS_V[top[0]], ...(SHOWS_BAC.test(big) ? { small: `${small} · for a ${b.bacBody ?? DEFAULT_BAC_BODY}${limits ? ` · ${limits}` : ''}`, warn: DRIVE_WARN } : {}) };
 }
 
 /** Round 15 (sparse stories, critic SA-2): where most of it is at minute m, as a card ("Most of it is in your small

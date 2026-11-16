@@ -163,6 +163,8 @@ export interface BeatCtx {
   /** round 6: the blood alcohol peak (g/L, typical body) and its minute: "gone" is then said from the SAME range as the
    *  gauge (bodies −40 %/+50 %, BAC_SPREAD) and the livers' range (0.20 / 0.10 g/L an hour, ELIM_RANGE) */ bacPeak?: { g: number; min: number };
   /** round 6: grams of alcohol (the hangover warning is said from 40 g up) */ alcoholG?: number;
+  /** phase 4h (critique M1: rakija + lemonade said only "Rakija."): what was drunk, each part with its amount and a
+   *  drink's strength ("40 ml of rakija (40 % ABV) + 250 ml of lemonade."), said in place of the name card */ serving?: string;
 }
 /** A share in words ("a fifth", "two thirds"), or null when it is too small to name. */
 export function fractionWord(r: number): string | null {
@@ -205,7 +207,8 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
       prot && Number(prot[1]) >= 20 && Number(carb?.[1] ?? 0) < 15 && `${prot[1]} g of protein.`].filter((x): x is string => !!x);
     // (with pacing the name loses its "over 2 h": the next card explains it)
     if (ctx.factsFirst && facts.length) push(facts);
-    if (ctx.name && (facts.length || ctx.pace)) push([end(cap(ctx.pace ? ctx.name.replace(/ over .+$/, '') : ctx.name))]);
+    if (ctx.serving && !ctx.pace) push([ctx.serving]);
+    else if (ctx.name && (facts.length || ctx.pace)) push([end(cap(ctx.pace ? ctx.name.replace(/ over .+$/, '') : ctx.name))]);
     else for (const s of sentencesOf(text).slice(0, 2)) push(rule(s)); // no numbers to add: its own short words
     if (ctx.pace) push([`Over ${hoursLabel(ctx.pace.overMin)}: one ${ctx.pace.round} every ${Math.round(ctx.pace.everyMin)} minutes.`]);
     // a number already said is not said again

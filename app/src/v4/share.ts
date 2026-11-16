@@ -5,6 +5,7 @@
 // 2026-10-22 video polish: timing comes from video-plan.ts (reading-speed rule, 62-75 s long cut, ≤ 30 s short cut),
 // every word stays inside the platform safe zone (SAFE below), our own soundtrack (video-audio.ts), brand fonts,
 // a hook frame as the first frame (= thumbnail) and an end card that loops back to it.
+import { teleFrame, teleOn } from './video-telemetry';
 import { FPS, INTRO_S, OUTRO_S, type Plan, type VFrame } from './video-plan';
 import { captionTrack, pageAt, placeCaption, duplicateOnScreen, punchTimes, CAP_FS, CAP_LH, CAP_PAD, PIN_R, type CapLine, type CapPage, type Pt } from './video-captions';
 import { aacConfig, encodeSoundtrack, lastVoiceMix, playSoundtrack, renderSoundtrack2, SAMPLE_RATE, type SoundMode } from './video-audio';
@@ -723,7 +724,7 @@ export function bg(ctx: CanvasRenderingContext2D, W: number, H: number) {
 }
 
 // ---- text helpers: every word goes through `text`, which (in tests) records its box for the safe-zone check ----
-export interface TextBox { x0: number; y0: number; x1: number; y1: number; text: string; deco: boolean }
+export interface TextBox { x0: number; y0: number; x1: number; y1: number; text: string; deco: boolean; /** phase 4h: its opacity */ a?: number }
 let textLog: TextBox[] | null = null;
 /** Tests: the box of every word drawn while `fn` runs (deco = small print allowed under the platform UI). */
 export function logText(fn: () => void): TextBox[] { textLog = []; try { fn(); return textLog; } finally { textLog = null; } }
@@ -738,7 +739,7 @@ function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, de
   if ((textLog || frameText) && ctx.globalAlpha > 0.02) {
     const w = ctx.measureText(s).width, px = fontPx(ctx), a = ctx.textAlign;
     const x0 = a === 'center' ? x - w / 2 : a === 'right' || a === 'end' ? x - w : x;
-    logBox({ x0, x1: x0 + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco });
+    logBox({ x0, x1: x0 + w, y0: y - px * 0.78, y1: y + px * 0.22, text: s, deco, a: ctx.globalAlpha });
   }
 }
 /** Largest font (from `max` down to `min`) at which `s` wraps into at most `lines` lines of width `w`. */
@@ -1242,7 +1243,7 @@ export function pinRoute(box: Rect, pref: P2, to: P2, texts: readonly Rect[], bo
   const ring = !blocks.some((r) => circleHitsRect(to, PIN_RING_R, r));
   const cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2, w = box.x1 - box.x0, d = (p: P2) => Math.hypot(p.x - to.x, p.y - to.y);
   const edge = [{ x: cx, y: box.y1 }, { x: cx, y: box.y0 }, { x: box.x0, y: cy }, { x: box.x1, y: cy }, { x: box.x0 + w * 0.25, y: box.y1 }, { x: box.x0 + w * 0.75, y: box.y1 }].sort((p, q) => d(p) - d(q));
-  const own = grow(box, -3);
+  const own = grow(box, -2); // (phase 4h: a line along its own edge, 2-3 px inside, crossed its words)
   for (const f of [pref, ...edge]) {
     if (segHitsRect(f, to, own) || words.some((r) => segHitsRect(f, to, r)) || others.some((r) => segHitsRect(f, to, r))) continue;
     return { from: f, ring };
@@ -1423,6 +1424,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   drawVignette(ctx, W, H, vignetteAlpha(cues, t));
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   const outS = plan?.outroS ?? OUTRO_S.long, E = endTiming(fr, outS);
+  let teleCard: string | undefined; // (phase 4h: the card as drawn, for the timeline)
   // 2) gauges pinned to the organs: where the drink is (left), the number that matters (right)
   if (E.main > 0.001) {
     ctx.save(); ctx.globalAlpha = E.main * (fr.phase === 'intro' && fr.beat !== 'teaser' ? smooth((ti - 0.8) / 0.5) : 1);
@@ -1458,6 +1460,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     ctx.save(); ctx.globalAlpha = E.main * plate;
     const title = (fr.title ?? o.step ?? '').trim(), cap = (fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? '').trim();
     const titleOnly = !!cap && cap.replace(/\.$/, '').toLowerCase() === title.toLowerCase();
+    if (cap && E.main * plate * fr.capA >= 0.5) teleCard = titleOnly ? cap : `${fr.tease ? 'STILL TO COME' : title.toUpperCase()} | ${cap}`;
     const capFit = balanced(ctx, fitWrap(ctx, cap, RL - L, 2, Lo.capFs, 42, (px) => `${titleOnly ? 700 : 600} ${px}px ${SANS}`), cap, RL - L);
     const capBot = S.bottom - 4, capY0 = capBot - (capFit.lines.length - 1) * Lo.capLH - capFit.px * 0.22;
     shade(ctx, true);
@@ -1482,6 +1485,8 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   if (fr.celeb !== undefined && fr.phase === 'main') drawCeleb(ctx, Lo, o, fr, cues);
   if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; footer(ctx, W, H, format, u, plan?.stopsU); ctx.restore(); }
   if (fr.phase === 'outro') drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= OUTRO_S.short + 0.05);
+  // (phase 4h: what this frame drew, for the video's timeline: only while one is recorded)
+  if (teleOn()) teleFrame(fr, { boxes: frameText ?? [], clock: E.top >= 0.5 ? elapsedText(fr.m) : undefined, card: teleCard, end: fr.phase === 'outro' ? E.end * (1 - E.first) : 0 });
   flushPins(ctx); // (phase 4g: last, clear of every word)
   if (fr.phase === 'outro' && first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
 }
@@ -1756,6 +1761,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
   drawSunrise(ctx, W, H, since(cues, 'night', t, (c) => c.data?.v === 0).age);
   drawVignette(ctx, W, H, vignetteAlpha(cues, t));
   const outS = plan?.outroS ?? OUTRO_S.long + CMP_OUTRO_EXTRA_S, E = endTiming(fr, outS);
+  const teleCards: string[] = []; // (phase 4h: the cards as drawn, for the timeline)
   // the seam between the two bodies
   const sg = ctx.createLinearGradient(0, Lo.headerBot, 0, Lo.capTop);
   sg.addColorStop(0, 'rgba(92,211,255,0)'); sg.addColorStop(0.2, 'rgba(92,211,255,.35)'); sg.addColorStop(0.8, 'rgba(92,211,255,.35)'); sg.addColorStop(1, 'rgba(92,211,255,0)');
@@ -1796,7 +1802,9 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     ctx.save(); ctx.globalAlpha *= fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
     const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' || isHushed(fr.capB, 1) ? '' : fr.capB ?? '']];
     // (round 13, critic P1-3: wine vs beer showed the same sentence twice, side by side): one card across both columns
-    const same = !!caps[0][1].trim() && caps[0][1].trim() === caps[1][1].trim();
+    // (phase 4h, critique M3: "Both · Blood sugar peak" while one side was past its peak: one card only when both
+    // sides are at the same moment, the same title and the same words)
+    const same = !!caps[0][1].trim() && caps[0][1].trim() === caps[1][1].trim() && ((caps[0][0] ?? '').trim() === (caps[1][0] ?? '').trim() || [caps[0][0], caps[1][0]].every((t) => /^First\b/i.test((t ?? '').trim())));
     sides.forEach((s, k) => {
       if (same && k === 1) return;
       const [x0, x1] = same ? [Lo.cols[0][0], Lo.cols[1][1]] : Lo.cols[k], w = x1 - x0;
@@ -1810,6 +1818,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
         const tl = cap ? wrap(ctx, title.toUpperCase(), w, 2) : [title.toUpperCase()], ty = cap ? y0 - c.px * 0.86 - 14 : capBot - 6;
         tl.forEach((ln, i) => text(ctx, fit(ctx, ln, w), x0, ty - (tl.length - 1 - i) * (Lo.kickFs + 6)));
       }
+      if (cap && ctx.globalAlpha * (fr.phase === 'main' ? fr.capA : 1) >= 0.5) teleCards.push(titleOnly ? cap : `${title.toUpperCase()} | ${cap}`);
       if (cap) {
         ctx.save(); ctx.globalAlpha *= fr.phase === 'main' ? fr.capA : 1; ctx.fillStyle = '#ffffff'; ctx.font = `${titleOnly ? 700 : 600} ${c.px}px ${SANS}`;
         c.lines.forEach((ln, i) => text(ctx, ln, x0, y0 + i * Lo.capLH));
@@ -1838,6 +1847,7 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     ctx.restore();
   }
   if (fr.phase === 'outro') drawSplitOutro(ctx, W, H, o, E.end, Lo.topBot, fr.k * outS, cues);
+  if (teleOn()) teleFrame(fr, { boxes: frameText ?? [], clock: E.top >= 0.5 ? elapsedText(fr.m) : undefined, card: teleCards.join(' || ') || undefined, end: fr.phase === 'outro' ? E.end * (1 - E.first) : 0 });
   flushPins(ctx); // (phase 4g: last, clear of every word)
   if (fr.phase === 'outro' && first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
 }
