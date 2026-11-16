@@ -205,7 +205,9 @@ function hookForRaw(h: HookIn): Hook {
   const ownPromise = (fatTells || fibTells) && !fatLead ? (day ? { line2: ownLine('day', key, mac.kcal, factsOf(first)), payoff: day.title } : promise) : promise;
   // round 13 (critic P0-2c: salmon opened with "Watch it for 24 hours."): protein-led food leads with its protein
   const prot = Number(/(\d+) g protein/.exec(first)?.[1] ?? 0), carbs = Number(/(\d+) g carbohydrate/.exec(first)?.[1] ?? 0);
-  if (h.solid && prot >= 20 && carbs < 15) { const l1 = named(`${prot} g of protein.`); return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: ownLine('protein', factKey(h), prot, factsOf(first)), lead: `${prot} g of protein.` }; }
+  // (phase 4i, full tier: "Shrimp: 20 g of protein. Watch your body use 20 g of protein.": the second line keeps the
+  // number and leaves out the "of protein" the first one just said)
+  if (h.solid && prot >= 20 && carbs < 15) { const l1 = named(`${prot} g of protein.`); return { line1: fit(l1, 9) ? l1 : `${prot} g of protein.`, line2: ownLine('protein', factKey(h), prot, factsOf(first)).replace(` ${prot} g of protein`, ` ${prot} g`), lead: `${prot} g of protein.` }; }
   // round 17 (critic G-3: brie): a small, fatty food leads with its fat (the number it is about), and asks what its
   // own moments answer
   const fat = Number(/(\d+) g fat/.exec(first)?.[1] ?? 0), kc = Number(/(\d+) kcal/.exec(first)?.[1] ?? 0);

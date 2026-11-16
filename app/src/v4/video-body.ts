@@ -49,8 +49,12 @@ const ORGAN_WORDS: [RegExp, string[]][] = [
 ];
 export function namedOrgans(...texts: (string | undefined | null)[]): string[] {
   const t = texts.filter(Boolean).join(' \n ');
-  return [...new Set(ORGAN_WORDS.filter(([re]) => re.test(t)).flatMap(([, o]) => o))];
+  // (phase 4i: the planner asks this for every frame of every layout it tries; the same words name the same organs)
+  let o = NAMED_MEMO.get(t);
+  if (!o) { if (NAMED_MEMO.size > 4096) NAMED_MEMO.clear(); o = [...new Set(ORGAN_WORDS.filter(([re]) => re.test(t)).flatMap(([, x]) => x))]; NAMED_MEMO.set(t, o); }
+  return [...o];
 }
+const NAMED_MEMO = new Map<string, string[]>();
 /** The organs the card on screen in a video frame names (its kicker title and its card), while a card is shown (a
  *  moment being read, or the first sip); side 1 = the comparison's right body. The app and the tests use this one. */
 export function cardNamed(fr: { beat?: string; phase?: string; title?: string; cap?: string; titleB?: string; capB?: string } | null | undefined, side: 0 | 1 = 0): string[] {

@@ -51,7 +51,7 @@ let captionFlags!: VideoKit['captionFlags'], captionsFor!: VideoKit['captionsFor
 let ORGAN_AT!: VideoKit['ORGAN_AT'], project!: VideoKit['project'], SIDE_X!: VideoKit['SIDE_X'], splitPose!: VideoKit['splitPose'];
 let quietFrame!: VideoKit['quietFrame'], camSeedOf!: VideoKit['camSeedOf'], beatChapter!: VideoKit['beatChapter'], beatOrgans!: VideoKit['beatOrgans'], camPlanOf!: VideoKit['camPlanOf'], camStyle!: VideoKit['camStyle'], classOf!: VideoKit['classOf'], shotOf!: VideoKit['shotOf'], splitShot!: VideoKit['splitShot'], splitPlanOf!: VideoKit['splitPlanOf'];
 let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
-let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'];
+let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'], questionImpactS!: VideoKit['questionImpactS'];
 // (phase 4h: the video's timeline, recorded only for the QA render harness, #render=; and the serving card)
 let teleScene!: VideoKit['teleScene'], teleStart!: VideoKit['teleStart'], teleStop!: VideoKit['teleStop'], sceneOf!: VideoKit['sceneOf'], servingCard!: VideoKit['servingCard'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
@@ -61,7 +61,7 @@ const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
     endCardOf, bacPeakText, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf,
     compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, quietFrame, camSeedOf, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
-    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf, teleScene, teleStart, teleStop, sceneOf, servingCard } = k);
+    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf, teleScene, teleStart, teleStop, sceneOf, servingCard, questionImpactS } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
 const NO_HOOK: Hook = { line1: '', line2: '' };
@@ -932,7 +932,7 @@ export default function AppV4() {
     const stops = applyHook(singleStops(story, ctx, (m) => whereCard(built, m)), hookNow, (built.alcoholG ?? 0) > 1 ? 0 : built.caffeine.doseMg); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = payoffMinOf(stops, hookNow);
-    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin,
+    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, questionByS: questionImpactS(hookNow, shortName(videoName)),
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
     const plan = singlePlan(stops, vidCut, fx, story.chapters, built); // (phase 4e: the same planner call as the audit, perceived stays capped)
     reelStops.current = plan.stops;

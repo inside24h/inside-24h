@@ -158,6 +158,15 @@ const NAMED: { re: RegExp; organs: string[]; all?: boolean }[] = [
 /** The organs a beat is about: those its title names, else the chapter's own organ (the one the body highlights).
  *  (Phase 4 bug: beer's "Kidneys" card had the bladder as its chapter organ, so the camera filmed the bladder.) */
 export function beatOrgans(title: string | undefined, chapterFocus: string | null | undefined): { organs: string[]; named: boolean } {
+  // (phase 4i: asked for every frame of every layout the planner tries; the same title and focus name the same organs)
+  let byF = BEAT_MEMO.get(title ?? '');
+  if (!byF) { if (BEAT_MEMO.size > 4096) BEAT_MEMO.clear(); byF = new Map(); BEAT_MEMO.set(title ?? '', byF); }
+  let o = byF.get(chapterFocus ?? '');
+  if (!o) { o = beatOrgans0(title, chapterFocus); byF.set(chapterFocus ?? '', o); }
+  return { organs: [...o.organs], named: o.named };
+}
+const BEAT_MEMO = new Map<string, Map<string, { organs: string[]; named: boolean }>>();
+function beatOrgans0(title: string | undefined, chapterFocus: string | null | undefined): { organs: string[]; named: boolean } {
   const hits = title ? NAMED.filter((n) => n.re.test(title)) : [];
   if (!hits.length) return { organs: chapterFocus && ORGAN_AT[chapterFocus] ? [chapterFocus] : [], named: false };
   const out = hits.flatMap((n) => (n.all ? n.organs : [chapterFocus && n.organs.includes(chapterFocus) ? chapterFocus : n.organs[0]]));
@@ -424,7 +433,7 @@ function camPlanBase(frames: { beat?: string; stop?: number; from?: number; t: n
   return { style, wide: [[pick.t0, Math.min(pick.t0 + Math.max(pick.s, ORIENT_S), pick.t0 + pick.s + ORIENT_SPILL_S)]] };
 }
 
-type FrameLike = { beat?: string; phase?: string; t: number; stop?: number; from?: number; hk?: number; pg?: number; lull?: boolean; pipe?: number; cap?: string };
+type FrameLike = { beat?: string; phase?: string; t: number; stop?: number; from?: number; hk?: number; pg?: number; lull?: boolean; pipe?: number; cap?: string; goal?: string };
 /** The camera's shot for one video frame: the organ the moment is about plus where the drink is; close while a
  *  moment is read, pulled back while the day races through a quiet stretch, wide for the 24 h beat and the end.
  *  (Moved from AppV4, 2026-11-13; `cam`: the video's CamPlan, phase 4.) */
@@ -454,7 +463,13 @@ export function shotOf(fr: FrameLike | null | undefined, beat: (string | null | 
   if ((fr.stop ?? 0) > 0 && quietFrame(fr)) return { focus: [...new Set(known)], zoom: 'body', yaw: 0 };
   if (cam?.body?.some(([a, b]) => fr.t >= a - 1e-6 && fr.t < b)) return { focus: [...new Set(known)], zoom: 'body', yaw: fr.beat === 'glide' ? arc : 0 };
   if (fr.beat === 'glide') {
-    return { focus: [...new Set(focus)], zoom: union || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid', yaw: arc };
+    // (phase 4i, full tier: a burger's Reels went from the brain, "Sleepy after eating", straight to a close-up of the
+    // kidneys, and the camera was still coming down when the card's kidneys had to be in the safe frame: a glide to a
+    // moment far up or down the body is filmed whole-body, so the camera reaches the next organs in time)
+    const ys = (ks: readonly string[]) => { const p = ks.map((k) => ORGAN_AT[k]).filter(Boolean); return p.length ? p.reduce((a, x) => a + x[1], 0) / p.length : null; };
+    const yHere = ys(focus), yNext = fr.goal ? ys(beatOrgans(fr.goal, null).organs) : null;
+    const farOff = yHere !== null && yNext !== null && Math.abs(yHere - yNext) > GLIDE_FAR_M;
+    return { focus: [...new Set(focus)], zoom: union || farOff || (fr.from !== undefined && (fr.stop ?? 0) - fr.from > 120) ? 'wide' : 'mid', yaw: arc };
   }
   // round 5 (critic: up to 13 s of the same shot): every new card, and every 2.6 s of a long one (fr.pg), reframes:
   // close on the organ, then wider, in turn (phase 4: a class may open wider first, camStyle.wideFirst)
@@ -497,6 +512,8 @@ export function organRect(organ: string, cam: { pos: V3; look: V3 }, fovDeg: num
 }
 /** Where an organ the card is about must be on the picture: inside the platforms' safe zone (share.ts SAFE: no
  *  platform button or caption bar over it). */
+/** Phase 4i: a glide between organs this far apart in height (metres; the brain and the kidneys, ~0.54) is filmed whole-body. */
+export const GLIDE_FAR_M = 0.5;
 export const ORGAN_SAFE = { reel: { l: 80, r: 1000, t: 280, b: 1320 }, feed: { l: 60, r: 1020, t: 50, b: 1290 } } as const;
 /** Is the whole body (head to pelvis: brain, liver, stomach and bladder) in the picture? (the orientation shot) */
 export function wholeBody(cam: { pos: V3; look: V3 }, fovDeg: number, W: number, H: number, dx = 0): boolean {

@@ -109,6 +109,7 @@ export interface VFrame {
   m: number;          // minute of the day shown (the 3D body steps to it)
   t: number;          // seconds into the video
   cap?: string;       // caption page shown in this frame
+  /** phase 4i: in a glide, the title of the moment it leads to (named on screen or not: the camera heads for it) */ goal?: string;
   capB?: string;      // comparison video: the second food's caption
   title?: string;     // the chapter title over the caption (the moment the caption belongs to)
   titleB?: string;
@@ -157,6 +158,10 @@ export interface PlanFx {
   payoffMin?: number;
   /** round 5: the long cut's first impact lands by this second (critic: "the first wow at 27 s is too late"). */
   peakByS?: number;
+  /** phase 4i (full tier: light beer and wine Shorts never said their hook's question, "When has your liver cleared
+   *  500 ml?": the first impact came at 6 s): the first impact comes no sooner than this (video-narration
+   *  questionImpactS), when the length allows; the opening's last card is held that much longer */
+  questionByS?: number;
   /** round 10: while the drink's main substance climbs in the blood (from SURGE_FROM of its peak, `min`, to the peak,
    *  `max`; video-story `surgeOf`), and which one: the bloodstream surges on screen and in the sound, once, at the
    *  first second of that stretch that is clear of the sip, the riser and the impact. */
@@ -469,8 +474,13 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // (round 5: in the long cut only the words from the peak on are stretched, so the first impact stays early)
   // (phase 4e: a moment in `calm` is not stretched: it is in a perceived stay that is at its cap)
   const calm = new Set<number>(), grows = (i: number) => i >= from && !calm.has(chosen[i].min);
+  // (phase 4i, full tier: green salad Shorts, 6.1 s on the small intestine: a lull's NEXT chip, then a 47-character
+  // card; a moment the lull's chip has just named gets no extra new-moment time on its first card (READ.newStop: the
+  // place is already read), when its stay is over the cap: `named`)
+  const named = new Set<number>();
   let from = 0, t0 = 0, reading = 0;
   let want = lim.min + 0.3; // a little over, so frame rounding never lands under the minimum
+  let openPad = 0;
   const lay = () => {
     from = isLongish(cut) && !sparse ? Math.max(0, peakIdx()) : 0;
     t0 = total(pages); reading = pages.reduce((a, p, i) => a + (grows(i) ? stopS(p) - (i === 0 && p.length ? READ.newStop : 0) : 0), 0);
@@ -480,7 +490,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     let lost = 0;
     // (phase 4h, critique M7: the first moment's first card is the "first bite" state: the hook just said what it is and
     // the clock and the stamp are already up, so it has no new-moment bonus; its clock leaves +0:00 by FIRST_CLOCK_S)
-    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0 && i > 0), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c; }));
+    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0 && i > 0 && !(named.has(chosen[i].min) && lulls.has(chosen[i].min))), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c + (i === 0 && j === pages[0].length - 1 ? openPad : 0); }));
     // first the glides after the impact, then the ones before it (as long as the impact still lands by PEAK_BY_S)
     const pi = Math.max(0, peakIdx()), calmG = (i: number) => (i < chosen.length ? calm.has(chosen[i].min) || lulls.has(chosen[i].min) : calm.has(chosen[chosen.length - 1].min) || lulls.has(1440));
     // (phase 4e: the glides into a calm moment keep their own time)
@@ -627,10 +637,11 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       for (const w of o.runs.filter((x) => x.s > o.cap).sort((x, y) => y.s - x.s).slice(0, 3)) {
         // the moments of the stay: some of their frames are seen on its region, inside it
         const inRun = chosen.map((_s, i) => i).filter((i) => out.frames.some((f) => f.beat === 'hold' && f.stop === chosen[i].min && f.t >= w.at - 1e-6 && f.t <= w.at + w.s + 1e-6 && pc.seen(f).includes(w.r)));
-        const snap = { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], want, pipe }, base = out;
-        const restore = () => { ({ chosen, sents, used, pages, want, pipe } = snap); calm.clear(); for (const m of snap.calm) calm.add(m); lulls.clear(); for (const m of snap.lulls) lulls.add(m); };
+        const snap = { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], named: [...named], want, pipe }, base = out;
+        const restore = () => { ({ chosen, sents, used, pages, want, pipe } = snap); calm.clear(); for (const m of snap.calm) calm.add(m); lulls.clear(); for (const m of snap.lulls) lulls.add(m); named.clear(); for (const m of snap.named) named.add(m); };
         const inRunMins = inRun.map((i) => chosen[i].min), calmRun = () => { for (const m of inRunMins) calm.add(m); };
-        const tries: (() => boolean)[] = [];
+        const tries: (() => boolean)[] = [], keepPeak = new Set<() => boolean>();
+        const peakKept = (f: () => boolean) => { keepPeak.add(f); return f; };
         // 0) a glide inside the stay becomes a lull (the whole body, no words, REGION_BREAK_S), the middle one first
         {
           // (into the stay's later moments, into its first one, out of its last one)
@@ -643,6 +654,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
         }
         // 0b) the first moment's camera stays on the food pipe (the stay began with the bite reaching the stomach)
         for (const p of [0, ...PIPE_SHARES]) if (p !== pipe) tries.push(() => { pipe = p; return true; });
+        // 0d) a moment of the stay its lull's NEXT chip has just named: no new-moment time on its first card
+        for (const m of inRunMins) if (lulls.has(m) && !named.has(m)) tries.push(() => { named.add(m); return true; });
         // 0c) a long moment of the stay is said in two parts, a few minutes apart, with a lull between (its later
         // cards then speak a few minutes later: never a moment's first card, never the first moment)
         for (const m of inRunMins) {
@@ -678,7 +691,15 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           if (j < 0) return false;
           dropCard(i, j); calmRun(); fill(base, o.cap);
           return true;
-        });
+        }, peakKept(() => {
+          // (phase 4i, full tier: an energy drink Short, 6.1 s on the stomach from its first sip: the opening's name card
+          // gives way and the time goes to the cards outside the stay, no moment brought in for it; never when that
+          // brings the impact sooner: the hook's question is said before it)
+          const j = spare(i);
+          if (j < 0) return false;
+          dropCard(i, j); calmRun();
+          return true;
+        }));
         for (const i of [...inRun].filter((x) => x > 0 && !forced(chosen[x])).sort((x, y) => val(chosen[x]) - val(chosen[y])).slice(0, 2)) tries.push(() => {
           const keep = inRun.filter((j) => j !== i).map((j) => chosen[j].min);
           chosen = chosen.filter((_s, k) => k !== i); sents = sents.filter((_s, k) => k !== i); used = used.filter((_s, k) => k !== i); pages = pages.filter((_s, k) => k !== i);
@@ -687,7 +708,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           return true;
         });
         // (every way is tried; the one that leaves the least time over the caps is kept)
-        let best: { sum: number; plan: Plan; st: { chosen: StopIn[]; sents: string[][]; used: number[]; pages: string[][]; calm: number[]; lulls: number[]; want: number; pipe: number } } | null = null;
+        let best: { sum: number; plan: Plan; st: { chosen: StopIn[]; sents: string[][]; used: number[]; pages: string[][]; calm: number[]; lulls: number[]; named: number[]; want: number; pipe: number } } | null = null;
         for (const tr of tries) {
           if (!tr()) { restore(); continue; }
           let next = relay();
@@ -695,17 +716,24 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           for (let k = 0; k < 3 && next.seconds < lo; k++) { bump += lo - next.seconds + 0.2; fill(base, o.cap); next = relay(); }
           bump = 0;
           const n = overOf(next);
-          if (n.sum < o.sum - 0.05 && next.seconds >= lo && next.seconds <= hi && (!best || n.sum < best.sum - 1e-6)) best = { sum: n.sum, plan: next, st: { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], want, pipe } };
+          if (n.sum < o.sum - 0.05 && !(keepPeak.has(tr) && (next.peakT ?? 0) < (out.peakT ?? 0) - 0.05) && next.seconds >= lo && next.seconds <= hi && (!best || n.sum < best.sum - 1e-6)) best = { sum: n.sum, plan: next, st: { chosen, sents, used, pages, calm: [...calm], lulls: [...lulls], named: [...named], want, pipe } };
           restore();
           if (best && best.sum <= 1e-6) break;
         }
         if (best) {
-          ({ chosen, sents, used, pages, want, pipe } = best.st); calm.clear(); for (const m of best.st.calm) calm.add(m); lulls.clear(); for (const m of best.st.lulls) lulls.add(m);
+          ({ chosen, sents, used, pages, want, pipe } = best.st); calm.clear(); for (const m of best.st.calm) calm.add(m); lulls.clear(); for (const m of best.st.lulls) lulls.add(m); named.clear(); for (const m of best.st.named) named.add(m);
           out = best.plan; better = true; break;
         }
       }
       if (!better) break;
     }
+  }
+  // (phase 4i: the hook's question is said before the first impact's hush: the opening holds its last card longer)
+  if (fx.questionByS && out.peakT !== undefined && out.peakT < fx.questionByS - 0.05) {
+    openPad = fx.questionByS - out.peakT;
+    const alt = relay();
+    openPad = 0;
+    if (alt.seconds <= lim.max + 0.05 && (alt.peakT ?? 0) >= fx.questionByS - 0.1 && overOf(alt).sum <= overOf(out).sum + 1e-6) out = alt;
   }
   // round 15 (critic SA-2: cards held 6-8 s): when the early impact left too few moments for the length, the impact
   // may come a little later (up to PEAK_BY_MAX_S), so the moments before it come back and every card stays short
@@ -823,8 +851,10 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
   // one region, both sides' cards and the organs lit for them (fx.perceive), is held to regionMaxS like a single's. Over
   // the cap, in turn: a glide inside the stay becomes a lull (a wordless whole-body stretch, LULL_S), or a moment in it
   // says one card a side. A change is kept only when the time over the cap shrinks and the length stays in its range.
-  const pc = fx.perceive;
-  if (pc && mend) {
+  // (phase 4i, full tier: 174 stays over the cap in 120 comparison Shorts: a Short has no room for wordless lulls, but a
+  // moment of a stay may still say one card a side, or be left out, within the Short's length)
+  const pc = fx.perceive, lullOK = mend;
+  if (pc && (mend || cut === 'short')) {
     const overOf = (pl: Plan) => {
       const cap = pc.maxS(pl.seconds) - 0.3, runs = pc.runs(pl.frames.filter((f) => f.phase === 'main').map((f) => ({ t: f.t, rs: pc.seen(f) })));
       return { sum: runs.reduce((a, x) => a + Math.max(0, x.s - cap), 0), runs: runs.filter((x) => x.s > cap).sort((x, y) => x.at - y.at) };
@@ -843,12 +873,12 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
         if (alt.seconds <= hi && alt.seconds >= lim.min - 0.05 && sum < o.sum - 1e-6 && (!best || sum < best.sum)) best = { plan: alt, apply: () => { apply(); lulls = ls; }, sum };
       };
       for (const x of inRun) {
-        if (x.lull && !lulls.includes(x.s.min)) tryIt(() => {}, () => {}, [...lulls, x.s.min]);
+        if (lullOK && x.lull && !lulls.includes(x.s.min)) tryIt(() => {}, () => {}, [...lulls, x.s.min]);
         const had = perMin.get(x.s.min);
         if ((had ?? 2) > 1) {
           const set = () => { perMin.set(x.s.min, 1); pages = pagesOf(chosen); }, back = () => { if (had === undefined) perMin.delete(x.s.min); else perMin.set(x.s.min, had); pages = pagesOf(chosen); };
           tryIt(set, back, lulls);
-          if (x.lull && !lulls.includes(x.s.min)) tryIt(set, back, [...lulls, x.s.min]);
+          if (lullOK && x.lull && !lulls.includes(x.s.min)) tryIt(set, back, [...lulls, x.s.min]);
         }
         // (or a moment that is not needed is left out: never the start, a side's peak, its answer or the middle)
         if (x.i > 0 && !x.s.keep && !x.s.mid && x.s.min !== peakMin && x.i < chosen.length - 1) {
@@ -859,7 +889,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
       // (no one change helps: every moment of the stays says one card a side, and every glide inside them is a lull)
       if (!best) {
         const had = new Map(perMin), set = () => { for (const x of inRun) perMin.set(x.s.min, 1); pages = pagesOf(chosen); }, back = () => { perMin.clear(); had.forEach((v, k) => perMin.set(k, v)); pages = pagesOf(chosen); };
-        tryIt(set, back, [...new Set([...lulls, ...inRun.filter((x) => x.lull).map((x) => x.s.min)])]);
+        tryIt(set, back, lullOK ? [...new Set([...lulls, ...inRun.filter((x) => x.lull).map((x) => x.s.min)])] : lulls);
       }
       if (!best) break;
       (best as { apply: () => void }).apply(); out = (best as { plan: Plan }).plan;
@@ -929,7 +959,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
     for (let i = 1; i <= n; i++) {
       const m = fromU(toU(from) + (toU(to) - toU(from)) * ease(i / n));
       frames.push({ phase: 'main', m, t: tNow(), cap: prevPage?.cap, capB: prevPage?.capB, title: prevStop?.title, titleB: prevStop?.titleB, capA: 1,
-        plateA: 1 - smooth01(i / out), k: 0, stop: nextStop?.min ?? to, beat: 'glide', from, ...(lull && i > out && i <= chipFrom ? { lull: true } : {}),
+        plateA: 1 - smooth01(i / out), k: 0, stop: nextStop?.min ?? to, beat: 'glide', from, ...(nextStop?.title ? { goal: nextStop.title } : {}), ...(lull && i > out && i <= chipFrom ? { lull: true } : {}),
         ...(nextStop?.title && chip && i > chipFrom ? { next: { min: nextStop.min, title: nextStop.chip ?? nextStop.title } } : {}) });
     }
     return g0;

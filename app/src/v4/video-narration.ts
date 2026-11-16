@@ -61,6 +61,10 @@ export const wordsOf = (s: string) => s.replace(/(\d+)(?:\.(\d+))?/g, (_m, a: st
   .trim().split(/[\s-]+/).filter((w) => /\w/.test(w)).length;
 /** Seconds a line takes at WPS (counted on its spoken form: units in words). */
 export const speakS = (s: string) => wordsOf(ttsText(speakable(s))) / WPS;
+/** Phase 4i: the fastest a voice says a line (words per second), and how much sooner than speakS it then ends (the
+ *  engine's ~0.12 s lead-in and lead-out aside): a pause the planner leaves is judged with it. */
+export const VOICE_MAX_WPS = 3.0;
+export const fastSlack = (s: string) => Math.max(0, speakS(s) * (1 - WPS / VOICE_MAX_WPS) - 0.12);
 /** Numbers in a text ("+30–50 %" → 30, 50; "0.04" stays "0.04"). */
 export const numbersOf = (s: string) => (clock12(s).match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.').replace(/\.0+$/, ''));
 /** v20: a clock time as Americans say it ("07:00" → "7 AM", "22:30" → "10:30 PM"); numbers compare in this form. */
@@ -71,8 +75,9 @@ export const clock12 = (s: string) => s.replace(/\b([01]?\d|2[0-3]):([0-5]\d)\b/
 
 /** v22: the quantities in a text with their unit ("2 g", "2 hours", "26 kcal"): a filler's number is "new" unless the
  *  same quantity was shown or said (not just the same digits in another unit) */
-export const qtyOf = (s: string) => (shownText(s).match(/\d+(?:[.,]\d+)?(?:\s*(?:%|kcal|calories|mg|ml|g|grams|hours?|minutes?|teaspoons?|liters?|standard)(?![a-z]))?/g) ?? []).map((q) => {
-  const m = /^(\d+(?:[.,]\d+)?)\s*(.*)$/.exec(q)!, u = ({ grams: 'g', calories: 'kcal', hour: 'hours', minute: 'minutes', teaspoon: 'teaspoons', liter: 'liters' } as Record<string, string>)[m[2]] ?? m[2];
+export const qtyOf = (s: string) => (shownText(s).match(/\d+(?:[.,]\d+)?(?:(?:-|\s*)(?:%|kcal|calories|mg|ml|g|grams|hours?|minutes?|teaspoons?|liters?|standard)(?![a-z]))?/g) ?? []).map((q) => {
+  // (phase 4i: "a 35-minute walk" is 35 minutes, as "35 minutes of brisk walking" said before it: no number twice)
+  const m = /^(\d+(?:[.,]\d+)?)(?:-|\s*)(.*)$/.exec(q)!, u = ({ grams: 'g', calories: 'kcal', hour: 'hours', minute: 'minutes', teaspoon: 'teaspoons', liter: 'liters' } as Record<string, string>)[m[2]] ?? m[2];
   return `${m[1].replace(',', '.').replace(/\.0+$/, '')}${u ? ` ${u}` : ''}`;
 });
 /** v21: a clock time said the way people say it ("7 AM" → "7 in the morning", "10:30 PM" → "10:30 at night"). */
@@ -226,6 +231,15 @@ export const ORGAN_BEAT = [(o: string) => `Your ${o}, hard at work.`, (o: string
 const VAGUE = /^(Half|Most|Almost|Nearly|Some|All|Much|Little|None|Less|More)\b/;
 const lc1 = (s: string) => (/^[A-Z][a-z’']*\b/.test(s) && !/^I\b|^I[’']/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** Phase 4i: the earliest a single video's first impact may come so that its hook's question can be said, the food
+ *  named first ("Light beer: when has your liver cleared 500 ml?"), before the hush of that impact (video-plan
+ *  PlanFx.questionByS); 0 = the hook asks nothing. */
+export function questionImpactS(hook: { line1: string; line2: string }, name: string): number {
+  const q = [hook.line1, hook.line2].map((x) => (x ?? '').trim()).find((x) => /\?$/.test(x));
+  if (!q) return 0;
+  const nm = cap1(name.trim().replace(/^[\d½.,]+\s+(?:\S+\s+of\s+)?/i, '').split(/ with | in /)[0]);
+  return Math.max(HOOK_QUIET_S + 0.1, 0.6) + speakS(`${nm}: ${q}`) + GAP_S + IMPACT_PRE_S + 0.1;
+}
 /** v21: "Cod: protein keeps arriving" (after a name and a colon, a sentence goes on in lower case; not "I" or a name). */
 const lower1 = (s: string, names: readonly string[] = []) => (/^[A-Z][a-z’']*\b/.test(s) && !/^I\b|^I’|^I'/.test(s) && !names.some((nm) => nm && s.toLowerCase().startsWith(nm.toLowerCase())) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 const words = (s: string) => s.toLowerCase().replace(/[’']/g, "'").split(/[^a-z0-9.']+/).map((w) => w.replace(/\.$/, '')).filter((w) => w.length > 2 || /\d/.test(w));
@@ -303,7 +317,7 @@ const VARY: [RegExp, string][] = [
   [/\balmost all has moved on by\b/gi, 'almost all is out by'], [/\bthe alcohol is gone\b/gi, 'it clears'], [/\bthe alcohol should be gone\b/gi, 'it should be cleared'],
   [/\bwhen it is finally gone\b/gi, 'when it finally clears'], [/\bThere is still alcohol in your blood\b/g, 'Some of it is still in you'],
   [/\bBlood alcohol is at its highest now\b/g, "It's at its highest now"], [/\bBlood fat is highest around now\b/g, 'Levels are highest around now'],
-  [/\bThe fat joins your blood later\b/g, 'It joins your blood later'], [/\ball the fat\b/gi, 'all of it'], [/(?<!all )\bthe fat\b(?= [a-z])/gi, 'it'], [/\bfat takes\b/gi, 'it takes'],
+  [/\bThe fat joins your blood later\b/g, 'It joins your blood later'], [/\bThe fat joins your blood later\b/g, 'The fat follows later'], /* (phase 4i: a hook asking when the fat joins the blood, the climax on blood sugar: "blood" a third time) */ [/\ball the fat\b/gi, 'all of it'], [/(?<!all )\bthe fat\b(?= [a-z])/gi, 'it'], [/\bfat takes\b/gi, 'it takes'],
   [/\bCaffeine in your blood peaks now\b/g, 'It peaks in your blood now'], [/\ball the caffeine\b/gi, 'all of it'], [/(?<!all )\bthe caffeine\b(?= [a-z])/gi, 'it'],
   [/\bteaspoons of sugar\b/gi, 'teaspoons'], [/\b(\d+) g of sugar: about\b/g, '$1 g: about'], [/\bStarch and sugar turn into blood sugar\b/g, 'Starch turns into glucose'],
   [/\bYour kidneys filter the extra water\b/g, 'The extra water gets filtered'], [/\bThe urine collects in your bladder\b/g, 'It collects in your bladder'],
@@ -418,6 +432,8 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   const twistL = !cmp ? (n.arc?.twist ?? []).filter((x) => !spans.some((sp) => repeats(x, sp.a) || (/coffee/i.test(x) && /coffee/i.test(sp.a)) || (/speed/i.test(x) && /speed/i.test(sp.a)) || (/sleep/i.test(x) && /sleep/i.test(sp.a)))) : [];
   const clearCard = spans.some((x) => CLEAR_TIME.test(x.a) || CLEAR_TIME.test(x.b)), twistQ = new Set(twistL.flatMap((x) => qtyOf(x)));
   const dropF = (x: string) => (clearCard && CLEAR_TIME.test(x)) || CLOCK.test(x) || restates(x) || qtyOf(x).some((v) => twistQ.has(v));
+  // (phase 4i: the facts that say the twist's number, short: said as the twist only when the twist itself fits no pause)
+  const twistFacts = (n.facts ?? []).filter((x) => qtyOf(x).some((v) => twistQ.has(v)) && !((clearCard && CLEAR_TIME.test(x)) || CLOCK.test(x) || restates(x))).sort((p, q) => speakS(p) - speakS(q));
   for (const xs of [facts, recall]) for (let i = xs.length - 1; i >= 0; i--) if (dropF(xs[i])) xs.splice(i, 1);
   const setupL = !cmp && n.arc ? n.arc.setup.filter((x) => !dropF(x)) : [];
   facts.unshift(...setupL);
@@ -615,6 +631,22 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   const hushed = (a: number, b: number) => impacts.some((p) => a < p + IMPACT_POST_S + 0.6 && b > p - IMPACT_PRE_S);
   // (the end card's number is said at the end: no callback to it just before)
   let recalled = 0;
+  // (phase 4i) the lines near `t` that say a word of `x` twice already, said another way where one wording leaves that
+  // word out; kept only when `ok()` then holds, else undone
+  const revary = (x: string, t: number, ok: () => boolean) => {
+    const win = out.filter((o) => o.t > t - VARIETY_S && o.t < t + VARIETY_S);
+    const ws = [...stems(x)].filter((w) => !nameWords.has(w) && win.filter((o) => stems(o.text).has(w)).length >= VARIETY_MAX), undo: [NarrLine, string, string][] = [];
+    for (const o of win) {
+      if (o.id === 'hook' || !ws.some((w) => stems(o.text).has(w))) continue;
+      const v = variants(o.text).slice(1).find((y) => ws.every((w) => !stems(y).has(w)) && (!o.card || o.card.split('|').every((c) => variants(c).some((z) => y.toLowerCase().includes(z.slice(1).toLowerCase())))));
+      if (!v) continue;
+      undo.push([o, o.text, o.say]);
+      Object.assign(o, { text: shownText(v), say: speakable(v) });
+    }
+    if (undo.length && ok()) return true;
+    for (const [o, tx, sy] of undo) Object.assign(o, { text: tx, say: sy });
+    return false;
+  };
   const heroSaid = new Set(out.filter((o) => o.id === 'answer').flatMap((o) => qtyOf(o.text)));
   for (let i = 0, guard = 0; i < out.length && guard < 40; i++) {
     const e = out[i].t + speakS(out[i].text), nx = Math.min(out[i + 1]?.t ?? outro, outro);
@@ -649,6 +681,15 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     // itself says the end card's number
     const close = !text && !cmp && n.arc && t > outro - 12 && t < outro ? n.arc.answer.find((x) => !/accounted for/.test(x) && fitsAny(x) && wordsOf(x) <= SLOT_WORDS.day && !out.some((o) => o.id === 'day' || o.text === x || repeats(x, o.text) || (Math.abs(o.t - t) < 12 && [...stems(x)].some((w) => stems(o.text).has(w))))) : undefined;
     if (close) { out.splice(i + 1, 0, { id: 'day', t, slotS: slot, text: shownText(close), say: speakable(close), source: '' }); guard++; continue; }
+    // (phase 4i, full tier: green salad Reels left 3.4 s silent: its twist, "Burning it off takes about 2 minutes of
+    // brisk walking.", fit no pause and every other fact was said; the twist's own number said short, "Just walking 2
+    // minutes burns it.", fills a pause nothing else can, once, as the twist)
+    // (a word it would say a third time is said another way in the line before, when that line has such a wording:
+    // "absorbs it within minutes" → "absorbs it quickly")
+    const twNew = (x: string) => !out.some((o) => qtyOf(o.text).some((v) => qtyOf(x).includes(v)));
+    const twShort = !text && !cmp && twistL.length && !out.some((o) => o.id === 'twist') && peak !== undefined && t > peak + IMPACT_POST_S && t < outro - 1
+      ? twistFacts.find((x) => twNew(x) && (fits(x) || revary(x, t, () => fits(x)))) : undefined;
+    if (twShort) { out.splice(i + 1, 0, { id: 'twist', t, slotS: slot, text: shownText(twShort), say: speakable(twShort), source: twShort }); guard++; continue; }
     if (!text) continue;
     if (!beats().includes(text) || out.some((o) => o.t < t && qtyOf(o.text).some((v) => qtyOf(text).includes(v)))) recalled++;
     const nums = qtyOf(text);
@@ -691,7 +732,9 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   for (let pass = 0; pass < 2; pass++) for (let i = 1; i < out.length; i++) {
     const l = out[i];
     if (l.id !== 'card' && l.id !== 'beat' && l.id !== 'tease') continue;
-    const d = speakS(l.text), before = l.t - (out[i - 1].t + speakS(out[i - 1].text)), nxT = Math.min(out[i + 1]?.t ?? outro, outro), after = nxT - l.t - d;
+    // (phase 4i, full tier: dates vs walnuts Reels, 3.2 s silent: a pause is measured as a voice at its fastest says the
+    // line before it, VOICE_MAX_WPS, not at WPS: a long line said faster leaves a longer pause after it)
+    const d = speakS(l.text), before = l.t - (out[i - 1].t + speakS(out[i - 1].text)) + fastSlack(out[i - 1].text), nxT = Math.min(out[i + 1]?.t ?? outro, outro), after = nxT - l.t - d + fastSlack(l.text);
     if (after <= 2.6 || after - before < 0.6 || before >= 2.3 || l.t + d > outro) continue;
     const sp = l.card ? spans.find((x) => (x.a === l.card || x.b === l.card || l.card!.split('|').every((c) => c === x.a || c === x.b)) && x.t0 <= l.t + 0.05 && x.t1 >= l.t) : undefined;
     if (l.card && !sp) continue;

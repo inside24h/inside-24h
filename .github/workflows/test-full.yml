@@ -9,8 +9,15 @@ permissions:
   contents: read
 jobs:
   full:
+    # Phase 4i: four runners in parallel, each a share of the files of about the same total time
+    # (vitest.full.config.ts, vitest.shard-sequencer.ts); every test file runs in exactly one shard.
+    name: full (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     defaults:
       run:
         working-directory: app
@@ -23,6 +30,6 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: npm ci
       - name: Tests (full tier)
-        run: npm run test:full
+        run: npm run test:full -- --shard=${{ matrix.shard }}/4
         env:
           NODE_OPTIONS: --max-old-space-size=6144

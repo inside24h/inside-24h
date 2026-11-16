@@ -542,8 +542,16 @@ export function litRegion(organs: readonly string[]): string {
 export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { min: number; title: string; focus?: string | null }[], built?: BuiltLike): Plan {
   // (a card about no organ is filmed where the food or drink is: shotOf's `lead`, the part of the route with most of it)
   const lead = (m: number) => { const p = built ? presentAt(built, m)[0] : undefined; return p ? REGION[SEG_FOCUS_V[p[0]]] ?? '' : ''; };
+  // (phase 4i: the region a card lights, once per card's words: the planner asks it for every frame it lays out)
+  const litMemo = new Map<string, Map<string, string>>();
+  const litOf = (fr: VFrame) => {
+    if (fr.phase !== 'main' || (fr.beat !== 'hold' && fr.beat !== 'hook')) return '';
+    let byCap = litMemo.get(fr.title ?? ''); if (!byCap) { byCap = new Map(); litMemo.set(fr.title ?? '', byCap); }
+    let v = byCap.get(fr.cap ?? ''); if (v === undefined) { v = litRegion(cardNamed(fr)); byCap.set(fr.cap ?? '', v); }
+    return v;
+  };
   const seen = (fr: VFrame) => {
-    const r = seenOf(fr, chapters!), lit = litRegion(cardNamed(fr));
+    const r = seenOf(fr, chapters!), lit = litOf(fr);
     const where = (fr.stop ?? 0) > 0 && fr.beat !== 'end' && !quietFrame(fr) && r.every((x) => !x || x === 'body') ? lead(fr.m) : '';
     // (phase 4h, critique M6: while the first bite goes down, the organ it is in glows with it: the stomach is seen from
     // the first second, as the rendered video's timeline counts it, video-telemetry sceneOf)

@@ -22,7 +22,7 @@ import { plainNote, inText, riseOf, whereCard } from './video-body';
 import { FPS, readSeconds, type Cut, type Plan, type PlanFx, type StopIn } from './video-plan';
 import { BEAT_WORDS } from './video-beats';
 import { worstMoment } from './status';
-import { lintNarration, narrationFor, type NarrIn } from './video-narration';
+import { lintNarration, narrationFor, questionImpactS, type NarrIn } from './video-narration';
 import { arcFor, compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
 import { seedOf } from './video-hook';
 import { sameAmountOffer, sameAs } from './Compare';
@@ -35,8 +35,17 @@ export const AUDIT_CUTS: Cut[] = ['long', 'medium', 'short'];
 const SYS = ['energy', 'heart', 'water', 'brain'] as const;
 
 export interface AuditItem { id: string; x: Analysis; /** the app's video name (AppV4 videoName) */ vname: string; parts: Part[] }
+// Phase 4i (the full tier took 44 min, half of it planning the same videos again): a model run and a video plan are
+// pure functions of their inputs, so within one test file each item, single, comparison and pair list is made once and
+// shared by every sweep that asks for it (each call gets its own array; the items and plans in it are shared, read only)
+const itemsMemo = new Map<Profile, AuditItem[]>();
 /** Every database food, every variant, every builder preset and "everything on", each at one serving. */
 export function auditItems(p: Profile = AUDIT_PROFILE): AuditItem[] {
+  let xs = itemsMemo.get(p);
+  if (!xs) { xs = makeItems(p); itemsMemo.set(p, xs); }
+  return [...xs];
+}
+function makeItems(p: Profile): AuditItem[] {
   const out: AuditItem[] = [];
   const add = (id: string, parts: Part[]) => { if (!parts.length) return; const x = analyze(parts, p); out.push({ id, x, parts, vname: parts.length === 1 && CURATED_NAME[parts[0].food.id] && Math.abs(parts[0].grams - parts[0].food.serving.grams) < 1 && !parts[0].food.base ? CURATED_NAME[parts[0].food.id] : parts.length === 1 ? capFirst(amountPhrase(parts[0])) : x.label }); };
   let seed = 18; const rnd = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 2 ** 32; };
@@ -61,8 +70,19 @@ export function auditItems(p: Profile = AUDIT_PROFILE): AuditItem[] {
 }
 
 export interface SingleOut { hook: Hook; plan: Plan; stops: StopIn[]; payoff?: number; name: string; hero?: { big: string; small: string }; /** phase 4e */ after24?: { big: string; small: string }; notes: string[]; caps: ReturnType<typeof captionsFor> }
+const singleMemo = new WeakMap<Profile, WeakMap<Analysis, Map<string, SingleOut>>>();
+/** A memo of `make` for (`p`, `x`, `key`) (see itemsMemo). */
+function memoOf<T>(memo: WeakMap<Profile, WeakMap<Analysis, Map<string, T>>>, p: Profile, x: Analysis, key: string, make: () => T): T {
+  let byX = memo.get(p); if (!byX) { byX = new WeakMap(); memo.set(p, byX); }
+  let m = byX.get(x); if (!m) { m = new Map(); byX.set(x, m); }
+  let o = m.get(key); if (o === undefined) { o = make(); m.set(key, o); }
+  return o;
+}
 /** The single video exactly as AppV4 builds it (reelPlan, overlay, captions). */
 export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AUDIT_PROFILE, vname = x.label): SingleOut {
+  return memoOf(singleMemo, p, x, `${cut}|${v}|${vname}`, () => makeSingle(x, cut, v, p, vname));
+}
+function makeSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile, vname: string): SingleOut {
   const b = x.built, story = b.story, name = shortName(vname);
   const chapters = story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
   const solid = /bite/i.test(story.chapters[0]?.title ?? '');
@@ -70,7 +90,7 @@ export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AU
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p), sugarRise: x.glucose !== undefined ? riseOf(b.effects.glucoseMgDl) : undefined, alcoholG: b.alcoholG };
   const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
   const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin, servingCard(x.parts)), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
-  const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), seed: seedOf(name), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
+  const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), seed: seedOf(name), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin, questionByS: questionImpactS(hook, name),
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   const plan = singlePlan(stops, cut, fx, story.chapters, b), payoff = fx.payoffMin;
   const notes = x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return `${s.label}: ${plainNote(s.key as typeof SYS[number], l, w, b, inText(w), !!s.unknown)}`; });
@@ -80,7 +100,13 @@ export function auditSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile = AU
 }
 
 export interface CompareOut { cp: ComparePlan; hook: string; hookB: string; caps: ReturnType<typeof captionsFor>; an: string; bn: string }
+const compareMemo = new WeakMap<Profile, WeakMap<Analysis, Map<string, CompareOut>>>(), bIds = new WeakMap<Analysis, number>();
+let nB = 0;
 export function auditCompare(a: Analysis, b: Analysis, cut: Cut, p: Profile = AUDIT_PROFILE): CompareOut {
+  let k = bIds.get(b); if (k === undefined) { k = ++nB; bIds.set(b, k); }
+  return memoOf(compareMemo, p, a, `${cut}|${k}`, () => makeCompare(a, b, cut, p));
+}
+function makeCompare(a: Analysis, b: Analysis, cut: Cut, p: Profile): CompareOut {
   const cp = comparePlan(a, b, p, cut), an = cmpName(a.label), bn = cmpName(b.label), gq = cp.guess;
   const hook = gq ? gq.question : hookForCompare(an, bn, false).line1, hb = gq ? compareHookB(gq.question, an, bn) : hook;
   const caps = captionsFor({ name: `${an} vs ${bn}`, hook: { line1: hook, line2: '' }, alcohol: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), sugar: /sugar/i.test(hook),
@@ -90,7 +116,16 @@ export function auditCompare(a: Analysis, b: Analysis, cut: Cut, p: Profile = AU
 
 /** A seeded, broad set of comparison pairs: random pairs, the same amount wherever the app offers it, near ties,
  *  food vs drink, alcohol vs alcohol. Each is [id, left query parts, right query parts]. */
-export function auditPairs(items: AuditItem[], n = 300, p: Profile = AUDIT_PROFILE): { id: string; a: Analysis; b: Analysis; same: boolean }[] {
+type AuditPair = { id: string; a: Analysis; b: Analysis; same: boolean };
+const pairsMemo: { items: AuditItem[]; n: number; p: Profile; out: AuditPair[] }[] = [];
+export function auditPairs(items: AuditItem[], n = 300, p: Profile = AUDIT_PROFILE): AuditPair[] {
+  const hit = pairsMemo.find((m) => m.n === n && m.p === p && m.items.length === items.length && m.items.every((x, i) => x === items[i]));
+  if (hit) return [...hit.out];
+  const out = makePairs(items, n, p);
+  pairsMemo.push({ items: [...items], n, p, out });
+  return [...out];
+}
+function makePairs(items: AuditItem[], n: number, p: Profile): AuditPair[] {
   let seed = 20261105;
   const rnd = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 2 ** 32; };
   const base = items.filter((i) => !/[.+]/.test(i.id));

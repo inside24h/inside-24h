@@ -2,7 +2,7 @@
 // narration, facts, captions, sound, the recorder, the share card), gathered in one module so the hosted build
 // loads it as its own chunk after the first screen (AppV4.tsx loadVideoKit: when the page is idle, or at once when
 // Share is tapped) instead of in the first download. Re-exports only: no logic lives here.
-export { narrationFor } from './video-narration';
+export { narrationFor, questionImpactS } from './video-narration';
 export { arcFor, compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
 export { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere } from './share';
 export { planVideo } from './video-plan';

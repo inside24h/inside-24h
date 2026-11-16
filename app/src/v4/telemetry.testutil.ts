@@ -15,13 +15,17 @@ import type { Analysis } from './analyze';
 import type { SegId } from '../scene/segments';
 
 /** A 2D canvas stand-in: text widths at `w` × the font size per character (Geist averages ~0.56). */
+// (phase 4i: the same widths; the font size parsed once per font, and a drawing call makes no new function each time)
 export function fakeCtx(w = 0.56): CanvasRenderingContext2D {
   const st: Record<string, unknown> = { font: '10px sans-serif', textAlign: 'left', textBaseline: 'alphabetic', globalAlpha: 1, fillStyle: '', strokeStyle: '', lineWidth: 1 };
   const stack: Record<string, unknown>[] = [];
-  const px = () => Number(/(\d+(?:\.\d+)?)px/.exec(String(st.font))?.[1] ?? 10);
-  const fns: Record<string, unknown> = { measureText: (s: string) => ({ width: [...s].length * px() * w }), save: () => { stack.push({ ...st }); }, restore: () => { Object.assign(st, stack.pop()); },
-    createLinearGradient: () => ({ addColorStop() {} }), createRadialGradient: () => ({ addColorStop() {} }) };
-  return new Proxy(st, { get: (t, k: string) => (k in fns ? fns[k] : k in t ? t[k] : () => {}), set: (t, k: string, v) => { t[k] = v; return true; } }) as unknown as CanvasRenderingContext2D;
+  let pxFont = '', pxV = 10;
+  const px = () => { const f = String(st.font); if (f !== pxFont) { pxFont = f; pxV = Number(/(\d+(?:\.\d+)?)px/.exec(f)?.[1] ?? 10); } return pxV; };
+  const chars = (s: string) => (/[\uD800-\uDFFF]/.test(s) ? [...s].length : s.length);
+  const grad = { addColorStop() {} }, noop = () => {};
+  const fns: Record<string, unknown> = { measureText: (s: string) => ({ width: chars(s) * px() * w }), save: () => { stack.push({ ...st }); }, restore: () => { Object.assign(st, stack.pop()); },
+    createLinearGradient: () => grad, createRadialGradient: () => grad };
+  return new Proxy(st, { get: (t, k: string) => (k in fns ? fns[k] : k in t ? t[k] : noop), set: (t, k: string, v) => { t[k] = v; return true; } }) as unknown as CanvasRenderingContext2D;
 }
 const SRC = { width: 1080, height: 1920 } as unknown as HTMLCanvasElement;
 const LIGHTS: Light[] = [{ icon: '⚡', label: 'Blood sugar', level: 0 }, { icon: '❤', label: 'Heart', level: 0 }, { icon: '💧', label: 'Water', level: 0 }, { icon: '🧠', label: 'Brain', level: 0 }];
