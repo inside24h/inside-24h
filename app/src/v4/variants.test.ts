@@ -54,7 +54,7 @@ describe('search: builders, variants and add-ins stay ONE thing', () => {
 // 2026-10-29: generic words ("pecivo", "meso", "salata", "grickalice") open a chooser of the database's own foods
 describe('generic words open a chooser of the foods the database has (2026-10-29)', () => {
   const PASTRY = ['Roll', 'Croissant', 'Doughnut', 'Pretzel', 'Muffin', 'Cinnamon roll'], MEAT = ['Chicken', 'Beef', 'Pork', 'Lamb', 'Turkey', 'Schnitzel', 'Ground'];
-  const SALAD = ['Green', 'Cabbage', 'Sauerkraut', 'Tomato', 'Cucumber', 'Potato', 'Rocket', 'Beetroot'];
+  const SALAD = ['Green', 'Cabbage', 'Sauerkraut', 'Tomato', 'Cucumber', 'Potato', 'Rocket', 'Beetroot', 'Caesar']; // Caesar: 2026-11-17 coverage round
   const GEN: [string, string, string, string[]][] = [
     ['pecivo', 'bread-white.roll', 'Which roll or pastry?', PASTRY],
     ['2 peciva', 'bread-white.roll', 'Which roll or pastry?', PASTRY],
@@ -63,8 +63,8 @@ describe('generic words open a chooser of the foods the database has (2026-10-29
     ['meat', 'chicken-breast', 'Which meat?', MEAT],
     ['salata', 'salad-lettuce', 'Which salad?', SALAD],
     ['salad', 'salad-lettuce', 'Which salad?', SALAD],
-    ['grickalice', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes']],
-    ['snacks', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes']],
+    ['grickalice', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes', 'Tortilla chips', 'Granola bar']],
+    ['snacks', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes', 'Tortilla chips', 'Granola bar']],
     ['riba', 'cod', 'Which fish?', ['White fish', 'Salmon', 'Sardines', 'Tuna', 'Mackerel', 'Calamari', 'Sea bass', 'Shrimp', 'Fish sticks']],
     ['jogurt', 'yogurt-plain', 'Which yogurt?', ['Plain', 'Low-fat', 'Greek', 'Fruit']],
   ];
@@ -195,7 +195,7 @@ describe('more detailed choices (2026-10-29 round 2)', () => {
   });
   it('"Which sweets?" lists chocolate, which keeps its own "Which chocolate?" row', () => {
     const row = choiceRow(parseMeal('slatkiši')[0].food)!;
-    expect(row.opts.map((o) => o.chip)).toEqual(['Candy', 'Chocolate', 'Cookies', 'Cake', 'Ice cream']);
+    expect(row.opts.map((o) => o.chip)).toEqual(['Candy', 'Chocolate', 'Cookies', 'Cake', 'Ice cream', 'Candy bar', 'Brownie']);
     const choc = row.opts.find((o) => o.chip === 'Chocolate')!.food;
     expect(choiceRow(choc)!.ask).toBe('Which chocolate?');
   });
@@ -332,7 +332,7 @@ const EXEMPT = new Set([172237, 173468]); // vinegar (acetic acid energy), salt 
 describe('builders', () => {
   const builders = FOODS.filter((f) => f.builder);
   it('pizza, burger, sandwich, kebab, burek and both salads have a builder whose default is the database food', () => {
-    expect(builders.map((f) => f.id).sort()).toEqual(['burek', 'cabbage', 'cucumber-salad', 'hamburger', 'kebab', 'pizza', 'rocket-salad', 'salad-lettuce', 'sandwich-ham', 'tomato-salad']);
+    expect(builders.map((f) => f.id).sort()).toEqual(['burek', 'cabbage', 'caesar-salad', 'cucumber-salad', 'hamburger', 'kebab', 'pizza', 'rocket-salad', 'salad-lettuce', 'sandwich-ham', 'tomato-salad']);
     for (const f of builders) expect(deriveFood(f, { on: defaultSel(f.builder!) })).toBe(f);
   });
   it('every combination: energy matches the macros (Atwater ±15%)', () => {
@@ -561,6 +561,22 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     'nectar*': 'no apricot, peach or pear nectar tested; only a grape nectar (52, 2021 Suppl. Table 1 row 1195)',
     'potato-salad': 'no potato salad tested', 'fish-sticks': 'no fish sticks tested', 'beetroot': 'no beetroot tested',
     'sandwich-ham_sub_ketchup': 'ketchup (4–5 g carbohydrate) has no tested GI and no whole sub was tested; on a burger it counts at the measured whole-burger GI, which included ketchup',
+    // 2026-11-17 coverage round (USDA FNDDS dishes and drinks). Checked in Atkinson 2008 Table 1 / A1 and 2021 Suppl.
+    // Tables 1-2: none of these was tested; the app shows its category estimate, labelled as an estimate (giEstimate.ts)
+    'mojito*': 'cocktails: no cocktail was tested, and an alcoholic drink gets no GI here (see beer)',
+    'red-wine.sangria': 'wine has no GI here, and no sangria was tested',
+    'latte.flavored': 'no flavored (syrup) latte tested', 'latte.mocha': 'no mocha tested', 'latte.iced-mocha': 'no mocha tested',
+    'sandwich-ham_grilled-cheese': 'no grilled cheese sandwich tested to the ISO method (white toast with cheddar, A1 row 1270, was eaten cold)',
+    'sandwich-ham_club': 'no club sandwich tested', 'sandwich-ham_pbj': 'no peanut butter and jelly sandwich tested',
+    'french-toast': 'no French toast tested', 'avocado-toast': 'our recipe of toast and avocado: the whole-wheat toast record has no GI here',
+    'fried-chicken*': 'no fried chicken tested', 'onion-rings': 'no onion rings tested', 'milkshake': 'only a low-fat malted chocolate milkshake was tested (2021 Suppl. Table 1 row 955), not a fast-food shake',
+    'fried-fish*': 'no battered fish tested (fish fingers only in a 5-person study, 2008 A2)',
+    'burrito*': 'no burrito tested', 'taco*': 'no taco tested', 'quesadilla*': 'no quesadilla tested', 'enchilada*': 'no enchilada tested', 'fajita*': 'no fajita tested',
+    'pad-thai*': 'no pad Thai tested', 'lo-mein*': 'no lo mein or chow mein tested', 'pho': 'no pho tested', 'curry.no-rice': 'curry without rice: only curries with rice were tested',
+    'orange-chicken*': 'no orange, General Tso or sesame chicken tested', 'garlic-bread': 'no garlic bread tested', 'tiramisu': 'no tiramisu tested', 'minestrone': 'no minestrone tested',
+    'apple-pie': 'no apple pie tested (only pastries of other kinds)', 'pudding*': 'flavored milk puddings were tested only as single brands; the app uses their median as its estimate',
+    'candy-bar': 'no Snickers-type bar tested', 'candy-bar.mms': 'only peanut M&M’s were tested (2021 Suppl. Table 1 row 1613), not milk-chocolate ones', 'chili': 'no chili con carne tested',
+    'falafel': 'no falafel tested in healthy people',
   };
   const reason = (key: string) => NO_GI[key] ?? NO_GI[`${key.split(/[._~]/)[0]}*`];
   const all: Food[] = [];

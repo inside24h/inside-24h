@@ -90,7 +90,8 @@ const GOLDEN: [string, [string, number][]][] = [
   ['sendvič', [['sandwich-ham', 184]]],
   // must find NOTHING: these name foods we do not have (a wrong food would be worse)
   ['maline', []], ['cockta', []], ['zobene pahuljice', []], ['oats', []], ['bijeli luk', []], ['bundeva', []],
-  ['blitva', []], ['višnje', []], ['njoki', []], // 'mljeveno meso': a food since 2026-10-29 round 2 (cooked ground beef, variants.test.ts)
+  ['blitva', []], ['višnje', []], ['njoki', [['gnocchi', 188]]], // njoki: potato gnocchi since 2026-11-17 (USDA FNDDS 2708722)
+  // 'mljeveno meso': a food since 2026-10-29 round 2 (cooked ground beef, variants.test.ts)
   ['ovčji sir', []], ['marelice', []], ['smokve', []],
   ['leblebije', []], // 'pecivo' (owner 2026-10-29): now a roll that asks "Which roll or pastry?" (variants.test.ts)
   // 2026-10-18 (owner, VARIANTS-PLAN.md): these now have a food of their own (variant or builder), checked by kind

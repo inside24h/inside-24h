@@ -73,7 +73,7 @@ class Ctx:
         k = (fdc, rule, gik)
         if k not in self.usda:
             if str(fdc) not in U.foods():
-                fail("%s: USDA %s not in SR Legacy" % (where, fdc)); return None
+                fail("%s: USDA %s not in SR Legacy or FNDDS" % (where, fdc)); return None
             e = dict(id="usda-%d" % fdc, name=U.foods()[str(fdc)], aliases=[], kind="solid", usda=fdc, color="#888888",
                      free=rule, serving=('g', 100, '100 g', 'USDA per 100 g'), gi=gik, note="", mix=None, proxy=False,
                      piece=None, alias_serving=None)
@@ -182,7 +182,7 @@ def build_var(ctx, bid, vs):
         level = "B" if vs.get("proxy") else "A"
         text = vs.get("text") or "%s: values from the USDA record “%s”." % (vs["name"], desc)
         src = [{"fields": ["all"], "level": level, "text": (text + (" " + note if note and not vs.get("text") else "")).strip(),
-                "cite": "USDA FoodData Central, SR Legacy %s: %s" % (fdc, desc), "url": usda_url(fdc), "claim": "DBV-" + key}]
+                "cite": "USDA FoodData Central, %s %s: %s" % (U.dataset(fdc), fdc, desc), "url": usda_url(fdc), "claim": "DBV-" + key}]
         for i, o in enumerate(ovr or []):
             src.append({"fields": o["fields"], "level": o["level"], "text": o["text"], "cite": o["source"], "url": o["url"], "claim": "DBO-%s-%d" % (key, i)})
         recipe = None
@@ -263,7 +263,7 @@ def build_option(ctx, bid, o):
     off = atwater(comp["p"])
     if abs(off) > 0.17 and comp["fdc"] not in ATWATER_EXEMPT: warn("%s: Atwater %+.0f%% (USDA food-specific factors)" % (where, 100 * off))
     src = [{"fields": ["all"], "level": o.get("level", "C"), "text": o["src"] + gi_text_extra, "cite": o.get("cite") or (
-        "USDA FoodData Central, SR Legacy %s: %s" % (comp["fdc"], comp["desc"]) if comp["fdc"] else "Our recipe from USDA SR Legacy parts"),
+        "USDA FoodData Central, %s %s: %s" % (U.dataset(comp["fdc"]), comp["fdc"], comp["desc"]) if comp["fdc"] else "Our recipe from USDA SR Legacy parts"),
         "url": o.get("url") or (usda_url(comp["fdc"]) if comp["fdc"] else "https://fdc.nal.usda.gov/"), "claim": "DBB-%s-%s" % (bid, o["k"])}] + rows
     return {"k": o["k"], "chip": o["chip"], "name": o["name"], "grams": round(grams, 1), "rng": list(rng) if rng else None,
             "on": bool(o.get("on")), "p": rp(comp["p"]), "gi": comp["gi"], "fdc": comp["fdc"], "food": comp.get("food"),

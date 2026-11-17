@@ -109,6 +109,36 @@ GI_SUPP = {
  # the 2021 Suppl. Table 1 PDF (pdftotext -raw): "74 Beer, non-alcoholic (0.0% alcohol by volume) (Nikolai Lager,
  # Sinebrychoff Ltd, Finland) Finland 2012* 80±6 8 Normal, 10 25 640 Glucose, 2h Standard ... 13"
  "t21_nab": (80, T21 + " row 74: Beer, non-alcoholic (0.0% alcohol by volume) (Nikolai Lager, Sinebrychoff, Finland), 80 ± 6, 10 subjects, 25 g available carbohydrate in a 640 g portion, single test: the only alcohol-free beer tested (the same tables: beer with alcohol, mean of two foods 104)"),
+ # ---- 2026-11-17 (coverage round: commonly searched US/EU foods, research/tools/fooddb_spec.py "COVERAGE 2026-11-17").
+ # Rows read in the 2021 Suppl. Table 1 PDF (nutritotal.com.br mirror of the online supplement, pdftotext -raw), quoted as
+ # read. "Nearest tested food" = the dish itself was never tested; the text names what was.
+ "t21_sushi": (48, T21 + " row 2050: Sushi, salmon ('I Love Sushi', Sydney, Australia), 48 ± 8, 10 subjects, 25 g available carbohydrate portions; brown-rice vegetable and tofu sushi (row 2049) gave 45 ± 3. Rolls of other fillings were not tested, so they count at the same value"),
+ "t21_english_muffin": (77, T21 + " row 145: English Muffin bread (Natural Ovens, USA), 77 ± 7, 10 subjects, single test"),
+ "t21_naan": (71, T21 + " row 345: Naan bread (True Foods, Australia), heated in microwave, 71 ± 5, 10 subjects, single test"),
+ "t21_quinoa": (53, T21 + ": Quinoa, mean of four foods 53 (rows 568-571: white quinoa boiled 50 ± 6, retort cups 53 ± 3, cooked and reheated 53 ± 5, red quinoa 54 ± 4)"),
+ "t21_baked_potato": (88, "Our mean of the two baked-potato tests in " + T21 + " (level B): row 1808, Irish potato, peeled, baked 45 min (Jamaica), 83 ± 6, 10 subjects; row 1809, Pontiac potato, peeled and baked (Australia), 93 ± 11, 10 subjects. Mean 88; the variety matters (boiled potatoes in the same table range from 53 to 94)"),
+ "t21_hash_browns": (56, T21 + " row 1872: Hash Browns, crispy shredded potato cakes, frozen, oven-baked (Birds Eye, Australia), 56 ± 6, 10 subjects, single test"),
+ "t21_fried_rice": (80, T21 + " row 2008: Fried rice in Yangzhou style, instant (China), 80 ± 6, 15 subjects, single test: the only fried rice tested, so the nearest tested food"),
+ "t21_spring_roll": (50, T21 + " row 2047: Spring roll, instant (China), 50 ± 5, 15 subjects, 25 g available carbohydrate portions, single test: the only spring or egg roll tested, so the nearest tested food"),
+ "t21_dumpling": (28, T21 + " row 2004: Dumpling, containing meat and shallots (China), 28 ± 3, 10 subjects, single test; a buckwheat-flour beef dumpling (row 2005) gave 43 ± 4. Nearest tested food: no wonton or pot sticker was tested"),
+ "t21_curry_rice": (67, T21 + " row 2002: Curry rice (Japan), 67 ± 8, 10 subjects, rice reference converted to the glucose scale; curry rice with processed cheese (row 2003) 55 ± 9. Nearest tested food: a Japanese curry over white rice, not an Indian curry"),
+ "t21_froyo": (46, T21 + " row 1005: Vanilla frozen yoghurt (President's Choice Blue Menu, Canada), 46 ± 5, 10 subjects; strawberry banana 55 ± 5 and mochaccino 51 ± 5 (rows 1004, 1003)"),
+ "t21_instant_noodles": (51, T21 + ": Instant noodles, mean of three foods 51 (rows 1451-1453, Maggi and Woolworths two-minute noodles, 48-52, the last two with their broth). Nearest tested food for a ramen bowl: fresh ramen noodles were not tested"),
+ "pasta_dish": (49, "Atkinson 2008 (PMC2584181) Table 1: Spaghetti, white, 49 ± 2, mean of multiple studies (the same value as our pasta). Nearly all the carbohydrate of this dish is the pasta, so the pasta's GI is used (our calculation, level C); the dish itself was not tested in healthy people (a boxed macaroni and cheese gave 65 ± 4 in 9 people with diabetes, Atkinson 2021 Suppl. Table 2 row 3352)"),
+ "t21_ravioli": (58, T21 + " row 1501: Ravioli, durum wheat, stuffed with veal, fresh (Raviolini con Carne di Vitello, Pastificio Rana, Italy), 58 ± 7, 10 subjects, single test"),
+ "t21_corn_chips": (42, T21 + " row 1558: Corn chips, plain, salted (Doritos original, Smith's Snack Food, Australia), 42 ± 4, 10 subjects, bread reference converted to the glucose scale: corn tortilla chips"),
+ "t21_granola": (53, T21 + ": Granola, mean of 11 foods 53 (breakfast cereals section)"),
+ "t21_cereal_bars": (56, T21 + ": Breakfast cereal bars, mean of 16 foods 56: the nearest tested class (granola bars themselves were tested only as single brands, 33-61)"),
+ "t21_cupcake": (73, T21 + " row 6: Cupcake, strawberry-iced (Squiggles, Farmland, Australia), 73 ± 12, 10 subjects, single test: the only cupcake tested"),
+ "t21_brownie": (43, T21 + " row 59: Brownies, made with wheat flour and coconut flour (Philippines), 43 ± 4, 10 subjects, single test: the only brownie tested in healthy people, so the nearest tested food"),
+ "t21_kitkat": (50, T21 + " row 1656: KitKat (Nestlé, Italy), 50 ± 7, 10 subjects, 25 g available carbohydrate portions, single test"),
+ "t21_twix": (44, T21 + " row 1683: Twix Cookie Bar, caramel (M&M/Mars, USA), 44 ± 6, 10-12 subjects, single test"),
+ "t21_milky_way": (62, T21 + " row 1660: Milky Way bar (M&M/Mars, USA), 62 ± 8, 10-12 subjects; the Australian Mars Bar, the same kind of bar, also 62 ± 8 (row 1614)"),
+ "t21_gnocchi": (68, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 3351: Gnocchi (Latina, Pillsbury Australia), 68 ± 9, 8 healthy subjects (listed in Table 2 because of the small number), single test"),
+ "t21_waffle_nearest": (66, A1 + " rows 30-35: Pancakes, homemade (Fiji), 66 ± 9, 8 subjects: the nearest tested food for a waffle (the same flour, milk and egg batter, baked in an iron). No waffle was tested in healthy people; one test in people with diabetes (Atkinson 2021 Suppl. Table 2 row 2132, Aunt Jemima waffles) gave 77 ± 4"),
+ "t21_protein_bar": (29, "Our mean of two high-protein bars in " + T21 + " (level B): rows 1706-1707, Snickers Marathon Protein Performance bar, caramel nut 26 ± 3 and chocolate nut 32 ± 4, 10 subjects each: the same brand as the USDA record"),
+ "t21_bagel": (61, "Atkinson 2021 (AJCN 114:1625) Suppl. Table 2 row 2154: Bagel, white (USA), 61, 12 healthy subjects, no SEM given (listed in Table 2 because blood was sampled at other times than the ISO method asks); a Korean bagel in the same table gave 77 ± 12 (row 2156)"),
+ "t21_risotto_rice": (69, T21 + " row 648: Arborio risotto rice, boiled (SunRice, Australia), 69 ± 7, 10 subjects, single test: the rice of a risotto, the nearest tested food"),
 }
 # Data round 3: GI keys used only to override a builder option (opt(..., gi=KEY)); see build_variants.build_option.
 def gi_lookup(key):
@@ -174,7 +204,7 @@ def serving(sp, fdc):
                 grams = round(float(g), 1)
                 if len(sp) > 2: label = sp[2]
                 elif re.match(r"1 cup\b", label): label = "1 portion, %g g" % grams  # US cup measure → metric wording
-                return {"label": label, "grams": grams, "source": "USDA SR Legacy food_portion (%s %s = %s g)" % (amt, mod, g), "assumed": False}
+                return {"label": label, "grams": grams, "source": "USDA %s food_portion (%s %s = %s g)" % (U.dataset(fdc), amt, mod, g), "assumed": False}
         return "FAIL"
     if kind in ('ml', 'mlx'):
         n = sp[1]
@@ -279,7 +309,7 @@ def build_entry(e, mode="build"):
                 gis += "; nearest tested class, not tested on this exact product"
             if e["gi"] in GI_LOWVAR: gis += "; Table 1 notes that low-GI varieties were also identified, so the type matters"
         else: gi, gis = None, None
-        ds = "SR Legacy" + (" (computed mix)" if e["mix"] else "") + (" + label override" if ovr_out else "")
+        ds = (U.dataset(fdc) if fdc else "SR Legacy") + (" (computed mix)" if e["mix"] else "") + (" + label override" if ovr_out else "")
         piece = None
         if e.get("piece"):
             pl, pg, pw = e["piece"]; piece = {"label": pl, "grams": pg, "source": pw}

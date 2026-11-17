@@ -1398,3 +1398,562 @@ add2("tortilla", "Flour tortilla", ["tortilja", "tortilla", "tortilje", "tortill
      note="USDA record: flour tortilla, refrigerated; 1 tortilla (10 inch) = 72 g. Free sugars null: no added-sugar split.")
 for _id in NEW_2026_10_29:
     CHANGED_ON_PURPOSE.setdefault(_id, "2026-10-29 round 2: new food (owner: more detailed choices; chooser-gaps-2026-10-29.md)")
+
+
+# ======================= COVERAGE 2026-11-17: commonly searched US/EU foods and drinks =======================
+# Owner 2026-11-17: "videos for ANY food"; search found no mojito, gin tonic, sushi, tacos, burrito, scrambled eggs.
+# Audit: 183 of the most searched/eaten foods and drinks (breakfast, fast food, cocktails and spirits, coffee shop,
+# Asian/Mexican/Italian dishes, snacks, desserts, sports and energy drinks); 69 resolved before this round. The list is
+# the coverage test app/src/v4/food/coverage.test.ts.
+# SOURCES. Every value is a USDA FoodData Central record:
+#  - SR Legacy (ids 16xxxx-17xxxx), as before, or
+#  - FNDDS 2021-2023 (ids 2705xxx-2710xxx; USDA Food and Nutrient Database for Dietary Studies, the survey foods of
+#    NHANES/WWEIA; usda_sr.py loads both, data/raw/usda/fndds). FNDDS has the mixed dishes, cocktails and coffee-shop
+#    drinks that SR Legacy lacks; its cocktails are USDA's standard recipes (spirit, mixer, juice, syrup) with alcohol.
+#  Servings are USDA portions: FNDDS "Quantity not specified" (QNS) is the amount USDA assigns when a survey respondent
+#  names the food but not the amount, i.e. a typical US serving; drink volumes come from the record's own 1 fl oz weight.
+#  GI: a measured value only where the food or its nearest tested food is in Atkinson 2021 Suppl. Table 1 / 2008
+#  (rows in build_fooddb.GI_SUPP); otherwise None, and the app shows its category ESTIMATE (giEstimate.ts), labelled as
+#  an estimate like every other food without a measured GI.
+#  Composite dishes: one record per dish (USDA's own recipe), the generic one-tap default first ("burrito" = USDA
+#  "Burrito, NFS"), the precise kinds as variants in the chooser ("Which burrito?"), or a builder option where a builder
+#  already exists (chicken sandwich in "Which burger?", grilled cheese, club and PB&J in "Which sandwich?").
+#  Croatian words are search aliases only; names and chips are English.
+NEW_2026_11_17 = []
+def add3(id, *a, **k):
+    add(id, *a, **k); NEW_2026_11_17.append(id)
+
+# ---- breakfast
+add3("scrambled-eggs", "Scrambled eggs (or omelet)", ["scrambled eggs", "scrambled egg", "omelet", "omelette", "omlet", "kajgana", "kajganu", "jaja na kajganu", "umućena jaja", "umucena jaja", "eggs scrambled", "egg omelet", "plain omelette", "omleta"], "solid",
+     2707198, "#f3d76a", "none", ('p', r'Quantity not specified', "1 portion (2 eggs)"),
+     note="USDA FNDDS 2707198 'Egg omelet or scrambled egg, NS as to fat' (FNDDS lists scrambled eggs and omelets as one food). Serving: the FNDDS default amount, 110 g (FNDDS 1 egg = 55 g, so about 2 eggs).")
+ask("scrambled-eggs", "Which eggs?", "Plain")
+var("scrambled-eggs", "cheese", "With cheese", "Cheese omelet", usda=2707209, serving=('p', r'Quantity not specified', "1 portion (2 eggs)"), words=["sirom"],
+    aliases=["cheese omelet", "cheese omelette", "omlet sa sirom", "omlet s sirom", "scrambled eggs with cheese", "kajgana sa sirom", "kajgana s sirom"],
+    text="Cheese omelet: values from the USDA FNDDS record 'Egg omelet or scrambled egg, with cheese, made with butter'; the FNDDS default amount, 130 g.")
+var("scrambled-eggs", "ham", "With ham", "Ham omelet", usda=2707213, serving=('p', r'Quantity not specified', "1 portion (2 eggs)"), words=["sunkom"],
+    aliases=["ham omelet", "ham omelette", "omlet sa šunkom", "omlet sa sunkom", "kajgana sa šunkom", "kajgana sa sunkom", "scrambled eggs with ham", "western omelet", "omelet with meat"],
+    text="Ham omelet: values from the USDA FNDDS record 'Egg omelet or scrambled egg, with meat'; the FNDDS default amount, 150 g.")
+add3("waffles", "Waffle", ["waffle", "waffles", "vafl", "vafli", "vafla", "gofre", "gofri", "belgian waffle", "belgijski vafl", "eggo"], "solid",
+     2708312, "#e3b25e", "upper", ('p', r'^1 medium waffle$', "1 waffle"), gi="t21_waffle_nearest",
+     note="USDA FNDDS 2708312 'Waffle, NFS'; 1 medium waffle = 75 g (FNDDS portion, also its default amount). Upper-bound free sugars (as pancakes). GI: nearest tested food (homemade pancakes).")
+add3("french-toast", "French toast", ["french toast", "pohani kruh", "prženi kruh u jajima", "przeni kruh u jajima", "kruh u jajima", "pain perdu"], "solid",
+     2708331, "#e2ad5a", "upper", ('p', r'^1 slice', "1 slice"),
+     note="USDA FNDDS 2708331 'French toast, NFS'; 1 slice = 65 g (FNDDS portion). Upper-bound free sugars.")
+add3("bagel", "Bagel", ["bagel", "bagels", "bejgl", "bejgla", "plain bagel"], "solid",
+     2707684, "#d9b07a", "null", ('p', r'^1 regular$', "1 bagel"), gi="t21_bagel",
+     note="USDA FNDDS 2707684 'Bagel'; 1 regular bagel = 105 g (FNDDS portion and default amount). Free sugars null: bread, no added-sugar split.")
+ask("bagel", "Which bagel?", "Plain")
+var("bagel", "cream-cheese", "Cream cheese", "Bagel with cream cheese", recipe=[("bagel", 105), ("cheese-cream", 29)],
+    serving=('g', None, "1 bagel", "our recipe"), words=["krem sirom"],
+    aliases=["bagel with cream cheese", "bagel and cream cheese", "bagel s krem sirom", "bagel sa krem sirom", "bagel with schmear"],
+    text="Bagel with cream cheese is our recipe: a regular bagel (105 g, USDA FNDDS) with 2 tablespoons of cream cheese (29 g; USDA SR Legacy 173418, 1 tbsp = 14.5 g).")
+add3("english-muffin", "English muffin", ["english muffin", "english muffins", "engleski muffin", "engleski mafin", "crumpet"], "solid",
+     2707698, "#e6c48c", "null", ('p', r'^1 muffin$', "1 muffin"), gi="t21_english_muffin",
+     note="USDA FNDDS 2707698 'Muffin, English'; 1 muffin = 58 g. Free sugars null (bread).")
+add3("hash-browns", "Hash browns", ["hash browns", "hash brown", "hashbrowns", "hash brown patty", "rösti", "rosti"], "solid",
+     2709478, "#d9a441", "none", ('p', r'^1 patty$', "1 patty"), gi="t21_hash_browns",
+     note="USDA FNDDS 2709478 'Potato, hash brown, from fast food'; 1 patty = 55 g. Free sugars none (potato, oil and salt, as fries).")
+add3("granola", "Granola", ["granola", "granola cereal", "hrskave žitarice", "hrskave zitarice", "crunchy muesli"], "solid",
+     173892, "#c99a52", "upper", ('p', r'NLEA', "1 bowl, 48 g"), gi="t21_granola",
+     note="USDA SR Legacy 173892 'Cereals ready-to-eat, QUAKER, 100% Natural Granola, Oats, Wheat and Honey'; ½ cup = 48 g (the NLEA serving). Upper-bound free sugars (honey and sugar in the clusters).")
+add3("avocado-toast", "Avocado toast", ["avocado toast", "tost s avokadom", "tost sa avokadom", "kruh s avokadom", "avocado on toast"], "solid",
+     None, "#9fb85a", "null", ('g', 100, "1 slice", "our assumption"),
+     mix=[(172688, 32), (171706, 68)],
+     note="COMPUTED mix (our assumption): 1 slice of whole-wheat toast (USDA SR Legacy 172688, 1 slice = 32 g) with half a Hass avocado (USDA SR Legacy 171706, 1 fruit without skin and seed = 136 g, half = 68 g). Not a USDA record; salt, oil and toppings not counted.")
+
+# ---- fast food
+add3("chicken-nuggets", "Chicken nuggets", ["chicken nuggets", "nuggets", "chicken nugget", "nuggetsi", "pileći nuggetsi", "pileci nuggetsi", "mcnuggets", "chicken mcnuggets", "pileći medaljoni", "pileci medaljoni"], "solid",
+     2706092, "#d9a24a", "null", ('p', r'Quantity not specified', "5 nuggets"), gi="a1_chicken_nuggets",
+     piece=("nugget", 16, "USDA FNDDS portion: 1 nugget = 16 g"),
+     note="USDA FNDDS 2706092 'Chicken nuggets, NFS'; the FNDDS default amount 80 g = 5 nuggets of 16 g. A typed number counts nuggets ('6 nuggets').")
+ask("chicken-nuggets", "Which?", "Nuggets")
+var("chicken-nuggets", "tenders", "Tenders", "Chicken tenders", usda=2706098, serving=('p', r'^1 tender', "1 tender"), gi="inherit",
+    aliases=["chicken tenders", "chicken strips", "chicken fingers", "tenders", "pileći štapići", "pileci stapici", "chicken strip"],
+    text="Chicken tenders: values from the USDA FNDDS record 'Chicken tenders or strips, NFS'; 1 tender = 50 g. Glycemic index: breaded chicken nuggets, the nearest tested food.")
+add3("fried-chicken", "Fried chicken", ["fried chicken", "kfc", "southern fried chicken", "pržena piletina", "przena piletina", "pohani batak", "crispy fried chicken"], "solid",
+     2705949, "#c8863a", "null", ('p', r'^1 piece$', "1 piece"),
+     note="USDA FNDDS 2705949 'Chicken, NS as to part, fried, coated, skin / coating eaten'; 1 piece = 85 g (meat without bone, FNDDS portion and default amount).")
+ask("fried-chicken", "Which piece?", "Any piece")
+var("fried-chicken", "breast", "Breast", "Fried chicken breast", usda=2705978, serving=('p', r'^1 breast$', "1 breast"),
+    aliases=["fried chicken breast", "kfc breast", "pohana pileća prsa s kožom", "pohana pileca prsa s kozom"],
+    text="Fried chicken breast: values from the USDA FNDDS record 'Chicken breast, fried, coated, skin / coating eaten, from fast food / restaurant'; 1 breast = 175 g without bone.")
+add3("onion-rings", "Onion rings (breaded)", ["onion rings", "onion ring", "kolutići luka", "kolutici luka", "pohani luk", "pohani kolutići luka"], "solid",
+     2710055, "#d9a85a", "null", ('p', r'fast food order', "1 order"),
+     note="USDA FNDDS 2710055 'Fried onion rings'; 1 fast-food order = 120 g.")
+add3("milkshake", "Milk shake (vanilla)", ["milkshake", "milk shake", "vanilla milkshake", "vanilla shake", "milkšejk", "milksejk", "šejk", "sejk"], "semi",
+     2705509, "#f2e2c4", "upper", ('ml', 430, r'^1 fl oz$', "1 small shake (430 ml)"),
+     note="USDA FNDDS 2705509 'Milk shake, fast food, flavors other than chocolate'; 1 small = 405 g (FNDDS), 430 ml from the record's 1 fl oz = 28 g. Upper-bound free sugars (the milk sugar, about a third, is included).")
+add3("fried-fish", "Fried fish (breaded)", ["fried fish", "battered fish", "pržena riba", "przena riba", "pohana riba", "fried cod", "pohani bakalar"], "solid",
+     2706244, "#e2bf7a", "null", ('p', r'^1 small/regular fillet$', "1 fillet"),
+     note="USDA FNDDS 2706244 'Fish, cod, fried' (coated); 1 regular fillet = 140 g.")
+ask("fried-fish", "With fries?", "Fish only")
+var("fried-fish", "chips", "With fries", "Fish and chips", recipe=[("fried-fish", 140), ("fries", 117)],
+    serving=('g', None, "1 plate", "our recipe"), words=["pomfritom"],
+    aliases=["fish and chips", "fish & chips", "fish n chips", "riba i pomfrit", "riba s pomfritom", "fish with fries"],
+    text="Fish and chips is our recipe: one fried cod fillet (140 g, USDA FNDDS 'Fish, cod, fried') with a medium portion of fries (117 g, USDA fast-food fries, portion 'medium').")
+
+# ---- Mexican
+add3("burrito", "Burrito", ["burrito", "burritos", "burito", "buriti", "burrito wrap"], "solid",
+     2708534, "#c98f4a", "null", ('p', r'^1 small/regular$', "1 burrito"),
+     note="USDA FNDDS 2708534 'Burrito, NFS' (flour tortilla with meat, beans, rice and cheese in USDA's mix); 1 regular burrito = 220 g (FNDDS portion and default amount).")
+ask("burrito", "Which burrito?", "Classic")
+var("burrito", "chicken", "Chicken", "Chicken burrito", usda=2708546, serving=('p', r'^1 small/regular$', "1 burrito"), words=["piletinom"],
+    aliases=["chicken burrito", "burrito with chicken", "burrito s piletinom", "pileći burrito", "pileci burrito"],
+    text="Chicken burrito: values from the USDA FNDDS record 'Burrito, chicken, with beans and rice, cheese'; 1 regular burrito = 220 g.")
+var("burrito", "beef", "Beef", "Beef burrito", usda=2708538, serving=('p', r'^1 small/regular$', "1 burrito"), words=["govedinom", "junetinom"],
+    aliases=["beef burrito", "burrito with beef", "steak burrito", "burrito s govedinom", "goveđi burrito", "govedji burrito"],
+    text="Beef burrito: values from the USDA FNDDS record 'Burrito, beef, with beans and rice, cheese'; 1 regular burrito = 220 g.")
+var("burrito", "bean", "Bean", "Bean burrito", usda=2708549, serving=('p', r'^1 small/regular$', "1 burrito"), words=["grahom"],
+    aliases=["bean burrito", "veggie burrito", "vegetarian burrito", "burrito s grahom", "vegetarijanski burrito"],
+    text="Bean burrito: values from the USDA FNDDS record 'Burrito, with beans and rice, cheese'; 1 regular burrito = 220 g.")
+var("burrito", "breakfast", "Breakfast", "Breakfast burrito", usda=2707344, serving=('p', r'^1 item', "1 burrito"), words=["jajima"],
+    aliases=["breakfast burrito", "egg burrito", "burrito s jajima", "burrito za doručak", "burrito za dorucak"],
+    text="Breakfast burrito: values from the USDA FNDDS record 'Egg burrito, with sausage'; 1 burrito = 190 g.")
+var("burrito", "bowl", "Bowl", "Burrito bowl", usda=2708563, serving=('p', r'^1 item', "1 bowl"),
+    aliases=["burrito bowl", "chicken burrito bowl", "burrito zdjela"],
+    text="Burrito bowl: values from the USDA FNDDS record 'Burrito bowl, chicken, with beans and rice' (no tortilla); 1 bowl = 315 g.")
+add3("taco", "Taco", ["taco", "tacos", "takos", "takosi"], "solid",
+     2708514, "#d9a54a", "null", ('p', r'^1 small/regular$', "1 taco"),
+     note="USDA FNDDS 2708514 'Taco, NFS'; 1 regular taco = 105 g (FNDDS portion and default amount). Several tacos: '3 tacos'.")
+ask("taco", "Which taco?", "Classic")
+var("taco", "beef", "Beef", "Beef taco", usda=2708515, serving=('p', r'^1 small/regular$', "1 taco"), words=["govedinom"],
+    aliases=["beef taco", "beef tacos", "hard shell taco", "crunchy taco", "taco s govedinom"],
+    text="Beef taco: values from the USDA FNDDS record 'Taco, corn tortilla, beef, cheese'; 1 regular taco = 105 g.")
+var("taco", "chicken", "Chicken", "Chicken taco", usda=2708526, serving=('p', r'^1 small/regular$', "1 taco"), words=["piletinom"],
+    aliases=["chicken taco", "chicken tacos", "soft taco", "taco s piletinom"],
+    text="Chicken taco: values from the USDA FNDDS record 'Taco, flour tortilla, chicken, cheese'; 1 regular taco = 105 g.")
+var("taco", "fish", "Fish", "Fish taco", usda=2708529, serving=('p', r'^1 small/regular$', "1 taco"), words=["ribom"],
+    aliases=["fish taco", "fish tacos", "taco s ribom"],
+    text="Fish taco: values from the USDA FNDDS record 'Taco, fish'; 1 regular taco = 100 g.")
+add3("nachos", "Nachos (with cheese and meat)", ["nachos", "nacho", "načos", "nacos", "loaded nachos", "nachos supreme"], "solid",
+     2708576, "#e6b13a", "null", ('p', r'Quantity not specified', "1 portion, 125 g"), gi="t21_corn_chips",
+     note="USDA FNDDS 2708576 'Nachos, NFS'; the FNDDS default amount, 125 g (half of a 250 g restaurant order).")
+ask("nachos", "Which nachos?", "Loaded")
+var("nachos", "cheese", "Cheese only", "Nachos with cheese", usda=2708577, serving=('p', r'Quantity not specified', "1 portion, 125 g"), words=["sirom"], gi="inherit",
+    aliases=["nachos with cheese", "cheese nachos", "nachos sa sirom", "nachos s sirom"],
+    text="Nachos with cheese: values from the USDA FNDDS record 'Nachos, cheese only'; the FNDDS default amount, 125 g.")
+add3("quesadilla", "Quesadilla", ["quesadilla", "quesadillas", "kesadilja", "kesadilje"], "solid",
+     2708590, "#e4b866", "null", ('p', r'^1 full circle$', "1 quesadilla"),
+     note="USDA FNDDS 2708590 'Quesadilla, NFS'; 1 full quesadilla = 140 g (FNDDS portion).")
+ask("quesadilla", "Which quesadilla?", "Classic")
+var("quesadilla", "cheese", "Cheese", "Cheese quesadilla", usda=2708591, serving=('p', r'^1 full circle$', "1 quesadilla"), words=["sirom"],
+    aliases=["cheese quesadilla", "quesadilla sa sirom"], text="Cheese quesadilla: values from the USDA FNDDS record 'Quesadilla, cheese only'; 1 quesadilla = 120 g.")
+var("quesadilla", "chicken", "Chicken", "Chicken quesadilla", usda=2708593, serving=('p', r'^1 full circle$', "1 quesadilla"), words=["piletinom"],
+    aliases=["chicken quesadilla", "quesadilla s piletinom", "kesadilja s piletinom"], text="Chicken quesadilla: values from the USDA FNDDS record 'Quesadilla, chicken'; 1 quesadilla = 140 g.")
+add3("enchilada", "Enchilada", ["enchilada", "enchiladas", "enčilada", "encilada", "enchilade"], "solid",
+     2708565, "#c4552e", "null", ('p', r'^1 enchilada', "1 enchilada"),
+     note="USDA FNDDS 2708565 'Enchilada, NFS' (the same values as USDA's chicken enchilada); 1 enchilada = 150 g.")
+ask("enchilada", "Which enchilada?", "Chicken")
+var("enchilada", "beef", "Beef", "Beef enchilada", usda=2708566, serving=('p', r'^1 enchilada', "1 enchilada"),
+    aliases=["beef enchilada", "beef enchiladas"], text="Beef enchilada: values from the USDA FNDDS record 'Enchilada, beef'; 1 enchilada = 150 g.")
+var("enchilada", "cheese", "No meat", "Cheese enchilada", usda=2708569, serving=('p', r'^1 enchilada', "1 enchilada"),
+    aliases=["cheese enchilada", "cheese enchiladas", "vegetarian enchilada"], text="Cheese enchilada: values from the USDA FNDDS record 'Enchilada, no meat'; 1 enchilada = 150 g.")
+add3("fajita", "Fajita", ["fajita", "fajitas", "fahita", "fahite", "fajite"], "solid",
+     2708603, "#c8763a", "null", ('p', r'^1 fajita$', "1 fajita"),
+     note="USDA FNDDS 2708603 'Fajita, NFS' (flour tortilla, meat, peppers and onion); 1 fajita = 95 g.")
+ask("fajita", "Which fajita?", "Classic")
+var("fajita", "chicken", "Chicken", "Chicken fajita", usda=2708604, serving=('p', r'^1 fajita$', "1 fajita"),
+    aliases=["chicken fajita", "chicken fajitas", "fajita s piletinom", "fajitas s piletinom"], text="Chicken fajita: values from the USDA FNDDS record 'Fajita, chicken'; 1 fajita = 95 g.")
+var("fajita", "beef", "Beef", "Beef fajita", usda=2708605, serving=('p', r'^1 fajita$', "1 fajita"),
+    aliases=["beef fajita", "beef fajitas", "steak fajitas", "steak fajita"], text="Beef fajita: values from the USDA FNDDS record 'Fajita, beef or pork'; 1 fajita = 95 g.")
+add3("guacamole", "Guacamole", ["guacamole", "gvakamole", "guac", "gvakamola", "umak od avokada"], "semi",
+     2709307, "#8fae4a", "none", ('p', r'Quantity not specified', "1 portion (4 tbsp)"),
+     note="USDA FNDDS 2709307 'Guacamole, NFS'; the FNDDS default amount, 60 g (1 tbsp = 15 g).")
+add3("salsa", "Salsa", ["salsa", "salsa dip", "pico de gallo", "salsa umak", "tomato salsa"], "semi",
+     2709736, "#c8402a", "null", ('p', r'Quantity not specified', "1 portion (2 tbsp)"),
+     note="USDA FNDDS 2709736 'Salsa, NFS'; the FNDDS default amount, 32 g (1 tbsp = 16 g).")
+add3("tortilla-chips", "Tortilla chips", ["tortilla chips", "tortilja čips", "tortilja cips", "nacho chips", "corn chips", "doritos", "tortilla chip", "kukuruzni čips", "kukuruzni cips"], "solid",
+     167558, "#e9c25a", "none", ('p', r'^oz$', "1 handful (28 g)"), gi="t21_corn_chips",
+     note="USDA SR Legacy 167558 'Snacks, tortilla chips, plain, white corn, salted'; 1 oz = 28 g. Free sugars none (corn, oil and salt).")
+ask("tortilla-chips", "With salsa?", "Plain")
+var("tortilla-chips", "salsa", "With salsa", "Chips and salsa", recipe=[("tortilla-chips", 28.35), ("salsa", 32)],
+    serving=('g', None, "1 portion", "our recipe"), words=["salsom"],
+    aliases=["chips and salsa", "chips & salsa", "chips with salsa", "tortilla chips and salsa", "čips sa salsom", "cips sa salsom"],
+    text="Chips and salsa is our recipe: a handful of tortilla chips (1 oz, 28 g, USDA SR Legacy) with 2 tablespoons of salsa (32 g, USDA FNDDS default amount).")
+
+# ---- Asian
+add3("sushi", "Sushi", ["sushi", "suši", "susi", "sushi roll", "sushi rolls", "maki", "maki roll", "sushi rolice", "sushi rolica"], "solid",
+     2708959, "#f1ece0", "null", ('p', r'Quantity not specified', "6 pieces"), gi="t21_sushi",
+     piece=("piece", 30, "USDA FNDDS portion: 1 piece = 30 g"),
+     note="USDA FNDDS 2708959 'Sushi, NFS' (the same values as USDA's California roll); the FNDDS default amount 180 g = 6 pieces of 30 g. Free sugars null: sushi rice is seasoned with sugar and vinegar, no split. A typed number counts pieces ('8 pieces of sushi').")
+ask("sushi", "Which sushi?", "Mixed")
+var("sushi", "california", "California roll", "California roll", usda=2708961, serving=('p', r'Quantity not specified', "6 pieces"), gi="inherit",
+    aliases=["california roll", "california rolls", "kalifornija rolica", "california maki"],
+    text="California roll: values from the USDA FNDDS record 'Sushi roll, California' (crab or imitation crab, avocado, cucumber); 6 pieces = 180 g.")
+var("sushi", "salmon-roll", "Salmon roll", "Salmon roll", usda=2708963, serving=('p', r'Quantity not specified', "6 pieces"), gi="inherit",
+    aliases=["salmon roll", "salmon maki", "maki s lososom", "sake maki", "salmon sushi roll"],
+    text="Salmon roll: values from the USDA FNDDS record 'Sushi roll, salmon'; 6 pieces = 180 g.")
+var("sushi", "tuna-roll", "Tuna roll", "Tuna roll", usda=2708965, serving=('p', r'Quantity not specified', "6 pieces"), gi="inherit",
+    aliases=["tuna roll", "tuna maki", "maki s tunom", "tekka maki", "spicy tuna roll"],
+    text="Tuna roll: values from the USDA FNDDS record 'Sushi roll tuna'; 6 pieces = 180 g.")
+var("sushi", "nigiri", "Salmon nigiri", "Salmon nigiri", usda=2708969, serving=('p', r'Quantity not specified', "6 pieces"), gi="inherit",
+    aliases=["nigiri", "salmon nigiri", "sake nigiri", "nigiri s lososom", "sushi with salmon", "salmon sushi"],
+    text="Salmon nigiri: values from the USDA FNDDS record 'Sushi, topped with salmon'; 6 pieces = 210 g. Glycemic index: salmon sushi as tested (Atkinson 2021).")
+var("sushi", "veg", "Veggie roll", "Vegetable roll", usda=2708966, serving=('p', r'Quantity not specified', "6 pieces"), gi="inherit",
+    aliases=["vegetable roll", "veggie roll", "cucumber roll", "avocado roll", "kappa maki", "vegetarijanski sushi", "vegan sushi"],
+    text="Vegetable roll: values from the USDA FNDDS record 'Sushi roll, vegetable'; 6 small pieces = 132 g.")
+add3("ramen", "Ramen (noodle soup bowl)", ["ramen", "ramen bowl", "ramen juha", "ramen soup", "japanska juha s rezancima", "noodle soup"], "semi",
+     2709153, "#e0b86a", "null", ('p', r'Quantity not specified', "1 bowl, 245 g"), gi="t21_instant_noodles",
+     note="USDA FNDDS 2709153 'Ramen bowl, NFS' (noodles, broth, meat, egg and vegetables); the FNDDS default amount, 245 g (1 cup). Restaurant bowls are often twice that: choose 2.")
+ask("ramen", "Which ramen?", "Ramen bowl")
+var("ramen", "instant", "Instant", "Instant ramen", usda=2709152, serving=('p', r'Quantity not specified', "1 bowl, 245 g"), gi="inherit",
+    aliases=["instant ramen", "instant noodles", "instant rezanci", "instant juha s rezancima", "maggi noodles", "top ramen"],
+    text="Instant ramen: values from the USDA FNDDS record 'Soup, ramen noodles, water added'; 1 bowl = 245 g. Glycemic index: instant noodles with their broth, as tested.")
+add3("pad-thai", "Pad Thai", ["pad thai", "padthai", "pad tai", "phad thai", "tajlandski rezanci"], "solid",
+     2708804, "#d9a35a", "null", ('p', r'Quantity not specified', "1 plate, 200 g"),
+     note="USDA FNDDS 2708804 'Pad Thai, NFS' (rice noodles, egg, peanuts, sauce; the same values as USDA's chicken pad thai); the FNDDS default amount, 200 g (1 cup).")
+ask("pad-thai", "Which pad Thai?", "Chicken")
+var("pad-thai", "shrimp", "Shrimp", "Shrimp pad Thai", usda=2708807, serving=('p', r'Quantity not specified', "1 plate, 200 g"), words=["kozicama", "skampima"],
+    aliases=["shrimp pad thai", "pad thai with shrimp", "prawn pad thai", "pad thai s kozicama"],
+    text="Shrimp pad Thai: values from the USDA FNDDS record 'Pad Thai with seafood'; 200 g.")
+add3("fried-rice", "Fried rice", ["fried rice", "pržena riža", "przena riza", "pržena riza", "kineska riža", "kineska riza", "egg fried rice", "nasi goreng"], "solid",
+     2708952, "#e2c47a", "null", ('p', r'Quantity not specified', "1 plate, 198 g"), gi="t21_fried_rice",
+     note="USDA FNDDS 2708952 'Rice, fried, NFS'; the FNDDS default amount, 198 g (1 cup).")
+ask("fried-rice", "Which fried rice?", "Classic")
+var("fried-rice", "chicken", "Chicken", "Chicken fried rice", usda=2708953, serving=('p', r'Quantity not specified', "1 plate, 198 g"), gi="inherit", words=["piletinom"],
+    aliases=["chicken fried rice", "pržena riža s piletinom", "przena riza s piletinom"],
+    text="Chicken fried rice: values from the USDA FNDDS record 'Rice, fried, with chicken'; 198 g.")
+var("fried-rice", "shrimp", "Shrimp", "Shrimp fried rice", usda=2708956, serving=('p', r'Quantity not specified', "1 plate, 198 g"), gi="inherit", words=["kozicama"],
+    aliases=["shrimp fried rice", "prawn fried rice", "pržena riža s kozicama", "przena riza s kozicama"],
+    text="Shrimp fried rice: values from the USDA FNDDS record 'Rice, fried, with shrimp'; 198 g.")
+add3("lo-mein", "Lo mein (Chinese noodles)", ["lo mein", "chinese noodles", "kineski rezanci", "kineski noodles", "stir fried noodles", "wok noodles", "wok rezanci"], "solid",
+     2708798, "#d9b05a", "null", ('p', r'Quantity not specified', "1 plate, 200 g"),
+     note="USDA FNDDS 2708798 'Lo mein, NFS'; the FNDDS default amount, 200 g (1 cup).")
+ask("lo-mein", "Which noodles?", "Lo mein")
+var("lo-mein", "chow-mein", "Chow mein", "Chicken chow mein", usda=2706687, serving=('p', r'Quantity not specified', "1 plate, 220 g"),
+    aliases=["chow mein", "chicken chow mein", "chop suey", "chow mein s piletinom"],
+    text="Chicken chow mein: values from the USDA FNDDS record 'Chicken or turkey chow mein or chop suey with noodles'; 220 g.")
+add3("egg-roll", "Egg roll", ["egg roll", "egg rolls", "spring roll", "spring rolls", "proljetna rolica", "proljetne rolice", "proljetni smotuljak", "proljetni smotuljci"], "solid",
+     2708702, "#d9a44a", "null", ('p', r'^1 egg roll$', "1 roll"), gi="t21_spring_roll",
+     note="USDA FNDDS 2708702 'Egg roll, with beef and/or pork'; 1 egg roll = 64 g. Spring rolls (thinner wrapper) use it too: FNDDS has no separate spring roll.")
+ask("egg-roll", "Which roll?", "Meat")
+var("egg-roll", "veg", "Vegetable", "Vegetable egg roll", usda=2708700, serving=('p', r'^1 egg roll$', "1 roll"), gi="inherit",
+    aliases=["vegetable egg roll", "vegetable spring roll", "veggie spring roll", "proljetna rolica s povrćem", "proljetna rolica s povrcem"],
+    text="Vegetable egg roll: values from the USDA FNDDS record 'Egg roll, meatless'; 1 roll = 64 g.")
+add3("dumplings", "Dumplings (steamed)", ["dumplings", "dumpling", "dim sum", "gyoza", "potstickers", "pot stickers", "wonton", "wontons", "jiaozi", "momo", "kineske knedle", "azijske knedle"], "solid",
+     2708708, "#efe2c0", "null", ('p', r'Quantity not specified', "3 dumplings"), gi="t21_dumpling",
+     piece=("dumpling", 25, "USDA FNDDS portion: 1 item = 25 g"),
+     note="USDA FNDDS 2708708 'Wonton, dumpling or pot sticker, steamed'; the FNDDS default amount 75 g = 3 pieces of 25 g. A typed number counts dumplings.")
+ask("dumplings", "Steamed or fried?", "Steamed")
+var("dumplings", "fried", "Fried", "Fried dumplings", usda=2708705, serving=('p', r'Quantity not specified', "3 dumplings"), gi="inherit",
+    aliases=["fried dumplings", "fried wontons", "fried gyoza", "pan fried dumplings", "pržene knedle"],
+    text="Fried dumplings: values from the USDA FNDDS record 'Wonton, dumpling or pot sticker, fried'; 3 pieces = 75 g.")
+add3("pho", "Pho (Vietnamese noodle soup)", ["pho", "phở", "pho soup", "pho bo", "vijetnamska juha", "beef pho"], "semi",
+     2707124, "#d9b47a", "null", ('p', r'Quantity not specified', "1 bowl, 245 g"),
+     note="USDA FNDDS 2707124 'Soup, pho, with meat'; the FNDDS default amount, 245 g (1 cup). Restaurant bowls are often two to three times that.")
+add3("curry", "Chicken curry with rice", ["curry", "kari", "chicken curry with rice", "curry with rice", "kari s rižom", "kari s rizom", "piletina u kariju", "indian curry", "curry rice"], "solid",
+     2706438, "#d99a2a", "null", ('p', r'Quantity not specified', "1 plate, 200 g"), gi="t21_curry_rice",
+     note="USDA FNDDS 2706438 'Chicken curry with rice'; the FNDDS default amount, 200 g (1 cup).")
+ask("curry", "Which curry?", "Chicken + rice")
+var("curry", "no-rice", "No rice", "Chicken curry", usda=2706437, serving=('p', r'Quantity not specified', "1 bowl, 240 g"),
+    aliases=["chicken curry", "pileći kari", "pileci kari", "curry without rice"],
+    text="Chicken curry without rice: values from the USDA FNDDS record 'Chicken curry'; 240 g.")
+var("curry", "tikka", "Tikka masala", "Chicken tikka masala with rice", usda=2706438, serving=('p', r'Quantity not specified', "1 plate, 200 g"), proxy=True, gi="inherit",
+    aliases=["tikka masala", "chicken tikka masala", "chicken tikka", "butter chicken", "korma", "chicken korma", "piletina tikka masala"],
+    text="Chicken tikka masala and butter chicken have no USDA record; USDA's chicken curry with rice stands in (FNDDS 2706438, 200 g). Cream-based curries have more fat.")
+var("curry", "beef", "Beef + rice", "Beef curry with rice", usda=2706389, serving=('p', r'Quantity not specified', "1 plate, 200 g"), gi="inherit",
+    aliases=["beef curry", "beef curry with rice", "goveđi kari", "govedji kari"], text="Beef curry with rice: values from the USDA FNDDS record 'Beef curry with rice'; 200 g.")
+var("curry", "veg", "Veg + rice", "Vegetable curry with rice", usda=2710068, serving=('p', r'Quantity not specified', "1 plate, 200 g"), gi="inherit",
+    aliases=["vegetable curry", "veggie curry", "vegetable curry with rice", "kari od povrća", "kari od povrca"], text="Vegetable curry with rice: values from the USDA FNDDS record 'Vegetable curry with rice'; 200 g.")
+var("curry", "dal", "Lentil + rice", "Lentil curry with rice", usda=2707432, serving=('p', r'Quantity not specified', "1 plate, 200 g"), gi="inherit",
+    aliases=["dal", "dhal", "daal", "lentil curry", "dal with rice", "kari od leće", "kari od lece"], text="Lentil curry (dal) with rice: values from the USDA FNDDS record 'Lentil curry with rice'; 200 g.")
+add3("naan", "Naan bread", ["naan", "nan", "naan bread", "indijski kruh", "garlic naan"], "solid",
+     171845, "#e8c890", "null", ('p', r'piece', "1 naan"), gi="t21_naan",
+     note="USDA SR Legacy 171845 'Bread, naan, plain, commercially prepared, refrigerated'; 1 piece = 90 g. Free sugars null (bread).")
+add3("teriyaki-chicken", "Teriyaki chicken", ["teriyaki chicken", "chicken teriyaki", "teriyaki", "piletina teriyaki", "teriyaki piletina"], "solid",
+     2706433, "#a8602a", "null", ('p', r'Quantity not specified', "1 portion, 183 g"),
+     note="USDA FNDDS 2706433 'Chicken or turkey with teriyaki' (meat and sauce, no rice); the FNDDS default amount, 183 g.")
+add3("orange-chicken", "Orange chicken", ["orange chicken", "piletina s narančom", "piletina s narancom", "panda express orange chicken"], "solid",
+     2706443, "#e0782a", "upper", ('p', r'Quantity not specified', "1 portion, 189 g"),
+     note="USDA FNDDS 2706443 'Orange chicken' (battered chicken in a sweet sauce, no rice); the FNDDS default amount, 189 g. Upper-bound free sugars (the sauce).")
+ask("orange-chicken", "Which chicken?", "Orange")
+var("orange-chicken", "general-tso", "General Tso's", "General Tso's chicken", usda=2706794, serving=('p', r'Quantity not specified', "1 portion, 110 g"),
+    aliases=["general tso", "general tso's chicken", "general tsos chicken", "general tso chicken", "kung pao chicken", "kung pao"],
+    text="General Tso's chicken: values from the USDA FNDDS record 'General Tso chicken'; the FNDDS default amount, 110 g. Kung pao chicken uses it too (no USDA record).", proxy=True)
+var("orange-chicken", "sesame", "Sesame", "Sesame chicken", usda=2706444, serving=('p', r'Quantity not specified', "1 portion, 189 g"),
+    aliases=["sesame chicken", "piletina sa sezamom", "piletina sa sezamom na kineski"],
+    text="Sesame chicken: values from the USDA FNDDS record 'Sesame chicken'; 189 g.")
+add3("miso-soup", "Miso soup", ["miso soup", "miso juha", "miso", "japanska miso juha"], "liquid",
+     2707455, "#d8c08a", "null", ('p', r'Quantity not specified', "1 bowl, 245 g"),
+     note="USDA FNDDS 2707455 'Soup, miso or tofu'; the FNDDS default amount, 245 g (1 cup).")
+add3("edamame", "Edamame", ["edamame", "edamame beans", "mlada soja", "zelena soja", "soybeans in pods"], "solid",
+     2707436, "#7caa3a", "none", ('p', r'Quantity not specified', "1 portion, 80 g"),
+     note="USDA FNDDS 2707436 'Edamame, cooked' (shelled); the FNDDS default amount, 80 g.")
+
+# ---- Italian
+add3("spaghetti-bolognese", "Spaghetti bolognese", ["spaghetti bolognese", "spaghetti bolognaise", "spag bol", "bolognese", "spaghetti with meat sauce", "špageti bolonjez", "spageti bolonjez", "bolonjez", "špageti bolognese", "spageti bolognese", "tjestenina bolonjez", "pasta bolognese"], "solid",
+     167680, "#b8502a", "null", ('p', r'serving', "1 restaurant plate"), gi="pasta_dish",
+     note="USDA SR Legacy 167680 'Restaurant, Italian, spaghetti with meat sauce'; 1 serving = 554 g (USDA's weighed US restaurant portion; choose Half for a home plate).")
+size("spaghetti-bolognese", [("half", "Half", 0.5), ("plate", "Plate", 1)],
+     "Sizes: Plate is USDA's weighed US restaurant serving, 554 g; Half is 277 g, closer to a plate at home.", "USDA FoodData Central, SR Legacy 167680 portion", "https://fdc.nal.usda.gov/food-details/167680/nutrients", level="B")
+ask("spaghetti-bolognese", "Which spaghetti?", "Meat sauce")
+var("spaghetti-bolognese", "pomodoro", "Tomato sauce", "Spaghetti with tomato sauce", usda=169033, serving=('p', r'serving', "1 restaurant plate"), gi="inherit",
+    words=["umakom od rajcice", "pomodoro"],
+    aliases=["spaghetti pomodoro", "spaghetti with tomato sauce", "pasta with tomato sauce", "špageti s umakom od rajčice", "spageti s umakom od rajcice", "pasta pomodoro", "spaghetti napoli", "špageti napoli"],
+    text="Spaghetti with tomato sauce: values from the USDA SR Legacy record 'Restaurant, Italian, spaghetti with pomodoro sauce (no meat)'; 1 serving = 510 g.")
+var("spaghetti-bolognese", "meatballs", "Meatballs", "Spaghetti and meatballs", usda=169029, serving=('p', r'serving', "1 restaurant plate"), gi="inherit",
+    words=["mesnim okruglicama", "polpetama"],
+    aliases=["spaghetti and meatballs", "spaghetti with meatballs", "špageti s mesnim okruglicama", "spageti s polpetama", "pasta with meatballs"],
+    text="Spaghetti and meatballs: values from the USDA SR Legacy record 'Restaurant, family style, spaghetti and meatballs'; 1 serving = 565 g.")
+add3("lasagna", "Lasagna (with meat)", ["lasagna", "lasagne", "lazanje", "lazanja", "lasagna bolognese", "lasagne bolognese", "beef lasagna"], "solid",
+     2708750, "#c8602e", "null", ('p', r'1/8 of 7', "1 piece"), gi="pasta_dish",
+     note="USDA FNDDS 2708750 'Lasagna with meat'; 1 piece (1/8 of a 7 × 12 inch pan) = 232 g.")
+add3("gnocchi", "Gnocchi (potato)", ["gnocchi", "njoki", "njoke", "njokima", "potato gnocchi", "gnocchi s umakom"], "solid",
+     2708722, "#efdcaa", "null", ('p', r'Quantity not specified', "1 plate, 188 g"), gi="t21_gnocchi",
+     note="USDA FNDDS 2708722 'Gnocchi, potato' (with butter or sauce as eaten in the survey); the FNDDS default amount, 188 g (1 cup).")
+add3("mac-and-cheese", "Macaroni and cheese", ["mac and cheese", "macaroni and cheese", "mac n cheese", "mac & cheese", "macaroni cheese", "makaroni sa sirom", "makaroni s sirom", "tjestenina sa sirom", "kraft dinner"], "solid",
+     2708811, "#f0c040", "null", ('p', r'Quantity not specified', "1 bowl, 230 g"), gi="pasta_dish",
+     note="USDA FNDDS 2708811 'Macaroni or noodles with cheese' (home recipe); the FNDDS default amount, 230 g (1 cup).")
+ask("mac-and-cheese", "Which mac and cheese?", "Homemade")
+var("mac-and-cheese", "boxed", "Boxed", "Boxed mac and cheese", usda=2708813, serving=('p', r'Quantity not specified', "1 bowl, 230 g"), gi="inherit",
+    aliases=["boxed mac and cheese", "kraft mac and cheese", "mac and cheese from box", "instant mac and cheese"],
+    text="Boxed mac and cheese: values from the USDA FNDDS record 'Macaroni or noodles with cheese, made from packaged mix'; 230 g.")
+add3("garlic-bread", "Garlic bread", ["garlic bread", "kruh s češnjakom", "kruh s cesnjakom", "češnjak kruh", "cesnjak kruh", "garlic toast", "pane all'aglio"], "solid",
+     2707626, "#e6c072", "null", ('p', r'^1 medium slice$', "1 slice"),
+     note="USDA FNDDS 2707626 'Garlic bread, NFS'; 1 medium slice = 79 g. Free sugars null (bread).")
+add3("tiramisu", "Tiramisu (layer cake)", ["tiramisu", "tiramisù", "tiramisu torta", "tiramisu kolač", "tiramisu kolac"], "solid",
+     2705702, "#c8a27a", "upper", ('p', r'^1 piece$', "1 piece"),
+     note="USDA FNDDS 2705702 'Tiramisu'; 1 piece = 175 g. Its caffeine (34 mg per 100 g) is the espresso in the sponge. Upper-bound free sugars.")
+add3("minestrone", "Minestrone soup", ["minestrone", "minestrone soup", "minestrone juha", "talijanska juha od povrća", "talijanska juha od povrca"], "semi",
+     2710114, "#c87a3a", "null", ('p', r'Quantity not specified', "1 bowl, 245 g"),
+     note="USDA FNDDS 2710114 'Soup, minestrone'; the FNDDS default amount, 245 g (1 cup).")
+add3("ravioli", "Ravioli (with tomato sauce)", ["ravioli", "raviole", "raviolli", "ravioli s umakom", "ravioli with sauce"], "solid",
+     2708761, "#e2b066", "null", ('p', r'Quantity not specified', "1 plate, 250 g"), gi="t21_ravioli",
+     note="USDA FNDDS 2708761 'Ravioli, NS as to filling, with tomato sauce'; the FNDDS default amount, 250 g (1 cup).")
+ask("ravioli", "Which ravioli?", "Classic")
+var("ravioli", "meat", "Meat", "Meat ravioli", usda=2708764, serving=('p', r'Quantity not specified', "1 plate, 250 g"), gi="inherit", words=["mesom"],
+    aliases=["meat ravioli", "beef ravioli", "ravioli s mesom", "ravioli with meat"], text="Meat ravioli: values from the USDA FNDDS record 'Ravioli, meat-filled, with tomato sauce or meat sauce'; 250 g.")
+var("ravioli", "cheese", "Cheese", "Cheese ravioli", usda=2708768, serving=('p', r'Quantity not specified', "1 plate, 250 g"), gi="inherit", words=["sirom"],
+    aliases=["cheese ravioli", "ravioli sa sirom", "ravioli s sirom", "ravioli with cheese"], text="Cheese ravioli: values from the USDA FNDDS record 'Ravioli, cheese-filled, with tomato sauce'; 250 g.")
+
+# ---- spirits and cocktails. FNDDS drink volumes: 1 fl oz of a cocktail = 30 g (1 drink of 225 g = 222 ml), of a
+# spirit 28 g (1 shot of 42 g = 44 ml, the US 1.5 fl oz shot).
+add3("vodka", "Vodka (40%)", ["vodka", "votka", "wodka", "vodka shot", "čašica votke", "casica votke"], "liquid",
+     2710704, "#eef2f4", "none", ('ml', 44, r'no ice', "1 shot (44 ml)"),
+     note="USDA FNDDS 2710704 'Vodka' (80 proof, 40% alcohol: 33.4 g alcohol per 100 g); 1 shot = 42 g = 44 ml (US 1.5 fl oz).")
+ask("vodka", "Which spirit?", "Vodka")
+for _v, _id, _nm, _al in (("gin", 2710702, "Gin", ["gin", "džin", "dzin", "gin shot", "london dry gin"]),
+                          ("rum", 2710703, "Rum", ["rum", "ruma", "white rum", "dark rum", "bijeli rum", "crni rum", "rum shot"]),
+                          ("tequila", 2710705, "Tequila", ["tequila", "tekila", "tequila shot", "mezcal"]),
+                          ("whiskey", 2710700, "Whiskey", ["whiskey", "whisky", "viski", "bourbon", "burbon", "scotch", "škotski viski", "skotski viski", "jack daniels", "jameson", "whiskey shot"])):
+    var("vodka", _v, _nm, _nm, usda=_id, serving=('ml', 44, r'no ice', "1 shot (44 ml)"), aliases=_al,
+        text="%s: values from the USDA FNDDS record '%s' (80 proof, 40%% alcohol); 1 shot = 44 ml (US 1.5 fl oz)." % (_nm, "Whiskey" if _v == "whiskey" else _nm) +
+             (" Scotch (FNDDS 'Scotch') has the same values." if _v == "whiskey" else ""))
+size("vodka", [("single", "Single", 1), ("double", "Double", 2)], "A shot is the US 1.5 fl oz (44 ml); a double is two.",
+     "USDA FNDDS 2021-2023 portions (1 shot = 42 g)", "https://fdc.nal.usda.gov/download-datasets", level="A")
+CHANGED_ON_PURPOSE["rakija"] = "2026-11-17 coverage round: aliases 'vodka' and 'whiskey' moved to the new spirits food (USDA FNDDS vodka, gin, rum, tequila, whiskey)"
+_rk = next(e for e in E if e["id"] == "rakija"); _rk["aliases"] = [a for a in _rk["aliases"] if a not in ("vodka", "whiskey")]
+
+# The generic one-tap default is the mojito (koktel / mixed drink open "Which cocktail?" on it). Not offered
+# (2026-11-17): drinks with cola or an energy drink in them, pina colada, the plain word "cocktail" itself, trail mix (its Short had no sugar moment) and cider (a cider comparison had too little voice): the video
+# pipeline (another agent's area) cannot yet build their story (no climax for spirit + a little caffeine; the pina
+# colada's hook went unanswered), and "cocktail" would catch the Slovenian soft drink "cockta" by prefix. "rum and coke"
+# is still read as rum + cola. To add when the video side handles them.
+add3("mojito", "Mojito", ["mojito", "mohito", "mojitos", "koktel", "kokteli", "mixed drink", "mixed drinks", "long drink", "alkoholni koktel"], "liquid",
+     2710644, "#cfe8b0", "all", ('ml', 222, r'^1 fl oz$', "1 drink (222 ml)"),
+     note="USDA FNDDS 2710644 'Mojito' (USDA's standard recipe: rum, lime, sugar, soda, mint; 7.6 g alcohol per 100 g); 1 drink = 225 g = 222 ml (FNDDS 1 fl oz = 30 g). Free sugars: all (syrup and juice).")
+ask("mojito", "Which cocktail?", "Mojito")
+_CK = [  # (key, chip, name, FNDDS id, ml, free rule or None, aliases)
+    ("gin-tonic", "Gin and tonic", "Gin and tonic", 2710633, 222, None, ["gin tonic", "gin and tonic", "gin & tonic", "g&t", "gin tonik", "džin tonik", "dzin tonik", "gin s tonikom"]),
+    ("vodka-tonic", "Vodka tonic", "Vodka and tonic", 2710670, 222, None, ["vodka tonic", "vodka and tonic", "vodka tonik", "votka tonik", "vodka s tonikom"]),
+    ("margarita", "Margarita", "Margarita", 2710638, 222, None, ["margarita", "margarita cocktail", "frozen margarita", "margarita koktel", "tommy's margarita"]),
+    ("daiquiri", "Daiquiri", "Daiquiri", 2710630, 222, None, ["daiquiri", "daikiri", "strawberry daiquiri", "frozen daiquiri"]),
+    ("old-fashioned", "Old fashioned", "Old fashioned", 2710646, 177, None, ["old fashioned", "old-fashioned", "old fashioned cocktail"]),
+    ("martini", "Martini", "Martini", 2710639, 118, None, ["martini", "dry martini", "gin martini", "vodka martini", "martini koktel"]),
+    ("manhattan", "Manhattan", "Manhattan", 2710637, 118, None, ["manhattan", "manhattan cocktail"]),
+    ("bloody-mary", "Bloody Mary", "Bloody Mary", 2710628, 222, "null", ["bloody mary", "bloody marry", "krvava meri", "bloody caesar"]),
+    ("moscow-mule", "Moscow mule", "Moscow mule", 2710645, 222, None, ["moscow mule", "moskovska mazga", "vodka ginger beer"]),
+    ("mimosa", "Mimosa", "Mimosa", 2710642, 177, None, ["mimosa", "mimoza", "buck's fizz", "bucks fizz"]),
+    ("whiskey-sour", "Whiskey sour", "Whiskey sour", 2710654, 222, None, ["whiskey sour", "whisky sour", "amaretto sour", "viski sour"]),
+    ("tequila-sunrise", "Tequila sunrise", "Tequila sunrise", 2710678, 222, None, ["tequila sunrise", "tekila sunrise"]),
+    ("screwdriver", "Screwdriver", "Screwdriver", 2710650, 222, None, ["screwdriver", "vodka orange", "vodka and orange juice", "vodka s narančom", "vodka s narancom", "vodka sok od naranče"]),
+    ("white-russian", "White Russian", "White Russian", 2710673, 222, "upper", ["white russian", "bijeli rus", "white russian cocktail"]),
+    ("mai-tai", "Mai tai", "Mai tai", 2710677, 177, None, ["mai tai", "maitai"]),
+    ("tom-collins", "Tom Collins", "Tom Collins", 2710653, 222, None, ["tom collins", "gin fizz", "john collins"]),
+]
+for _k, _chip, _nm, _id, _ml, _free, _al in _CK:
+    var("mojito", _k, _chip, _nm, usda=_id, serving=('ml', _ml, r'^1 fl oz$', "1 drink (%d ml)" % _ml), free=_free, aliases=_al,
+        text="%s: values from the USDA FNDDS record %d (USDA's standard recipe for the drink, with its alcohol); 1 drink = %d ml." % (_nm, _id, _ml))
+var("red-wine", "sangria", "Sangria", "Sangria", usda=2710695, serving=('ml', 222, r'^1 fl oz$', "1 glass, 222 ml"), free="all",
+    aliases=["sangria", "sangrija", "red sangria", "sangria tinto"],
+    text="Sangria: values from the USDA FNDDS record 'Sangria, red' (wine with fruit juice and sugar, 8 g alcohol per 100 g); 1 glass = 222 ml.")
+add3("hard-seltzer", "Hard seltzer", ["hard seltzer", "spiked seltzer", "white claw", "alkoholna gazirana voda", "seltzer alcohol"], "liquid",
+     2710622, "#e4f0f2", "none", ('ml', 355, r'^1 fl oz$', "1 can (355 ml)"),
+     note="USDA FNDDS 2710622 'Hard seltzer' (3.2 g alcohol per 100 g, about 4-5% by volume, 0 g sugar); 1 can = 12 fl oz = 355 ml.")
+
+# ---- coffee shop
+ask("latte", "Which latte?", "Whole milk")
+var("latte", "iced", "Iced", "Iced latte", usda=2710431, serving=('ml', 355, r'^1 fl oz$', "1 small (355 ml)"), free="none", gi="inherit", words=["ledeni"],
+    aliases=["iced latte", "ledeni latte", "latte on ice", "iced caffe latte", "iced coffee latte"],
+    text="Iced latte: values from the USDA FNDDS record 'Coffee, Iced Latte' (espresso and milk over ice); 1 small = 12 fl oz (355 ml). All its sugar is milk sugar.")
+var("latte", "flavored", "Flavored", "Flavored latte", usda=2710389, serving=('ml', 355, r'^1 fl oz$', "1 small (355 ml)"), free="minusLactose",
+    aliases=["flavored latte", "vanilla latte", "caramel latte", "hazelnut latte", "pumpkin spice latte", "psl", "caramel macchiato", "latte macchiato caramel", "latte s vanilijom", "latte s karamelom", "syrup latte"],
+    text="Flavored latte: values from the USDA FNDDS record 'Coffee, Latte, flavored' (with syrup); 1 small = 12 fl oz (355 ml). A caramel macchiato is a vanilla latte with caramel, so it uses this record.")
+var("latte", "mocha", "Mocha", "Mocha", usda=2710410, serving=('ml', 355, r'^1 fl oz$', "1 small (355 ml)"), free="minusLactose",
+    aliases=["mocha", "cafe mocha", "caffe mocha", "café mocha", "mocha latte", "mocha coffee", "kava s čokoladom", "kava s cokoladom", "mochaccino"],
+    text="Mocha: values from the USDA FNDDS record 'Coffee, Cafe Mocha' (espresso, milk and chocolate syrup); 1 small = 12 fl oz (355 ml).")
+var("latte", "iced-mocha", "Iced mocha", "Iced mocha", usda=2710443, serving=('ml', 355, r'^1 fl oz$', "1 small (355 ml)"), free="minusLactose",
+    aliases=["iced mocha", "iced cafe mocha", "iced caffe mocha", "ledena mocha"],
+    text="Iced mocha: values from the USDA FNDDS record 'Coffee, Iced Cafe Mocha'; 1 small = 12 fl oz (355 ml).")
+var("filter-coffee", "iced", "Iced", "Iced coffee", usda=2710375, serving=('ml', 355, r'^1 fl oz$', "1 glass, 355 ml"), words=["ledena"],
+    aliases=["iced coffee", "ledena kava", "ice coffee", "iced black coffee", "kava s ledom"],
+    text="Iced coffee: brewed coffee over ice, values from the USDA FNDDS record 'Coffee, brewed' (40 mg caffeine per 100 g); 1 glass = 12 fl oz (355 ml). Sugar or milk: add them.")
+var("filter-coffee", "cold-brew", "Cold brew", "Cold brew coffee", usda=2710375, serving=('ml', 355, r'^1 fl oz$', "1 glass, 355 ml"), proxy=True,
+    aliases=["cold brew", "cold brew coffee", "cold brewed coffee", "hladno kuhana kava"],
+    text="Cold brew has no USDA record; USDA FNDDS brewed coffee stands in (40 mg caffeine per 100 g, about 140 mg in 355 ml). Cold brews are often stronger: check the label if you know it.")
+
+# ---- soft drinks, sports and fermented drinks
+for _id, _nm, _rec, _al, _col, _why in (
+        ("lemon-lime-soda", "Lemon-lime soda", 173205, ["sprite", "seven up", "lemon-lime soda", "lemon lime soda", "lemon soda", "sierra mist", "gazirani sok od limuna"], "#e8f2c8", "SR Legacy 173205 'Beverages, carbonated, lemon-lime soda, no caffeine'"),
+        ("ginger-ale", "Ginger ale", 174846, ["ginger ale", "gingerale", "canada dry", "đumbirov sok gazirani", "dumbirov sok gazirani"], "#e8d49a", "SR Legacy 174846 'Beverages, carbonated, ginger ale'"),
+        ("tonic-water", "Tonic water", 171869, ["tonic", "tonic water", "tonik", "schweppes tonic", "indian tonic", "bitter lemon"], "#eef4f2", "SR Legacy 171869 'Beverages, carbonated, tonic water'"),
+        ("root-beer", "Root beer", 171871, ["root beer", "rootbeer", "a&w root beer", "sarsaparilla"], "#5a2a14", "SR Legacy 171871 'Beverages, carbonated, root beer'")):
+    add3(_id, _nm, _al, "liquid", _rec, _col, "all", ('ml', 355, r'fl oz', "1 can (355 ml)"), gi="softdrink",
+         note="USDA %s; 1 can = 12 fl oz (355 ml). Free sugars: all (soft drink). GI: the Table 1 soft drink/soda average." % _why)
+add3("fruit-soda", "Orange soda", ["fanta", "orange soda", "oranžada", "oranzada", "gazirani sok od naranče", "gazirani sok od narance", "fruit soda", "orangina"], "liquid",
+     2710551, "#f39a1c", "all", ('ml', 355, r'no ice', "1 can (355 ml)"), gi="softdrink",
+     note="USDA FNDDS 2710551 'Soft drink, fruit flavored, caffeine free' (orange and other fruit sodas); 1 can = 12 fl oz (355 ml). The SR Legacy orange soda record has no sugar value, so the FNDDS record is used.")
+add3("sports-drink", "Sports drink", ["sports drink", "gatorade", "isotonic drink", "izotonični napitak", "izotonicni napitak", "izotonik", "sportski napitak", "electrolyte drink", "sportsko piće", "sportsko pice"], "liquid",
+     2710771, "#7ad0e8", "all", ('ml', 591, r'^1 fl oz$', "1 bottle (591 ml)"), gi="softdrink",
+     note="USDA FNDDS 2710771 'Sports drink, NFS' (the same values as Gatorade); 1 bottle = 20 fl oz (591 ml). Free sugars: all. GI: the Table 1 soft drink/soda average (sports drinks were tested only in small studies, Atkinson 2021 Suppl. Table 2).")
+ask("sports-drink", "Which sports drink?", "Regular")
+var("sports-drink", "powerade", "Powerade", "Powerade", usda=2710770, serving=('ml', 591, r'^1 fl oz$', "1 bottle (591 ml)"), gi="inherit",
+    aliases=["powerade", "power ade", "poweraid"], text="Powerade: values from the USDA FNDDS record 'Sports drink (Powerade)'; 1 bottle = 20 fl oz (591 ml).")
+var("sports-drink", "zero", "Low calorie", "Low-calorie sports drink", usda=2710774, serving=('ml', 591, r'^1 fl oz$', "1 bottle (591 ml)"), gi="inherit",
+    aliases=["gatorade zero", "g2", "gatorade g2", "powerade zero", "sugar-free sports drink", "zero sports drink", "low calorie sports drink"],
+    text="Low-calorie sports drink: values from the USDA FNDDS record 'Sports drink, low calorie'; 1 bottle = 20 fl oz (591 ml).")
+add3("kombucha", "Kombucha", ["kombucha", "kombuča", "kombuca", "kombucha tea", "čajna gljiva", "cajna gljiva"], "liquid",
+     2710509, "#d9a85a", "upper", ('ml', 355, r'no ice', "1 bottle (355 ml)"), gi="softdrink",
+     note="USDA FNDDS 2710509 'Tea, kombucha' (4 g sugar and 11 mg caffeine per 100 g); 1 bottle = 12 fl oz (355 ml). Upper-bound free sugars (sugar added for the fermentation, no split). GI: the Table 1 soft drink/soda average, the nearest tested class.")
+
+# ---- snacks, desserts
+add3("granola-bar", "Granola bar", ["granola bar", "granola bars", "muesli bar", "müsli pločica", "musli plocica", "žitna pločica", "zitna plocica", "cereal bar", "nature valley", "oat bar"], "solid",
+     167542, "#c99a52", "upper", ('p', r'bar \(1 oz\)', "1 bar"), gi="t21_cereal_bars",
+     note="USDA SR Legacy 167542 'Snacks, granola bars, hard, plain'; 1 bar = 28 g. Upper-bound free sugars.")
+add3("protein-bar", "Protein bar", ["protein bar", "protein bars", "proteinska pločica", "proteinska plocica", "proteinske pločice", "high protein bar", "energy bar", "energetska pločica", "energetska plocica"], "solid",
+     2708122, "#8a5a3a", "upper", ('p', r'^1 bar$', "1 bar"), proxy=True, gi="t21_protein_bar",
+     note="USDA FNDDS 2708122 'Nutrition bar (Snickers Marathon Protein Bar)': a typical 80 g high-protein bar (20 g protein per bar); FNDDS's own 'Nutrition bar, NFS' is a 34 g meal bar with 7.6 g protein, not what people mean by a protein bar. Bars differ a lot by brand. Upper-bound free sugars.")
+add3("beef-jerky", "Beef jerky", ["beef jerky", "jerky", "sušena govedina", "susena govedina", "govedina sušena", "slim jim"], "solid",
+     2705860, "#7a3a20", "upper", ('p', r'Quantity not specified', "1 portion (30 g)"),
+     note="USDA FNDDS 2705860 'Beef jerky' (9 g sugar per 100 g from the marinade); the FNDDS default amount, 30 g. Upper-bound free sugars.")
+add3("brownie", "Brownie", ["brownie", "brownies", "brauni", "browni", "čokoladni brownie", "cokoladni brownie", "fudge brownie"], "solid",
+     2707904, "#4a2814", "upper", ('p', r'^1 medium$', "1 brownie"), gi="t21_brownie",
+     note="USDA FNDDS 2707904 'Cookie, brownie, without icing'; 1 medium brownie = 50 g. Upper-bound free sugars.")
+add3("apple-pie", "Apple pie", ["apple pie", "pita od jabuka", "pita s jabukama", "jabučna pita", "jabucna pita", "slice of apple pie", "apple pie slice"], "solid",
+     2707995, "#d9a45a", "upper", ('p', r'^1 regular slice$', "1 slice"),
+     note="USDA FNDDS 2707995 'Pie, apple' (US double-crust pie); 1 regular slice = 150 g. Croatian pita od jabuka (thin sheets) is close in kind. Upper-bound free sugars.")
+add3("pudding", "Pudding (chocolate)", ["pudding", "puding", "chocolate pudding", "čokoladni puding", "cokoladni puding", "puding od čokolade", "pudding cup"], "semi",
+     2705694, "#7a4a2a", "upper", ('p', r'snack size', "1 cup (110 g)"),
+     note="USDA FNDDS 2705694 'Pudding, chocolate, ready-to-eat'; 1 snack-size cup = 110 g. Upper-bound free sugars (the milk sugar is included).")
+ask("pudding", "Which pudding?", "Chocolate")
+var("pudding", "vanilla", "Vanilla", "Vanilla pudding", usda=2705692, serving=('p', r'snack size', "1 cup (110 g)"), words=["vanilije", "vanilin"],
+    aliases=["vanilla pudding", "puding od vanilije", "vanilin puding", "puding vanilija"],
+    text="Vanilla pudding: values from the USDA FNDDS record 'Pudding, flavors other than chocolate, ready-to-eat'; 1 cup = 110 g.")
+add3("candy-bar", "Candy bar (peanut and caramel)", ["snickers", "snikers", "candy bar", "chocolate candy bar", "čokoladica s kikirikijem", "cokoladica s kikirikijem", "peanut caramel bar"], "solid",
+     169589, "#6a3a1a", "upper", ('p', r'\(2 oz\)', "1 bar (57 g)"),
+     note="USDA SR Legacy 169589 'Candies, MARS SNACKFOOD US, SNICKERS Bar'; 1 bar = 57 g (2 oz). Upper-bound free sugars.")
+ask("candy-bar", "Which bar?", "Peanut caramel")
+var("candy-bar", "twix", "Cookie bar", "Caramel cookie bar", usda=168768, serving=('p', r'^package \(2 oz\)', "1 pack (57 g)"), gi="t21_twix",
+    aliases=["twix", "twiks", "caramel cookie bar"], text="Caramel cookie bar: values from the USDA SR Legacy record for TWIX Caramel Cookie Bars; 1 pack of 2 bars = 57 g.")
+var("candy-bar", "kitkat", "Wafer bar", "Chocolate wafer bar", usda=167992, serving=('p', r'bar \(1\.5 oz\)', "1 bar (42 g)"), gi="t21_kitkat",
+    aliases=["kit kat", "kitkat", "kit-kat", "chocolate wafer bar"], text="Chocolate wafer bar: values from the USDA SR Legacy record 'Candies, KIT KAT Wafer Bar'; 1 bar = 42 g.")
+var("candy-bar", "nougat", "Nougat bar", "Caramel nougat bar", usda=168756, serving=('p', r'2\.05 oz', "1 bar (58 g)"), gi="t21_milky_way",
+    aliases=["milky way", "mars", "mars bar", "mars čokoladica", "mars cokoladica", "caramel nougat bar"],
+    text="Caramel nougat bar: values from the USDA SR Legacy record for the US MILKY WAY Bar (the bar sold as Mars in Europe); 1 bar = 58 g.")
+var("candy-bar", "mms", "Candies", "Chocolate candies", usda=169583, serving=('p', r'1\.69 oz', "1 pack (48 g)"),
+    aliases=["m&m's", "m&ms", "m&m", "m and ms", "mms", "chocolate candies", "smarties"],
+    text="Chocolate candies: values from the USDA SR Legacy record for M&M's Milk Chocolate Candies; 1 pack = 48 g.")
+var("cake-sponge", "cupcake", "Cupcake", "Cupcake", usda=2707866, serving=('p', r'^1 regular cupcake$', "1 cupcake"), gi="t21_cupcake",
+    aliases=["cupcake", "cupcakes", "kapkejk", "kapkejkovi", "chocolate cupcake", "frosted cupcake"],
+    text="Cupcake: values from the USDA FNDDS record 'Cake or cupcake, chocolate with chocolate icing, bakery'; 1 cupcake = 90 g.")
+var("ice-cream", "gelato", "Gelato", "Gelato", usda=2705636, serving=('p', r'^1 small ice cream cup$', "1 small cup"), gi="inherit",
+    aliases=["gelato", "talijanski sladoled", "gelato vanilla", "italian ice cream"],
+    text="Gelato: values from the USDA FNDDS record 'Gelato, vanilla'; 1 small cup = 160 g.")
+var("ice-cream", "froyo", "Frozen yogurt", "Frozen yogurt", usda=2705452, serving=('p', r'^1 small ice cream cup$', "1 small cup"), gi="t21_froyo",
+    aliases=["frozen yogurt", "frozen yoghurt", "froyo", "smrznuti jogurt", "jogurt sladoled", "frozen jogurt"],
+    text="Frozen yogurt: values from the USDA FNDDS record 'Frozen yogurt, vanilla'; 1 small cup = 160 g.")
+
+# ---- mains
+var("chicken-breast", "grilled", "Grilled", "Grilled chicken breast", usda=2705968, serving=('p', r'Quantity not specified', "1 breast"), words=["na zaru", "rostilja"],
+    aliases=["grilled chicken", "grilled chicken breast", "chicken breast grilled", "piletina na žaru", "piletina na zaru", "pileća prsa na žaru", "pilece prsa na zaru", "piletina s roštilja", "piletina s rostilja"],
+    text="Grilled chicken breast: values from the USDA FNDDS record 'Chicken breast, grilled without sauce, skin not eaten' (salted as eaten in the survey); 1 medium breast = 120 g.")
+add3("meatballs", "Meatballs (in sauce)", ["meatballs", "meatball", "ćufte", "cufte", "polpete", "mesne okruglice", "okruglice od mesa", "ćuftice", "cuftice", "polpette"], "solid",
+     2706467, "#9a4a2a", "null", ('p', r'Quantity not specified', "3 meatballs"),
+     piece=("meatball", 43, "USDA FNDDS portion: 1 meatball with sauce = 43 g"),
+     note="USDA FNDDS 2706467 'Meatballs, NS as to type of meat, with sauce'; the FNDDS default amount 129 g = 3 meatballs of 43 g. A typed number counts meatballs.")
+add3("potato-baked", "Baked potato", ["baked potato", "baked potatoes", "jacket potato", "krumpir u ljusci", "pečeni krumpir u ljusci", "peceni krumpir u ljusci", "krumpir pečen u ljusci", "loaded baked potato"], "solid",
+     2709524, "#c8a060", "none", ('p', r'^1 medium$', "1 potato"), gi="t21_baked_potato",
+     note="USDA FNDDS 2709524 'Potato, baked, peel eaten' (salted as eaten in the survey); 1 medium potato = 285 g. Butter, sour cream or cheese on top are not counted.")
+add3("chili", "Chili con carne", ["chili", "chilli", "chili con carne", "chilli con carne", "čili", "cili", "čili kon karne", "cili kon karne", "chili with beans", "beef chili"], "solid",
+     2706375, "#a8402a", "null", ('p', r'Quantity not specified', "1 bowl, 255 g"),
+     note="USDA FNDDS 2706375 'Chili with meat and beans'; the FNDDS default amount, 255 g (1 cup).")
+add3("quinoa", "Quinoa (cooked)", ["quinoa", "kvinoja", "kinoa", "kvinoa", "cooked quinoa", "kuhana kvinoja"], "solid",
+     2708400, "#e0d0a0", "none", ('p', r'Quantity not specified', "1 cup, 170 g"), gi="t21_quinoa",
+     note="USDA FNDDS 2708400 'Quinoa, no added fat' (cooked, salted as eaten in the survey); 1 cup = 170 g.")
+add3("falafel", "Falafel (chickpea patties)", ["falafel", "falafeli", "falafela", "felafel", "falafel balls", "falafel kuglice"], "solid",
+     2707408, "#a8783a", "null", ('g', 85, "5 balls", "USDA FNDDS portion: 1 patty = 17 g; 5 pieces is our assumption of a portion"),
+     piece=("ball", 17, "USDA FNDDS portion: 1 patty = 17 g"),
+     note="USDA FNDDS 2707408 'Falafel' (deep-fried chickpea patties). A typed number counts falafel balls.")
+next(e for e in E if e["id"] == "kebab")["aliases"].extend(["shawarma", "shawerma", "šaverma", "saverma", "shawarma wrap", "chicken shawarma"])
+CHANGED_ON_PURPOSE["kebab"] += "; 2026-11-17 coverage round: aliases 'shawarma' (the same kind of spit-roasted meat in bread)"
+next(e for e in E if e["id"] == "cola")["aliases"].extend(["coke", "coca-cola classic"])
+CHANGED_ON_PURPOSE["cola"] = "2026-11-17 coverage round: alias 'coke'"
+next(e for e in E if e["id"] == "diet-cola")["aliases"].extend(["diet coke", "coke zero", "coca-cola zero", "coca cola zero sugar", "diet pepsi", "coke light"])
+CHANGED_ON_PURPOSE["diet-cola"] = "2026-11-17 coverage round: aliases 'diet coke', 'coke zero', 'diet pepsi'"
+
+# Caesar salad: builder (the dressing is on by default, the chicken one tap away)
+add3("caesar-salad", "Caesar salad", ["caesar salad", "caesar", "cezar salata", "cezar", "caesar salata", "salata cezar", "cesar salad"], "solid",
+     2709591, "#9cc06a", "null", ('p', r"Wendy's side salad", "1 salad"),
+     note="USDA FNDDS 2709591 'Caesar salad, with romaine, no dressing' (romaine, croutons, parmesan); 1 salad = 113 g (FNDDS side salad). The dressing is a builder part, on by default.")
+CS = "USDA FNDDS 2021-2023: 2709591 Caesar salad, 2710199 Caesar dressing, 2705968 grilled chicken breast; 21 CFR 101.12 (dressing reference amount 30 g)"
+builder("caesar-salad", "What's on it?", [
+    grp("base", "Salad", [opt("base", "Caesar salad", "caesar salad", "caesar-salad", on=True, level="A",
+        src="Caesar salad: USDA FNDDS 'Caesar salad, with romaine, no dressing' (romaine, croutons, parmesan), 113 g.")], one=True),
+    grp("extra", "Extras", [
+        opt("dressing", "Dressing", "caesar dressing", (2710199, "null"), 29, rng=(15, 44), on=True, words=["dressingom", "dressing", "preljevom"], cite=CS, url=FNU,
+            src="Caesar dressing: 29 g, the USDA FNDDS default amount (about 2 tablespoons; the US label reference amount for dressings is 30 g); a packet is 44 g."),
+        opt("chicken", "Chicken", "grilled chicken", (2705968, "none"), 85, rng=(60, 120), words=["piletinom", "chicken"], aliases=["chicken caesar", "chicken caesar salad", "cezar salata s piletinom", "caesar s piletinom", "grilled chicken caesar"], cite=CS, url=FNU,
+            src="Grilled chicken: 85 g (3 oz), a large slice of USDA FNDDS grilled chicken breast (60–120 g on restaurant salads)."),
+    ]),
+], "Caesar salad is our builder: USDA FNDDS Caesar salad with its dressing on by default, chicken one tap away.",
+    ask="Which Caesar?", unit="salad", base_is_default=True, serving_label="1 salad", cite=CS, url=FNU)
+
+# Builder options where a builder already exists
+next(g for g in BUILD["hamburger"]["groups"] if g["k"] == "type")["opts"].append(
+    opt("chicken", "Chicken", "chicken sandwich", (2707003, "null"), 140, level="A",
+        aliases=["chicken sandwich", "chicken burger", "crispy chicken sandwich", "fried chicken sandwich", "chicken fillet sandwich", "mcchicken", "pileći burger", "pileci burger", "burger s piletinom"],
+        src="Chicken sandwich: USDA FNDDS 'Chicken fillet sandwich, fried, from fast food', 140 g (regular).", cite="USDA FNDDS 2021-2023 2707003", url=FNU, **BGGI))
+_sw = next(g for g in BUILD["sandwich-ham"]["groups"] if g["k"] == "type")["opts"]
+_sw.append(opt("grilled-cheese", "Grilled cheese", "grilled cheese sandwich", (2705801, "null"), 116, level="A",
+    aliases=["grilled cheese", "grilled cheese sandwich", "cheese toastie", "toasted cheese sandwich", "tost sa sirom", "tost s sirom", "sendvič sa sirom", "sendvic sa sirom"],
+    src="Grilled cheese: USDA FNDDS 'Grilled cheese sandwich, NFS', 116 g.", cite="USDA FNDDS 2021-2023 2705801", url=FNU))
+_sw.append(opt("club", "Club", "club sandwich", (2706993, "null"), 130, level="A",
+    aliases=["club sandwich", "clubhouse sandwich", "klub sendvič", "klub sendvic", "turkey club"],
+    src="Club sandwich: USDA FNDDS 'Club sandwich on white' (turkey or chicken, bacon, lettuce, tomato), 130 g.", cite="USDA FNDDS 2021-2023 2706993", url=FNU))
+_sw.append(opt("pbj", "PB&J", "peanut butter and jelly sandwich", (2707555, "upper"), 112, level="A",
+    aliases=["peanut butter and jelly sandwich", "peanut butter and jelly", "pb&j", "pbj", "pb and j", "peanut butter jelly sandwich", "sendvič s maslacem od kikirikija i džemom"],
+    src="Peanut butter and jelly sandwich: USDA FNDDS record on white bread, 112 g. Its jelly sugar counts as free sugar (upper bound).", cite="USDA FNDDS 2021-2023 2707555", url=FNU))
+
+# Choosers: the new foods join the "Which …?" rows of their words
+def _chooser_add(k, opts):
+    next(c for c in CHOOSE if c["k"] == k)["opts"].extend(opts)
+_chooser_add("eggs", [("scrambled-eggs", "Scrambled")])
+_chooser_add("potato", [("potato-baked", "Baked"), ("hash-browns", "Hash browns")])
+_chooser_add("cereal", [("granola", "Granola")])
+_chooser_add("salad", [("caesar-salad", "Caesar")])
+_chooser_add("snacks", [("tortilla-chips", "Tortilla chips"), ("granola-bar", "Granola bar")])
+_chooser_add("sweets", [("candy-bar", "Candy bar"), ("brownie", "Brownie")])
+
+for _id in NEW_2026_11_17:
+    CHANGED_ON_PURPOSE.setdefault(_id, "2026-11-17 coverage round: new food (USDA SR Legacy or FNDDS record; research/tools/fooddb_spec.py COVERAGE 2026-11-17)")
+
+# ---- round 2 of the same day: risotto (closest FNDDS record) and a hot dog in its bun
+add3("risotto", "Risotto (creamy rice with cheese)", ["risotto", "rižoto", "rizoto", "rižot", "risotto ai funghi", "mushroom risotto", "rižoto s gljivama", "rizoto s gljivama", "cheese risotto", "creamy rice"], "solid",
+     2709092, "#efe0b0", "null", ('p', r'^1 cup$', "1 plate, 204 g"), proxy=True, gi="t21_risotto_rice",
+     note="PROXY: no USDA record is called risotto. USDA FNDDS 2709092 'Rice, white, with cheese and/or cream based sauce' is the same kind of dish (white rice cooked creamy with cheese); 1 cup = 204 g. Risottos with mushrooms, seafood or more butter differ.")
+CHANGED_ON_PURPOSE.setdefault("risotto", "2026-11-17 coverage round: new food (USDA FNDDS proxy)")
+ask("frankfurter", "In a bun?", "Sausage only")
+var("frankfurter", "bun", "In a bun", "Hot dog in a bun", usda=2707056, serving=('p', r'^1 sandwich$', "1 hot dog"), gi="white_bread",
+    aliases=["hot dog in bun", "hot dog sandwich", "hotdog in bun", "hot dog s pecivom", "hot dog u pecivu", "hotdog u pecivu", "hot dog with bun"],
+    text="Hot dog in a bun: values from the USDA FNDDS record 'Hot dog sandwich, NFS, on white bun'; 1 hot dog = 102 g. Its carbohydrate is the white bun, so it counts at the white-bread GI (no hot dog was tested).")

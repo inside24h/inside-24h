@@ -116,9 +116,11 @@ const PORTION_ML: [RegExp, number, PortionWord][] = [
 // All level C (our assumption) and shown as "≈ … ml" so people can type the exact amount instead.
 // A bottle of wine is 750 ml (EU nominal quantity for still wine, Directive 2007/45/EC). Croatian beer cans and bottles
 // are mainly 0.5 l (Ožujsko, Karlovačko), so a can of beer is 500 ml; 0.33 l exists too and can be typed as "330 ml".
+// Vodka, gin, rum, tequila, whiskey (2026-11-17, one food with variants): one pour is the database shot, 44 ml (USDA
+// FNDDS 1 shot = 1.5 fl oz).
 const PORTION_BY_FOOD: Record<string, Partial<Record<PortionWord, number>>> = {
   'red-wine': { glass: 150, cup: 150, bottle: 750 }, 'white-wine': { glass: 150, cup: 150, bottle: 750 },
-  beer: { glass: 300, can: 500 }, rakija: { glass: 40, cup: 40, shot: 40 }, espresso: { cup: 30, glass: 30 },
+  beer: { glass: 300, can: 500 }, rakija: { glass: 40, cup: 40, shot: 40 }, vodka: { glass: 44, cup: 44, shot: 44 }, espresso: { cup: 30, glass: 30 },
 };
 /** ml of one portion word for this food: a per-drink size, else the food's own can size (energy drink 250 ml, a
  *  Monster 500 ml via its alias), else the word's default. */

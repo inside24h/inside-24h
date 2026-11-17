@@ -61,6 +61,9 @@ const KINDS: [(f: Food, n: string) => boolean, number, string][] = [
   [(_f, n) => /\b(breaded|schnitzel|calamari|nuggets)\b/.test(n), 42, 'breaded foods'],
   // S21 soups, median of all 21 rows 1719-1739, 48 (mean 49)
   [(_f, n) => /\b(soup|stew|salad)\b/.test(n) && !/\b(green|rocket|tomato|cucumber|lettuce)\b/.test(n), 48, 'soups and mixed dishes'],
+  // 2026-11-17 coverage round: mixed dishes from USDA FNDDS with no GI test of their own (burrito, tacos, pad Thai,
+  // chili …) take the same estimate and label as the row above; before, they fell to the last row ("vegetables")
+  [(_f, n) => /\b(burrito|taco|quesadilla|enchilada|fajita|nachos|pad thai|lo mein|chow mein|pho|teriyaki|orange chicken|general tso's|sesame chicken|chili con carne|lasagna|meatballs|caesar)\b/.test(n), 48, 'soups and mixed dishes'],
   // S21 legumes, median of all 32 rows 1278-1309, 36 (mean 34)
   [(_f, n) => /\b(bean|beans|lentil|lentils|chickpea|chickpeas|peas)\b/.test(n), 36, 'beans and lentils'],
   // S21 nuts, median of the three rows 1431-1433 (22, 21, 24): 22
