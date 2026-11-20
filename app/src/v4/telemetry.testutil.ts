@@ -5,9 +5,9 @@
 // <video>.timeline.json (npm run qc:render).
 import { AUDIT_PROFILE, auditCompare, auditSingle, type AuditItem } from './text-audit';
 import { drawCmpFrame, drawFrame, type CmpOverlay, type Light, type Overlay } from './share';
-import { after24Of, cmpName, gaugesAt } from './video-story';
+import { after24Of, bacPeakText, cmpName, gaugesAt, servingAmount } from './video-story';
 import { beatChapter, beatOrgans, camPlanOf, camSeedOf, camStyle, classOf, nextLead, shotOf, splitPlanOf, splitShot } from './video-cam';
-import { presentAt, SEG_FOCUS_V } from './video-body';
+import { plainSugar, presentAt, SEG_FOCUS_V } from './video-body';
 import { seedOf } from './video-hook';
 import { FPS, type Cut, type Plan } from './video-plan';
 import { sceneOf, teleScene, teleStart, teleStop, type Timeline } from './video-telemetry';
@@ -69,8 +69,9 @@ export function filmCompareTimeline(a: Analysis, b: Analysis, cut: Cut): Timelin
     teleScene({ ...sa, shotB: sb.shot, litB: sb.lit, topicB: sb.topic });
     const side = (x: Analysis, cap: string | undefined): CmpOverlay['a'] => {
       const gs = gaugesAt(x.built, m, 'mmol/L', x.glucose !== undefined), gg = gs.find((z) => z.curve) ?? gs[0];
-      return { name: cmpName(x.label), color: x.color, step: x.built.story.chapters[0].title, caption: cap ?? '', sugar: '', sugarLevel: 0, lights: LIGHTS, serving: x.serving,
-        gauge: gg ? { ...gg, at: null } : null, alcohol: (x.built.alcoholG ?? 0) > 1, summary: { kcal: x.kcal, sugarPeak: 'steady', worst: LIGHTS.map((l) => ({ ...l, note: 'fine all day' })) } } as CmpOverlay['a'];
+      // (phase 4j: the end card's blood sugar line and the serving as AppV4 startCompare says them)
+      return { name: cmpName(x.label), color: x.color, step: x.built.story.chapters[0].title, caption: cap ?? '', sugar: '', sugarLevel: 0, lights: LIGHTS, serving: servingAmount(x),
+        gauge: gg ? { ...gg, at: null } : null, alcohol: (x.built.alcoholG ?? 0) > 1, summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, '', x.macros.availCarbs), bac: bacPeakText(x.built), worst: LIGHTS.map((l) => ({ ...l, note: 'fine all day' })) } } as CmpOverlay['a'];
     };
     const ov = { hook: c.hook, guess: !!g, clock: '22:00', progress: fr.u ?? 0, handle: '@inside24h', verdict: c.cp.verdict, answer: g ? { a1: g.answer1, a2: g.answer2, recap: g.recap, kind: g.kind, winner: g.winner } : undefined,
       a: side(a, fr.cap), b: side(b, fr.capB) } as CmpOverlay;

@@ -48,7 +48,7 @@ function singlePlanOf(x: Analysis, cut: Cut, p: Profile = P, v: 'A' | 'B' = 'A')
     alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: b.energy.total,
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p) };
   const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
+  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin), (m, u) => whereCard(b, m, u)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
   const payoff = payoffMinOf(stops, hook);
   const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hook), payoffMin: payoff, drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin,
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };

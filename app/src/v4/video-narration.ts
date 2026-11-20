@@ -195,7 +195,7 @@ export const CLOCK = /\b\d{1,2}(?::\d\d)?\s?(?:AM|PM)\b|\b\d\d:\d\d\b/;
 export const CLEAR_TIME = /^(?!Half\b)(?:.*?)\b(?:gone|clear\w*|out of your blood|burns? it off|break it down)\b[^.]*\b\d+(?:[.,]\d+)?(?:–\d+)?\s*(?:hours?|minutes?|h)\b|\b\d+(?:–\d+)?\s*(?:hours?|h)\b[^.]*\b(?:to clear|cleared|gone|clear it|break it down|burns? it off|liver work)\b/i;
 /** v23b (editor: "About three quarters of the caffeine remains." had no when): a line about what is still there says when */
 export const STATE = /\b(?:remains?|still (?:in|there|working|here)|is left|left in you)\b/i;
-export const ANCHOR = /\b(?:bedtime|morning|night|tonight|tomorrow|now|at \d|after|hours?|minutes?|later|by|until|day|in)\b/i; // (phase 4e: "tomorrow", the day-later hooks)
+export const ANCHOR = /\b(?:bedtime|morning|night|tonight|tomorrow|now|at \d|after|hours?|minutes?|later|by|until|day|in|to bed)\b/i; // (phase 4e: "tomorrow", the day-later hooks; phase 4j: "when you go to bed?")
 export const unanchored = (x: string) => STATE.test(x) && !ANCHOR.test(x.replace(/\bstill in\b/gi, ''));
 /** v23b: the time a moment is at, said from the first sip ("5 hours in, …"; bedtime and morning by name) */
 export function whenLead(title: string, stop?: number): string {
@@ -368,30 +368,34 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   // 1. the hook: the hook card read out (its numbers are on it), else a line from the pool
   const hookT = Math.max(HOOK_QUIET_S + 0.1, 0.6);
   const hookSet = cmp ? (n.guess ? HOOKS.compareGuess : HOOKS.compare) : n.alcohol ? HOOKS.alcohol : n.caffeine ? HOOKS.caffeine : n.solid ? HOOKS.solid : HOOKS.drink;
-  const h1 = (n.hook?.line1 ?? '').trim(), h2 = (n.hook?.line2 ?? '').trim(), ends = (x: string) => /[.?!]$/.test(x);
+  // (phase 4j, full tier: "1 shot of vodka: 14 g of alcohol." said aloud made "1" a number of the video, and the answer
+  // "gone after about 1–5 hours" could no longer be said: a counted serving word is not read, "Vodka: 14 g of alcohol.";
+  // the card shows it)
+  const unCount = (x: string) => (n.kind === 'compare' ? x : x.replace(/^(?:\d+|½)\s+(?:(?:small|medium|large|restaurant|regular|standard)\s+)?(?:slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?|drinks?|plates?|mugs?)\s+of\s+(\S)/i, (_m, c: string) => c.toUpperCase()));
+  const h1 = (n.hook?.line1 ?? '').trim(), h2 = (n.hook?.line2 ?? '').trim(), ends = (x: string) => /[.?!]$/.test(x), s1 = unCount(h1), s2 = unCount(h2);
   const hookOpts: string[] = [];
-  if (cmp && n.guess && h1) { const q = cap1(h1.replace(/^Guess:\s*/i, '')); if (ends(q)) hookOpts.push(`${q} ${pick(GUESS_TAIL, s, 6)}`, q); }
-  else if (cmp && ends(h1)) hookOpts.push(h1);
+  if (cmp && n.guess && s1) { const q = cap1(s1.replace(/^Guess:\s*/i, '')); if (ends(q)) hookOpts.push(`${q} ${pick(GUESS_TAIL, s, 6)}`, q); }
+  else if (cmp && ends(s1)) hookOpts.push(s1);
   // (a question over a bare name, "How long does it stay in your blood? / Beer.", is said name first)
-  else if (ends(h1) && ends(h2) && /\?$/.test(h1) && wordsOf(h2) <= 4 && !/\d/.test(h2)) hookOpts.push(`${h2} ${h1}`, h1);
-  else if (ends(h1) && ends(h2)) hookOpts.push(`${h1} ${h2}`, /\?$/.test(h2) ? h2 : h1, /\?$/.test(h2) ? h1 : h2);
-  else if (ends(h1)) hookOpts.push(h1);
+  else if (ends(s1) && ends(s2) && /\?$/.test(s1) && wordsOf(s2) <= 4 && !/\d/.test(s2)) hookOpts.push(`${s2} ${s1}`, s1);
+  else if (ends(s1) && ends(s2)) hookOpts.push(`${s1} ${s2}`, /\?$/.test(s2) ? s2 : s1, /\?$/.test(s2) ? s1 : s2);
+  else if (ends(s1)) hookOpts.push(s1);
   // v21b (review: "What is left of it a day later?" before the food was named): every hook names the food first.
   // A question over the name is said name first; else "Ham sub: what is left of it a day later?"; a pool line too.
   // (the name without its amount: "1 slice of pizza with salami" → "Pizza with salami"; the amount is on the hook card)
-  const bare = (x: string) => cap1(x.trim().replace(/^[\d½.,]+\s+(?:(?:ml|g|l|cl|oz|slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?)\s+of\s+)?/i, '').replace(/\s+\d+(?:[.,]\d+)?\s*%\.?$/, ''));
+  const bare = (x: string) => cap1(x.trim().replace(/^[\d½.,]+\s+(?:(?:small|medium|large|restaurant|regular|standard)\s+)?(?:(?:ml|g|l|cl|oz|slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?|drinks?|plates?|mugs?)\s+of\s+)?/i, '').replace(/\s+\d+(?:[.,]\d+)?\s*%\.?$/, ''));
   const named = (cmp ? (n.names ?? ['', '']) : [n.name ?? '']).map(bare).filter((x) => x && (cmp ? !/\d\s*(?:ml|g|l|oz|×|x)\b/i.test(x) : !/\d/.test(x))); // (v22: a comparison keeps "2% milk")
   // v22: a comparison's hook names BOTH foods first ("Cod or muffin: which leaves first?", "Cod versus muffin: …")
   const lead = cmp ? (named.length === 2 ? `${named[0]} ${n.guess ? 'or' : 'versus'} ${lower1(named[1])}` : '') : (named[0] ?? '').split(/ with | in /)[0].replace(/ (?:made|cooked|served|topped|filled|mixed|fried|baked)$/i, ''); // (master audit 2026-11-12, C18: never "Oatmeal made:")
   const nameFirst = (x: string) => !lead || (cmp ? named.every((nm) => namesFirst(x, [nm])) : namesFirst(x, named));
-  const q = [h1, h2].find((x) => /\?$/.test(x)) ?? '';
-  const st = [h1, h2].find((x) => ends(x) && !/\?$/.test(x)) ?? '';
+  const q = [s1, s2].find((x) => /\?$/.test(x)) ?? '';
+  const st = [s1, s2].find((x) => ends(x) && !/\?$/.test(x)) ?? '';
   for (const x of [...hookOpts]) if (!nameFirst(x)) {
     const i = hookOpts.indexOf(x);
     if (st && q && x === `${q} ${st}` && nameFirst(st)) hookOpts.splice(i, 1, `${st} ${q}`);
     else hookOpts.splice(i, 1);
   }
-  const qq = cmp && n.guess ? cap1(h1.replace(/^Guess:\s*/i, '')) : q;
+  const qq = cmp && n.guess ? cap1(s1.replace(/^Guess:\s*/i, '')) : q;
   if (lead && qq && ends(qq)) hookOpts.push(`${lead}: ${lower1(qq, named)}`); // (the names make it long enough: the screen says "Guess")
   if (st && nameFirst(st) && !hookOpts.includes(st)) hookOpts.push(st);
   // v23: the arc's curiosity line between the food and the hook card's question ("150 ml of red wine. Your liver can't

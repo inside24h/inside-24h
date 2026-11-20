@@ -22,7 +22,7 @@ function shortOf(x: Analysis) {
   const ch = story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
   const hin = { name, chapters: ch, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: b.energy.total, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, P), decaf: decafOf(x.label, b, P) };
   const hook = hookFor(hin);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, P.drinkAtMin), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
+  const stops = applyHook(singleStops(story, beatCtx(name, b, P.drinkAtMin), (m, u) => whereCard(b, m, u)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
   const fx = { ...climaxFx(b, x.glucose !== undefined, ch, hook), payoffMin: payoffMinOf(stops, hook), drinkAtMin: P.drinkAtMin, wakeMin: P.wakeMin, lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   return { plan: singlePlan(stops, 'short', fx), stops, solid: hin.solid };
 }
@@ -59,9 +59,10 @@ describe('C13: Shorts keep a moment from the middle of the day', () => {
     expect(n).toBeGreaterThan(200);
     // (measured 2026-11-13: before 54 of 261 had no middle moment, 49 of them solid food; after 11, 8 solid. The rest
     // cannot fit the large intestine in 30 s next to their peak and payoff. Other stories end at their payoff, round 5.)
-    // 2026-11-17 coverage round: the database grew from about 260 to about 410 items (USDA FNDDS dishes), so the
-    // limits are shares of the Shorts now (were 10 solid / 12 in all at about 260 items; 21 / 27 of 416 measured).
-    expect(skipSolid).toBeLessThan(Math.max(10, Math.ceil(0.055 * n)));
-    expect(skip).toBeLessThanOrEqual(Math.max(12, Math.ceil(0.07 * n)));
+    // 2026-11-17 coverage round: the database grew from 261 to about 410 items (USDA FNDDS dishes). Phase 4j: the limits
+    // are the 261-item ones as the same shares, never looser (under 10 solid and at most 12 in all of 261 Shorts: at 261
+    // items exactly the old test); measured after phase 4j: 10 solid and 15 in all of 414
+    expect(skipSolid * 261).toBeLessThan(10 * n);
+    expect(skip * 261).toBeLessThanOrEqual(12 * n);
   }, 120000);
 });

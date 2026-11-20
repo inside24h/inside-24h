@@ -44,7 +44,7 @@ export interface Overlay {
   hook: string; title: string; sub: string; clock: string; step: string; caption: string;
   where?: string; color?: string; progress: number; lights: Light[];
   summary: (Light & { note: string })[]; handle: string;
-  /** round 14 (critic G-3): the end card's one big number: the main gauge at the climax, its words and its range */ hero?: { big: string; small: string };
+  /** round 14 (critic G-3): the end card's one big number: the main gauge at the climax, its words and its range */ hero?: { big: string; small: string; /** phase 4j: a series' highest value (said "Peak: …") */ peak?: boolean };
   /** phase 4b (critique M2): the value AT 24 h, the line under "AFTER 24 HOURS" (the hero is then labelled as the peak) */ after24?: { big: string; small: string };
   stamp?: string; // big 'X MIN LATER' line
   pop?: { big: string; small: string; level: 0 | 1 | 2 }; // headline number of this moment
@@ -1425,7 +1425,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   drawVignette(ctx, W, H, vignetteAlpha(cues, t));
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   const outS = plan?.outroS ?? OUTRO_S.long, E = endTiming(fr, outS);
-  let teleCard: string | undefined; // (phase 4h: the card as drawn, for the timeline)
+  let teleCard: string | undefined, teleNext = false; // (phase 4h: the card as drawn, for the timeline; phase 4j: the NEXT chip)
   // 2) gauges pinned to the organs: where the drink is (left), the number that matters (right)
   if (E.main > 0.001) {
     ctx.save(); ctx.globalAlpha = E.main * (fr.phase === 'intro' && fr.beat !== 'teaser' ? smooth((ti - 0.8) / 0.5) : 1);
@@ -1477,8 +1477,19 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     }
     shade(ctx, false);
     ctx.restore();
+    // (phase 4j, critique M6: a lull's card, about the whole body: how much it has taken up so far, video-plan withLullCards)
+    if (fr.beat === 'glide' && fr.gcap && (fr.gA ?? 0) > 0.001) {
+      const ga = E.main * (fr.gA ?? 1), gc = fitWrap(ctx, fr.gcap, RL - L, 2, Lo.capFs, 42, (px) => `600 ${px}px ${SANS}`);
+      const gy0 = S.bottom - 4 - (gc.lines.length - 1) * Lo.capLH - gc.px * 0.22;
+      ctx.save(); ctx.globalAlpha = ga; shade(ctx, true);
+      ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = ACCENT; text(ctx, fit(ctx, (fr.gtitle ?? '').toUpperCase(), RL - L), L, gy0 - gc.px * 0.86 - 16);
+      ctx.fillStyle = '#ffffff'; ctx.font = `600 ${gc.px}px ${SANS}`; gc.lines.forEach((ln, i) => text(ctx, ln, L, gy0 + i * Lo.capLH));
+      shade(ctx, false); ctx.restore();
+      if (ga >= 0.5) teleCard = `${(fr.gtitle ?? '').toUpperCase()} | ${fr.gcap}`;
+    }
     if (fr.beat === 'glide' && fr.next) {
       ctx.save(); ctx.globalAlpha = E.main * Math.max(0, 1 - 2 * (fr.plateA ?? 1));
+      if (ctx.globalAlpha >= 0.5) teleNext = true;
       drawNextChip(ctx, `NEXT · ${elapsedText(fr.next.min)} · ${fr.next.title}`, L, S.bottom - 62, RL - L, reel);
       ctx.restore();
     }
@@ -1487,7 +1498,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
   if (E.top > 0.001) { ctx.save(); ctx.globalAlpha = E.top; footer(ctx, W, H, format, u, plan?.stopsU); ctx.restore(); }
   if (fr.phase === 'outro') drawBodyOutro(ctx, W, H, o, E.end, format, Lo.topBot, fr.k * outS, outS <= OUTRO_S.short + 0.05);
   // (phase 4h: what this frame drew, for the video's timeline: only while one is recorded)
-  if (teleOn()) teleFrame(fr, { boxes: frameText ?? [], clock: E.top >= 0.5 ? elapsedText(fr.m) : undefined, card: teleCard, end: fr.phase === 'outro' ? E.end * (1 - E.first) : 0 });
+  if (teleOn()) teleFrame(fr, { boxes: frameText ?? [], clock: E.top >= 0.5 ? elapsedText(fr.m) : undefined, card: teleCard, next: teleNext, end: fr.phase === 'outro' ? E.end * (1 - E.first) : 0 });
   flushPins(ctx); // (phase 4g: last, clear of every word)
   if (fr.phase === 'outro' && first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
 }
@@ -1594,7 +1605,7 @@ export function layoutBodyOutro(ctx: CanvasRenderingContext2D, o: Overlay, forma
       if (o.after24.small && smalls) block('after24s', o.after24.small, reel ? 26 : 22, 18, 600, '#e6edf5', 1.15, reel ? 18 : 12);
     }
     if (o.hero) {
-      block('hero', o.after24 ? `Peak: ${o.hero.big}` : o.hero.big, reel ? (o.after24 ? 32 : 40) : (o.after24 ? 28 : 34), 22, 800, '#ffd27a', 1.08, smalls || bac ? 10 : reel ? 24 : 16);
+      block('hero', o.after24 && o.hero.peak ? `Peak: ${o.hero.big}` : o.hero.big, /* (phase 4j, M2: "Peak" only for a series' own highest value, never "Peak: At bedtime: 45 mg") */ reel ? (o.after24 ? 32 : 40) : (o.after24 ? 28 : 34), 22, 800, '#ffd27a', 1.08, smalls || bac ? 10 : reel ? 24 : 16);
       // (a BAC number keeps its body and limits on the card, B1: never left out)
       if (smalls || SHOWS_BAC.test(o.hero.small)) block('heros', o.hero.small, reel ? 26 : 22, 18, 600, '#e6edf5', 1.15, reel ? 24 : 16);
     }
@@ -1800,8 +1811,11 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     ctx.fillStyle = ACCENT; ctx.font = `700 21px ${SANS}`; ctx.textAlign = 'center'; text(ctx, 'VS', W / 2, Lo.nameY - 2); ctx.textAlign = 'left';
     // each side's moment: its title, its short card
     // (round 9: the cards leave before the NEXT chip comes in, never two texts cross-fading in one place)
-    ctx.save(); ctx.globalAlpha *= fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
-    const caps: [string, string][] = [[fr.title ?? o.a.step, fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' || isHushed(fr.capB, 1) ? '' : fr.capB ?? '']];
+    // (phase 4j, critique M6: a lull shows each body's "taken up so far" card, video-plan withLullCards)
+    const lullCard = fr.beat === 'glide' && !!(fr.gcap || fr.gcapB) && (fr.gA ?? 0) > 0.001;
+    ctx.save(); ctx.globalAlpha *= lullCard ? fr.gA ?? 1 : fr.beat === 'glide' && fr.next ? Math.max(0, 2 * (fr.plateA ?? 1) - 1) : fr.plateA ?? 1;
+    const caps: [string, string][] = lullCard ? [[fr.gtitle ?? '', fr.gcap ?? ''], [fr.gtitle ?? '', fr.gcapB ?? '']]
+      : [[fr.title ?? o.a.step, fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? ''], [fr.titleB ?? o.b.step, fr.phase === 'intro' || isHushed(fr.capB, 1) ? '' : fr.capB ?? '']];
     // (round 13, critic P1-3: wine vs beer showed the same sentence twice, side by side): one card across both columns
     // (phase 4h, critique M3: "Both · Blood sugar peak" while one side was past its peak: one card only when both
     // sides are at the same moment, the same title and the same words)
@@ -1831,7 +1845,8 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     ctx.restore();
   }
   // the game (spec §3.3): the guess, the open loop, the race out of the stomach and the scoreboard (lower part)
-  if (E.main > 0.001) drawSplitGame(ctx, W, H, o, fr, cues, Lo, E.main);
+  // (phase 4j: the guess's answer banner is the card on screen while it shows, for the timeline)
+  if (E.main > 0.001) { const ans = drawSplitGame(ctx, W, H, o, fr, cues, Lo, E.main); if (ans && E.main >= 0.5) teleCards.push(`ANSWER | ${ans}`); }
   if (fr.celeb !== undefined && fr.phase === 'main') drawCelebSplit(ctx, W, o, fr, cues, Lo);
   // top line: brand, hook, clock
   if (E.top > 0.001) {
@@ -1848,7 +1863,8 @@ export function drawSplitFrame(ctx: CanvasRenderingContext2D, W: number, H: numb
     ctx.restore();
   }
   if (fr.phase === 'outro') drawSplitOutro(ctx, W, H, o, E.end, Lo.topBot, fr.k * outS, cues);
-  if (teleOn()) teleFrame(fr, { boxes: frameText ?? [], clock: E.top >= 0.5 ? elapsedText(fr.m) : undefined, card: teleCards.join(' || ') || undefined, end: fr.phase === 'outro' ? E.end * (1 - E.first) : 0 });
+  if (teleOn()) teleFrame(fr, { boxes: frameText ?? [], clock: E.top >= 0.5 ? elapsedText(fr.m) : undefined, card: teleCards.join(' || ') || undefined,
+    next: fr.beat === 'glide' && !!fr.next && E.main * Math.max(0, 1 - 2 * (fr.plateA ?? 1)) >= 0.5, end: fr.phase === 'outro' ? E.end * (1 - E.first) : 0 }); // (phase 4j: the NEXT chip, drawSplitGame)
   flushPins(ctx); // (phase 4g: last, clear of every word)
   if (fr.phase === 'outro' && first && E.first > 0.001) { ctx.save(); ctx.globalAlpha = E.first; ctx.drawImage(first, 0, 0); ctx.restore(); }
 }
@@ -1870,7 +1886,7 @@ export function lighten(hex: string): string {
  *  stomach with a scoreboard of the four lights for each body. The race finish is a neutral "✓ OUT": never a trophy,
  *  never green, and with alcohol on one side "Faster out ≠ better for you." The verdict is verdictOf's only. */
 const SCOREBOARD = false;
-function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: CmpOverlay, fr: VFrame, cues: Plan['cues'] | undefined, Lo: ReturnType<typeof layoutSplit>, alpha: number) {
+function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: CmpOverlay, fr: VFrame, cues: Plan['cues'] | undefined, Lo: ReturnType<typeof layoutSplit>, alpha: number): string | null {
   const { S, L, R } = Lo, t = fr.t;
   ctx.save(); ctx.globalAlpha = alpha;
   // one chip at a time above the captions: the guess (intro), "Answer at 24 h." (half time), "Faster out ≠ …" (race)
@@ -1893,6 +1909,7 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
   if (chip) { ctx.save(); drawNextChip(ctx, chip, W / 2, Lo.capTop - 92, 2 * (S.rightLow - W / 2), true, true); ctx.restore(); } // (round 9: centred, so it clears the button column)
   // (round 6: with alcohol on either side the answer is neutral grey, never the winner's colour)
   if (showAns && ans) drawAnswer(ctx, W, Lo, ans, o.a.alcohol || o.b.alcohol ? '#8a9bb0' : [o.a, o.b][ans.winner].color, dec.age, ansS);
+  const shownAns = showAns && ans && dec.age >= 0.06 && dec.age < ansS - 0.15 ? `${ans.a1} ${ans.a2}` : null; // (phase 4j: at least half opaque)
   // the NEXT chip while the day runs on (the captions are away then)
   if (fr.beat === 'glide' && fr.next) {
     ctx.save(); ctx.globalAlpha *= Math.max(0, 1 - 2 * (fr.plateA ?? 1));
@@ -1923,6 +1940,7 @@ function drawSplitGame(ctx: CanvasRenderingContext2D, W: number, _H: number, o: 
     });
   });
   ctx.restore();
+  return shownAns;
 }
 
 /** The answer banner: "First out: Espresso." / "Out of the stomach in about 1 h.", over the bodies' middle, with a
@@ -1975,10 +1993,10 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
     const nm = fitWrap(ctx, s.name, cw - 40, 1, 44, 26, (px) => `400 ${px}px ${SERIF}`);
     ctx.fillStyle = '#ffffff'; ctx.font = `400 ${nm.px}px ${SERIF}`; text(ctx, fit(ctx, nm.lines[0] ?? s.name, cw - 40), x + 20, y + 54);
     ctx.fillStyle = '#e6edf5'; ctx.font = `700 30px ${SANS}`;
-    text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal`, cw - 40), x + 20, y + 98);
+    text(ctx, fit(ctx, `${Math.round(s.summary.kcal)} kcal${s.serving && /^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)$/.test(s.serving) ? ` · ${s.serving}` : ''}`, cw - 40), x + 20, y + 98); // (phase 4j, critique M1: the serving with its kcal)
     // (phase 4e, critique M-A: an alcohol side shows its blood alcohol peak here, not "Blood sugar: not tracked here")
     const bacRange = s.summary.bac ? s.summary.bac.split(' · ')[0].replace(/^BAC /, '') : '';
-    const sg = fitWrap(ctx, bacRange ? `BAC peak: ${bacRange}` : `${/^(?:steady|not tracked)/.test(s.summary.sugarPeak) ? 'Blood sugar' : 'Sugar peak'}: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 18, (px) => `600 ${px}px ${SANS}`); // (phase 4b, M2: a peak is called one)
+    const sg = fitWrap(ctx, bacRange ? `BAC peak: ${bacRange}` : `${/^(?:steady|not tracked|only \d|no curve)/.test(s.summary.sugarPeak) ? 'Blood sugar' : 'Sugar peak'}: ${s.summary.sugarPeak}`, cw - 40, 1, 26, 18, (px) => `600 ${px}px ${SANS}`); // (phase 4b, M2: a peak is called one)
     ctx.font = `600 ${sg.px}px ${SANS}`; ctx.fillStyle = '#b8c7d8';
     text(ctx, fit(ctx, sg.lines[0] ?? '', cw - 40), x + 20, y + 134);
     const rows = shown(s) ?? [{ icon: '✓', label: 'All lights green', level: 0 as const, note: 'Nothing flagged all day' }];

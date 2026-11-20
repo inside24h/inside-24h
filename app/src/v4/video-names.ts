@@ -8,7 +8,7 @@ export const plainLatin = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, 
 // round 17 (critic G-8 / G-4): "Brie cheese" is "Brie", "Cod / white fish" is "Cod"
 const CHEESE_NAMED = /\b(brie|camembert|cheddar|gouda|edam|parmesan|emmental|emmentaler|mozzarella|feta|gorgonzola|halloumi|ricotta|mascarpone) cheese\b/i;
 /** The amount in front of a name ("1 portion of", "8 slices of", "A whole 14-inch", "half a"): not part of the name. */
-export const AMOUNT_PREFIX = /^(?:\d+(?:[.,]\d+)?|½|a|an|one|half(?: a| an)?)\s+(?:whole\s+)?(?:\d+-inch\s+)?(?:(?:small|medium|large|side)\s+)?(?:(?:portions?|pieces?|slices?|cups?|glass(?:es)?|bowls?|cans?|bottles?|containers?|servings?|plates?|fillets?|scoops?|pots?|shakers?|ml|g|l|cl|dl)\s+of\s+)?/i; // (C18: "250 ml of" too, never a bare "Ml of cranberry juice")
+export const AMOUNT_PREFIX = /^(?:\d+(?:[.,]\d+)?|½|a|an|one|half(?: a| an)?)\s+(?:whole\s+)?(?:\d+-inch\s+)?(?:(?:small|medium|large|side|restaurant|regular|standard)\s+)?(?:(?:portions?|pieces?|slices?|cups?|glass(?:es)?|bowls?|cans?|bottles?|containers?|servings?|plates?|fillets?|scoops?|pots?|shakers?|drinks?|shots?|mugs?|ml|g|l|cl|dl)\s+of\s+)?/i; // (C18: "250 ml of" too, never a bare "Ml of cranberry juice"; phase 4j: "1 drink of mojito", "1 restaurant plate of")
 const wordsOf = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 /** Round 18 (critic V-6 / T-6): the add-ons that change a food most come first (meat, fish, egg, cheese, fat). */
 const KEY_ADDON = /\b(bacon|extra patty|patty|pepperoni|salami|ham|sausage|tuna|chicken|beef|egg|cheese|olive oil|sunflower oil|oil|butter|mayonnaise|cream|chocolate)\b/i;
@@ -31,6 +31,10 @@ export const shortName = (n: string) => {
 };
 /** The comparison's name for a side (round 5): the amount moves to its own line ("330 ml of water" → "Water"). */
 export const cmpName = (label: string) => { const s = shortName(plainLatin(label).replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, '')); return s.charAt(0).toUpperCase() + s.slice(1); };
+/** Phase 4j (critique 2026-11-17, M5: "FIRST SIP / 250 ml of black tea." under the headline "250 ml of black tea.",
+ *  "FIRST BITE / Soft pretzel." over the body named "Soft pretzel"): two texts say the same words (case, punctuation
+ *  and spacing aside), so a card would only repeat a title already on screen. */
+export const sameWords = (a: string, b: string) => { const n = (s: string) => plainLatin(s).toLowerCase().replace(/[^a-z0-9%]+/g, ' ').trim(); return !!n(a) && n(a) === n(b); };
 /** A name inside a sentence ("orange juice"), unless an acronym or brand-like ("USDA", "McFlurry"). */
 export const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 /** Round 18 (critic T-4: "Black olives wins"): a name that is a plural noun takes "win", "are" … */

@@ -173,7 +173,9 @@ describe('phase 4b: M2 the end card under "AFTER 24 HOURS" says the value at 24 
       const h = ts.indexOf('AFTER 24 HOURS'), nb = (t: string) => t.replace(/ /g, ' ');
       const j = h < 0 ? -1 : ts.slice(h + 1, h + 5).findIndex((t) => nb(t).length >= 3 && nb(a.big).startsWith(nb(t)));
       if (h < 0 || j < 0) bad.push(`${it.id}: the 24 h value is not under the heading (${ts.slice(0, 6).join(' | ')})`);
-      if (o.hero && !ts.some((t) => t.startsWith('Peak:'))) bad.push(`${it.id}: the hero is not labelled as the peak`);
+      // (phase 4j, critique M2: "Peak" exactly when the hero is its series' own highest value, never "Peak: At bedtime: 45 mg")
+      if (o.hero && o.hero.peak && !ts.some((t) => t.startsWith('Peak:'))) bad.push(`${it.id}: the hero is not labelled as the peak`);
+      if (o.hero && !o.hero.peak && ts.some((t) => t.startsWith('Peak:'))) bad.push(`${it.id}: a hero that is no peak is labelled as one: ${o.hero.big}`);
     }
     expect(bad.slice(0, 10)).toEqual([]);
     // the critic's espresso: the peak's 58 mg is never said to be left after 24 h

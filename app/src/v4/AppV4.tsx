@@ -830,7 +830,7 @@ export default function AppV4() {
         gauge: (() => { const g = gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined); return g.find((y) => y.curve) ?? g[0] ?? null; })(),
         alcohol: (x.built.alcoholG ?? 0) > 1,
         ...lifeOf(x.label, x.built, m, gaugesAt(x.built, Math.min(1440, m), profile.glucoseUnit, x.glucose !== undefined)),
-        summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit)), bac: bacPeakText(x.built), // (phase 4e, M-A)
+        summary: { kcal: x.kcal, sugarPeak: plainSugar(x.sugarPeak, sugarPeakText(x.sugarPeak, profile.glucoseUnit), x.macros.availCarbs), bac: bacPeakText(x.built), // (phase 4e, M-A)
           worst: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: ICON_OF[s.key], label: SHORT_OF[s.key], level: l, unknown: !!s.unknown, note: plainNote(s.key, l, w, x.built, inText(w), !!s.unknown) }; }) },
         serving: servingAmount(x), // (round 18, critic V-3: "28 g 23 whole ker…" was cut off: the amount only)
       };
@@ -929,7 +929,7 @@ export default function AppV4() {
   const reelPlan = (): Plan => {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
     const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin, servingCard(currentParts)); // (phase 4h, M1: a drink with alcohol says its amount and strength)
-    const stops = applyHook(singleStops(story, ctx, (m) => whereCard(built, m)), hookNow, (built.alcoholG ?? 0) > 1 ? 0 : built.caffeine.doseMg); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
+    const stops = applyHook(singleStops(story, ctx, (m, u) => whereCard(built, m, u)), hookNow, (built.alcoholG ?? 0) > 1 ? 0 : built.caffeine.doseMg); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = payoffMinOf(stops, hookNow);
     const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, questionByS: questionImpactS(hookNow, shortName(videoName)),

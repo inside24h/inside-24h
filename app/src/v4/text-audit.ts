@@ -69,7 +69,7 @@ function makeItems(p: Profile): AuditItem[] {
   return out;
 }
 
-export interface SingleOut { hook: Hook; plan: Plan; stops: StopIn[]; payoff?: number; name: string; hero?: { big: string; small: string }; /** phase 4e */ after24?: { big: string; small: string }; notes: string[]; caps: ReturnType<typeof captionsFor> }
+export interface SingleOut { hook: Hook; plan: Plan; stops: StopIn[]; payoff?: number; name: string; hero?: { big: string; small: string; peak?: boolean }; /** phase 4e */ after24?: { big: string; small: string }; notes: string[]; caps: ReturnType<typeof captionsFor> }
 const singleMemo = new WeakMap<Profile, WeakMap<Analysis, Map<string, SingleOut>>>();
 /** A memo of `make` for (`p`, `x`, `key`) (see itemsMemo). */
 function memoOf<T>(memo: WeakMap<Profile, WeakMap<Analysis, Map<string, T>>>, p: Profile, x: Analysis, key: string, make: () => T): T {
@@ -89,7 +89,7 @@ function makeSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile, vname: stri
   const hin = { name, chapters, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid, kcal: b.energy.total, grams: x.macros.grams,
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p), sugarRise: x.glucose !== undefined ? riseOf(b.effects.glucoseMgDl) : undefined, alcoholG: b.alcoholG };
   const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin, servingCard(x.parts)), (m) => whereCard(b, m)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
+  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin, servingCard(x.parts)), (m, u) => whereCard(b, m, u)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
   const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), seed: seedOf(name), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin, questionByS: questionImpactS(hook, name),
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   const plan = singlePlan(stops, cut, fx, story.chapters, b), payoff = fx.payoffMin;

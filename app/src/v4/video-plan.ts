@@ -130,6 +130,10 @@ export interface VFrame {
   /** phase 4e: a wordless whole-body stretch of a glide (no card, no NEXT chip, no organ lit for a card): the viewer
    *  leaves the region the moments before were on */
   lull?: boolean;
+  /** phase 4j (critique 2026-11-17, M6: 3-4 s of whole-body glide with no card): a lull's card, about the whole body
+   *  (no organ, no place: the stay it breaks is not resumed), its words from the model at this frame's minute; `gA` its
+   *  opacity; `gcapB` the comparison's second food (withLullCards) */
+  gtitle?: string; gcap?: string; gcapB?: string; gA?: number;
   /** phase 4e: the share of the first moment from which its camera is on the stomach (default 0.55: the food pipe before) */
   pipe?: number;
   pg?: number;        // round 5: shot number while moments are read (a new one with every card and every 2.6 s of a long card): the camera reframes, so the picture never stands still for 3 s
@@ -181,6 +185,7 @@ export interface PlanFx {
   /** phase 4e (internal): the minutes whose glide in is a lull; `pipe`: the first moment stays on the food pipe */
   lulls?: number[]; pipe?: number;
   /** phase 4h: the food's own seed (video-hook seedOf of its name), for choices that should differ between foods */ seed?: number;
+  /** phase 4j (internal): seconds the first glide takes on for the hook's question (questionByS) */ openGlide?: number;
   perceive?: { seen: (fr: VFrame) => string[]; runs: (seq: { t: number; rs: string[] }[]) => { s: number; r: string; at: number }[]; maxS: (seconds: number) => number; extra?: StopIn[] };
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
@@ -239,7 +244,12 @@ export const DRIFT = 0.12, DRIFT_FIRST = 1; // (phase 4h, critique M7: the first
 export const EARLY_MIN = 10;
 /** Phase 4h: seconds into the story (after the hook) by which the clock has left +0:00. */
 export const FIRST_CLOCK_S = 2.7;
-export const MOVE_S = 1.0;        // glide between two moments (eased)
+/** Phase 4j (critique 2026-11-17, M5: the clock stood at +0:00 to +0:03 for 7-13 s of every opening): the first
+ *  moment's clock runs OPEN_RATE minutes of the day per second of video from the first sip on (a little faster at
+ *  first, OPEN_EASE), up to OPEN_SHARE of the way to the next moment, so it has visibly moved within ~3 s and never
+ *  stands still under the first cards. The timeline check (video-telemetry, "clock") holds every video to it. */
+export const OPEN_RATE = 2.5, OPEN_SHARE = 0.75, OPEN_EASE = 0.7;
+export const MOVE_S = 1.0;       // glide between two moments (eased)
 /** 2026-10-24: a glide over a long quiet stretch takes longer (up to 1.8 s), so hours never flash past. */
 export const moveS = (toU: (m: number) => number, from: number, to: number) => MOVE_S + 0.8 * Math.max(0, Math.min(1, (toU(to) - toU(from)) / 0.35));
 export const INTRO_S = { long: 3.0, medium: 2.7, short: 2.4 } as const; // big hook card (it then stays at the top as the headline)
@@ -344,8 +354,12 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       const before = chosen;
       const mid = toU(ga) + (toU(gb) - toU(ga)) / 2;
       // (only where the food really goes on: the large intestine. Other stories end at their payoff, round 5)
-      const cands = story.filter((s) => MID_FIRST.test(s.title) && s.min >= ga + 60 && s.min <= gb - 60 && !chosen.some((c) => c.min === s.min) && linesOf(s).length)
-        .sort((x, y) => Math.abs(toU(x.min) - mid) - Math.abs(toU(y.min) - mid));
+      // (phase 4j, full tier after 68 new foods: a story without a large intestine moment, a muffin's or a curry's, its
+      // stomach at +4:00, a coffee's bedtime: its own moment from the middle of the day comes in the same way, after
+      // the large intestine; never a quiet template moment)
+      const midOK = (s: StopIn) => MID_FIRST.test(s.title) || (s.min >= 240 && s.min <= 1200 && !DULL.test(s.title.trim()));
+      const cands = story.filter((s) => midOK(s) && s.min >= ga + 60 && s.min <= gb - 60 && !chosen.some((c) => c.min === s.min) && linesOf(s).length)
+        .sort((x, y) => Number(MID_FIRST.test(y.title)) - Number(MID_FIRST.test(x.title)) || Math.abs(toU(x.min) - mid) - Math.abs(toU(y.min) - mid));
       const sorted = (list: StopIn[]) => list.sort((x, y) => x.min - y.min);
       const fits = (list: StopIn[]) => len(list) <= lim.max && (() => { const [a, b] = gapOf(list); return b - a < gb - ga; })();
       outer: for (const c0 of cands) {
@@ -480,7 +494,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const named = new Set<number>();
   let from = 0, t0 = 0, reading = 0;
   let want = lim.min + 0.3; // a little over, so frame rounding never lands under the minimum
-  let openPad = 0;
+  let openPad = 0, openGlide = 0;
   const lay = () => {
     from = isLongish(cut) && !sparse ? Math.max(0, peakIdx()) : 0;
     t0 = total(pages); reading = pages.reduce((a, p, i) => a + (grows(i) ? stopS(p) - (i === 0 && p.length ? READ.newStop : 0) : 0), 0);
@@ -490,7 +504,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     let lost = 0;
     // (phase 4h, critique M7: the first moment's first card is the "first bite" state: the hook just said what it is and
     // the clock and the stamp are already up, so it has no new-moment bonus; its clock leaves +0:00 by FIRST_CLOCK_S)
-    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0 && i > 0 && !(named.has(chosen[i].min) && lulls.has(chosen[i].min))), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; return c + (i === 0 && j === pages[0].length - 1 ? openPad : 0); }));
+    const secs = chosen.map((_s, i) => pages[i].map((p, j) => { const r = readSeconds(p, j === 0 && i > 0 && !(named.has(chosen[i].min) && lulls.has(chosen[i].min))), w = r * (grows(i) ? stretch : 1), c = Math.min(w, Math.max(r, CARD_MAX_S)); lost += w - c; if (i === 0 && j === pages[0].length - 1) { const pad = Math.min(openPad, Math.max(0, Math.max(r, CARD_MAX_S) + 0.5 - c)); openGlide = openPad - pad; return c + pad; } return c; }));
+    // (phase 4j: what of the hook's room does not fit on the opening's last card, under CARD_MAX_S, the first glide takes)
     // first the glides after the impact, then the ones before it (as long as the impact still lands by PEAK_BY_S)
     const pi = Math.max(0, peakIdx()), calmG = (i: number) => (i < chosen.length ? calm.has(chosen[i].min) || lulls.has(chosen[i].min) : calm.has(chosen[chosen.length - 1].min) || lulls.has(1440));
     // (phase 4e: the glides into a calm moment keep their own time)
@@ -507,7 +522,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     const back = Math.max(0, rem - useB);
     // (what is left goes to the cards from the impact on, so the impact stays early)
     const nCards = secs.reduce((a, x, i) => a + (grows(i) ? x.length : 0), 0);
-    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, calm: calm.has(s.min) && i > pi, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + (grows(i) ? (calm.size ? Math.min(back / Math.max(1, nCards), Math.max(0, CARD_MAX_S + 0.5 - secs[i][j])) : back / Math.max(1, nCards)) : 0) })) /* (phase 4e: with calm moments, a card is never held much over CARD_MAX_S) */ })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0, lulls: [...lulls], pipe });
+    return layFrames(chosen.map((s, i) => ({ min: s.min, title: s.title, calm: calm.has(s.min) && i > pi, pages: pages[i].map((p, j) => ({ cap: p, s: secs[i][j] + (grows(i) ? (calm.size ? Math.min(back / Math.max(1, nCards), Math.max(0, CARD_MAX_S + 0.5 - secs[i][j])) : back / Math.max(1, nCards)) : 0) })) /* (phase 4e: with calm moments, a card is never held much over CARD_MAX_S) */ })), cut, toU, fromU, { ...fx, teaserMin, peakMin, glideK, glideK0, lulls: [...lulls], pipe, openGlide });
   };
   const relay = () => {
     let o = lay();
@@ -916,23 +931,45 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const holdN = (i: number) => stops[i].pages.reduce((a, p) => a + F(p.s), 0) + (i === 0 ? nIntro - nPre : 0);
   // while a moment is on screen the day drifts on towards the next moment (DRIFT of the way on the day axis), so
   // the drink keeps moving and the clock ticks; the first sip runs on to the stomach
-  const driftTo = (i: number) => {
-    const s = stops[i], next = stops[i + 1]?.min ?? 1440;
-    if (s.min >= 1440) return s.min;
+  // phase 4j (critique 2026-11-17, M5: water's first 27 s showed +0:00 to +0:05, its moments one or two minutes apart):
+  // the clock a moment is shown at, `effM` (never before its own minute, never before where the clock already is), and
+  // where its clock has run to when its cards end, `driftM`. In the first EARLY_MIN minutes of the day a moment's clock
+  // runs a minute a second however close the next one is (that one is then shown a little later than it began: its
+  // words still hold, the clock never runs back)
+  const effM: number[] = [], driftM: number[] = [];
+  const driftOf = (i: number, from: number) => {
+    const s = stops[i], next = Math.max(from, stops[i + 1]?.min ?? 1440);
+    if (s.min >= 1440) return from;
     // (phase 4h, M7: a comparison's first moment says the servings and both first numbers: its clock runs a little
     // further, so it never stands at +0:00 for long)
-    if (i === 0) return fromU(Math.min(toU(Math.min(next, fx.compare ? 6 : 3)), toU(s.min) + DRIFT_FIRST * (toU(next) - toU(s.min))));
+    // (phase 4j, critique M5: not three minutes in 7-13 s: OPEN_RATE minutes a second, up to EARLY_MIN, or OPEN_SHARE of
+    // the way when the next moment is further; a long opening at least 1.2 minutes a second)
+    if (i === 0) return Math.max(fromU(Math.min(toU(Math.min(next, fx.compare ? 6 : 3)), toU(from) + DRIFT_FIRST * (toU(next) - toU(from)))), from + Math.min(Math.max(EARLY_MIN, OPEN_SHARE * (next - from), 1.2 * holdN(0) / FPS), OPEN_RATE * holdN(0) / FPS));
     // (round 12, critic P0-3: the clock must not stand still under the cards): at least one minute of the day per
     // ~4.5 s of reading, never more than half the way to the next moment
-    const share = fromU(toU(s.min) + DRIFT * (toU(next) - toU(s.min)));
+    const share = fromU(toU(from) + DRIFT * (toU(next) - toU(from)));
     // (phase 4h, critique M7: in the first minutes, a minute of the day per second of reading, so "+0:01" does not
-    // stand under a card for 4 s; still never more than half the way to the next moment)
-    return Math.max(share, s.min + Math.min(0.5 * (next - s.min), holdN(i) / FPS / (s.min < EARLY_MIN ? 1 : 4.5)));
+    // stand under a card for 4 s; phase 4j: up to EARLY_MIN even past a moment just ahead; later never more than half
+    // the way to the next moment)
+    const h = holdN(i) / FPS;
+    return Math.max(share, from + (from < EARLY_MIN ? Math.min(h, Math.max(0.5 * (next - from), EARLY_MIN - from)) : Math.min(0.5 * (next - from), h / 4.5)));
+  };
+  stops.forEach((s, i) => { effM[i] = i ? Math.max(s.min, driftM[i - 1]) : s.min; driftM[i] = driftOf(i, effM[i]); });
+  const driftTo = (i: number) => driftM[i];
+  // (phase 4j: a glide lasts as long as before the clock ran ahead in the opening: its time comes from where the clock
+  // would have stood then, `legacyDrift`, so every cut keeps the length its planner laid out)
+  const legacyDrift = (i: number) => {
+    const s = stops[i], next = stops[i + 1]?.min ?? 1440;
+    if (s.min >= 1440) return s.min;
+    if (i === 0) return fromU(Math.min(toU(Math.min(next, fx.compare ? 6 : 3)), toU(s.min) + DRIFT_FIRST * (toU(next) - toU(s.min))));
+    return Math.max(fromU(toU(s.min) + DRIFT * (toU(next) - toU(s.min))), s.min + Math.min(0.5 * (next - s.min), holdN(i) / FPS / (s.min < EARLY_MIN ? 1 : 4.5)));
   };
   // (round 12: even in minutes, so the clock ticks at an even pace while the cards are read)
   // (phase 4h, critique M7: the first moment's clock reaches its next minute FIRST_CLOCK_S into the story at the latest,
   // even under a long first card: the "first bite" state never lasts longer)
-  const at = (i: number, k: number) => { const n = Math.max(1, i === 0 ? Math.min(holdN(0), nIntro - nPre + F(FIRST_CLOCK_S)) : holdN(i)); return stops[i].min + (driftTo(i) - stops[i].min) * Math.min(1, k / n); };
+  // (phase 4j, critique M5: the first moment's clock runs all through its cards, a little faster at first: it never
+  // reaches its minute early and then stands)
+  const at = (i: number, k: number) => { const n = Math.max(1, holdN(i)); const x = Math.min(1, Math.max(0, k / n)); return effM[i] + (driftTo(i) - effM[i]) * (i === 0 ? Math.pow(x, OPEN_EASE) : x); };
   cues.push({ t: 0, kind: 'start' });
   cues.push({ t: 0, kind: 'teaser' });
   for (let i = 0; i < nIntro; i++) {
@@ -947,11 +984,13 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   // GLIDE: the words of the moment that ends leave (0.25 s), and while the day runs on, a "NEXT" chip names the
   // moment ahead (an open loop, §2.4). Its own words appear only when it is reached, so a card never says "now"
   // before its time.
-  const glide = (from: number, to: number, nextStop: { min: number; title?: string; chip?: string; calm?: boolean } | null) => {
+  let nGlide = 0;
+  const glide = (from: number, to: number, nextStop: { min: number; title?: string; chip?: string; calm?: boolean } | null, shown = nextStop?.min ?? to, durFrom = from, durTo = to) => {
+    const firstGlide = nGlide++ === 0;
     // (round 14, critic DC-1: a glide is never longer than GLIDE_MAX_S: it is a stretch without words)
-    const base = moveS(toU, from, to) * (cut === 'short' ? SHORT_GLIDE_K : 1);
+    const base = moveS(toU, durFrom, durTo) * (cut === 'short' ? SHORT_GLIDE_K : 1);
     const lull = !!nextStop && !!fx.lulls?.includes(nextStop.min);
-    const n = lull ? F(Math.max(base, LULL_S)) : F(Math.min(Math.max(GLIDE_MAX_S, base), base * (nextStop?.calm ? 1 : from >= (fx.peakMin ?? 0) ? fx.glideK ?? 1 : fx.glideK0 ?? 1))), out = F(0.25); // (phase 4e: never into a calm moment; a lull lasts LULL_S)
+    const n = (lull ? F(Math.max(base, LULL_S)) : F(Math.min(Math.max(GLIDE_MAX_S, base), base * (nextStop?.calm ? 1 : from >= (fx.peakMin ?? 0) ? fx.glideK ?? 1 : fx.glideK0 ?? 1)))) + (firstGlide && fx.openGlide ? F(fx.openGlide) : 0), out = F(0.25); // (phase 4e: never into a calm moment; a lull lasts LULL_S)
     const chipFrom = lull ? n - F(LULL_CHIP_S) : 0; // (round 13: only after the impact, which stays early)
     const g0 = frames.length;
     cues.push({ t: tNow(), kind: 'move', data: { v: Math.round(to - from) } }); // (round 9: how much of the day this glide skips, for the sound)
@@ -961,7 +1000,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
       const m = fromU(toU(from) + (toU(to) - toU(from)) * ease(i / n));
       frames.push({ phase: 'main', m, t: tNow(), cap: prevPage?.cap, capB: prevPage?.capB, title: prevStop?.title, titleB: prevStop?.titleB, capA: 1,
         plateA: 1 - smooth01(i / out), k: 0, stop: nextStop?.min ?? to, beat: 'glide', from, ...(nextStop?.title ? { goal: nextStop.title } : {}), ...(lull && i > out && i <= chipFrom ? { lull: true } : {}),
-        ...(nextStop?.title && chip && i > chipFrom ? { next: { min: nextStop.min, title: nextStop.chip ?? nextStop.title } } : {}) });
+        ...(nextStop?.title && chip && i > chipFrom ? { next: { min: shown, title: nextStop.chip ?? nextStop.title } } : {}) }); // (phase 4j: the time the clock will show there)
     }
     return g0;
   };
@@ -969,7 +1008,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const peakIdx = fx.peakMin === undefined ? -1 : nearestStop(stops.map((s) => s.min), fx.peakMin, toU);
   let pg = 0; const PG_N = F(2.6);
   stops.forEach((s, i) => {
-    if (i > 0) glide(prevMin, s.min, s);
+    if (i > 0) glide(prevMin, effM[i], s, effM[i], legacyDrift(i - 1), s.min);
     if (i === peakIdx && i > 0) { const t = tNow(); cues.push({ t: Math.max(nPre / FPS + 0.2, t - RISER_S), kind: 'riser' }, { t, kind: 'peak', data: { v: s.min } }); }
     let k = i === 0 ? nIntro - nPre : 0;
     s.pages.forEach((p, j) => {
@@ -988,7 +1027,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const lastStop = stops[stops.length - 1], last = lastStop?.pages.slice(-1)[0];
   const endsAtDay = (lastStop?.min ?? 0) >= 1440;
   if (!endsAtDay) {
-    const g0 = glide(prevMin, 1440, { min: 1440, title: DAY_END_TITLE, calm: lastStop?.calm }); cues.push({ t: tNow(), kind: 'stop' });
+    const g0 = glide(prevMin, 1440, { min: 1440, title: DAY_END_TITLE, calm: lastStop?.calm }, 1440, stops.length ? legacyDrift(stops.length - 1) : prevMin, 1440); cues.push({ t: tNow(), kind: 'stop' });
     for (let i = g0; i < frames.length; i++) frames[i].stop = 1440;
   }
   // round 11 (research R1): the payoff beat at +24:00, body in frame: the last words leave for "AFTER 24 HOURS", the
@@ -1093,6 +1132,28 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   return { frames, stops: stopMins, stopsU: stopMins.map(toU), pages: pageList, cues, seconds: frames.length / FPS, introS: nIntro / FPS, outroS: nOut / FPS, peakT: cues.find((c) => c.kind === 'peak')?.t };
 }
 const smooth01 = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
+/** Phase 4j (critique 2026-11-17, M6): the title of a lull's card (withLullCards). */
+export const LULL_TITLE = 'Taken up so far';
+/** Phase 4j (critique 2026-11-17, M6: donut, oatmeal, rice bowl, prosecco and the comparison glided 3-4 s over the
+ *  whole body with no card): a lull (the wordless whole-body stretch that breaks a long stay on one region) shows a
+ *  card about the whole body: how much of it the body has taken up so far, from the model at each frame's minute
+ *  (`fa`; `fb` the comparison's second food), a counter that runs with the clock. It names no organ and no place, so
+ *  the stay it breaks is not resumed; it fades in over 0.2 s and out over 0.15 s, before the NEXT chip. The plan's
+ *  timing is unchanged. */
+export function withLullCards(plan: Plan, fa: (m: number) => string | null, fb?: (m: number) => string | null): Plan {
+  const fs = plan.frames, nIn = Math.max(1, Math.round(0.2 * FPS)), nOut = Math.max(1, Math.round(0.15 * FPS));
+  for (let i = 0; i < fs.length;) {
+    if (!fs[i].lull) { i++; continue; }
+    let j = i; while (j < fs.length && fs[j].lull) j++;
+    for (let k = i; k < j; k++) {
+      const f = fs[k], a = fa(f.m), b = fb ? fb(f.m) : null;
+      if (!a && !b) continue;
+      f.gtitle = LULL_TITLE; if (a) f.gcap = a; if (b) f.gcapB = b; f.gA = Math.min(1, (k - i + 1) / nIn, (j - k) / nOut);
+    }
+    i = j;
+  }
+  return plan;
+}
 /** Index of the stop nearest `min` on the day axis (within 6 % of the day), or -1. */
 function nearestStop(mins: number[], min: number, toU: (m: number) => number): number {
   let best = -1, d = 0.06;

@@ -4,6 +4,7 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
+import { isPluralName } from './video-names';
 /** Round 17: a name inside a sentence ("orange juice"), as video-hook lowerName. */
 const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG' | 'kcal';
@@ -73,6 +74,9 @@ export const QUESTION_POOL: Record<string, readonly string[]> = {
   'Guess: which has more sugar?': ['Guess: which has more sugar?', 'Guess: which one hides more sugar?', 'Guess: which packs more sugar?', 'Guess: more sugar, left or right?'],
   'Guess: which brings more alcohol?': ['Guess: which brings more alcohol?', 'Guess: which one has more alcohol?', 'Guess: more alcohol, left or right?'],
   'Guess: which has more calories?': ['Guess: which has more calories?', 'Guess: which one packs more calories?', 'Guess: more calories, left or right?'],
+  // (phase 4j, critique M1: 115 g of soft pretzel vs 28 g of peanuts asked "which has more calories?": servings that
+  // differ are asked about as servings, the amounts under the names, and answered with both)
+  'Guess: which serving has more calories?': ['Guess: which serving has more calories?', 'Guess: which serving packs more calories?', 'Guess: more calories per serving, left or right?'],
 };
 export const askedAs = (q: string, seed = 0) => { const p = QUESTION_POOL[q]; return p ? p[Math.abs(Math.floor(seed)) % p.length] : q; };
 export function chooseGuess(a: GuessSide, b: GuessSide, opts: { bedMin?: number; seed?: number } = {}): Guess | null {
@@ -170,7 +174,20 @@ function chooseGuess0(a: GuessSide, b: GuessSide, opts: { bedMin?: number } = {}
   };
   if (a.alcohol && b.alcohol) return ask('alcohol', 'Guess: which brings more alcohol?', ga, gb, 'g of alcohol', 'More alcohol', 2, Math.max(later(a.bac), later(b.bac)));
   if (!anyAlcohol && sa >= 1 && sb >= 1 && fair(sa, sb)) return ask('sugarG', 'Guess: which has more sugar?', sa, sb, 'g of sugar', 'More sugar', 3, Math.max(later(a.sugar), later(b.sugar)));
-  return ask('kcal', 'Guess: which has more calories?', a.kcal ?? 0, b.kcal ?? 0, 'kcal', 'More calories', 10, 60);
+  // (phase 4j, critique M1: "More calories: Soft pretzel. 389 kcal vs 167 kcal." for 115 g against 28 g of peanuts,
+  // which have more gram for gram): servings that differ are asked about as servings and answered with both amounts;
+  // when gram for gram it is the other way round, the answer says so per 100 g (never a win on a serving's size)
+  const ka = a.kcal ?? 0, kb = b.kcal ?? 0, g = ask('kcal', sameSize ? 'Guess: which has more calories?' : 'Guess: which serving has more calories?', ka, kb, 'kcal', 'More calories', 10, 60);
+  if (!sameSize && !/^Almost/.test(g.answer1) && !fair(ka, kb)) {
+    const w = g.winner, l = (1 - w) as 0 | 1, p100 = (k: number, gr: number) => Math.round((100 * k) / Math.max(1, gr)), [kw, kl] = w ? [kb, ka] : [ka, kb], [gw, gl] = w ? [gb0, ga0] : [ga0, gb0];
+    const has = (n: string) => (isPluralName(n) ? 'have' : 'has');
+    // (the answer is read in one look, under 90 characters: the per-100 g numbers are on the end card's verdict)
+    const a1 = `More per serving: ${the(sides[w].name)}.`, a2 = [`${g.answer2} Per 100 g, ${lowerName(sides[l].name)} ${has(sides[l].name)} more (${p100(kl, gl)} vs ${p100(kw, gw)}).`,
+      `${g.answer2} Per 100 g, ${lowerName(sides[l].name)} ${has(sides[l].name)} more.`, g.answer2].find((x) => a1.length + x.length < 90) ?? g.answer2;
+    return { ...g, answer1: a1, answer2: a2,
+      recap: `Answer: ${sides[w].name}, per serving (${sides[w].portion} vs ${sides[l].portion}).` };
+  }
+  return g;
 }
 
 /** A side of the race from the app's analysis of one food or drink (Compare / analyze.ts). */
@@ -181,7 +198,7 @@ export function guessSideOf(x: { label: string; glucose?: ArrayLike<number> | nu
     name: name ?? x.label, alcohol: (x.built.alcoholG ?? 0) > 1, amount: stomach ? Math.max(0, ...Array.from(stomach)) : undefined,
     stomach,
     caffeine: x.built.caffeine.doseMg >= 10 ? x.built.caffeine.body : null,
-    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0, kcal: x.kcal ?? 0, grams: x.macros?.grams, portion: x.serving ? /(\d+(?:[.,]\d+)?\s*(?:ml|g))\b/i.exec(x.serving.split('·').pop() ?? x.serving)?.[1] : undefined,
+    bac: (x.built.alcoholG ?? 0) > 1 ? x.built.bac ?? null : null, alcoholG: x.built.alcoholG ?? 0, sugarG: x.macros?.sugars ?? 0, kcal: x.kcal ?? 0, grams: x.macros?.grams, portion: (x.serving ? /(\d+(?:[.,]\d+)?\s*(?:ml|g))\b/i.exec(x.serving.split('·').pop() ?? x.serving)?.[1] : undefined) ?? (x.macros?.grams ? `${Math.round(x.macros.grams)} g` : undefined), // (phase 4j, M1: "1 pretzel" is said in grams)
     sugar: x.glucose ? Float32Array.from({ length: N }, (_, m) => (x.glucose![m] ?? 0) / 18.016) : null,
   };
 }

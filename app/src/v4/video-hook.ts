@@ -71,7 +71,7 @@ export const HOOK_POOL = {
   /** phase 4f (full tier: cheddar, gouda and a fried egg all asked "When does it leave your stomach?"): a small fatty
    *  food that leads with its fat ("1 slice of cheddar: 9 g of fat.") asks the stomach question with those grams, {n}
    *  (its half time answers, as for stomach) */
-  stomachFat: ['How long does your stomach hold those {n} g?', 'When do {n} g of fat leave your stomach?', 'How long do {n} g sit in your stomach?', 'When is your stomach done with {n} g?', 'How long do {n} g stay in your stomach?', 'When does your stomach pass on those {n} g?', 'How slowly do {n} g leave your stomach?'],
+  stomachFat: ['How long does your stomach hold those {n} g?', 'When do those {n} g leave your stomach?', 'How long do {n} g sit in your stomach?', 'When is your stomach done with {n} g?', 'How long do {n} g stay in your stomach?', 'When does your stomach pass on those {n} g?', 'How slowly do {n} g leave your stomach?'],
   stomachN: ['When do {n} kcal leave your stomach?', 'How long does your stomach hold {n} kcal?', 'When is your stomach done with {n} kcal?', 'How long do {n} kcal stay in your stomach?', 'When does your stomach pass on {n} kcal?', 'How slowly do {n} kcal leave your stomach?', 'How long do {n} kcal sit in your stomach?'],
   bloodN: ['When do its {n} kcal reach your blood?', 'How fast are {n} kcal in your blood?', 'When does your blood get its {n} kcal?', 'How soon do {n} kcal reach your blood?', 'When do {n} kcal hit your blood?', 'How long until {n} kcal are in your blood?'],
   /** (phase 4f, full tier: "Red wine: how long until 150 ml are out of you?" takes 5.0 s to say, a Short's hook has
@@ -79,6 +79,9 @@ export const HOOK_POOL = {
    *  its name and "one hundred fifty milliliters") */
   alcoholGoneN: ['How long do {n} ml stay?', 'When has your liver cleared {n} ml?', 'When are {n} ml out of you?', 'How long until {n} ml clear?', 'When does your liver finish {n} ml?', 'How long do {n} ml last?', 'When are those {n} ml gone?'],
   proteinN: ['Watch your body use {n} g of protein.', 'Watch where {n} g of protein go.', 'Watch your body take {n} g apart.', 'Follow {n} g of protein through you.', 'See what your body builds with {n} g.', 'Watch {n} g become building blocks.', 'Watch your gut break down {n} g.', 'See where {n} g of protein end up.', 'Watch your body sort out {n} g.', 'Follow those {n} g of protein.'],
+  /** phase 4j (full tier: sangria and whiskey, vodka and a margarita asked the same "When is the alcohol gone?"): a drink
+   *  served without its ml in its name asks with its own grams of alcohol, {n}, as its other line says them */
+  alcoholGoneG: ['When are those {n} g gone?', 'How long do {n} g stay in you?', 'When has your liver cleared {n} g?', 'How long until {n} g clear?', 'When does your liver finish {n} g?', 'How long do those {n} g last?', 'When are {n} g out of you?'],
   alcoholWhere: ['Where does the alcohol go?', 'What does your liver do with it?', 'How does your body clear it?', 'How does your liver deal with it?', 'Where does all that alcohol go?', 'What does your body do with the alcohol?'],
 } as const satisfies Record<string, readonly string[]>;
 export type HookClass = keyof typeof HOOK_POOL;
@@ -92,8 +95,11 @@ export const poolLine = (cls: HookClass, name: string, n?: number | string, fact
   // follow from the macros and only added their rounding, which put two salads of 14 g fat, 142 and 130 kcal, on the
   // same line, their sums 20 apart, a multiple of the pool's length; two foods a few grams apart now sit a few lines
   // apart. A hash of the numbers instead left 4-7 same-class pairs on one question, this none)
-  const [, c = 0, f = 0, p = 0, fb = 0] = (facts ?? []).map((x) => Math.round(x));
-  const i = facts && xs[0].includes('{n}') ? (seedOf(cls) + c + 4 * f + 2 * p + 3 * fb) % xs.length : seedOf(`${cls}|${name}`) % xs.length;
+  // (phase 4j, full tier after 68 new foods: a burrito and a quesadilla, avocado toast and an enchilada, a soda and a
+  // sports drink of the same grams shared a question and most of their cards: 3 × carbohydrate + 3 × fat + protein +
+  // fiber + kcal, the weights that part every same-class pair of the database whose cards are alike, measured)
+  const [kc = 0, c = 0, f = 0, p = 0, fb = 0] = (facts ?? []).map((x) => Math.round(x));
+  const i = facts && xs[0].includes('{n}') ? (seedOf(cls) + 3 * c + 3 * f + p + fb + kc) % xs.length : seedOf(`${cls}|${name}`) % xs.length;
   return xs[i].replace('{n}', String(n ?? ''));
 };
 /** Phase 4e: the numbers a food's pool line is picked by (its first moment's kcal and macros). */
@@ -134,7 +140,7 @@ export function hookFor(h: HookIn): Hook {
     const nums = numbersIn(l);
     if (nums.every((n) => ok.has(n) || n === '24')) return l;
     const key = factKey(h);
-    if (cls === 'sugarGo') { const t = /(\d+) teaspoons of sugar/.exec(k.line1)?.[1]; return t ? poolLine('sugarGoT', key, t) : l; }
+    if (cls === 'sugarGo') { const t = /(\d+) teaspoons of sugar/.exec(k.line1)?.[1]; return t ? poolLine('sugarGoT', key, t, factsOf(h.chapters[0]?.text ?? '')) : l; } // (phase 4j: by its numbers, as every pool with one)
     const plain = cls.replace(/N$/, '') as HookClass;
     return plain !== cls && HOOK_POOL[plain] ? poolLine(plain, key) : l;
   };
@@ -155,7 +161,9 @@ function hookForRaw(h: HookIn): Hook {
     // (phase 4h, critique M1: a mix says both, "Rakija + lemonade", and its grams from the model when its first chapter has none)
     const ag = /(\d+) g (?:of )?alcohol/.exec(first)?.[1] ?? ((h.alcoholG ?? 0) >= 1 ? String(Math.round(h.alcoholG!)) : undefined);
     const nm = cap(name.replace(/ over .+$/, '').split(' + ').map((x, i) => (i ? lowerName(x) : x)).join(' + '));
-    const beers = h.pace && /beer/i.test(name) ? `${h.pace.doses} beers in one evening.` : ag && fit(`${nm}: ${ag} g of alcohol.`) ? `${nm}: ${ag} g of alcohol.` : `${nm}.`;
+    // (phase 4j: "1 drink of bloody Mary: 14 g of alcohol." is 9 words: then the drink without its serving word)
+    const nmB = cap(nm.replace(AMOUNT_PREFIX, ''));
+    const beers = h.pace && /beer/i.test(name) ? `${h.pace.doses} beers in one evening.` : ag && fit(`${nm}: ${ag} g of alcohol.`) ? `${nm}: ${ag} g of alcohol.` : ag && fit(`${nmB}: ${ag} g of alcohol.`) ? `${nmB}: ${ag} g of alcohol.` : `${nm}.`;
     if (wake) return { line1: `Still in your blood at ${wake}.`, line2: fit(beers) ? beers : 'Watch what alcohol does.', payoff: 'Next morning' };
     if (h.pace) return { line1: fit(beers) ? beers : 'One drink, 24 hours.', line2: 'Watch what alcohol does.' };
     // round 14 (critic G-2: "500 ml of beer. Watch what alcohol does." had no question and no number): one drink asks
@@ -163,7 +171,8 @@ function hookForRaw(h: HookIn): Hook {
     const gone = h.chapters.find((c) => c.title === 'Alcohol gone');
     // (phase 4e: with its own amount, "How long do those 500 ml stay in you?", the amount line2 names)
     const ml = Number(/(\d+)\s*ml\b/.exec(name)?.[1] ?? 0);
-    if (gone) return { line1: ownLine('alcoholGone', factKey(h), ml, factsOf(first) /* (phase 4f: its macros, as every pool; the ml is its line's own number) */), line2: fit(beers) ? beers : 'One drink.', payoff: gone.title };
+    const gq = ml < 1 && ag && beers.includes(`${ag} g of alcohol`) ? poolLine('alcoholGoneG', factKey(h), ag, factsOf(first)) : ownLine('alcoholGone', factKey(h), ml, factsOf(first) /* (phase 4f: its macros, as every pool; the ml is its line's own number) */);
+    if (gone) return { line1: gq, line2: fit(beers) ? beers : 'One drink.', payoff: gone.title };
     return { line1: fit(beers) ? beers : 'One drink, 24 hours.', line2: 'Watch what alcohol does.' };
   }
   // round 14 (critic DC-1: decaf had no story): is there still caffeine in it? The model's mg answers, next to a regular cup
@@ -245,7 +254,9 @@ function hookForRaw(h: HookIn): Hook {
     if (tsp && Number(tsp[2]) >= 4 && k && Number(k) < 500) return tspHook();
     if (nat && Number(nat[1]) >= 16 && k && Number(k) < 500) return natHook();
     const sized = h.grams && !/\d+\s*g\b/.test(name) && !/^\d/.test(name) ? `${cap(name)} (${Math.round(h.grams)} g): ${k} kcal.` : `${cap(name)}: ${k} kcal.`;
-    if (k && Number(k) >= 300) return { line1: fit(sized) ? sized : fit(named(`${k} kcal.`), 9) ? named(`${k} kcal.`) : `One meal: ${k} kcal.` /* (round 17: a builder name with its add-ons, 9 words) */, ...ownPromise, lead: `${k} kcal in total.`, ...(fatLead ?? {}) };
+    // (phase 4j, critique M4: "One meal: 844 kcal." named no food for 45 s: a meal too long to say whole is said by its
+    // first parts and how many more, "White rice + salmon + 2 more: 844 kcal.")
+    if (k && Number(k) >= 300) return { line1: fit(sized) ? sized : fit(named(`${k} kcal.`), 9) ? named(`${k} kcal.`) : mealLine(name, `${k} kcal.`) /* (round 17: a builder name with its add-ons, 9 words) */, ...ownPromise, lead: `${k} kcal in total.`, ...(fatLead ?? {}) };
   }
   if (tsp && Number(tsp[2]) >= 3) return tspHook();
   if (nat && Number(nat[1]) >= 10 && !h.caffeine) return natHook();
@@ -283,6 +294,14 @@ function hookForRaw(h: HookIn): Hook {
   const k = /(\d+) kcal/.exec(first)?.[1];
   if (k && Number(k) >= 1) return { line1: named(`${k} kcal.`), ...ownPromise, lead: `${k} kcal in total.`, ...(fatLead ?? {}) };
   return { ...fallbackQ(h), line2: fit(`${cap(name)}.`) ? `${cap(name)}.` : 'One drink, 24 hours.' };
+}
+/** Phase 4j (critique 2026-11-17, M4): a meal said by its name, else its first parts and how many more ("White rice +
+ *  salmon + 2 more: 844 kcal."), never a bare "One meal", so the food is named with its first number. */
+export function mealLine(name: string, rest: string, max = 9): string {
+  const parts = name.replace(/\s*\([^)]*\)/g, '').split(/\s*\+\s*|,\s*/).map((p) => p.replace(AMOUNT_PREFIX, '').trim()).filter(Boolean);
+  const nm = (i: number) => (i ? lowerName(parts[i]) : cap(parts[i]));
+  const tries = [parts.map((_p, i) => nm(i)).join(' + '), ...(parts.length > 2 ? [`${nm(0)} + ${nm(1)} + ${parts.length - 2} more`] : []), ...(parts.length > 1 ? [`${nm(0)} + ${parts.length - 1} more`] : []), parts[0] ? nm(0) : 'One meal'];
+  return tries.map((t) => `${t}: ${rest}`).find((x) => fit(x, max)) ?? `${tries[tries.length - 1]}: ${rest}`;
 }
 /** A question the video answers, from the moments it has (round 14); `not` = a question already asked (hook A). */
 function fallbackQ(h: HookIn, not = ''): { line1: string; payoff?: string; payoffMin?: number } {

@@ -3,6 +3,8 @@
 // a winner is only named with a reason; the sentence reads the same whichever side an item is on.
 import { cmpName } from './video-names';
 import { describe, expect, it } from 'vitest';
+import { auditItems, auditPairs } from './text-audit';
+import { sweep } from './sweep.testutil';
 import { FOODS, parseMeal, servingPart } from './food/parse';
 import { DEFAULT_PROFILE, type Profile } from '../science/profile';
 import { analyze, verdictOf, type Analysis } from './analyze';
@@ -21,32 +23,32 @@ describe('verdictOf', () => {
         expect(v).toMatch(/Espresso wins: no alcohol|3 espressos win: no alcohol|No clear winner: Beer brings alcohol; (3 espressos|Espresso) brings/); // (round 12: any alcohol weighs on the brain light)
       }
     }
-    expect(verdictOf(an('espresso', P(16)), an('beer', P(16)))).toBe('🏆 Espresso wins: no alcohol, 213 fewer kcal.');
+    expect(verdictOf(an('espresso', P(16)), an('beer', P(16)))).toBe('🏆 Espresso wins: no alcohol, 213 fewer kcal (30 ml vs 500 ml beer).'); // (phase 4j, M1: both servings named)
   });
 
   it('a sugary or late caffeinated drink against alcohol is a trade-off that names both costs', () => {
-    expect(verdictOf(an('rakija', P(16)), an('1 can of cola', P(16)))).toBe('No clear winner: Rakija brings alcohol; Cola brings a blood sugar peak.'); // (round 18: the video's own name)
-    expect(verdictOf(an('espresso', P(22)), an('beer', P(22)))).toBe('No clear winner: Beer brings alcohol; Espresso brings caffeine at bedtime.');
+    expect(verdictOf(an('rakija', P(16)), an('1 can of cola', P(16)))).toBe('No clear winner: Rakija brings alcohol; Cola brings a blood sugar peak (40 ml vs 330 ml).'); // (round 18: the video's own name)
+    expect(verdictOf(an('espresso', P(22)), an('beer', P(22)))).toBe('No clear winner: Beer brings alcohol; Espresso brings caffeine at bedtime (500 ml vs 30 ml).');
   });
 
   it('two alcoholic drinks: the fact (less alcohol), never "the lighter choice" nor a trophy (round 13, critic P1-3)', () => {
     const p = P(16), beer = an('beer', p), wine = an('glass of red wine', p);
-    expect(verdictOf(beer, wine)).toBe('Less alcohol: Red wine (16 g vs 20 g). Both: don’t drive.');
+    expect(verdictOf(beer, wine)).toBe('Less alcohol: Red wine (16 g in 150 ml vs 20 g in 500 ml). Both: don’t drive.');
     expect(verdictOf(beer, an('beer', p))).toBe('It’s close: beer and beer bring about the same alcohol (about 20 g). Both: don’t drive.'); // (round 17: names in a sentence are lower case)
     expect(verdictOf(beer, an('2 beers', p))).toBe('Less alcohol: Beer (20 g vs 40 g). Both: don’t drive.');
   });
 
   it('everyday alcohol-free pairs keep their plain answers', () => {
     const p = P(16);
-    expect(verdictOf(an('1 can of cola', p), an('glass of water', p))).toBe('🏆 Water wins: no blood sugar peak, 139 fewer kcal.');
+    expect(verdictOf(an('1 can of cola', p), an('glass of water', p))).toBe('🏆 Water wins: no blood sugar peak, 139 fewer kcal (250 ml vs 330 ml cola).');
     // (master audit 2026-11-12, C1: the orange's 67 fewer kcal come from its smaller portion, gram for gram they are
     // about the same, so one reason is left: the facts, no trophy)
-    expect(verdictOf(an('orange juice', p), an('1 orange', p))).toBe('Orange: a smaller blood sugar peak (+0.7 vs +1.9 mmol/L), 67 fewer kcal.');
+    expect(verdictOf(an('orange juice', p), an('1 orange', p))).toBe('Orange: a smaller blood sugar peak (+0.7 vs +1.9 mmol/L), 67 fewer kcal (131 g vs 250 ml orange juice).');
     expect(verdictOf(an('orange juice', p), an('1 orange', p), 'mg/dL')).toMatch(/\(\+\d+ vs \+\d+ mg\/dL\)/);
     expect(verdictOf(an('espresso', P(8)), an('glass of water', P(8)))).toMatch(/^It’s close/); // a morning espresso is fine
     // (C1: caffeine alone is never a trophy)
-    expect(verdictOf(an('espresso', P(22)), an('glass of water', P(22)))).toMatch(/^Water: no caffeine/);
-    expect(verdictOf(an('espresso', P(22)), an('green tea', P(22)))).toBe('Green tea: less caffeine (30 vs 63 mg).');
+    expect(verdictOf(an('espresso', P(22)), an('glass of water', P(22)))).toMatch(/^Water: no caffeine \(250 ml vs 30 ml espresso\)\.$/);
+    expect(verdictOf(an('espresso', P(22)), an('green tea', P(22)))).toBe('Green tea: less caffeine (30 vs 63 mg; 250 ml vs 30 ml espresso).');
   });
 
   it('master audit 2026-11-12 (C1): a trophy needs two health reasons that hold at the same amount', () => {
@@ -58,7 +60,7 @@ describe('verdictOf', () => {
         expect(v).not.toMatch(/wins?: (?:no caffeine|more protein)\.$/);
       }
     }
-    expect(verdictOf(an('1 can of cola', p), an('glass of water', p))).toMatch(/^🏆 Water wins: no blood sugar peak, \d+ fewer kcal\.$/); // (two reasons, both hold per gram)
+    expect(verdictOf(an('1 can of cola', p), an('glass of water', p))).toMatch(/^🏆 Water wins: no blood sugar peak, \d+ fewer kcal \(250 ml vs 330 ml cola\)\.$/); // (two reasons, both hold per gram; phase 4j: both servings named)
   });
 
   it('every pair of drinks: alcohol never wins, every winner has a reason, order does not matter', () => {
@@ -80,4 +82,34 @@ describe('verdictOf', () => {
       }
     }
   });
+});
+
+// Phase 4j (critique 2026-11-17, M1: "Peanuts: 222 fewer kcal." for 28 g of peanuts against a 115 g soft pretzel, which
+// has fewer kcal gram for gram): every per-serving claim names both servings; a metric that turns the other way gram for
+// gram is never a side's win, the per-100 g fact is said instead. Every audit pair, both orders.
+describe('phase 4j: per-serving verdicts name both servings, never a win the grams turn round', () => {
+  it('soft pretzel vs peanuts: the facts per serving and per 100 g, no win', () => {
+    const p = P(16), v = verdictOf(an('soft pretzel', p), an('peanuts', p));
+    expect(v).not.toMatch(/fewer kcal|wins?:/);
+    expect(v).toMatch(/\(115 g\)/); expect(v).toMatch(/\(28 g\)/);
+    expect(v).toMatch(/Per 100 g, peanuts have more kcal \(\d+ vs \d+\)\./);
+  });
+  it('every audit pair: a kcal, fat, fiber or protein edge holds per gram, and the servings are named when they differ', () => {
+    const items = sweep(auditItems()), bad: string[] = [];
+    for (const pr of sweep(auditPairs(auditItems(), 120))) for (const [a, b] of [[pr.a, pr.b], [pr.b, pr.a]] as const) {
+      const v = verdictOf(a, b), per = (x: Analysis, k: 'kcal' | 'satFat' | 'fiber' | 'protein') => (k === 'kcal' ? x.kcal : x.macros[k]) / Math.max(1, x.macros.grams);
+      const amt = (x: Analysis) => /(\d+(?:[.,]\d+)?\s*(?:ml|g))/i.exec(x.serving.split('·').pop() ?? x.serving)?.[1] ?? `${Math.round(x.macros.grams)} g`;
+      for (const [w, l] of [[a, b], [b, a]] as const) {
+        // (the sentence that starts with w's name, "🏆 W wins: …" or "W (28 g): …", says what w does better)
+        const nm = cmpName(w.label), said = (re: RegExp) => v.split(/(?<=\.)\s+(?=[A-Z🏆])/).some((x) => x.replace(/^🏆 /, '').startsWith(`${nm} `) || x.replace(/^🏆 /, '').startsWith(`${nm}:`) ? re.test(x) && !/^Per 100 g/.test(x) : false);
+        if (said(/fewer kcal/) && per(w, 'kcal') >= per(l, 'kcal')) bad.push(`${pr.id}: ${v}`);
+        if (said(/less saturated fat/) && per(w, 'satFat') >= per(l, 'satFat')) bad.push(`${pr.id}: ${v}`);
+        if (said(/more fiber/) && per(w, 'fiber') <= per(l, 'fiber')) bad.push(`${pr.id}: ${v}`);
+        if (said(/more protein/) && per(w, 'protein') <= per(l, 'protein')) bad.push(`${pr.id}: ${v}`);
+      }
+      if (amt(a) !== amt(b) && /fewer kcal|more kcal|saturated fat|more fiber|more protein|blood sugar peak/.test(v) && !(v.includes(amt(a)) && v.includes(amt(b)))) bad.push(`${pr.id} (servings not named): ${v}`);
+    }
+    void items;
+    expect(bad.slice(0, 20)).toEqual([]);
+  }, 600_000);
 });

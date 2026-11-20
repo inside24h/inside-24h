@@ -225,15 +225,80 @@ export function whereGauge(b: BuiltLike, m: number): Gauge | null {
   return { big, small, level: 0, organ: SEG_FOCUS_V[top[0]], ...(SHOWS_BAC.test(big) ? { small: `${small} · for a ${b.bacBody ?? DEFAULT_BAC_BODY}${limits ? ` · ${limits}` : ''}`, warn: DRIVE_WARN } : {}) };
 }
 
+/** Phase 4j (critique 2026-11-17, M2: black tea's end card said "Peak: 150 ml urine · 2 h in", the value at its kidney
+ *  moment, while its chip went on to 186-203 ml): the urine chip's own series (the route's bladder, "Urine made in the
+ *  last 3 h", as whereGauge shows it), its true highest value over the day and the minute of it. The one source of
+ *  every "peak" of the urine; null without a bladder in the route. */
+export function urinePeak(b: BuiltLike): { ml: number; min: number; big: string; small: string } | null {
+  if (!b.route) return null;
+  let best = 0, at = -1;
+  for (let m = 0; m <= 1440; m++) { const s = b.route.segs(m).bladder; if (s && s.amount > best) { best = s.amount; at = m; } }
+  return at >= 0 && best >= 1 ? { ml: best, min: at, big: `${fmtAmount(best)} ml urine`, small: best > 500 ? 'Made in 3 h: more than one pee' : 'Urine made in the last 3 h' } : null;
+}
+
+/** Phase 4j: the serving a route carries, in its unit: a content part's amount over its share of the serving (routes.ts
+ *  st(): frac = amount ÷ serving), where the stomach first holds a real share of it; 0 when unknown. */
+export function servingOf(r: Route): number {
+  const c = SERVING_MEMO.get(r);
+  if (c !== undefined) return c;
+  let v = 0;
+  for (let k = 0; k <= 90; k++) { const s = r.segs(k).stomach; if (s && s.frac >= 0.2 && s.amount > 0) { v = s.amount / s.frac; break; } }
+  SERVING_MEMO.set(r, v);
+  return v;
+}
+const SERVING_MEMO = new WeakMap<Route, number>();
+/** Phase 4j (critique 2026-11-17, M7: "The food is mostly in your large intestine." at +24:00 for a soft pretzel, of
+ *  which 1.9 g of fiber was left there and the rest absorbed): where MOST of the serving is at minute m, by mass, from
+ *  the route model. The gut's contents (food pipe, stomach, duodenum, small intestine: the food itself; the large
+ *  intestine: what reached it) each against the serving (servingOf); what
+ *  is not in the gut any more has been absorbed ('absorbed': in the blood, the kidneys, the bladder, or used). A card
+ *  that says where the food is says this place (whereCard; video-story.test.ts holds every such card to it). */
+export function dominantAt(b: BuiltLike, m: number): SegId | 'absorbed' | null {
+  const r = b.route;
+  if (!r) return null;
+  const serving = servingOf(r);
+  if (!(serving > 0)) return null;
+  const segs = r.segs(Math.max(0, Math.min(1440, m))), gut: SegId[] = ['swallow', 'stomach', 'duodenum', 'small', 'colon'];
+  let top: SegId | 'absorbed' = 'absorbed', inGut = 0, best = 0;
+  for (const id of gut) { const a = Math.max(0, segs[id]?.amount ?? 0); inGut += a; if (a > best) { best = a; top = id; } }
+  return Math.max(0, serving - inGut) >= best ? 'absorbed' : top;
+}
+
+/** Phase 4j (critique 2026-11-17, M6): how much of it the body has taken up by minute m, for a lull's card (video-plan
+ *  withLullCards): its kcal (the model's absorbed energy) when it has 20 kcal or more, else the share of the serving that
+ *  has left the gut (the route model, as dominantAt). `pct`: as a share ("54 %"; a comparison that asks about kcal never
+ *  says them before its answer). null when the model has neither. */
+export function takenUpAt(b: BuiltLike & { energy?: { total: number; absorbed?: (m: number) => number } }, m: number, pct = false): string | null {
+  const en = b.energy, mm = Math.max(0, Math.min(1440, m));
+  if (en?.absorbed && en.total >= 20) {
+    const a = Math.max(0, Math.min(en.total, en.absorbed(mm)));
+    return pct ? `${Math.round((100 * a) / en.total)} % of it` : `${Math.round(a)} of ${Math.round(en.total)} kcal`;
+  }
+  const r = b.route;
+  if (!r) return null;
+  const serving = servingOf(r);
+  if (!(serving >= 1)) return null;
+  const s = r.segs(mm), inGut = (['swallow', 'stomach', 'duodenum', 'small', 'colon'] as SegId[]).reduce((acc, id) => acc + Math.max(0, s[id]?.amount ?? 0), 0);
+  const up = Math.max(0, Math.min(serving, serving - inGut));
+  return pct ? `${Math.round((100 * up) / serving)} % of it` : `${Math.round(up)} of ${Math.round(serving)} ${r.unit}`;
+}
+
 /** Round 15 (sparse stories, critic SA-2): where most of it is at minute m, as a card ("Most of it is in your small
  *  intestine now."), from the same route model as the where-gauge; null for the bladder and unknown places. */
-export function whereCard(b: BuiltLike, m: number): string | null {
+export function whereCard(b: BuiltLike, m: number, until = m + 45): string | null {
   const top = presentAt(b, m).filter(([id]) => id !== 'swallow')[0];
   const small = top ? WHERE_SMALL[top[0]] : undefined;
   // (round 17, critic P2-CR: "It collects in your bladder." then "Most of it is in your blood now." read as urine): it says what
   const t0 = b.story?.chapters[0]?.title ?? '', what = /bite and sip/i.test(t0) ? 'the meal' : /bite/i.test(t0) ? 'the food' : 'the drink';
   // (round 18, critic: "The food is mostly in your blood.": nutrients go into the blood, not the food)
-  if (top?.[0] === 'blood') return `Most of ${what} has been absorbed now.`;
+  // (phase 4j, M7: a place is said only where most of the serving really is, by mass, and only while it holds, from m
+  // to `until` (every minute): the few grams of fiber left in the large intestine once the rest was absorbed are
+  // not "mostly"; nutrients in the blood are "absorbed" only once most of the serving has left the gut)
+  const dom = top && [...CONTENT_SEGS, 'colon', 'blood'].includes(top[0]) ? dominantAt(b, m) : null;
+  if (dom) for (let k = m; k <= Math.min(1440, until); k += 1) if (dominantAt(b, k) !== dom) return null;
+  if (dom === 'absorbed') return `Most of ${what} has been absorbed now.`;
+  if (top?.[0] === 'blood') return null;
+  if (dom && top && dom !== top[0]) { const s2 = WHERE_SMALL[dom]; return s2 && /^In your /.test(s2) ? `${what.charAt(0).toUpperCase()}${what.slice(1)} is mostly ${s2.charAt(0).toLowerCase()}${s2.slice(1)}.` : null; }
   return small && /^In your /.test(small) ? `${what.charAt(0).toUpperCase()}${what.slice(1)} is mostly ${small.charAt(0).toLowerCase()}${small.slice(1)}.` : null;
 }
 
@@ -295,7 +360,14 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
 }
 /** The end card's blood sugar line in plain words ("not measured" read like an error). */
 // (round 6: the same range as the gauge, critic P0: "+45 %" on the end card vs "26–62 %" on the gauge)
-export const plainSugar = (peak: number | null, _text?: string) => (peak === null ? 'not tracked here' : peak < 0.3 ? 'steady' : `${sugarPct(peak)}, ${peak >= 3 ? 'a big rise' : 'normal'}`);
+// (phase 4j, critique M3: "Blood sugar: not tracked here" was internal language, next to a "0.5 g sugar · In your blood"
+// chip: without a blood sugar curve the line says what the model knows, its carbohydrate, `carbs` g)
+export const plainSugar = (peak: number | null, _text?: string, carbs?: number) => (peak === null ? (carbs !== undefined && carbs < 10 ? `only ${Math.max(1, Math.round(carbs))} g of carbs` : 'no curve for this food') : peak < 0.3 ? 'steady' : `${sugarPct(peak)}, ${peak >= 3 ? 'a big rise' : 'normal'}`);
+/** Phase 4j (critique M3: "Both · Into the small intestine / Starch and sugar turn into blood sugar." for a soft pretzel
+ *  and peanuts, whose end card said its blood sugar was not tracked): a card about blood sugar is said for a food only
+ *  when its model has a blood sugar rise (a sugar peak of 0.3 mmol/L or more); one card for both sides only then. */
+export const SUGAR_CLAIM = /\bblood sugar\b|\binsulin\b/i;
+export const sugarClaimTrue = (sugarPeak: number | null) => sugarPeak !== null && sugarPeak >= 0.3;
 /** When in the day, in words: "13 min in", "1½ h in" (round 6: "+0:13" read like a code). */
 export function inText(m: number): string {
   // (round 13: "1 h 50 min in", never a rounded "2 h"; master audit 2026-11-12, C12: but never more precise than the
