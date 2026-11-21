@@ -283,6 +283,12 @@ export function takenUpAt(b: BuiltLike & { energy?: { total: number; absorbed?: 
   return pct ? `${Math.round((100 * up) / serving)} % of it` : `${Math.round(up)} of ${Math.round(serving)} ${r.unit}`;
 }
 
+/** Phase 4k: the place a where-card says ("… is mostly in your stomach." → 'stomach', "… has been absorbed now." →
+ *  'absorbed'), as dominantAt names it; null for a card that says no place. */
+export function placeOfCard(card: string): ReturnType<typeof dominantAt> {
+  const P: [RegExp, ReturnType<typeof dominantAt>][] = [[/has been absorbed/, 'absorbed'], [/is mostly in your stomach/, 'stomach'], [/is mostly in your gut/, 'duodenum'], [/is mostly in your small intestine/, 'small'], [/is mostly in your large intestine/, 'colon']];
+  return P.find(([re]) => re.test(card))?.[1] ?? null;
+}
 /** Round 15 (sparse stories, critic SA-2): where most of it is at minute m, as a card ("Most of it is in your small
  *  intestine now."), from the same route model as the where-gauge; null for the bladder and unknown places. */
 export function whereCard(b: BuiltLike, m: number, until = m + 45): string | null {

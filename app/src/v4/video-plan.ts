@@ -186,6 +186,8 @@ export interface PlanFx {
   lulls?: number[]; pipe?: number;
   /** phase 4h: the food's own seed (video-hook seedOf of its name), for choices that should differ between foods */ seed?: number;
   /** phase 4j (internal): seconds the first glide takes on for the hook's question (questionByS) */ openGlide?: number;
+  /** phase 4k: the slowest the story's clock runs, minutes a second (PACE_FAST with alcohol or caffeine; default PACE_MEAL) */ paceMin?: number;
+  /** phase 4k: the hook asks about kcal (a lull may then count kcal with alcohol too) */ kcalHook?: boolean;
   perceive?: { seen: (fr: VFrame) => string[]; runs: (seq: { t: number; rs: string[] }[]) => { s: number; r: string; at: number }[]; maxS: (seconds: number) => number; extra?: StopIn[] };
 }
 export type SurgeKind = 'sugar' | 'caffeine' | 'alcohol';
@@ -247,7 +249,15 @@ export const FIRST_CLOCK_S = 2.7;
 /** Phase 4j (critique 2026-11-17, M5: the clock stood at +0:00 to +0:03 for 7-13 s of every opening): the first
  *  moment's clock runs OPEN_RATE minutes of the day per second of video from the first sip on (a little faster at
  *  first, OPEN_EASE), up to OPEN_SHARE of the way to the next moment, so it has visibly moved within ~3 s and never
- *  stands still under the first cards. The timeline check (video-telemetry, "clock") holds every video to it. */
+ *  stands still under the first cards. The timeline check (video-telemetry, "clock") holds every video to it.
+ *  (The constants follow PACE_FAST below.) */
+/** Phase 4k (critique 2026-11-21, M1): the slowest the story's clock runs, minutes of the day a second of video: alcohol
+ *  or caffeine (acting within minutes), and everything else (PlanFx.paceMin; layFrames). Above the timeline check's
+ *  PACE_MIN (6 and 3 minutes in every 6 s), so the displayed minute's rounding never fails it. */
+export const PACE_FAST = 1.25, PACE_MEAL = 0.65;
+/** Phase 4k (critique M2): the least a NEXT chip's time is ahead of the clock when it appears, minutes. */
+export const NEXT_AHEAD_MIN = 1.5;
+/** (OPEN_RATE, OPEN_SHARE, OPEN_EASE: phase 4j, above) */
 export const OPEN_RATE = 2.5, OPEN_SHARE = 0.75, OPEN_EASE = 0.7;
 export const MOVE_S = 1.0;       // glide between two moments (eased)
 /** 2026-10-24: a glide over a long quiet stretch takes longer (up to 1.8 s), so hours never flash past. */
@@ -368,6 +378,12 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
         const spare = chosen.map((_s, i) => i).filter((i) => i > 0 && !forced(chosen[i]) && !mids.has(chosen[i].min)).sort((i, j) => val(chosen[i]) - val(chosen[j]));
         for (const i of spare) {
           const next = sorted([...chosen.filter((_s, k) => k !== i), c]);
+          if (fits(next)) { chosen = next; mids.add(c.min); break outer; }
+        }
+        // (phase 4k: or in place of two of them, the least telling first: a Short whose opening became a moment shorter
+        // fills it with an early moment, which alone may not make room)
+        for (let a = 0; a < spare.length; a++) for (let b = a + 1; b < spare.length; b++) {
+          const next = sorted([...chosen.filter((_s, k) => k !== spare[a] && k !== spare[b]), c]);
           if (fits(next)) { chosen = next; mids.add(c.min); break outer; }
         }
       }
@@ -616,6 +632,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       for (let j = p.length - 1; j >= 0; j--) {
         if (SAFETY.test(p[j]) || ((p[j].startsWith(TEASE_PREFIX) || p[j].startsWith(TEASE_PREFIX2)) && p.length - 1 > j)) continue; // (a tease may go only as the moment's last card)
         if (j === 0 && (keep0 || p.length < 2)) continue;
+        if (j < (c.must ?? 0)) continue; // (phase 4k: the cards a moment says it must show, StopIn.must: the morning's fact)
         if (j > 0 && j < Math.max(i === 0 ? first1() : 1, mustOf(c)) && !p.slice(0, j + 1).some((x) => SAFETY.test(x))) continue;
         return j;
       }
@@ -749,7 +766,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     openPad = fx.questionByS - out.peakT;
     const alt = relay();
     openPad = 0;
-    if (alt.seconds <= lim.max + 0.05 && (alt.peakT ?? 0) >= fx.questionByS - 0.1 && overOf(alt).sum <= overOf(out).sum + 1e-6) out = alt;
+    if (alt.seconds <= lim.max + 1e-6 && (alt.peakT ?? 0) >= fx.questionByS - 0.1 && overOf(alt).sum <= overOf(out).sum + 1e-6) out = alt;
   }
   // round 15 (critic SA-2: cards held 6-8 s): when the early impact left too few moments for the length, the impact
   // may come a little later (up to PEAK_BY_MAX_S), so the moments before it come back and every card stays short
@@ -1048,6 +1065,36 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const nOut = F(outroSeconds(cut, !!fx.compare));
   for (let i = 0; i < nOut; i++) frames.push({ phase: 'outro', m: 1440, t: tNow(), capA: 0, k: i / nOut, stop: 1440, beat: 'end' });
   cues.push({ t: tNow(), kind: 'end' });
+  // phase 4k (critique 2026-11-21, M1: aperol stood at +0:10 to +0:11 from 9 to 17.5 s, carbonara at +1:29 for 9.6 s:
+  // moments a minute apart, each held for its cards, the clock pushed into the next by the opening's run and then held
+  // to half the way on): the story's clock never runs slower than fx.paceMin minutes a second (PACE_FAST for alcohol or
+  // caffeine, PACE_MEAL else), from the hook on; a moment reached later than its own minute shows its cards at the
+  // later clock (never earlier: the clock never runs back), and the NEXT chip names the clock it is reached at. The
+  // timeline check (video-telemetry "clock pace") holds every video to PACE_MIN per 6 s and no value held over 3 s.
+  {
+    const r = (fx.paceMin ?? PACE_MEAL) / FPS;
+    let prev = Number.NEGATIVE_INFINITY, chip0 = -1;
+    for (let i = 0; i < frames.length; i++) {
+      const f = frames[i], story = (f.phase === 'intro' && f.beat === 'hook') || (f.phase === 'main' && (f.beat === 'hold' || f.beat === 'glide'));
+      if (!story) continue;
+      if (f.m < 1440 && prev > Number.NEGATIVE_INFINITY) f.m = Math.min(1440, Math.max(f.m, prev + r));
+      if (f.beat === 'glide' && f.next && f.next.min < 1440 && chip0 < 0) chip0 = i;
+      // (critique M2: "NEXT · +0:10 · In your stomach" at +0:10: from the chip's first frame to the moment it names, the
+      // clock runs at least NEXT_AHEAD_MIN, so the chip always names a time ahead)
+      if (f.beat !== 'glide' && chip0 >= 0) {
+        const m0 = frames[chip0].m, need = m0 + NEXT_AHEAD_MIN;
+        if (f.m < need && need < 1440) { for (let k = chip0 + 1; k < i; k++) frames[k].m = Math.max(frames[k].m, m0 + ((need - m0) * (k - chip0)) / (i - chip0)); f.m = need; }
+        chip0 = -1;
+      }
+      prev = f.m;
+    }
+    for (let i = 0; i < frames.length; i++) {
+      const nx = frames[i].next;
+      if (!nx || nx.min >= 1440) continue;
+      let j = i; while (j < frames.length && frames[j].beat === 'glide') j++;
+      if (j < frames.length) frames[i].next = { ...nx, min: Math.max(nx.min, frames[j].m) };
+    }
+  }
   // the clock: day position and speed of every frame
   frames.forEach((f, i) => {
     f.u = toU(f.m);

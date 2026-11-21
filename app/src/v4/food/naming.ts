@@ -4,6 +4,7 @@
 // "Whole · 1104 g pizza capricciosa.", "2 large egg", "1 cup, 70 ml turkish coffee" or "Kebab / doner (1 kebab)".
 // The amount labels themselves (UI chips, search) are unchanged; this only words them.
 import { baseOf, deriveFood, FOODS, type Part } from './parse';
+import { startsProper } from '../video-names';
 
 /** First words that are names and keep their capital in the middle of a sentence. */
 const PROPER_FIRST = new Set(['French', 'Greek', 'Turkish', 'Medica']);
@@ -55,7 +56,7 @@ export const distinctName = (name: string) => (SHARED.has(baseName(name).toLower
 export function nameInSentence(name: string): string {
   const n = qualifiedName(name);
   const [first, ...rest] = n.split(' ');
-  const keep = (PROPER_FIRST.has(first) && !(first === 'French' && rest[0] === 'fries')) || /[A-Z].*[A-Z]/.test(first); // "french fries" (AP style)
+  const keep = (PROPER_FIRST.has(first) && !(first === 'French' && rest[0] === 'fries')) || /[A-Z].*[A-Z]/.test(first) || startsProper(n); // (phase 4k, M4: "Aperol spritz", brands) // "french fries" (AP style)
   return [keep ? first : first.toLowerCase(), ...rest].join(' ');
 }
 

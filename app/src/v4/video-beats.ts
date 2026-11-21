@@ -21,6 +21,10 @@ const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 /** Values that follow the clock: only on the gauges. */
 export const DYNAMIC = /‰|mmol\/L|mg\/dL|\bmg of caffeine is (?:left|still)\b|\bg of fiber reach/;
 
+/** Phase 4k (critique 2026-11-21, M2): a next-morning card that says nothing new (when the alcohol is gone was said
+ *  before; "don't drive" is on every BAC chip): a "NEXT MORNING" moment of only these is left out (video-story), and
+ *  the timeline check holds such a stretch to MORNING_MAX_S (video-telemetry). */
+export const MORNING_NO_FACT = /should be gone|^Don.t drive|^Waking up\b/i;
 /** A card is a complete thought: capital (or number / quote) first, sentence end last, short. */
 export function isCard(s: string): boolean {
   const t = s.trim();
@@ -106,7 +110,10 @@ const RULES: Rule[] = [
   [/^It spreads through all the water in your body/, () => ['The water spreads through your whole body.']],
   [/^Most of the glass is now collecting in your bladder/, () => ['Most of it collects in your bladder.']],
   [/^About (\d+) hours later the glass has passed through you/, () => ['The glass has passed through you.', 'Your body water is back in balance.']],
-  [/^The extra water \(?.*\)? is filtered by your kidneys into your bladder/, () => ['Your kidneys filter the extra water.', 'The urine collects in your bladder for hours.']],
+  // (phase 4k, critique 2026-11-21, M2: "Your kidneys filter the extra water." under carbonara said nothing of its own:
+  // the card says the food's own water, the model's number)
+  [/^The extra water \((\d+) ml\) is filtered by your kidneys into your bladder/, (m) => [`Your kidneys filter its ${m[1]} ml of water.`, 'The urine collects in your bladder for hours.']],
+  [/^The extra water \(?.*\)? is filtered by your kidneys into your bladder/, () => ['The urine collects in your bladder for hours.']],
   [/^A beer does not make you lose more water than you drank/, () => ['You don’t lose more water than you drank.']],
   [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['Cola hydrates like the same amount of water.']],
   // meals
@@ -162,6 +169,7 @@ export interface BeatCtx {
   /** pacing ("Over how long?"): rounds and the time between them, as the model doses them */
   pace?: { doses: number; overMin: number; everyMin: number; round: string };
   /** round 5: the caffeine dose (mg), so "still in you at bedtime" is said as a share of it ("about a fifth") */ caffeineMg?: number;
+  /** phase 4k (critique 2026-11-21, M3): with alcohol, the caffeine (mg) the model still has in you at minute m */ caffeineLeft?: (m: number) => number;
   /** round 5: clock time of the first sip (minutes after midnight), so "gone" is said as a range of hours */ drinkAtMin?: number;
   /** round 6: the blood alcohol peak (g/L, typical body) and its minute: "gone" is then said from the SAME range as the
    *  gauge (bodies −40 %/+50 %, BAC_SPREAD) and the livers' range (0.20 / 0.10 g/L an hour, ELIM_RANGE) */ bacPeak?: { g: number; min: number };
@@ -272,6 +280,14 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
         if (goneRange(ctx.bacPeak.g, ctx.bacPeak.min)[1] > wakeH) {
           const keep = out.filter((c) => !/should be gone|hangover|^Don’t drive/.test(c));
           out.splice(0, out.length, `At ${wake}, a breath test may be positive.`, 'Don’t drive.', ...keep);
+        } else {
+          // (phase 4k, critique 2026-11-21, M2: "The alcohol should be gone." read as doubt 8 s after "gone after about
+          // 1–3 h", and the morning had no fact of its own): the range's own top end, the slowest liver with the
+          // heaviest reading, said in hours before waking, with the driving warning in the same card (one card: the
+          // morning stays short, and the fact is never said without the warning)
+          // ("over N h": N whole hours, strictly fewer than the range leaves)
+          const ago = Math.ceil(wakeH - goneRange(ctx.bacPeak.g, ctx.bacPeak.min)[1]) - 1, k = out.findIndex((c) => /^(?:At \d\d:\d\d, t|T)he alcohol should be gone\.$/.test(c));
+          if (k >= 0 && ago >= 1) { out[k] = `Alcohol-free for over ${ago} h. Still, don’t drive.`; const d = out.indexOf('Don’t drive after drinking.'); if (d >= 0) out.splice(d, 1); }
         }
       }
     }

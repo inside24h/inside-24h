@@ -929,10 +929,10 @@ export default function AppV4() {
   const reelPlan = (): Plan => {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
     const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin, servingCard(currentParts)); // (phase 4h, M1: a drink with alcohol says its amount and strength)
-    const stops = applyHook(singleStops(story, ctx, (m, u) => whereCard(built, m, u)), hookNow, (built.alcoholG ?? 0) > 1 ? 0 : built.caffeine.doseMg); // (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
+    const stops = applyHook(singleStops(story, ctx, (m, u) => whereCard(built, m, u)), hookNow, built.caffeine.doseMg, built.alcoholG ?? 0); // (phase 4k: with alcohol too, M3) (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = payoffMinOf(stops, hookNow);
-    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, questionByS: questionImpactS(hookNow, shortName(videoName)),
+    const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, kcalHook: /kcal/.test(`${hookNow.line1} ${hookNow.line2}`), seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, questionByS: questionImpactS(hookNow, shortName(videoName)),
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
     const plan = singlePlan(stops, vidCut, fx, story.chapters, built); // (phase 4e: the same planner call as the audit, perceived stays capped)
     reelStops.current = plan.stops;

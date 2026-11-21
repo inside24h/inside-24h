@@ -22,7 +22,7 @@ function shortOf(x: Analysis) {
   const ch = story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) }));
   const hin = { name, chapters: ch, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid: /bite/i.test(story.chapters[0]?.title ?? ''), kcal: b.energy.total, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, P), decaf: decafOf(x.label, b, P) };
   const hook = hookFor(hin);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, P.drinkAtMin), (m, u) => whereCard(b, m, u)), hook, (b.alcoholG ?? 0) > 1 ? 0 : b.caffeine.doseMg);
+  const stops = applyHook(singleStops(story, beatCtx(name, b, P.drinkAtMin), (m, u) => whereCard(b, m, u)), hook, b.caffeine.doseMg, b.alcoholG ?? 0);
   const fx = { ...climaxFx(b, x.glucose !== undefined, ch, hook), payoffMin: payoffMinOf(stops, hook), drinkAtMin: P.drinkAtMin, wakeMin: P.wakeMin, lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
   return { plan: singlePlan(stops, 'short', fx), stops, solid: hin.solid };
 }

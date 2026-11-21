@@ -35,8 +35,27 @@ export const cmpName = (label: string) => { const s = shortName(plainLatin(label
  *  "FIRST BITE / Soft pretzel." over the body named "Soft pretzel"): two texts say the same words (case, punctuation
  *  and spacing aside), so a card would only repeat a title already on screen. */
 export const sameWords = (a: string, b: string) => { const n = (s: string) => plainLatin(s).toLowerCase().replace(/[^a-z0-9%]+/g, ' ').trim(); return !!n(a) && n(a) === n(b); };
-/** A name inside a sentence ("orange juice"), unless an acronym or brand-like ("USDA", "McFlurry"). */
-export const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+/** Phase 4k (critique 2026-11-21, M2: "FIRST SIP / 1 drink of aperol spritz." under the headline "Aperol spritz: 14 g
+ *  of alcohol." passed sameWords): the words of a card that carry its meaning, case, punctuation, a serving's words
+ *  ("1 drink of", "1 plate of") and filler aside. */
+const CARD_STOP = new Set(['a', 'an', 'the', 'of', 'in', 'on', 'at', 'to', 'and', 'or', 'it', 'its', 'is', 'are', 'your', 'you', 'this', 'that', '1', 'one', 'total', 'drink', 'drinks', 'plate', 'plates',
+  'serving', 'servings', 'glass', 'cup', 'can', 'bottle', 'portion', 'restaurant', 'piece', 'slice', 'bowl', 'shot', 'mug']);
+export const cardTokens = (s: string) => plainLatin(s).toLowerCase().replace(/[’']/g, '').split(/[^a-z0-9%]+/).filter((w) => w && !CARD_STOP.has(w));
+/** Phase 4k: a card that nearly repeats a title on screen: at least `k` of its words are the title's. */
+export const nearSame = (card: string, title: string, k = 0.8) => { const c = cardTokens(card), t = new Set(cardTokens(title)); return c.length > 0 && c.filter((w) => t.has(w)).length / c.length >= k - 1e-9; };
+/** Phase 4k: two cards that say nearly the same: at least `k` of all their words shared. */
+export const alikeCards = (a: string, b: string, k = 0.8) => { const x = new Set(cardTokens(a)), y = new Set(cardTokens(b)); const both = [...x].filter((w) => y.has(w)).length, all = new Set([...x, ...y]).size; return all > 0 && both / all >= k - 1e-9; };
+/** Phase 4k (critique 2026-11-21, M4: "1 drink of aperol spritz", "coca-Cola"): the food database's proper nouns and
+ *  brands (from its names and its brand aliases, food/fooddb.json; video-4k.test checks each is there), which keep
+ *  their capital inside a sentence. "French" only where it names the place ("French toast"; AP style "french fries"). */
+export const PROPER_NAMES = ['Aperol', 'Campari', 'Red Bull', 'Coca-Cola', 'Pepsi', 'Monster', 'Powerade', 'Nutella', 'Medica', 'Negroni', 'Bloody Mary', 'Tom Collins', 'Manhattan',
+  'Moscow', 'Russian', 'Thai', 'General Tso', 'Caesar', 'California', 'Croatian', 'English', 'Camembert', 'Trappist', 'Greek', 'Turkish', 'French'];
+const PROPER_RE = new RegExp(`^(?:${PROPER_NAMES.map((n) => n.replace(/[-\s]/g, '[-\\s]')).join('|')})(?![a-z])`);
+/** True when a name starts with a proper noun or brand ("Aperol spritz", "Coca-Cola"), never "French fries". */
+export const startsProper = (s: string) => PROPER_RE.test(s) && !/^French fries\b/.test(s);
+/** A name inside a sentence ("orange juice"), unless an acronym or brand-like ("USDA", "McFlurry") or a proper noun
+ *  or brand of the food database ("Aperol spritz", "Coca-Cola": phase 4k). */
+export const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) && !startsProper(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 /** Round 18 (critic T-4: "Black olives wins"): a name that is a plural noun takes "win", "are" … */
 const SINGULAR_S = /(?:ss|us|is|ous|hummus|couscous|asparagus|swiss|molasses|series|species)$/i;
 const PLURAL_NOUN = /(?:fries|chips|cevapi|nuggets|sticks|cakes|olives|berries|beans|peas|lentils|nuts|seeds|almonds|walnuts|hazelnuts|peanuts|crackers|cookies|crepes|pancakes|grapes|dates|figs|strawberries|blueberries|raspberries|cherries|noodles|oats|flakes|sardines|mushrooms|vegetables|eggs|tomatoes|potatoes|sprouts|wings|ribs|shrimps?|prawns|mussels|pretzels|pieces|slices)$/i;

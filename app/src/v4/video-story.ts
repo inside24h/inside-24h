@@ -3,11 +3,11 @@
 import { minutesFromU, uFromMinutes } from '../time';
 import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
-import { beatLines, eventMin, tooEarly, type BeatCtx } from './video-beats';
+import { beatLines, eventMin, isCard, MORNING_NO_FACT, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
-import { DULL, planCompare, planVideo, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
-import { bacPlain, cardNamed, DEFAULT_BAC_BODY, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, SUGAR_CLAIM, sugarClaimTrue, takenUpAt, urinePeak, whereCard, whereGauge, type BuiltLike } from './video-body';
+import { DULL, PACE_FAST, PACE_MEAL, planCompare, planVideo, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
+import { bacPlain, cardNamed, DEFAULT_BAC_BODY, dominantAt, placeOfCard, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, SUGAR_CLAIM, sugarClaimTrue, takenUpAt, urinePeak, whereCard, whereGauge, type BuiltLike } from './video-body';
 import { perceivedRuns, quietFrame, REGION, regionMaxS, seenOf } from './video-cam';
 import { perceivedOf, sceneOf } from './video-telemetry';
 import { at as atMin } from '../science/espressoSim';
@@ -24,7 +24,7 @@ export const CMP_SHORT = [0, 20, 90, 240, 720, 1440]; // 2026-10-24: the planner
 /** The video's short name: no grams in brackets; a long name keeps its first part ("A whole pizza with extra
  *  cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name. */
 // round 18: the names live in video-names.ts (one source for the video, the comparison and its verdict)
-import { cmpName, plainLatin, sameWords, shortName } from './video-names';
+import { cmpName, nearSame, plainLatin, sameWords, shortName } from './video-names';
 export { cmpName, plainLatin, shortName };
 
 /** What the caption cards need to know (video-beats.ts): the short name, and the pacing as the model doses it. */
@@ -48,13 +48,15 @@ export function servingCard(parts: readonly Pick<Part, 'food' | 'amountLabel' | 
   ].map((s) => `${s.charAt(0).toUpperCase()}${s.slice(1)}.`);
   return forms.find((s) => s.trim().split(/\s+/).length <= 8);
 }
-export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
+export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number; body?: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
   const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
   // (round 6: the blood alcohol peak, so "gone" is said from the gauge's own range)
   let pk = 0, pm = 0; if (built.bac && (built.alcoholG ?? 0) > 1) for (let m = 0; m <= Math.min(1440, built.bac.length - 1); m++) if (built.bac[m] > pk) { pk = built.bac[m]; pm = m; }
   return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined,
     caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin,
-    ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}), ...(serving ? { serving } : {}) };
+    ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}), ...(serving ? { serving } : {}),
+    // (phase 4k, M3: alcohol with caffeine says what caffeine is left when the alcohol is gone, from the model)
+    ...(pk > 0.01 && built.caffeine?.body && built.caffeine.doseMg >= CAF_WITH_ALCOHOL_MG ? { caffeineLeft: (m: number) => Number(built.caffeine!.body![Math.max(0, Math.min(built.caffeine!.body!.length - 1, Math.round(m)))] ?? 0) } : {}) };
 }
 
 /** The minute of the main gauge's peak (alcohol, else a clear blood sugar rise, else caffeine), as mainGauge chooses:
@@ -111,15 +113,50 @@ export function decafOf(label: string, b: { caffeine: { doseMg: number; body: Fl
   return { mg: b.caffeine.body[pk], regularMg: reg, min: Math.max(5, Math.min(240, pk)) }; // (round 15: the gauge's own number)
 }
 
+/** Phase 4k (critique 2026-11-21, M3): with alcohol, caffeine from this many mg is said with its dose (the model's
+ *  story warns about it from here: food/foodProduct cafNote), and what is left when the alcohol is gone. */
+export const CAF_WITH_ALCOHOL_MG = 10;
+/** Phase 4k, M3: the card at the alcohol-gone moment ("Alcohol: gone. 37 mg caffeine: still in you."). */
+export const ALC_GONE_CAF = 'Alcohol: gone.';
+/** A US standard drink: 14 g of alcohol (NIAAA). */
+export const US_STD_DRINK_G = 14;
+/** Phase 4k (M1): a where-card no place fits all the while it is on screen gives way to this (placesOnScreen). */
+export const PLACE_NONE = 'It keeps moving through you.';
+/** Phase 4k (critique 2026-11-21, M1): the clock's least pace (video-plan PACE_*) may show a moment's cards later than
+ *  its minute; a card that says where most of it is ("The drink is mostly in your stomach.") must still be true at
+ *  every frame it is on screen (video-4j M7, video-body dominantAt): else it says where it is then, true all the while
+ *  (whereCard over those minutes), or PLACE_NONE. The plan's page keeps the same words. */
+export function placesOnScreen(plan: Plan, b: BuiltLike): Plan {
+  const fs = plan.frames, on = (f: VFrame) => f.phase === 'main' && (f.beat === 'hold' || (f.beat === 'glide' && (f.plateA ?? 1) >= 0.5));
+  for (let i = 0; i < fs.length;) {
+    const c = fs[i].cap, p = c && on(fs[i]) ? placeOfCard(c) : null;
+    if (!c || !p) { i++; continue; }
+    let j = i; while (j < fs.length && fs[j].cap === c && fs[j].phase === 'main' && (fs[j].beat === 'hold' || fs[j].beat === 'glide')) j++;
+    const shown = fs.slice(i, j).filter(on);
+    if (!shown.every((f) => dominantAt(b, Math.min(1440, f.m)) === p)) {
+      const m0 = Math.floor(Math.min(1440, shown[0].m)), m1 = Math.ceil(Math.min(1440, shown[shown.length - 1].m));
+      const w = whereCard(b, m0, m1), alt = w && shown.every((f) => dominantAt(b, Math.min(1440, f.m)) === placeOfCard(w)) ? w : PLACE_NONE;
+      for (let k = i; k < j; k++) fs[k].cap = alt;
+      const pg = plan.pages.find((x) => x.text === c && x.stop === fs[i].stop); if (pg) pg.text = alt;
+    }
+    i = j;
+  }
+  return plan;
+}
+/** Phase 4k: a drink's alcohol in US standard drinks, as a card ("About 1.4 US standard drinks."). */
+export const stdDrinksCard = (alcoholG: number) => { const n = Math.round((alcoholG / US_STD_DRINK_G) * 10) / 10; return n > 0.85 && n < 1.15 ? 'About 1 US standard drink.' : `About ${n} US standard drinks.`; };
 /** Round 14 (critic: every hook question is answered on screen): the hook's own moment (decaf's caffeine) joins the
  *  story, and its answer card is said first at the payoff moment, which is then never left out. */
-export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: string; payoff?: string; payoffMin?: number; answer?: string; lead?: string; extra?: { min: number; title: string; lines: string[] } }, caffeineMg = 0): StopIn[] {
+export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: string; payoff?: string; payoffMin?: number; answer?: string; lead?: string; extra?: { min: number; title: string; lines: string[] } }, caffeineMg = 0,
+  /** phase 4k: the drink's grams of alcohol (with caffeine: its dose is said from CAF_WITH_ALCOHOL_MG up) */ alcoholG = 0): StopIn[] {
   let out = stops.map((s) => ({ ...s, lines: s.lines ? [...s.lines] : undefined }));
   // the hook's number is said right after the name, on the first moment; round 16 (critic E-1: an energy drink never
   // said its 80 mg): 20 mg of caffeine or more is said there too, in the same card when it fits ("…, 80 mg of caffeine.")
-  const s0 = out[0];
-  const had = caffeineMg >= 20 && s0 ? (s0.lines ?? []).find((l) => /\d+ mg of caffeine/.test(l)) : undefined; // (said already: kept, and shown early)
-  const caf = caffeineMg >= 20 && s0 && !had ? `${Math.round(caffeineMg)} mg of caffeine` : null;
+  // (phase 4k, critique 2026-11-21, M3: vodka and an energy drink never said its caffeine: with alcohol, the dose is said
+  // from CAF_WITH_ALCOHOL_MG up, the amount the model's story warns about)
+  const s0 = out[0], alc = alcoholG > 1, cafMin = alc ? CAF_WITH_ALCOHOL_MG : 20;
+  const had = caffeineMg >= cafMin && s0 ? (s0.lines ?? []).find((l) => /\d+ mg of caffeine/.test(l)) : undefined; // (said already: kept, and shown early)
+  const caf = caffeineMg >= cafMin && s0 && !had ? `${Math.round(caffeineMg)} mg of caffeine` : null;
   let lead = hook.lead;
   if (caf && lead) { const j = `${lead.replace(/\.$/, '').replace(/^(\d+) g of sugar: about (\d+) teaspoons$/, '$2 teaspoons of sugar')}, ${caf}.`; if (j.split(/\s+/).length <= 8) lead = j; }
   if (s0) {
@@ -132,16 +169,65 @@ export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: strin
     if (add.length) { s0.lines = [...add, ...ls]; s0.must = Math.min(s0.lines.length, add.length); }
     // (phase 4j, critique M5: "FIRST SIP / 250 ml of black tea." under the headline "250 ml of black tea.": a card that
     // says a line of the hook, on screen all along as the headline, is not said)
-    const dup = (l: string) => sameWords(l, hook.line1 ?? '') || sameWords(l, hook.line2 ?? '');
+    // (phase 4k, critique 2026-11-21, M2: "FIRST SIP / 1 drink of aperol spritz." under "Aperol spritz: 14 g of
+    // alcohol.", "16 g of fiber." under "1 portion of lentils: 16 g of fiber.": nor a card whose words are nearly all
+    // the headline's, video-names nearSame, the same measure as the timeline check "card repeats title")
+    const dup = (l: string) => [hook.line1, hook.line2].some((h) => !!h && nearSame(l, h));
     // (a name card the hook says without its amount is said with it, as the first sentence has it: "250 ml of sparkling
     // mineral water." under the headline "Sparkling mineral water.")
     const bareAmt = (l: string) => l.replace(/^\d+(?:[.,]\d+)?\s*(?:ml|g|l|cl)\s+of\s+/i, '');
     const first = sentences(s0.text)[0] ?? '', withAmt = /\d/.test(first) && first.length <= 46 && !dup(first) && !(s0.lines ?? []).includes(first) ? first : null;
-    const kept0 = (s0.lines ?? []).flatMap((l) => (!dup(l) ? [l] : withAmt && sameWords(bareAmt(l), bareAmt(first)) ? [withAmt] : []));
+    // (phase 4k, critique M2: "86 kcal in total." in a video about alcohol: kcal only when the hook asks about them)
+    const kcalOff = alc && !/\bkcal\b/.test(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`), filler = (l: string) => kcalOff && /\bkcal\b/.test(l);
+    for (const s of out) if (s !== s0 && s.lines?.some(filler)) s.lines = s.lines.filter((l) => !filler(l));
+    const kept0 = (s0.lines ?? []).filter((l) => !filler(l)).flatMap((l) => (!dup(l) ? [l] : withAmt && sameWords(bareAmt(l), bareAmt(first)) ? [withAmt] : []));
     // (when the hook's line was its only card, the first moment says its energy instead, from its own first sentence)
     const kc = /(\d+) kcal/.exec(s0.text)?.[1], energy = kc === undefined ? null : Number(kc) >= 1 ? `${kc} kcal in total.` : /\b0 g carbohydrate/.test(s0.text) ? 'No sugar, no calories.' : null;
-    const kept = kept0.length || !energy || dup(energy) ? kept0 : [energy];
-    if (kept.length && kept.join('|') !== (s0.lines ?? []).join('|')) { const gone = (s0.lines ?? []).length - kept.length; s0.lines = kept; if (s0.must) s0.must = Math.max(0, Math.min(kept.length, s0.must - (add.some(dup) ? gone : 0))) || undefined; }
+    // (phase 4k: else what it is made of, from the same sentence: "61 g carbs, 26 g fat, 24 g protein."; a drink with
+    // alcohol says its US standard drinks, 14 g of alcohol each (NIAAA), never a kcal card the hook did not ask for)
+    const mac = /(\d+) g carbohydrate(?: \([^)]*\))?,\s*(\d+) g fat,\s*(\d+) g protein/.exec(s0.text);
+    // (the two biggest, so the card stays short; none of the three: it says so)
+    const macro = mac ? ([[Number(mac[1]), 'carbs'], [Number(mac[2]), 'fat'], [Number(mac[3]), 'protein']] as [number, string][]).filter(([g]) => g >= 1).sort((p, q) => q[0] - p[0]).slice(0, 2).map(([g, w]) => `${g} g ${w}`) : [];
+    const macroCard = !mac ? null : macro.length === 2 ? `${macro.join(', ')}.` : macro.length === 1 ? `${macro[0]}, little else.` : 'No carbs, fat or protein.';
+    const stdCard = alc ? stdDrinksCard(alcoholG) : null;
+    const fresh = [alc ? stdCard : energy, macroCard].filter((x): x is string => !!x && isCard(x) && !dup(x) && !kept0.includes(x));
+    // (the hook's number is still said on a card, round 14: a card that only repeated it says it with a fact of its own,
+    // "26 g of fat, 584 kcal in total." under "Spaghetti carbonara: 26 g of fat.")
+    // (an amount: a number with its unit, never the "2" of "2% milk")
+    const amounts = (x: string) => [...x.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:g|mg|kcal|ml|teaspoons?)\b/g)].map((m) => m[1]);
+    const hookNums = new Set(amounts(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`));
+    const lower1 = (g: string) => (/^[A-Z][a-z]/.test(g) && !/^[A-Z][a-z]*[A-Z]/.test(g) ? g.charAt(0).toLowerCase() + g.slice(1) : g);
+    // (with the moment's own first fact, else a fresh one; the long and the short form: "150 kcal in total." → "150 kcal.")
+    const joinWith = (l: string) => {
+      for (const f of [...kept0.filter((k) => /\d/.test(k)), ...fresh]) {
+        const parts = f.replace(/[.!?]$/, '').split(', ').filter((p) => !(l.match(/\b(?:sugar|fat|protein|fiber|carbs?|kcal|alcohol|caffeine)\b/g) ?? []).some((w) => p.includes(w)));
+        // (short, so the opening is no longer than its two cards were: "19 g natural sugar, 95 kcal.")
+        const l0 = l.replace(/[.!?]$/, '').replace(/ in total$/, '').replace(/^(\d+(?:[.,]\d+)?) (g|mg|ml) of /, '$1 $2 ').replace(/natural (?:milk |fruit )sugar/, 'natural sugar');
+        for (const g of [(parts[0] ?? '').replace(/ in total$/, ''), parts[0] ?? '', parts.join(', ')].filter(Boolean)) {
+          const j = `${l0}, ${lower1(g)}.`;
+          if (isCard(j) && !dup(j)) return { j, f };
+        }
+      }
+      return null;
+    };
+    const numDup = (s0.lines ?? []).find((l) => !filler(l) && dup(l) && amounts(l).some((n) => hookNums.has(n)) && !kept0.some((k) => amounts(k).some((n) => hookNums.has(n))));
+    const joined = numDup ? joinWith(numDup) : null;
+    const kept1 = joined ? [joined.j, ...kept0.filter((k) => k !== joined.f)] : kept0.length ? kept0 : fresh.slice(0, 1);
+    // (a first moment left with one card, where it had two, says a fresh fact second: never one card held 6-7 s)
+    // (with alcohol, in the name card's place: its standard drinks, a card without an organ, so the opening's stay on the
+    // stomach is not longer; "About 1.4 US standard drinks." or "1.4 US standard drinks." by the food's own seed, so two
+    // alike cocktails do not run in step)
+    // (its short form, never longer than the name card it takes the place of: "38 g carbs.")
+    const short1 = (f: string) => (/^\d+ g \w+, /.test(f) ? `${f.split(', ')[0]}.` : f);
+    const extra = fresh.filter((f) => !kept1.includes(f) && (!joined || f !== joined.f) && !kept1.some((k) => amounts(k).some((n) => amounts(f).includes(n)))).map(short1).sort((x, y) => (alc ? 0 : x.length - y.length))[0];
+    const nameGone = !joined && !!s0.lines?.length && dup(s0.lines[0]);
+    const lead1 = extra && extra === stdCard && seedOf(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`) % 2 === 1 ? extra.replace(/^About /, '') : extra;
+    const kept = kept1.length === 1 && (s0.lines ?? []).length >= 2 && extra && lead1 ? (alc && nameGone ? [lead1, ...kept1] : [...kept1, extra]) : kept1;
+    if (kept.length && kept.join('|') !== (s0.lines ?? []).join('|')) {
+      const gone = (s0.lines ?? []).length - kept.length; s0.lines = kept;
+      if (joined) s0.must = Math.max(1, Math.min(kept.length, s0.must ?? 1));
+      else if (s0.must) s0.must = Math.max(0, Math.min(kept.length, s0.must - (add.some(dup) ? gone : 0))) || undefined;
+    }
   }
   if (hook.extra) {
     const near = out.find((s) => Math.abs(s.min - hook.extra!.min) <= 5 && s.min > 0);
@@ -243,6 +329,10 @@ export function endCardOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: 
     const g = /(\d+) g protein/.exec(chapters[0]?.text ?? '')?.[1];
     if (g && !/protein/i.test(`${hero?.big} ${hero?.small}`)) hero = { big: `${g} g of protein`, small: 'Taken apart into building blocks' };
   }
+  // (phase 4k, critique 2026-11-21, M3: alcohol with caffeine ends on what the caffeine does when the alcohol is gone,
+  // the model's mg at the alcohol-gone moment: "Gone after about 3 h (typical) · 37 mg caffeine: still in you")
+  const goneCh = chapters.find((c) => c.title === 'Alcohol gone'), left = goneCh && (b.alcoholG ?? 0) > 1 && b.caffeine.doseMg >= CAF_WITH_ALCOHOL_MG ? Math.round(atMin(b.caffeine.body, goneCh.min)) : 0;
+  if (left >= 1) after24 = { ...after24, small: /^Gone after/.test(after24.small) ? `${after24.small.split(' · ')[0]} · ${left} mg caffeine: still in you` : `${ALC_GONE_CAF} ${left} mg caffeine: still in you` };
   return { hero, after24 };
 }
 /** Phase 4b (critique M2: "AFTER 24 HOURS / 58 mg caffeine · 45 min in / still in your body" was the PEAK): what the
@@ -345,11 +435,24 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
     const ls = fresh.length ? fresh : all;
     // (round 15: a sparse story also says where most of it is, after its own cards, used only when there is room)
     // (phase 4j: the place holds while the moment is on screen: up to the next chapter, at least minute 15)
+    // (phase 4k: the clock's least pace may show it later still: singlePlan's placesOnScreen says the place then)
     const nx = story.chapters.find((y) => y.min > c.min)?.min ?? 1440;
     const w = sparse && c.min >= 1 && where ? where(c.min, Math.max(nx, 15)) : null;
     const ls2 = w && !ls.includes(w) && !seen.has(w) ? (seen.add(w), [...ls, w]) : ls;
     return { min: c.min, title: c.title, text, lines: c.min === 0 ? [...ls2, ...pipeLines.filter((l) => !ls2.includes(l))] : byNutrient(ls2, mac) };
-  });
+  })
+    // (phase 4k, critique 2026-11-21, M2: "NEXT MORNING / The alcohol should be gone. / Don't drive after drinking." stood
+    // 4-7 s over a still body, after the video had said when the alcohol is gone, "should be gone" read as doubt): a
+    // morning with no fact of its own is left out; the BAC chip says "Never safe to drive after drinking." with every
+    // number, and the alcohol-gone moment "We can't tell when you're safe to drive."
+    .filter((s) => !(/^Next morning$/i.test(s.title) && (s.lines ?? []).every((l) => MORNING_NO_FACT.test(l))))
+    // (one with a fact says it first, with its driving card, so a cut that keeps only its first cards keeps the fact)
+    .map((s) => {
+      if (!/^Next morning$/i.test(s.title) || !s.lines) return s;
+      const fact = s.lines.filter((l) => !MORNING_NO_FACT.test(l)), drive = s.lines.filter((l) => /^Don.t drive/.test(l)).slice(0, 1);
+      if (!fact.length || fact.some((l) => SAFETY.test(l))) return s;
+      return { ...s, lines: [fact[0], ...drive, ...s.lines.filter((l) => l !== fact[0] && !drive.includes(l))], must: 1 + drive.length };
+    });
   // round 12 (critic P0-3): a card that speaks of a later minute ("Half has moved on after 116 minutes.") is said when
   // the clock gets there, as its own moment under the same title (never while the clock still stands at +0:01)
   const out: StopIn[] = [];
@@ -375,6 +478,15 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
     alcPeak.lines = [MASK, ...(alcPeak.lines ?? []).filter((l) => l !== MASK)];
     alcPeak.must = Math.max(alcPeak.must ?? 0, 1);
   } else if (cafStop) cafStop.keep = true;
+  // (phase 4k, critique 2026-11-21, M3: vodka and an energy drink never said its best fact: at +3:11 the alcohol is gone,
+  // 37 mg of caffeine is still in you): the alcohol-gone moment says it, from the model, and is in every cut
+  const gone = (ctx.alcoholG ?? 0) > 1 && ctx.caffeineLeft ? out.find((s) => s.title === 'Alcohol gone') : undefined;
+  const left = gone ? Math.round(ctx.caffeineLeft!(gone.min)) : 0;
+  if (gone && left >= 1) {
+    const c = `${ALC_GONE_CAF} ${left} mg caffeine: still in you.`, ls = (gone.lines ?? []).filter((l) => l !== c);
+    // (its second card, where the cut has room; the end card says it in every cut: endCardOf)
+    gone.lines = [...ls.slice(0, 1), c, ...ls.slice(1)]; gone.keep = true;
+  }
   return out.sort((a, b) => a.min - b.min);
 }
 
@@ -411,7 +523,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // (phase 4j, critique M5: "FIRST BITE / Soft pretzel." repeated the name over its body: a card that only says the
   // side's name, its title on screen, is not said)
   const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(cmpName(x.label), x.built, profile.drinkAtMin), factsFirst: true } /* (round 17: "Orange juice.", its amount is on the servings card) */)
-    .filter((l) => (!SUGAR_CLAIM.test(l) || sugarClaimTrue(x.sugarPeak)) && !sameWords(l, c.title)).map((l, _i, all) => (!sameWords(l, cmpName(x.label)) ? l : x.kcal >= 1 && !all.some((y) => /\d+ kcal/.test(y)) ? `${Math.round(x.kcal)} kcal in total.` : '')).filter(Boolean); }; // (its name's place: its kcal, from the model)
+    .filter((l) => (!SUGAR_CLAIM.test(l) || sugarClaimTrue(x.sugarPeak)) && !sameWords(l, c.title)).map((l, _i, all) => (!sameWords(l, cmpName(x.label)) ? l : x.kcal >= 1 && !all.some((y) => /\d+ kcal/.test(y)) ? `${Math.round(x.kcal)} kcal in total.` : '')).filter(Boolean)
+    // (phase 4k, critique M2: no kcal card for a drink with alcohol unless the question is about calories: its US standard drinks)
+    .map((l) => ((x.built.alcoholG ?? 0) > 1 && gq?.kind !== 'kcal' && /\bkcal\b/.test(l) ? stdDrinksCard(x.built.alcoholG ?? 0) : l)).filter((l, i, all) => all.indexOf(l) === i); }; // (its name's place: its kcal, from the model)
   // (phase 4j: a chapter left with no card for a side, a blood sugar card for a food without a rise, says where the food
   // is or how much is taken up, from the model, never a bare title)
   const cardsOr = (x: Analysis, cm: number, shown: number) => { const ls = cards(x, cm); if (ls.length) return ls; const w = whereOrUp(x.built, shown); return w ? [w] : ls; };
@@ -428,7 +542,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   const hit = gq ? Math.round(gq.decidedMin) : pk;
   // round 10: the bloodstream surge on the first side that has one (the same order as the peak: no alcohol first)
   const sg = ([...nonAlc, a, b].map((x) => { const s = surgeOf(x.built, x.glucose !== undefined); return s && { ...s, side: (x === a ? 0 : 1) as 0 | 1 }; })).find((x) => !!x);
-  const fx: PlanFx = { calmDay: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
+  const fx: PlanFx = { calmDay: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1), paceMin: [a, b].some((x) => (x.built.alcoholG ?? 0) > 1 || x.built.caffeine.doseMg > 0) ? PACE_FAST : PACE_MEAL /* (phase 4k, M1) */, surge: sg, peakMin: hit, teaserMin: hit, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, verdict: true, verdictTrophy: /^🏆/.test(verdictNow),
     lights: wa.flatMap((l, i) => [l, wb[i] ?? 0]).slice(0, 8), race: gq && gq.kind !== 'sugar' && gq.kind !== 'bedtime' && gq.kind !== 'alcohol' && gq.kind !== 'sugarG' && gq.kind !== 'kcal' ? race ?? undefined : undefined,
     heart: (() => { const ha = a.systems.find((s) => s.key === 'heart')?.levels, hb = b.systems.find((s) => s.key === 'heart')?.levels; return ha && hb ? Uint8Array.from(ha, (v, i) => Math.max(v, hb[i] ?? 0)) : undefined; })() };
   // the peak gets a moment of its own (its impact lands when both bodies are there)
@@ -605,7 +719,16 @@ export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { m
     return [...new Set([...r, lit, where, first])].filter(Boolean);
   };
   const perceive = chapters ? { seen, runs: perceivedRuns, maxS: regionMaxS } : undefined;
-  const plan = planVideo(stops, cut, uFromMinutes, minutesFromU, perceive ? { ...fx, perceive } : fx);
+  // (phase 4k, critique 2026-11-21, M1: the clock's slowest pace by what the food does: alcohol or caffeine within minutes)
+  const alc = ((built as { alcoholG?: number } | undefined)?.alcoholG ?? 0) > 1, fx1: PlanFx = { paceMin: built && (alc || built.caffeine.doseMg > 0) ? PACE_FAST : PACE_MEAL, ...fx };
+  // (phase 4k, critique M3: vodka and an energy drink never told its caffeine story: with alcohol, the caffeine moment
+  // "comes where there is room", and a long video has room: it is kept there; a Short or a Reel says the caffeine at
+  // the alcohol peak and the alcohol-gone moment)
+  const cafKeep = alc && cut === 'long' && (built?.caffeine.doseMg ?? 0) >= CAF_WITH_ALCOHOL_MG;
+  const stops1 = cafKeep ? stops.map((s) => (s.min > 0 && /caffeine/i.test(s.title) ? { ...s, keep: true } : s)) : stops;
+  const plan = planVideo(stops1, cut, uFromMinutes, minutesFromU, perceive ? { ...fx1, perceive } : fx1);
   // (phase 4j, critique M6: a lull says how much the body has taken up so far, never 3-4 s without a card)
-  return built ? withLullCards(plan, (m) => takenUpAt(built, m)) : plan;
+  // (phase 4k, critique M2: "TAKEN UP SO FAR / 28 of 164 kcal" in a video about alcohol: with alcohol the lull counts the
+  // drink taken up, in ml, from the route model; kcal only when the hook asks about them)
+  return built ? withLullCards(placesOnScreen(plan, built), (m) => takenUpAt(alc && !fx.kcalHook ? { ...built, energy: undefined } as BuiltLike : built, m)) : plan;
 }

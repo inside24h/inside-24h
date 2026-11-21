@@ -8,6 +8,7 @@
 // Beer has no GI on purpose (Atkinson A1 lists 66): alcohol changes how the liver handles glucose.
 import { estimatedGi } from './giEstimate';
 import raw from './fooddb.json';
+import { startsProper } from '../video-names';
 
 export interface Per100 {
   kcal: number; carbs: number | null; sugars: number | null; freeSugars: number | null; fiber: number | null; fat: number | null;
@@ -519,8 +520,10 @@ function builderName(base: Food, sel: string[]): string {
   // (round 18, critic T-6: a beef wrap was "1 kebab"): the choices that differ from the default name it, "beef wrap kebab"
   else if (ones.length > 1) { const def = defaultSel(b), diff = chosen.filter((c) => !def.includes(c.k)).reverse().map((c) => c.name); noun = diff.length ? cap1(`${diff.join(' ')} ${plainName(base).split(' / ')[0].toLowerCase()}`) : plainName(base); ref = def; }
   else { noun = cap1(chosen[0].name); ref = defaultSel(b); }
-  const added = anyOn(sel).filter((o) => !ref.includes(o.k)).map((o) => o.name);
-  const removed = anyOn(ref).filter((o) => !sel.includes(o.k)).map((o) => o.name);
+  // (phase 4k, critique 2026-11-21, M4: "without caesar dressing"): an option that starts with a proper noun or brand keeps its capital
+  const optName = (n: string) => (startsProper(cap1(n)) ? cap1(n) : n);
+  const added = anyOn(sel).filter((o) => !ref.includes(o.k)).map((o) => optName(o.name));
+  const removed = anyOn(ref).filter((o) => !sel.includes(o.k)).map((o) => optName(o.name));
   return `${noun}${added.length ? ` with ${listWords(added)}` : ''}${removed.length ? ` without ${listWords(removed)}` : ''}`;
 }
 

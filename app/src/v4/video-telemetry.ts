@@ -10,7 +10,8 @@
 import { perceivedRuns, regionMaxS, REGION, regionOf, topicRegion, type Shot } from './video-cam';
 import { cardNamed, SEG_FOCUS_V } from './video-body';
 import { hookAnswerIssue } from './video-hook';
-import { plainLatin, sameWords } from './video-names';
+import { MORNING_NO_FACT } from './video-beats';
+import { alikeCards, nearSame, plainLatin, sameWords } from './video-names';
 
 /** One word block drawn on a frame (share.ts text(): one line of words), in video pixels. */
 export interface TeleBox { x0: number; y0: number; x1: number; y1: number; text: string; deco?: boolean; a?: number }
@@ -127,6 +128,7 @@ export function checkTimeline(tl: Timeline): TeleIssue[] {
   const h = hookAnswerIssue(tl.hook, said, endSaid);
   if (h) out.push({ check: 'hook answered', text: h });
   out.push(...checkTimeline4j(tl));
+  out.push(...checkTimeline4k(tl));
   return out;
 }
 // ---- Phase 4j (critique 2026-11-17, v31 samples: never-tested foods). What the critic saw, checked on what is drawn ----
@@ -206,4 +208,99 @@ export function teleSummary(tl: Timeline) {
   const clocked = fs.filter((f) => f.phase === 'main' && f.clock), moved = clocked.find((f) => f.clock !== clocked[0]?.clock);
   return { longestStay: { s: Math.round(stay.s * 10) / 10, region: stay.r, at: Math.round(stay.at * 10) / 10, cap: regionMaxS(tl.seconds) }, endCardS: Math.round(best * 100) / 100,
     clockMovesAfterS: moved && clocked[0] ? Math.round((moved.t - clocked[0].t) * 10) / 10 : null, bacFrames: fs.filter((f) => f.bac).length, overlapFrames: fs.filter((f) => f.ov?.length).length };
+}
+// ---- Phase 4k (critique 2026-11-21, v33 samples: aperol spritz, spaghetti carbonara, vodka and energy drink) ----
+// The 4j checks let two of their own defects through: "clock open" judged only the first 3 s of the story and the
+// stands before the first glide (aperol stood at +0:10 to +0:11 from 9 to 17.5 s, carbonara at +1:29 for 9.6 s, both
+// after it), and "card repeats title" asked for the very same words ("1 drink of aperol spritz." is not word for word
+// "Aperol spritz: 14 g of alcohol."). These checks measure the whole story.
+/** M1: the clock's pace, in every rolling PACE_WINDOW_S window from PACE_FROM_S into the video on: at least this many
+ *  minutes of the day, by class (alcohol or caffeine act within minutes; a meal over hours). */
+export const PACE_WINDOW_S = 6, PACE_FROM_S = 2, CLOCK_HOLD_MAX_S = 3;
+export const PACE_MIN = { fast: 6, meal: 3 } as const;
+/** The one deliberate, labelled pause: the day done ("24 HOURS LATER" / "AFTER 24 HOURS") at +24:00. */
+export const PAUSE_CLOCK = '+24:00';
+/** M2: a "NEXT MORNING" stretch with no fact of its own on screen at most this long. */
+export const MORNING_MAX_S = 2.5;
+/** A morning card that says nothing new: video-beats MORNING_NO_FACT. */
+export { MORNING_NO_FACT };
+const allWords = (tl: Timeline, phase?: string) => tl.frames.filter((f) => !phase || f.phase === phase).flatMap((f) => [f.card ?? '', ...(f.texts ?? []).map((b) => b.text)]).join(' ').replace(/\s+/g, ' ');
+/** The pace class of a video, from what it draws: a blood alcohol number or caffeine is "fast", else "meal". */
+export const paceClassOf = (tl: Timeline): keyof typeof PACE_MIN => (tl.frames.some((f) => f.bac) || /\bcaffeine\b/i.test(allWords(tl, 'main')) ? 'fast' : 'meal');
+const cardBody = (c: string) => (c.includes(' | ') ? c.slice(c.indexOf(' | ') + 3) : c);
+const cardHead = (c: string) => (c.includes(' | ') ? c.slice(0, c.indexOf(' | ')) : '');
+/** A live counter, its number running with the clock (the lull's "TAKEN UP SO FAR | 28 of 164 kcal"): not a card that
+ *  repeats, a gauge. */
+const LIVE_CARD = /^TAKEN UP SO FAR/i;
+/** The phase 4k checks: the clock's pace all through (M1), no card that nearly repeats a title or another card, no
+ *  filler (a kcal card with alcohol, a NEXT chip naming the present, a kidney card without its number, a long empty
+ *  "NEXT MORNING") (M2), alcohol with caffeine says the dose and what is left when the alcohol is gone (M3). */
+export function checkTimeline4k(tl: Timeline): TeleIssue[] {
+  const out: TeleIssue[] = [], dt = 1 / tl.fps, fs = tl.frames;
+  // M1: the clock's pace (every window) and no clock value held over CLOCK_HOLD_MAX_S (the +24:00 pause aside)
+  const story = fs.filter((f) => f.clock && f.phase !== 'outro' && f.beat !== 'teaser' && f.beat !== 'rewind' && f.beat !== 'end' && f.t >= PACE_FROM_S - 1e-6);
+  if (story.length) {
+    const cls = paceClassOf(tl), need = PACE_MIN[cls], tEnd = story[story.length - 1].t;
+    let worst: { d: number; at: number; a: string; b: string } | null = null;
+    for (let i = 0, j = 0; i < story.length; i++) {
+      const f = story[i];
+      if (f.clock === PAUSE_CLOCK || f.t + PACE_WINDOW_S > tEnd + dt) continue;
+      if (j < i) j = i;
+      while (j + 1 < story.length && story[j + 1].t <= f.t + PACE_WINDOW_S + 1e-6) j++;
+      // (a window that reaches the day-done pause has arrived: the last glide eases into +24:00)
+      if (story[j].clock === PAUSE_CLOCK) continue;
+      const d = clockMinutes(story[j].clock) - clockMinutes(f.clock);
+      if (d < need && (!worst || d < worst.d)) worst = { d, at: f.t, a: f.clock!, b: story[j].clock! };
+    }
+    if (worst) out.push({ check: 'clock pace', text: `${worst.a} → ${worst.b} in ${PACE_WINDOW_S} s from ${fmt(worst.at)} s (${cls}: at least ${need} min in every ${PACE_WINDOW_S} s)` });
+    for (let i = 0, j = 0; i < story.length; i = j) {
+      for (j = i + 1; j < story.length && story[j].clock === story[i].clock && story[j].t - story[j - 1].t < 2 * dt + 1e-6; j++);
+      const s = story[j - 1].t - story[i].t + dt;
+      if (story[i].clock !== PAUSE_CLOCK && s > CLOCK_HOLD_MAX_S + dt + 1e-6) { out.push({ check: 'clock pace', text: `${story[i].clock} held ${fmt(s)} s from ${fmt(story[i].t)} s (at most ${CLOCK_HOLD_MAX_S} s)` }); break; }
+    }
+  }
+  // M2: no card that (nearly) says a title on screen (the hook's lines; a comparison's side names) or, in a single
+  // video, what another of its cards said (a comparison says each side's fact in turn, alike by design)
+  // (a single's name is the end card's title, not on screen in the story: its headline is the hook)
+  const titles = [...tl.hook.split('\n'), ...(tl.kind === 'compare' ? tl.name.split(' vs ') : [])].map((x) => x.trim()).filter(Boolean);
+  const bodies: string[][] = [[], []], dupT = new Set<string>(), dupC = new Set<string>();
+  for (const f of fs) if (f.phase === 'main' && f.card) f.card.split(' || ').forEach((c, side) => { const w = cardBody(c).trim(); if (w && side < 2 && !LIVE_CARD.test(cardHead(c)) && !bodies[side].includes(w)) bodies[side].push(w); });
+  for (const side of bodies) {
+    for (const w of side) if (titles.some((x) => nearSame(w, x))) dupT.add(w);
+    if (tl.kind === 'single') for (let i = 0; i < side.length; i++) for (let j = i + 1; j < side.length; j++) if (alikeCards(side[i], side[j])) dupC.add(`${side[i]} ≈ ${side[j]}`);
+  }
+  if (dupT.size) out.push({ check: 'card repeats title', text: [...dupT].join(' / ') });
+  if (dupC.size) out.push({ check: 'card repeats card', text: [...dupC].join(' / ') });
+  // M2: a kcal card in a video about a drink with alcohol only when the hook asks about kcal (calories); (a comparison's
+  // other side, a food, may say its own)
+  if (tl.kind === 'single' && fs.some((f) => f.bac) && !/\bkcal\b|\bcalorie/i.test(tl.hook)) {
+    const k = fs.find((f) => f.phase === 'main' && /\bkcal\b/i.test(f.card ?? ''));
+    if (k) out.push({ check: 'filler card', text: `"${k.card}" at ${fmt(k.t)} s in a video about alcohol` });
+  }
+  // M2: a NEXT chip names a time still ahead of the clock when it appears
+  {
+    let last = '';
+    for (const f of fs) {
+      if (!f.texts) continue;
+      const chip = f.phase === 'main' ? f.texts.map((b) => b.text).find((x) => /^NEXT · \+\d+:\d\d/.test(x)) ?? '' : '';
+      if (chip && chip !== last && f.clock && !(clockMinutes(/\+\d+:\d\d/.exec(chip)![0]) > clockMinutes(f.clock))) { out.push({ check: 'filler card', text: `"${chip}" at ${f.clock} (${fmt(f.t)} s): the chip names no time ahead` }); break; }
+      last = chip;
+    }
+  }
+  // M2: a kidney card says the food's own number
+  const kid = fs.find((f) => f.phase === 'main' && (f.card ?? '').split(' || ').some((c) => /\bkidneys? filter/i.test(cardBody(c)) && !/\d/.test(cardBody(c))));
+  if (kid) out.push({ check: 'filler card', text: `"${kid.card}" at ${fmt(kid.t)} s says no number of its own` });
+  // M2: a "NEXT MORNING" stretch without a fact of its own
+  {
+    let s = 0, fact = false;
+    for (const f of fs) if (f.phase === 'main' && f.card) for (const c of f.card.split(' || ')) if (/^NEXT MORNING/i.test(cardHead(c))) { s += dt; if (!MORNING_NO_FACT.test(cardBody(c))) fact = true; break; }
+    if (!fact && s > MORNING_MAX_S + 2 * dt) out.push({ check: 'filler card', text: `"NEXT MORNING" ${fmt(s)} s with no fact of its own (at most ${MORNING_MAX_S} s)` });
+  }
+  // M3: alcohol with caffeine says the caffeine dose and, at the end, the caffeine still in you when the alcohol is gone
+  if (tl.kind === 'single' && fs.some((f) => f.bac) && /\bcaffeine\b/i.test(allWords(tl, 'main'))) {
+    const main = fs.filter((f) => f.phase === 'main').map((f) => f.card ?? '').join(' ');
+    if (!/\b\d+ mg of caffeine\b/.test(main)) out.push({ check: 'caffeine and alcohol', text: 'no card says the caffeine dose ("N mg of caffeine")' });
+    if (!/\b\d+ mg (?:of )?caffeine: still in you/i.test(`${main} ${allWords(tl, 'outro')}`)) out.push({ check: 'caffeine and alcohol', text: 'nothing says the caffeine still in you when the alcohol is gone' });
+  }
+  return out;
 }

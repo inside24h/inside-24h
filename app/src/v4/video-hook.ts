@@ -3,7 +3,7 @@
 // chapter texts, never typed in by hand, so a hook can only say what the video then shows. Plain words for anyone
 // scrolling past (owner, 2026-10-24). Alcohol is a warning, never a celebration: no "best", "wins", "cure".
 
-import { AMOUNT_PREFIX } from './video-names';
+import { AMOUNT_PREFIX, lowerName } from './video-names';
 export interface HookIn {
   /** the video's short name ("One can of cola", "3 × 500 ml of beer over 2 h", "A whole pizza") */ name: string;
   chapters: { min: number; title: string; text: string }[];
@@ -27,8 +27,8 @@ const fit = (s: string, max = 8) => words(s) <= max;
 /** A share in words, as the bedtime card says it (video-beats.ts fractionWord). */
 const share = (r: number) => { if (!(r >= 0.07)) return null; const W: [number, string][] = [[0.1, 'a tenth'], [0.2, 'a fifth'], [0.25, 'a quarter'], [1 / 3, 'a third'], [0.5, 'half'], [2 / 3, 'two thirds'], [0.75, 'three quarters'], [0.9, 'almost all']]; return W.reduce((b, w) => (Math.abs(w[0] - r) < Math.abs(b[0] - r) ? w : b))[1]; };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-/** Round 17: a name inside a sentence ("orange juice"), unless it is an acronym or a brand-like word ("USDA", "McFlurry"). */
-export const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+/** Round 17: a name inside a sentence (video-names lowerName: brands and proper nouns keep their capital, phase 4k). */
+export { lowerName };
 /** "1.6×", "2×" (round 14: the oat milk answer). */
 export const timesText = (r: number) => (r >= 1.95 ? `${Math.round(r)}×` : `${(Math.round(r * 10) / 10).toFixed(1)}×`);
 /** Round 14: a hook must carry a number (or a number word) or a question. */
@@ -188,7 +188,8 @@ function hookForRaw(h: HookIn): Hook {
     // (round 14: with its number on the first frame, the same the answer card says)
     const r = h.surprise.ratio ? timesText(h.surprise.ratio) : null;
     return { line1: `${cap(name)}.`, line2: r ? `${r} the blood sugar rise of ${h.surprise.than}.` : `More blood sugar than ${h.surprise.than}.`, ...(pk ? { payoff: pk.title } : {}),
-      ...(pk && r ? { answer: `About ${r} the rise of ${h.surprise.than}.` } : {}) };
+      // (phase 4k, critique M2: "About 3× the rise of cow’s milk." repeated the headline: the card says the peak is now)
+      ...(pk && r ? { answer: `Peak now: ${r} the rise of ${h.surprise.than}.` } : {}) };
   }
   // food: its calories lead (a whole pizza is about its size, not its teaspoons)
   // round 5 (critic): a big number comes with the portion's size, and the promise is a question the 24 h moment answers

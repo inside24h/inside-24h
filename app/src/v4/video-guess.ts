@@ -4,9 +4,7 @@
 // the overall verdict (analyze.ts verdictOf) as a separate line. A question whose answer is a tie or a near-tie is
 // never asked: then the next question is tried, and if none is clear there is no guess at all.
 
-import { isPluralName } from './video-names';
-/** Round 17: a name inside a sentence ("orange juice"), as video-hook lowerName. */
-const lowerName = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^[A-Z][a-z]+[A-Z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+import { isPluralName, lowerName } from './video-names';
 export type GuessKind = 'stomach' | 'blood' | 'sugar' | 'bedtime' | 'alcohol' | 'sugarG' | 'kcal';
 export interface GuessSide {
   name: string;
