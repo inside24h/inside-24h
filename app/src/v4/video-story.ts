@@ -6,7 +6,7 @@ import { chapterText } from './stories';
 import { beatLines, eventMin, isCard, MORNING_NO_FACT, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
-import { DULL, PACE_FAST, PACE_MEAL, planCompare, planVideo, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
+import { DULL, FPS, PACE_FAST, PACE_MEAL, planCompare, planVideo, readSeconds, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
 import { bacPlain, cardNamed, DEFAULT_BAC_BODY, dominantAt, placeOfCard, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, SUGAR_CLAIM, sugarClaimTrue, takenUpAt, urinePeak, whereCard, whereGauge, type BuiltLike } from './video-body';
 import { perceivedRuns, quietFrame, REGION, regionMaxS, seenOf } from './video-cam';
 import { perceivedOf, sceneOf } from './video-telemetry';
@@ -118,6 +118,8 @@ export function decafOf(label: string, b: { caffeine: { doseMg: number; body: Fl
 export const CAF_WITH_ALCOHOL_MG = 10;
 /** Phase 4k, M3: the card at the alcohol-gone moment ("Alcohol: gone. 37 mg caffeine: still in you."). */
 export const ALC_GONE_CAF = 'Alcohol: gone.';
+/** Phase 4k: the kidney card with the drink's own water (video-beats), and its form when that is the whole drink. */
+export const KIDNEY_ML = /^Your kidneys filter its (\d+) ml of water\.$/, KIDNEY_ALL = 'Your kidneys filter all of it.';
 /** A US standard drink: 14 g of alcohol (NIAAA). */
 export const US_STD_DRINK_G = 14;
 /** Phase 4k (M1): a where-card no place fits all the while it is on screen gives way to this (placesOnScreen). */
@@ -135,9 +137,11 @@ export function placesOnScreen(plan: Plan, b: BuiltLike): Plan {
     const shown = fs.slice(i, j).filter(on);
     if (!shown.every((f) => dominantAt(b, Math.min(1440, f.m)) === p)) {
       const m0 = Math.floor(Math.min(1440, shown[0].m)), m1 = Math.ceil(Math.min(1440, shown[shown.length - 1].m));
-      const w = whereCard(b, m0, m1), alt = w && shown.every((f) => dominantAt(b, Math.min(1440, f.m)) === placeOfCard(w)) ? w : PLACE_NONE;
+      // (a card that takes its place is read in the time the card had: else PLACE_NONE, the shortest)
+      const pg = plan.pages.find((x) => x.text === c && x.stop === fs[i].stop), fits = (s: string) => !pg || readSeconds(s) <= pg.s + 1 / FPS;
+      const w = whereCard(b, m0, m1), alt = w && fits(w) && shown.every((f) => dominantAt(b, Math.min(1440, f.m)) === placeOfCard(w)) ? w : PLACE_NONE;
       for (let k = i; k < j; k++) fs[k].cap = alt;
-      const pg = plan.pages.find((x) => x.text === c && x.stop === fs[i].stop); if (pg) pg.text = alt;
+      if (pg) pg.text = alt;
     }
     i = j;
   }
@@ -180,6 +184,10 @@ export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: strin
     // (phase 4k, critique M2: "86 kcal in total." in a video about alcohol: kcal only when the hook asks about them)
     const kcalOff = alc && !/\bkcal\b/.test(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`), filler = (l: string) => kcalOff && /\bkcal\b/.test(l);
     for (const s of out) if (s !== s0 && s.lines?.some(filler)) s.lines = s.lines.filter((l) => !filler(l));
+    // (phase 4k: a kidney card whose water is the whole drink the hook names, "Your kidneys filter its 250 ml of water."
+    // under "250 ml of sparkling mineral water.", says it is all of it: the voice never says a number twice)
+    const hookMl = new Set([...`${hook.line1 ?? ''} ${hook.line2 ?? ''}`.matchAll(/(\d+) ml\b/g)].map((m) => m[1]));
+    for (const s of out) if (s.lines?.some((l) => KIDNEY_ML.test(l))) s.lines = s.lines.map((l) => { const k = KIDNEY_ML.exec(l); return k && hookMl.has(k[1]) ? KIDNEY_ALL : l; });
     const kept0 = (s0.lines ?? []).filter((l) => !filler(l)).flatMap((l) => (!dup(l) ? [l] : withAmt && sameWords(bareAmt(l), bareAmt(first)) ? [withAmt] : []));
     // (when the hook's line was its only card, the first moment says its energy instead, from its own first sentence)
     const kc = /(\d+) kcal/.exec(s0.text)?.[1], energy = kc === undefined ? null : Number(kc) >= 1 ? `${kc} kcal in total.` : /\b0 g carbohydrate/.test(s0.text) ? 'No sugar, no calories.' : null;
@@ -198,8 +206,11 @@ export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: strin
     const hookNums = new Set(amounts(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`));
     const lower1 = (g: string) => (/^[A-Z][a-z]/.test(g) && !/^[A-Z][a-z]*[A-Z]/.test(g) ? g.charAt(0).toLowerCase() + g.slice(1) : g);
     // (with the moment's own first fact, else a fresh one; the long and the short form: "150 kcal in total." → "150 kcal.")
+    // (phase 4k: which fresh fact a food says with the hook's number, its kcal or its other big macro, by its own seed, so
+    // two foods of a class with the same hook do not open alike: "21 g fat, 227 kcal." / "21 g fat, 9 g carbs.")
+    const joinOrder = !alc && (seedOf(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`) >>> 1) % 2 === 1 ? [...fresh].reverse() : fresh;
     const joinWith = (l: string) => {
-      for (const f of [...kept0.filter((k) => /\d/.test(k)), ...fresh]) {
+      for (const f of [...kept0.filter((k) => /\d/.test(k)), ...joinOrder]) {
         const parts = f.replace(/[.!?]$/, '').split(', ').filter((p) => !(l.match(/\b(?:sugar|fat|protein|fiber|carbs?|kcal|alcohol|caffeine)\b/g) ?? []).some((w) => p.includes(w)));
         // (short, so the opening is no longer than its two cards were: "19 g natural sugar, 95 kcal.")
         const l0 = l.replace(/[.!?]$/, '').replace(/ in total$/, '').replace(/^(\d+(?:[.,]\d+)?) (g|mg|ml) of /, '$1 $2 ').replace(/natural (?:milk |fruit )sugar/, 'natural sugar');
@@ -222,7 +233,10 @@ export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: strin
     const extra = fresh.filter((f) => !kept1.includes(f) && (!joined || f !== joined.f) && !kept1.some((k) => amounts(k).some((n) => amounts(f).includes(n)))).map(short1).sort((x, y) => (alc ? 0 : x.length - y.length))[0];
     const nameGone = !joined && !!s0.lines?.length && dup(s0.lines[0]);
     const lead1 = extra && extra === stdCard && seedOf(`${hook.line1 ?? ''} ${hook.line2 ?? ''}`) % 2 === 1 ? extra.replace(/^About /, '') : extra;
-    const kept = kept1.length === 1 && (s0.lines ?? []).length >= 2 && extra && lead1 ? (alc && nameGone ? [lead1, ...kept1] : [...kept1, extra]) : kept1;
+    // (the opening no longer than its first two cards were: a joined first card that is longer leaves no room for a second, so a
+    // Short's stay on the stomach stays under its cap, e.g. "1 medium onion")
+    const readAll = (ls: readonly string[]) => ls.reduce((a, l) => a + readSeconds(l), 0), roomFor = (f: string) => readAll([...kept1, f]) <= readAll((s0.lines ?? []).slice(0, 2)) + 0.1;
+    const kept = kept1.length === 1 && (s0.lines ?? []).length >= 2 && extra && lead1 && (!joined || roomFor(extra)) ? (alc && nameGone ? [lead1, ...kept1] : [...kept1, extra]) : kept1;
     if (kept.length && kept.join('|') !== (s0.lines ?? []).join('|')) {
       const gone = (s0.lines ?? []).length - kept.length; s0.lines = kept;
       if (joined) s0.must = Math.max(1, Math.min(kept.length, s0.must ?? 1));

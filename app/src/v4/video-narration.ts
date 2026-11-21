@@ -75,9 +75,10 @@ export const clock12 = (s: string) => s.replace(/\b([01]?\d|2[0-3]):([0-5]\d)\b/
 
 /** v22: the quantities in a text with their unit ("2 g", "2 hours", "26 kcal"): a filler's number is "new" unless the
  *  same quantity was shown or said (not just the same digits in another unit) */
-export const qtyOf = (s: string) => (shownText(s).match(/\d+(?:[.,]\d+)?(?:(?:-|\s*)(?:%|kcal|calories|mg|ml|g|grams|hours?|minutes?|teaspoons?|liters?|standard)(?![a-z]))?/g) ?? []).map((q) => {
+export const qtyOf = (s: string) => (shownText(s).match(/\d+(?:[.,]\d+)?(?:(?:-|\s*)(?:%|kcal|calories|mg|ml|g|grams|hours?|minutes?|teaspoons?|liters?|(?:US\s)?standard)(?![a-z]))?/g) ?? []).map((q) => {
+  // (phase 4k: "About 1 US standard drink." is 1 standard drink, as "1 standard drink.": not the "1" of "1–5 hours")
   // (phase 4i: "a 35-minute walk" is 35 minutes, as "35 minutes of brisk walking" said before it: no number twice)
-  const m = /^(\d+(?:[.,]\d+)?)(?:-|\s*)(.*)$/.exec(q)!, u = ({ grams: 'g', calories: 'kcal', hour: 'hours', minute: 'minutes', teaspoon: 'teaspoons', liter: 'liters' } as Record<string, string>)[m[2]] ?? m[2];
+  const m = /^(\d+(?:[.,]\d+)?)(?:-|\s*)(.*)$/.exec(q)!, u = ({ 'US standard': 'standard', grams: 'g', calories: 'kcal', hour: 'hours', minute: 'minutes', teaspoon: 'teaspoons', liter: 'liters' } as Record<string, string>)[m[2]] ?? m[2];
   return `${m[1].replace(',', '.').replace(/\.0+$/, '')}${u ? ` ${u}` : ''}`;
 });
 /** v21: a clock time said the way people say it ("7 AM" → "7 in the morning", "10:30 PM" → "10:30 at night"). */
@@ -360,7 +361,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     return Math.max(0, e - t);
   };
   // candidates; placed in time order, each as soon after the one before as it may (`delay`), else left out
-  type Cand = Omit<NarrLine, 'slotS' | 'say' | 'text'> & { until: number; delay: number; options: readonly string[]; /** v22: tried first */ pref?: readonly string[]; /** v23b: said even if a word repeats */ must?: boolean };
+  type Cand = Omit<NarrLine, 'slotS' | 'say' | 'text'> & { until: number; delay: number; options: readonly string[]; /** v22: tried first */ pref?: readonly string[]; /** v23b: said even if a word repeats */ must?: boolean; /** phase 4k: the card that answers the hook (its words are kept free for it) */ pay?: boolean };
   const cands: Cand[] = [];
   const cmp = n.kind === 'compare', calm = !!n.alcohol;
   const peak = at('peak')[0];
@@ -535,7 +536,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       // v23d: a card whose numbers the hook said in part says only the rest ("Plus 32 mg of caffeine.")
       const parts = sp.a.replace(/\.$/, '').split(/,\s+/), fresh1 = parts.filter((x) => !qtyOf(x).some((v) => hookNums.has(v)));
       const plus = fresh1.length && fresh1.length < parts.length && fresh1.every((x) => qtyOf(x).length > 0) ? [`Plus ${lc1(fresh1.join(', '))}.`] : [];
-      cands.push({ id: 'card', t, until: isPay ? Math.max(until, sp.t1 + 0.3) : until, delay: isPay ? 99 : late, options: [...pay, ...anch, ...rise, ...(wl ? [] : said), ...plus, ...(isPay ? [] : beats()), ...(isPay && wl ? said : [])] /* (phase 4b: the hook's answer is never swapped for a filler) */, source: `${sp.title} ${sp.a} ${wl}`, ...(onTop ? {} : { card: sp.a, side: 0 as const }), ...(isPay ? { must: true } : {}) });
+      cands.push({ id: 'card', t, until: isPay ? Math.max(until, sp.t1 + 0.3) : until, delay: isPay ? 99 : late, ...(isPay ? { pay: true } : {}), options: [...pay, ...anch, ...rise, ...(wl ? [] : said), ...plus, ...(isPay ? [] : beats()), ...(isPay && wl ? said : [])] /* (phase 4b: the hook's answer is never swapped for a filler) */, source: `${sp.title} ${sp.a} ${wl}`, ...(onTop ? {} : { card: sp.a, side: 0 as const }), ...(isPay ? { must: true } : {}) });
       return;
     }
     // comparison: a card both sides show is said once; the two names as "Left: … Right: …"; else each side whose card
@@ -620,11 +621,14 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     // (v23: the setup, the striking number, before the first impact, once)
     const setupFirst = c.id === 'beat' && (peak === undefined || t < peak) && !out.some((o) => setupL.includes(o.text)) ? setupL : [];
     const opts = c.id === 'answer' ? [...c.options] : [...setupFirst, ...(c.pref ?? []), ...own, ...own.filter((x) => !fastQ || (!x.includes(fastQ.slice(0, -1)) && !(fastShort && x.includes(fastShort)))).flatMap((x) => variants(x).slice(1)), ...c.options.filter(filler)]; // (the closing line is said as written)
-    const text = (FIXED.has(c.id) ? undefined : opts.find((x) => ok(x) && fresh(out, x, t, nameWords))) ?? (c.id === 'climax' || c.id === 'answer' || c.id === 'day' || c.id === 'loop' || c.must || FIXED.has(c.id) ? c.options.find(ok) : undefined);
+    // (phase 4k: the card that answers the hook is read later in any case: a line before it leaves its words free, so
+    // no word comes a third time within VARIETY_S, e.g. "blood" before "Blood fat is highest around now.")
+    const ahead = c.pay ? out : [...out, ...cands.filter((p) => p.pay && p.t > c.t + 1e-6 && p.t < t + VARIETY_S).map((p) => ({ t: p.t, text: p.options[p.options.length > 1 && /^From your first/.test(p.options[0]) ? 1 : 0] ?? '' } as NarrLine))];
+    const text = (FIXED.has(c.id) ? undefined : opts.find((x) => ok(x) && fresh(ahead, x, t, nameWords))) ?? (c.id === 'climax' || c.id === 'answer' || c.id === 'day' || c.id === 'loop' || c.must || FIXED.has(c.id) ? c.options.find(ok) : undefined);
     if (!text) continue;
     // (a line from a pool has no on-screen source: it says no number)
     const fromPool = (c.id === 'answer' && !heroL.some((h) => variants(h).includes(text)) && !verdictL.includes(text)) || (c.id === 'hook' && !hookOpts.includes(text)) || (c.id === 'climax' && !c.card && cmp && !text.endsWith((n.answer ?? '').trim() || '\u0000'));
-    const { until: _u, delay: _d, options: _o, pref: _p, must: _m, card, side, ...rest } = c; void _u; void _d; void _o; void _p; void _m;
+    const { until: _u, delay: _d, options: _o, pref: _p, must: _m, pay: _y, card, side, ...rest } = c; void _u; void _d; void _o; void _p; void _m; void _y;
     // (a pool line instead of the card: the card stays on screen, and the line has no on-screen source)
     const reads = !!card && card.split('|').every((x) => variants(x).some((v) => text.toLowerCase().includes(v.slice(1).toLowerCase())));
     out.push({ ...rest, ...(reads ? { card, side } : {}), t, slotS: slot, text: shownText(text), say: speakable(text), source: isFact(text) || c.id === 'twist' || c.id === 'payoff' || c.id === 'setup' || (!!fastQ && text.includes(fastQ.slice(0, -1))) ? text : fromPool || (card && !reads && !/^Plus /.test(text)) ? '' : c.source });

@@ -287,8 +287,8 @@ export function checkTimeline4k(tl: Timeline): TeleIssue[] {
       last = chip;
     }
   }
-  // M2: a kidney card says the food's own number
-  const kid = fs.find((f) => f.phase === 'main' && (f.card ?? '').split(' || ').some((c) => /\bkidneys? filter/i.test(cardBody(c)) && !/\d/.test(cardBody(c))));
+  // M2: a kidney card says the food's own number (or, when its water is the whole drink the hook names, "all of it")
+  const kid = fs.find((f) => f.phase === 'main' && (f.card ?? '').split(' || ').some((c) => /\bkidneys? filter/i.test(cardBody(c)) && !/\d/.test(cardBody(c)) && !/\ball of it\b/.test(cardBody(c))));
   if (kid) out.push({ check: 'filler card', text: `"${kid.card}" at ${fmt(kid.t)} s says no number of its own` });
   // M2: a "NEXT MORNING" stretch without a fact of its own
   {
