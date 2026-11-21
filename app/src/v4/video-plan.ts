@@ -764,7 +764,12 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // (phase 4i: the hook's question is said before the first impact's hush: the opening holds its last card longer)
   if (fx.questionByS && out.peakT !== undefined && out.peakT < fx.questionByS - 0.05) {
     openPad = fx.questionByS - out.peakT;
-    const alt = relay();
+    let alt = relay();
+    // (phase 4k: a layout the pad pushes over the cut's length by a few frames takes them off the pad; the check below
+    // still asks the impact to land by questionByS − 0.1 s (questionImpactS has 0.1 s of margin of its own), so the
+    // question is said before it and the cut stays in its length to the frame: red and white wine Shorts were 30.03 s)
+    const over = alt.seconds - lim.max, pad0 = openPad;
+    if (over > 1e-6 && over < 0.15) { openPad = Math.max(0, pad0 - over - 1e-3); alt = relay(); openPad = pad0; }
     openPad = 0;
     if (alt.seconds <= lim.max + 1e-6 && (alt.peakT ?? 0) >= fx.questionByS - 0.1 && overOf(alt).sum <= overOf(out).sum + 1e-6) out = alt;
   }

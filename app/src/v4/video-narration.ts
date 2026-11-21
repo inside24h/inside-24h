@@ -89,6 +89,7 @@ const singular = (s: string) => s.replace(/(^|[^\d.,])1 (hours|minutes|grams|mil
  *  12 h, "h"/"min" as words, "&" as "and"); "g", "ml", "mg", "kcal" and "%" stay short on screen. Keeps every number. */
 export function shownText(s: string): string {
   return singular(clock12(s.replace(/\+(\d{1,2}):(\d\d)\b/g, (_m, h: string, mm: string) => `${Number(h)} h${mm === '00' ? '' : ` ${Number(mm)} min`} later`))
+    .replace(/\b(\d+)\+ h\b/g, 'over $1 hours') // (phase 4k: the morning card's "Alcohol-free 3+ h.")
     .replace(/(\d)\s*h\b/g, '$1 hours')
     .replace(/(\d)\s*min\b/g, '$1 minutes')
     .replace(/\s&\s/g, ' and ')
@@ -235,10 +236,13 @@ const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** Phase 4i: the earliest a single video's first impact may come so that its hook's question can be said, the food
  *  named first ("Light beer: when has your liver cleared 500 ml?"), before the hush of that impact (video-plan
  *  PlanFx.questionByS); 0 = the hook asks nothing. */
+/** The food's name as the voice says it before a question (its amount off: "1 slice of pizza" → "Pizza"). */
+export const bareName = (x: string) => cap1(x.trim().replace(/^[\d½.,]+\s+(?:(?:small|medium|large|restaurant|regular|standard)\s+)?(?:(?:ml|g|l|cl|oz|slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?|drinks?|plates?|mugs?)\s+of\s+)?/i, '').replace(/\s+\d+(?:[.,]\d+)?\s*%\.?$/, ''));
 export function questionImpactS(hook: { line1: string; line2: string }, name: string): number {
   const q = [hook.line1, hook.line2].map((x) => (x ?? '').trim()).find((x) => /\?$/.test(x));
   if (!q) return 0;
-  const nm = cap1(name.trim().replace(/^[\d½.,]+\s+(?:\S+\s+of\s+)?/i, '').split(/ with | in /)[0]);
+  // (phase 4k: the very name the hook line says, narrationFor's lead: "Tbsp of hummus: …" was counted as "Hummus: …")
+  const nm = bareName(name).split(/ with | in /)[0].replace(/ (?:made|cooked|served|topped|filled|mixed|fried|baked)$/i, '');
   return Math.max(HOOK_QUIET_S + 0.1, 0.6) + speakS(`${nm}: ${q}`) + GAP_S + IMPACT_PRE_S + 0.1;
 }
 /** v21: "Cod: protein keeps arriving" (after a name and a colon, a sentence goes on in lower case; not "I" or a name). */
@@ -384,7 +388,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   // v21b (review: "What is left of it a day later?" before the food was named): every hook names the food first.
   // A question over the name is said name first; else "Ham sub: what is left of it a day later?"; a pool line too.
   // (the name without its amount: "1 slice of pizza with salami" → "Pizza with salami"; the amount is on the hook card)
-  const bare = (x: string) => cap1(x.trim().replace(/^[\d½.,]+\s+(?:(?:small|medium|large|restaurant|regular|standard)\s+)?(?:(?:ml|g|l|cl|oz|slices?|pieces?|cups?|glass(?:es)?|cans?|bottles?|bowls?|servings?|portions?|shots?|scoops?|handfuls?|drinks?|plates?|mugs?)\s+of\s+)?/i, '').replace(/\s+\d+(?:[.,]\d+)?\s*%\.?$/, ''));
+  const bare = bareName;
   const named = (cmp ? (n.names ?? ['', '']) : [n.name ?? '']).map(bare).filter((x) => x && (cmp ? !/\d\s*(?:ml|g|l|oz|×|x)\b/i.test(x) : !/\d/.test(x))); // (v22: a comparison keeps "2% milk")
   // v22: a comparison's hook names BOTH foods first ("Cod or muffin: which leaves first?", "Cod versus muffin: …")
   const lead = cmp ? (named.length === 2 ? `${named[0]} ${n.guess ? 'or' : 'versus'} ${lower1(named[1])}` : '') : (named[0] ?? '').split(/ with | in /)[0].replace(/ (?:made|cooked|served|topped|filled|mixed|fried|baked)$/i, ''); // (master audit 2026-11-12, C18: never "Oatmeal made:")

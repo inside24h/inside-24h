@@ -342,8 +342,8 @@ describe('round 7: the morning follows the range, cards name what is left, no te
       const wakeH = ((7 * 60 - drinkAt + 1440) % 1440) / 60, [, hi] = goneRange(g, pm);
       const all = lines.join(' ');
       if (hi > wakeH) { expect(lines[0], `${drinkAt} ${g}`).toBe('A breath test may be positive.'); /* (phase 4b, M6) */ expect(all).not.toMatch(/should be gone/); }
-      // (phase 4k: the range's own top end, in whole hours before waking; under an hour: "should be gone")
-      else if (Math.ceil(wakeH - hi) - 1 >= 1) expect(all).toMatch(new RegExp(`Alcohol-free for over ${Math.ceil(wakeH - hi) - 1} h\\. Still, don’t drive\\.`));
+      // (phase 4k: the range's own top end, in whole hours before waking ("3+ h": more than 3); under an hour: "should be gone")
+      else if (Math.ceil(wakeH - hi) - 1 >= 1) expect(all).toMatch(new RegExp(`Alcohol-free ${Math.ceil(wakeH - hi) - 1}\\+ h\\. Don’t drive\\.`));
       else expect(all).toMatch(/should be gone/);
       expect(all).toMatch(/drive/); // a driving warning in every case
     }

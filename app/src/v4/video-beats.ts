@@ -285,9 +285,10 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
           // 1–3 h", and the morning had no fact of its own): the range's own top end, the slowest liver with the
           // heaviest reading, said in hours before waking, with the driving warning in the same card (one card: the
           // morning stays short, and the fact is never said without the warning)
-          // ("over N h": N whole hours, strictly fewer than the range leaves)
+          // ("N+ h": more than N whole hours, N strictly fewer than the range leaves; short, so a Short keeps room for
+          // the hook's question before its first impact)
           const ago = Math.ceil(wakeH - goneRange(ctx.bacPeak.g, ctx.bacPeak.min)[1]) - 1, k = out.findIndex((c) => /^(?:At \d\d:\d\d, t|T)he alcohol should be gone\.$/.test(c));
-          if (k >= 0 && ago >= 1) { out[k] = `Alcohol-free for over ${ago} h. Still, don’t drive.`; const d = out.indexOf('Don’t drive after drinking.'); if (d >= 0) out.splice(d, 1); }
+          if (k >= 0 && ago >= 1) { out[k] = `Alcohol-free ${ago}+ h. Don’t drive.`; const d = out.indexOf('Don’t drive after drinking.'); if (d >= 0) out.splice(d, 1); }
         }
       }
     }
