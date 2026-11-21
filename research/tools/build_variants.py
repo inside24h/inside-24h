@@ -12,8 +12,9 @@ Spec (fooddb_spec.py, section "VARIANTS, SIZES, ADD-INS, BUILDERS, CHOOSERS"):
   addin(...) / addins(base, ks)  sugar, honey, milk, extra shot: folded INTO the drink, never a separate solid
   builder(base, ...)             a base plus toggleable parts with grams per serving ("What's on it?")
   chooser(k, ask, opts, words)   one word that names several foods ("čaj" → black, green, herbal, iced)
-A ref is a database food id ("ham": its final values, label overrides included), a USDA FDC id (int), or
-(fdc, free-sugar rule[, GI key]). An amount is grams, or ("ml", n) converted with that food's own serving density.
+A ref is a database food id ("ham": its final values, label overrides included), a USDA FDC id (int),
+(fdc, free-sugar rule[, GI key]), or "ingr:<id>" (2026-11-20: a recipe ingredient USDA lacks, fooddb_spec.ingr: a USDA
+proxy record with the producer's label over it, its label rows cited as DBI-<id>-<i>; not a food of its own). An amount is grams, or ("ml", n) converted with that food's own serving density.
 
 Mixing rule (the app does exactly the same in parse.ts mixFood, a test compares them):
   per 100 g = gram-weighted sum; a nutrient is null if ANY part has it null (never a silent 0)
@@ -59,6 +60,20 @@ class Ctx:
 
     def comp(self, ref, where):
         """A part: its per-100 g values, GI, record and the claim ids of its label overrides."""
+        if isinstance(ref, str) and ref.startswith("ingr:"):
+            k = ref[5:]
+            if k not in self.usda:
+                e = getattr(S, "INGR", {}).get(k)
+                if e is None:
+                    fail("%s: unknown ingredient %r" % (where, ref)); return None
+                ent, f = self.B.build_entry(e)
+                if ent is None:
+                    fail("%s: ingredient %s did not build" % (where, k)); return None
+                self.usda[k] = dict(ref=ref, p=dict(ent["per100g"]), gi=ent["gi"], giSource=ent["giSource"], fdc=ent["usdaFdcId"],
+                                    desc="%s (producer label over USDA %s)" % (ent["name"], ent["usdaDescription"]), name=ent["name"], food=None, ingr=k,
+                                    claims=["DBI-%s-%d" % (k, i) for i in range(len(ent.get("overrides") or []))],
+                                    overrides=ent.get("overrides") or [], serving=ent["serving"], proxy=True)
+            return self.usda[k]
         if isinstance(ref, str):
             e = self.by.get(ref)
             if e is None:
@@ -141,7 +156,7 @@ def part_claim_rows(parts):
     rows, seen = [], set()
     for c, _ in parts:
         for i, o in enumerate(c["overrides"]):
-            cid = "DBO-%s-%d" % (c["food"], i)
+            cid = "DBO-%s-%d" % (c["food"], i) if c.get("food") else "DBI-%s-%d" % (c["ingr"], i)
             if cid in seen: continue
             seen.add(cid)
             rows.append({"fields": o["fields"], "level": o["level"], "text": o["text"], "cite": o["source"], "url": o["url"], "claim": cid})

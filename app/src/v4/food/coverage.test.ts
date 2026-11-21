@@ -3,8 +3,9 @@
 // and spirits, coffee shop, Asian / Mexican / Italian dishes, snacks, desserts, sports and energy drinks): 69 resolved
 // before this round, 169 after. Every query below must keep resolving, to the same food, with nothing left over.
 // The foods are USDA SR Legacy or FNDDS 2021-2023 records (research/tools/fooddb_spec.py, "COVERAGE 2026-11-17").
-// Still not found: trail mix, cider, poke bowl, carbonara, pina colada, cosmopolitan, aperol spritz, negroni, cuba libre, long island iced tea, flat white, frappuccino, chai latte, matcha latte.
-// (No USDA record; pina colada and cola or energy-drink cocktails wait for the video side, fooddb_spec.py.)
+// Not found on 2026-11-17: trail mix, cider, poke bowl, carbonara, pina colada, cosmopolitan, aperol spritz, negroni, cuba
+// libre, long island iced tea, flat white, frappuccino, chai latte, matcha latte. All but long island iced tea are in
+// since 2026-11-20 (the second block below): USDA FNDDS records, or standard recipes from USDA parts.
 import { describe, expect, it } from 'vitest';
 import { FOOD_BY_ID, baseOf, readMeal } from './parse';
 
@@ -95,7 +96,7 @@ const COVERAGE: [string, string][] = [
   ["old fashioned", "Old fashioned"],
   ["martini", "Martini"],
   ["bloody mary", "Bloody Mary"],
-  ["rum and coke", "Rum + Cola (regular)"],
+  ["rum and coke", "Rum and cola"],
   ["whiskey", "Whiskey"],
   ["vodka", "Vodka (40%)"],
   ["gin", "Gin"],
@@ -242,5 +243,86 @@ describe('coverage of commonly searched foods (2026-11-17)', () => {
         expect(v.serving.grams, `${id}.${v.v}`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+// 2026-11-20: the foods left out on 2026-11-17 (fooddb_spec.py "COVERAGE 2026-11-20").
+// (A) USDA FNDDS records: cola and energy-drink cocktails, pina colada, hard cider, trail mix; the video side now tells
+//     their story (caffeine with alcohol: video-story singleStops, CDC 2024 [AL18]; trail mix: video-caption captionFlags).
+// (B) standard recipes from USDA parts: IBA cocktails, cafe drinks, carbonara (Giallo Zafferano), poke (RecipeTin Eats).
+const COVERAGE2: [string, string][] = [
+  ["rum and coke", "Rum and cola"], ["cuba libre", "Rum and cola"], ["jack and coke", "Whiskey and cola"], ["whiskey and coke", "Whiskey and cola"],
+  ["vodka and coke", "Vodka and cola"], ["vodka red bull", "Vodka and energy drink"], ["vodka redbull", "Vodka and energy drink"],
+  ["pina colada", "Pina colada"], ["piña colada", "Pina colada"], ["cider", "Cider (hard, alcoholic)"], ["hard cider", "Cider (hard, alcoholic)"],
+  ["trail mix", "Trail mix (nuts and dried fruit)"], ["studentska hrana", "Trail mix (nuts and dried fruit)"], ["chocolate trail mix", "Trail mix with chocolate"],
+  ["cosmopolitan", "Cosmopolitan"], ["negroni", "Negroni"], ["aperol spritz", "Aperol spritz"], ["spritz", "Aperol spritz"],
+  ["flat white", "Flat white"], ["frappuccino", "Mocha frappe"], ["frappe", "Mocha frappe"], ["chai latte", "Chai latte"], ["chai", "Chai latte"],
+  ["matcha", "Matcha (whisked green tea)"], ["matcha latte", "Matcha latte"],
+  ["carbonara", "Spaghetti carbonara"], ["spaghetti carbonara", "Spaghetti carbonara"], ["poke bowl", "Poke bowl"], ["poke", "Poke bowl"],
+  // the words that already worked keep working
+  ["rum", "Rum"], ["cola", "Cola (regular)"], ["red bull", "Energy drink"], ["vodka", "Vodka (40%)"], ["martini", "Martini"], ["latte", "Latte"],
+  ["black tea", "Black tea"], ["green tea", "Green tea"], ["rum and cola", "Rum and cola"], ["prosecco", "Sparkling wine"],
+];
+const NEW_FOODS2 = ['hard-cider', 'trail-mix', 'matcha'];
+const NEW_VARIANTS2: [string, string[]][] = [['mojito', ['rum-cola', 'whiskey-cola', 'vodka-cola', 'vodka-energy', 'pina-colada', 'cosmopolitan', 'negroni', 'aperol-spritz']],
+  ['coffee-with-milk', ['flat-white', 'mocha-frappe']], ['black-tea', ['chai-latte']], ['spaghetti-bolognese', ['carbonara']], ['sushi', ['poke']]];
+
+describe('coverage of the foods left out on 2026-11-17 (2026-11-20)', () => {
+  for (const [q, names] of COVERAGE2) {
+    it(`"${q}" → ${names}`, () => {
+      const r = readMeal(q);
+      expect(r.left).toEqual([]);
+      expect(r.parts.map((p) => p.food.name).join(' + ')).toBe(names);
+    });
+  }
+  it('every search word of a new food or variant finds it', () => {
+    const bad: string[] = [];
+    const say = (a: string, parts: ReturnType<typeof readMeal>['parts'], want = '') => bad.push(`${a} → ${parts.map((p) => p.food.name).join(' + ') || 'nothing'}${want ? ` (want ${want})` : ''}`);
+    for (const id of NEW_FOODS2) {
+      const f = FOOD_BY_ID[id];
+      expect(f, id).toBeDefined();
+      for (const a of f.aliases) { const parts = readMeal(a).parts; if (parts.length !== 1 || baseOf(parts[0].food).id !== id) say(a, parts); }
+      for (const v of f.variants ?? []) for (const a of v.aliases) {
+        const parts = readMeal(a).parts;
+        if (parts.length !== 1 || baseOf(parts[0].food).id !== id || parts[0].food.v !== v.v) say(a, parts, v.name);
+      }
+    }
+    for (const [id, vs] of NEW_VARIANTS2) {
+      const have = (FOOD_BY_ID[id].variants ?? []).filter((x) => vs.includes(x.v));
+      expect(have.map((x) => x.v).sort(), id).toEqual([...vs].sort());
+      for (const v of have) for (const a of v.aliases) { const parts = readMeal(a).parts; if (parts.length !== 1 || parts[0].food.v !== v.v) say(a, parts, v.name); }
+    }
+    expect(bad).toEqual([]);
+  });
+  it('names are English, servings and calories are there, variant names have no parentheses', () => {
+    for (const id of NEW_FOODS2) {
+      const f = FOOD_BY_ID[id];
+      expect(f.serving.grams, id).toBeGreaterThan(0);
+      expect(f.p.kcal, id).not.toBeNull();
+      expect(/[čćšžđ]/i.test(f.name), id).toBe(false);
+    }
+    for (const [id, vs] of NEW_VARIANTS2) for (const v of FOOD_BY_ID[id].variants!.filter((x) => vs.includes(x.v))) {
+      expect(/[čćšžđ()]/i.test(v.name), `${id}.${v.v}`).toBe(false);
+      expect(v.serving.grams, `${id}.${v.v}`).toBeGreaterThan(0);
+    }
+  });
+  // what the records and recipes give (USDA FNDDS; IBA specs from USDA parts and producer labels): a change shows here
+  const per = (q: string, k: 'alcoholG' | 'caffeineMg' | 'kcal') => { const p = readMeal(q).parts[0]; return ((p.food.p[k] ?? 0) * p.grams) / 100; };
+  it('cola and energy-drink cocktails carry both the alcohol and the caffeine of their records', () => {
+    expect(per('vodka red bull', 'alcoholG')).toBeCloseTo(18.7, 0);
+    expect(per('vodka red bull', 'caffeineMg')).toBeCloseTo(49.5, 0);
+    expect(per('rum and coke', 'caffeineMg')).toBeCloseTo(15.8, 0);
+    expect(per('pina colada', 'caffeineMg')).toBe(0);
+  });
+  it('IBA cocktails: the alcohol of their parts (vodka 40 ml + Cointreau 15 ml; gin + Campari + vermouth; prosecco + Aperol; the aperitifs are recipe ingredients, fooddb_spec ingr)', () => {
+    expect(per('cosmopolitan', 'alcoholG')).toBeCloseTo(17.4, 0);
+    expect(per('negroni', 'alcoholG')).toBeCloseTo(18.9, 0);
+    expect(per('aperol spritz', 'alcoholG')).toBeCloseTo(13.9, 0);
+  });
+  it('cafe drinks: espresso shots and matcha set the caffeine; carbonara and poke are full plates', () => {
+    expect(Math.abs(per('flat white', 'caffeineMg') - 127)).toBeLessThan(2);
+    expect(per('matcha latte', 'caffeineMg')).toBeCloseTo(45, 0);
+    expect(per('carbonara', 'kcal')).toBeGreaterThan(500);
+    expect(per('poke bowl', 'kcal')).toBeGreaterThan(500);
   });
 });

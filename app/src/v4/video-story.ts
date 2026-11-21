@@ -365,7 +365,16 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
   }
   // (round 16, critic E-1: an energy drink's caffeine was never shown): the caffeine moment is never left out
   const cafStop = out.find((s) => s.min > 0 && /caffeine/i.test(s.title));
-  if (cafStop) cafStop.keep = true;
+  // (2026-11-20, rum and cola / vodka and an energy drink: the Short lost its climax to the caffeine moment): with
+  // alcohol, what the caffeine does is the alcohol peak's first card, under its title "Alcohol peak", so every cut says
+  // it at the climax ("Caffeine masks drowsiness, not impairment.", CDC 2024 [AL18]; the gauge shows the blood alcohol
+  // with both driving limits); the caffeine moment then comes where there is room
+  const MASK = 'Caffeine masks drowsiness, not impairment.';
+  const alcPeak = (ctx.alcoholG ?? 0) > 1 ? out.find((s) => s.title === 'Alcohol peak' && (s.lines ?? []).includes(MASK)) : undefined;
+  if (alcPeak) {
+    alcPeak.lines = [MASK, ...(alcPeak.lines ?? []).filter((l) => l !== MASK)];
+    alcPeak.must = Math.max(alcPeak.must ?? 0, 1);
+  } else if (cafStop) cafStop.keep = true;
   return out.sort((a, b) => a.min - b.min);
 }
 

@@ -51,11 +51,14 @@ const tags = (list: string[], max: number) => { const own = [...new Set(list.fil
 export const pluralName = (name: string) => { const m = /^(\d+)\s+(\S+)/.exec(name.trim()); return !!m && Number(m[1]) >= 2 && !/^(ml|g|l|cl|oz|kg|×|x)$/i.test(m[2]); };
 
 /** Round 18 (critic V-7: a pljeskavica was #bloodsugar): what the caption's topic is, from the food itself: blood sugar
- *  only when its carbohydrate leads (≥ 35 % of kcal) and the curve rose; protein when protein leads (≥ 25 % of kcal). */
-export function captionFlags(x: { alcoholG?: number; caffeineMg: number; sugarPeak: number | null; decaf?: boolean; solid: boolean; macros?: { kcal: number; availCarbs: number; protein: number } }): Pick<CaptionIn, 'alcohol' | 'caffeine' | 'sugar' | 'solid' | 'protein'> {
-  const m = x.macros, k = Math.max(1, m?.kcal ?? 1);
-  return { alcohol: (x.alcoholG ?? 0) > 1, caffeine: x.caffeineMg >= 10 || !!x.decaf, solid: x.solid,
-    sugar: (x.sugarPeak ?? 0) >= 0.5 && (!m || 4 * m.availCarbs >= 0.35 * k), protein: !!m && 4 * m.protein >= 0.25 * k };
+ *  only when its carbohydrate leads (≥ 35 % of kcal) and the curve rose; protein when protein leads (≥ 25 % of kcal).
+ *  2026-11-20 (trail mix: 10 g of sugar, but its fat and fiber keep the curve under 0.5 mmol/L): a food whose sugar leads
+ *  its carbohydrate (≥ 10 g, at least half) is about blood sugar too, when it has no caffeine to be about. */
+export function captionFlags(x: { alcoholG?: number; caffeineMg: number; sugarPeak: number | null; decaf?: boolean; solid: boolean; macros?: { kcal: number; availCarbs: number; protein: number; sugars?: number } }): Pick<CaptionIn, 'alcohol' | 'caffeine' | 'sugar' | 'solid' | 'protein'> {
+  const m = x.macros, k = Math.max(1, m?.kcal ?? 1), caffeine = x.caffeineMg >= 10 || !!x.decaf;
+  const sugarLed = !!m && !caffeine && (m.sugars ?? 0) >= 10 && (m.sugars ?? 0) >= 0.5 * m.availCarbs;
+  return { alcohol: (x.alcoholG ?? 0) > 1, caffeine, solid: x.solid,
+    sugar: ((x.sugarPeak ?? 0) >= 0.5 || sugarLed) && (!m || 4 * m.availCarbs >= 0.35 * k), protein: !!m && 4 * m.protein >= 0.25 * k };
 }
 export function captionsFor(c: CaptionIn): Captions {
   const cmp = c.compare;

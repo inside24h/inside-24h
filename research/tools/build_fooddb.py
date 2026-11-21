@@ -350,7 +350,7 @@ def main(mode):
         ent, f = build_entry(e, mode)
         fails += f
         if ent is not None: out.append(ent)
-    keys = {e["id"] for e in S.E} | {"%s.%s" % (b, v["v"]) for b, vs in getattr(S, "VARS", {}).items() for v in vs}
+    keys = {e["id"] for e in S.E} | {"%s.%s" % (b, v["v"]) for b, vs in getattr(S, "VARS", {}).items() for v in vs} | set(getattr(S, "INGR", {}))
     for o in S.OVR:
         if o["id"] not in keys: fails += 1; print("OVERRIDE FOR UNKNOWN FOOD", o["id"])
     if mode == "build": fails += dedupe_aliases(out)

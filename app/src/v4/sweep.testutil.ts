@@ -10,7 +10,18 @@ const EVERY = Math.max(1, Math.floor(Number(env.I24_SWEEP_EVERY ?? 1)) || 1);
 /** True in the fast tier. */
 export const FAST_TIER = EVERY > 1;
 
+// 2026-11-20, a local debugging aid: I24_SWEEP_ONLY=<id>,<id> keeps only the items (and the pairs with one side) whose
+// database id is one of these (an item "mojito.rum-cola" matches "mojito.rum-cola"; "hard-cider" also matches its
+// variants and presets). Unset (as in CI and both tiers) it changes nothing.
+const ONLY = (env.I24_SWEEP_ONLY ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const onlyHit = (x: unknown): boolean => {
+  const id = (x as { id?: unknown })?.id;
+  if (typeof id !== 'string') return true;
+  return id.replace(/ \(same amount\)$/, '').split(' vs ').some((side) => ONLY.some((o) => side === o || side.startsWith(`${o}.`) || side.startsWith(`${o}+`)));
+};
+
 /** Every item in the full tier; every k-th one (starting with the first) in the fast tier. */
 export function sweep<T>(xs: readonly T[], every = EVERY): T[] {
+  if (ONLY.length) return xs.filter(onlyHit);
   return every > 1 ? xs.filter((_, i) => i % every === 0) : [...xs];
 }

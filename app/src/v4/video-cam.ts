@@ -189,7 +189,7 @@ export function classOf(b: { alcoholG?: number; caffeine: { doseMg: number }; st
 /** How a class films: the spring's pace (`half`, s), the sway (radians each way, seconds per swing), the height (pitch,
  *  radians from above), the arc a glide swings round the body (radians), which framing a moment opens with, and
  *  where in the video the whole-body orientation shot falls. */
-export interface CamStyle { cls: StoryClass; half: number; sway: number; swayS: number; pitch: number; arc: number; wideFirst: boolean; orient: 'early' | 'middle' | 'late' }
+export interface CamStyle { cls: StoryClass; half: number; sway: number; swayS: number; pitch: number; arc: number; wideFirst: boolean; orient: 'early' | 'middle' | 'late'; /** 2026-11-20: the food's own bits for which framing each moment opens with (moments, not one flag for the video) */ flip?: number }
 const CLASS_STYLE: Record<StoryClass, Omit<CamStyle, 'cls'>> = {
   // a night out: slow, low, a long sway; the orientation shot late (the night, the morning after)
   alcohol: { half: 0.62, sway: 0.24, swayS: 14, pitch: 0.05, arc: 0.16, wideFirst: false, orient: 'late' },
@@ -211,7 +211,7 @@ export function camStyle(cls: StoryClass, seed = 0): CamStyle {
   const h = Math.imul(s ^ (s >>> 15), 0x2c1b3c6d) >>> 0; // (mixed: two foods' seeds that share low bits still part)
   const ORDER = ['early', 'middle', 'late'] as const, oi = ORDER.indexOf(b.orient), shift = (h >>> 20) % 3;
   const orient = shift === 1 ? ORDER[oi === 2 ? 1 : oi + 1] : b.orient;
-  return { cls, ...b, half: b.half * (0.94 + (0.12 * ((s >>> 3) % 11)) / 10), arc: (s >>> 1) % 2 ? -b.arc : b.arc, wideFirst: (h >>> 27) % 2 ? !b.wideFirst : b.wideFirst, orient };
+  return { cls, ...b, half: b.half * (0.94 + (0.12 * ((s >>> 3) % 11)) / 10), arc: (s >>> 1) % 2 ? -b.arc : b.arc, wideFirst: (h >>> 27) % 2 ? !b.wideFirst : b.wideFirst, orient, flip: Math.imul(h ^ (h >>> 13), 0x85ebca6b) >>> 0 };
 }
 
 /** Phase 4e (two foods of one story, ham and bacon, were filmed 96 % alike once the perceived stays were capped): the
@@ -476,8 +476,18 @@ export function shotOf(fr: FrameLike | null | undefined, beat: (string | null | 
   // (round 6: a big organ - brain, colon, liver - is never closer than 'mid', so its other framing is 'wide')
   // (phase 4: the wider framing keeps to the moment's organs; the drink joins only when it is close by, so the organ
   // the card names stays in the safe frame)
-  const alt = ((fr.pg ?? 0) % 2 === 1) !== !!cam?.style.wideFirst;
-  if (alt) { const f2 = [...new Set(focus)]; return { focus: f2, zoom: f2.length && f2.every((k) => BIG.has(k)) ? 'far' : 'mid', tight: 0.5 * (fr.hk ?? 0) }; } // (phase 4: 'far', not 'wide': the whole-body shot put the brain under the headline)
+  // (2026-11-20, the full tier's sample after the new cocktails: gin and tonic and a Moscow mule tell the same story
+  // and were filmed 96 % alike, one wideFirst flag for the whole video): each moment opens with its own framing, from
+  // the food's bits (camStyle.flip) and the moment, so two foods of the same story part moment by moment
+  // (two bits a card page, from the food's bits, the moment and the page: whether the page takes the wider framing,
+  // and whether that is 'far' for any organ, not only for a big one; a page that keeps its predecessor's framing still
+  // reframes on the next page, so no shot is held longer than before)
+  const pg = fr.pg ?? 0;
+  const bitsAt = (k: number) => (cam?.style.flip === undefined ? 0 : Math.imul(Math.imul(cam.style.flip ^ Math.round(fr.stop ?? 0), 0x9e3779b1) ^ k, 0x85ebca6b) >>> 30);
+  const mBits = bitsAt(pg);
+  const alt = cam?.style.flip === undefined ? (pg % 2 === 1) !== !!cam?.style.wideFirst
+    : pg === 0 ? ((mBits & 1) === 1) !== !!cam.style.wideFirst : (pg % 2 === 1) !== (((bitsAt(0) & 1) === 1) !== !!cam.style.wideFirst);
+  if (alt) { const f2 = [...new Set(focus)]; return { focus: f2, zoom: f2.length && ((mBits & 2) === 2 || f2.every((k) => BIG.has(k))) ? 'far' : 'mid', tight: 0.5 * (fr.hk ?? 0) }; } // (phase 4: 'far', not 'wide': the whole-body shot put the brain under the headline)
   return { focus: [...new Set(focus)], zoom: union ? 'mid' : 'close', tight: fr.hk ?? 0 };
 }
 

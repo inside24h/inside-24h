@@ -296,13 +296,16 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     const oncePeak = once ? peakOf(once) : 0;
     const onceNote = pc && once ? ` (Spread over ${paceLabel(pc.overMin)}. All at once it would have been about ${bacRangeText(oncePeak)}.)`
       : meal.alcoholG > 21 ? ` (We assume you drink it all at once${canPace(parts) ? '. Pick “Over how long?” to spread it over the evening: the peak is lower' : '; spread over an evening the peak is lower'}.)` : '';
-    const peakClaims = ['AL1', 'AL3', 'AL4', ...(meal.alcoholG > 21 ? ['AL14'] : []), ...(pc ? ['AL16'] : []),...(poisonRisk(bacPeak) ? ['AL9'] : [])];
+    // 2026-11-20 (rum and cola, vodka and an energy drink): caffeine with the alcohol hides the drowsiness, not the
+    // impairment; the blood alcohol, the driving limits and "Don't drive" stay exactly as without it [AL18, CDC 2024]
+    const cafNote = meal.caffeineMg >= 10 ? ' The caffeine can make you feel less drunk than you are: it doesn’t lower your blood alcohol or how impaired you are.' : '';
+    const peakClaims = ['AL1', 'AL3', 'AL4', ...(meal.alcoholG > 21 ? ['AL14'] : []), ...(pc ? ['AL16'] : []),...(poisonRisk(bacPeak) ? ['AL9'] : []), ...(cafNote ? ['AL18'] : [])];
     // `live`: the number follows the clock with the same formatter as the label on the body (routes.ts), so both always match
-    ch.push({ min: bacPeakMin, title: 'Alcohol peak', focus: 'brain', claims: peakClaims, text: `Blood alcohol is at its highest now: about ${bacRangeText(bacPeak)}${fedNote}. ${drive(bacPeak)}${onceNote}`,
+    ch.push({ min: bacPeakMin, title: 'Alcohol peak', focus: 'brain', claims: peakClaims, text: `Blood alcohol is at its highest now: about ${bacRangeText(bacPeak)}${fedNote}. ${drive(bacPeak)}${cafNote}${onceNote}`,
       live: (t) => {
         const b = at(s.bac, t);
-        return t - bacPeakMin < 5 ? `Blood alcohol is at its highest now: about ${bacRangeText(b)}${fedNote}. ${drive(b)}${onceNote}`
-          : `Blood alcohol is now about ${bacRangeText(b)}, slowly coming down from its peak${fedNote}. ${drive(b)}`;
+        return t - bacPeakMin < 5 ? `Blood alcohol is at its highest now: about ${bacRangeText(b)}${fedNote}. ${drive(b)}${cafNote}${onceNote}`
+          : `Blood alcohol is now about ${bacRangeText(b)}, slowly coming down from its peak${fedNote}. ${drive(b)}${cafNote}`;
       } });
     // when it is gone, typical and across livers (0.10–0.20 ‰ an hour) [AL2]; past 24 h we say so (no silent cut)
     const clk = alcoholClock(s.bac, once ? once.indexOf(oncePeak) : undefined);
@@ -331,7 +334,9 @@ function foodStory(s: FoodSim, meal: Meal, m: Macros, p: Profile, color: string,
     }
   }
   const nutrientKcal = meal.kcal - 7 * meal.alcoholG; // calories slow the stomach, so caffeine peaks later [GE12, C]
-  if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: [...(s.meal?.caffeineInDrink ? ['DB1', 'D2', 'ML3'] : nutrientKcal > 30 ? ['DB1', 'D2', 'GE12'] : ['DB1', 'D2']), ...labelClaims(parts, 'caffeineMg')], text: `${pc ? `${r0(meal.caffeineMg)} mg of caffeine in total, spread over ${paceLabel(pc.overMin)}: it builds up with each ${roundWord} and is highest now. It reaches your brain` : `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain`} and blocks the tiredness signal a little.${mealCaffeineNote(s)}` });
+  // (2026-11-20: with alcohol, the caffeine moment says what the caffeine does not do [AL18])
+  const withAlcohol = meal.alcoholG > 1 ? ' With alcohol in you, it hides the drowsiness, not the impairment: your blood alcohol stays the same.' : '';
+  if (meal.caffeineMg >= 10) ch.push({ min: r0(s.caffeine.tmaxMin), title: 'Caffeine peak', focus: 'brain', claims: [...(s.meal?.caffeineInDrink ? ['DB1', 'D2', 'ML3'] : nutrientKcal > 30 ? ['DB1', 'D2', 'GE12'] : ['DB1', 'D2']), ...labelClaims(parts, 'caffeineMg'), ...(withAlcohol ? ['AL18'] : [])], text: `${pc ? `${r0(meal.caffeineMg)} mg of caffeine in total, spread over ${paceLabel(pc.overMin)}: it builds up with each ${roundWord} and is highest now. It reaches your brain` : `About ${r0(meal.caffeineMg)} mg of caffeine reaches your brain`} and blocks the tiredness signal a little.${withAlcohol}${mealCaffeineNote(s)}` });
   // FC1 is about meals (Wells 1998): not for drinks alone, and alcohol calories don't count (10 beers are not "a big meal")
   if (!isDrink && meal.kcal - 7 * meal.alcoholG >= 500) ch.push({ min: 90, title: 'Sleepy after eating', focus: 'brain', claims: ['FC1'], text: 'A big meal: many people feel sleepy about 1.5 hours later, whatever the meal was.' });
   if (m.protein >= 10) ch.push({ min: 150, title: 'Building blocks', focus: 'heart', claims: ['AA1', 'TE1'], text: `The ${r0(m.protein)} g of protein arrive in your blood as amino acids, peaking about now. Processing protein (absorbing it, building with it and breaking down the rest) uses up about a quarter of its calories.` });

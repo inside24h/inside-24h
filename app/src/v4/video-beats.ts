@@ -76,6 +76,9 @@ const RULES: Rule[] = [
   [/^About \d+ mg of caffeine is (?:left|still) in you/, () => ['Some caffeine is still in you.']],
   // alcohol
   [/^Blood alcohol is at its highest now/, () => ['Blood alcohol is at its highest now.']],
+  // (2026-11-20: caffeine with the alcohol, CDC 2024 [AL18]: it hides the drowsiness, never the impairment)
+  [/^The caffeine can make you feel less drunk than you are/, () => ['Caffeine masks drowsiness, not impairment.']],
+  [/^With alcohol in you, it hides the drowsiness, not the impairment/, () => ['Caffeine doesn’t lower your blood alcohol.']],
   [/^Blood alcohol is now about .*coming down from its peak/, () => ['Blood alcohol is slowly coming down.']],
   [/^Blood alcohol keeps rising for a while after the last drink/, () => ['Blood alcohol keeps rising for a while.']],
   [/^Dangerous: people have died of alcohol poisoning/, () => ['Dangerous: alcohol poisoning level.']],

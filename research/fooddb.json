@@ -1790,6 +1790,166 @@
     ],
     "range": null,
     "overrides": null
+   },
+   {
+    "v": "flat-white",
+    "chip": "Flat white",
+    "name": "Flat white",
+    "words": [
+     "flat"
+    ],
+    "aliases": [
+     "flat white",
+     "flat white coffee",
+     "flat white kava",
+     "flatwhite",
+     "flet vajt"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 cup (190 ml)",
+     "grams": 194.1,
+     "source": "our recipe: 60 g espresso + 134.1 g milk",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 44.9,
+     "carbs": 3.832,
+     "sugars": 3.489,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 2.301,
+     "satFat": 1.313,
+     "protein": 2.213,
+     "sodiumMg": 34.034,
+     "caffeineMg": 65.548,
+     "alcoholG": 0.0,
+     "waterG": 91.099
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (espresso, milk)",
+    "gi": 39,
+    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Milk (whole) GI 39 on 6.4 g carbs (Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, mean of multiple studies)",
+    "color": "#9a6b44",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "espresso",
+      "usdaFdcId": 171891,
+      "usdaDescription": "Beverages, coffee, brewed, espresso, restaurant-prepared",
+      "grams": 60.0
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 134.1
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Flat white is a standard cafe build: a double espresso (2 x 30 ml, USDA) and about 130 ml of steamed whole milk (USDA) in a small cup (Starbucks at Home flat white: 2 shots of espresso; barista guides: about 130 ml of milk). Check: Starbucks UK/IE lists a Short flat white with whole milk at 76 kcal, 5 g sugar and 89 mg caffeine (it uses smaller ristretto shots).",
+      "cite": "Our recipe from USDA SR Legacy parts: 60 g Beverages, coffee, brewed, espresso, restaurant-prepared (171891); 134.1 g Milk, whole, 3.25% milkfat, with added vitamin D (171265)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-coffee-with-milk.flat-white"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "mocha-frappe",
+    "chip": "Mocha frappe",
+    "name": "Mocha frappe",
+    "words": [
+     "frappe"
+    ],
+    "aliases": [
+     "blended coffee",
+     "blended iced coffee",
+     "frape",
+     "frappe",
+     "frappuccino",
+     "frappucino",
+     "frappé",
+     "frapuccino",
+     "frapé",
+     "frozen blended coffee",
+     "frozen coffee",
+     "ice blended coffee",
+     "kava frape",
+     "mocha frappe",
+     "mocha frappuccino"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink",
+     "grams": 252.5,
+     "source": "our recipe: 30 g espresso + 182.5 g milk + 40 g Chocolate syrup",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 87.8,
+     "carbs": 14.314,
+     "sugars": 13.154,
+     "freeSugars": 9.504,
+     "fiber": 0.0,
+     "fat": 2.37,
+     "satFat": 1.355,
+     "protein": 2.291,
+     "sodiumMg": 56.504,
+     "caffeineMg": 28.037,
+     "alcoholG": 0.0,
+     "waterG": 80.35
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (espresso, milk, Chocolate syrup)",
+    "gi": null,
+    "giSource": null,
+    "color": "#9a6b44",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "espresso",
+      "usdaFdcId": 171891,
+      "usdaDescription": "Beverages, coffee, brewed, espresso, restaurant-prepared",
+      "grams": 30.0
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 182.5
+     },
+     {
+      "ref": 2710276,
+      "usdaFdcId": 2710276,
+      "usdaDescription": "Chocolate syrup",
+      "grams": 40.0
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Mocha frappe: the Starbucks at Home recipe for a mocha frozen blended coffee (1 shot of espresso, 3/4 cup of whole milk, 2 tablespoons of chocolate sauce, 1 1/2 cups of ice), from USDA espresso (30 ml), whole milk (177 ml) and chocolate syrup (40 g). The ice adds no nutrients and is not counted. A coffee frappuccino without chocolate has less sugar.",
+      "cite": "Our recipe from USDA SR Legacy parts: 30 g Beverages, coffee, brewed, espresso, restaurant-prepared (171891); 182.5 g Milk, whole, 3.25% milkfat, with added vitamin D (171265); 40 g Chocolate syrup (2710276)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-coffee-with-milk.mocha-frappe"
+     }
+    ],
+    "range": null,
+    "overrides": null
    }
   ],
   "addins": [
@@ -3075,6 +3235,86 @@
   "recipe": null,
   "usdaProxy": false,
   "notes": "Brewed, tap water, no sugar or milk.",
+  "ask": "Which black tea?",
+  "chip": "Plain",
+  "variants": [
+   {
+    "v": "chai-latte",
+    "chip": "Chai latte",
+    "name": "Chai latte",
+    "words": [
+     "chai"
+    ],
+    "aliases": [
+     "caj latte",
+     "chai",
+     "chai latte",
+     "chai latte s mlijekom",
+     "chai s mlijekom",
+     "chai tea",
+     "chai tea latte",
+     "masala chai",
+     "čaj latte"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 cup (240 ml)",
+     "grams": 241.6,
+     "source": "our recipe: 59 g black tea + 182.5 g milk",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 46.3,
+     "carbs": 3.7,
+     "sugars": 3.816,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 2.456,
+     "satFat": 1.405,
+     "protein": 2.38,
+     "sodiumMg": 33.223,
+     "caffeineMg": 4.889,
+     "alcoholG": 0.0,
+     "waterG": 90.935
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (black tea, milk)",
+    "gi": 39,
+    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Milk (whole) GI 39 on 8.8 g carbs (Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, mean of multiple studies)",
+    "color": "#8a4a14",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "black-tea",
+      "usdaFdcId": 173227,
+      "usdaDescription": "Beverages, tea, black, brewed, prepared with tap water",
+      "grams": 59.0
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 182.5
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Chai latte: the Stash Tea recipe (2 chai black tea bags steeped in 1/4 cup of boiling water, then 3/4 cup of whole milk; sweetener to taste), from USDA brewed black tea (59 ml) and whole milk (177 ml), unsweetened. Two bags in a quarter cup make a stronger tea than USDA's brewed tea, so the real caffeine is likely higher: Starbucks UK/IE lists 39 mg for a sweetened Tall chai latte.",
+      "cite": "Our recipe from USDA SR Legacy parts: 59 g Beverages, tea, black, brewed, prepared with tap water (173227); 182.5 g Milk, whole, 3.25% milkfat, with added vitamin D (171265)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-black-tea.chai-latte"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
   "addins": [
    {
     "k": "sugar",
@@ -10623,6 +10863,10 @@
     {
      "k": "granola-bar",
      "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
     }
    ]
   }
@@ -19348,6 +19592,10 @@
     {
      "k": "granola-bar",
      "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
     }
    ]
   }
@@ -19428,6 +19676,10 @@
     {
      "k": "granola-bar",
      "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
     }
    ]
   }
@@ -19509,6 +19761,10 @@
     {
      "k": "granola-bar",
      "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
     }
    ]
   }
@@ -28318,6 +28574,10 @@
     {
      "k": "granola-bar",
      "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
     }
    ]
   }
@@ -28659,6 +28919,143 @@
       "cite": "USDA FoodData Central, FNDDS 2021-2023 2708966: Sushi roll, vegetable",
       "url": "https://fdc.nal.usda.gov/food-details/2708966/nutrients",
       "claim": "DBV-sushi.veg"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "poke",
+    "chip": "Poke bowl",
+    "name": "Poke bowl",
+    "words": [
+     "poke"
+    ],
+    "aliases": [
+     "ahi poke",
+     "poke",
+     "poke bowl",
+     "poke zdjela",
+     "poki",
+     "poki bowl",
+     "poké",
+     "poké bowl",
+     "tuna poke",
+     "tuna poke bowl"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 bowl",
+     "grams": 576.6,
+     "source": "our recipe: 87.5 g Fish, tuna, fresh, yellowfin, raw + 281 g white rice + 15 g Vinegar + 2.1 g sugar + 8.7 g Soy sauce made from soy and wheat (shoyu) + 8.5 g Oil, sesame, salad or cooking + 34 g Avocados, raw, all commercial varieties + 38.8 g Edamame, frozen, prepared + 75.2 g cucumber + 15.2 g Carrots, raw + 6.8 g Radishes, raw + 3.8 g Onions, spring or scallions (includes tops and bulb), raw",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 116.7,
+     "carbs": 16.108,
+     "sugars": 0.97,
+     "freeSugars": 0.363,
+     "fiber": 1.127,
+     "fat": 2.931,
+     "satFat": 0.449,
+     "protein": 6.185,
+     "sodiumMg": 93.792,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 73.753
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Fish, tuna, fresh, yellowfin, raw, white rice, Vinegar, sugar, Soy sauce made from soy and wheat (shoyu), Oil, sesame, salad or cooking, Avocados, raw, all commercial varieties, Edamame, frozen, prepared, cucumber, Carrots, raw, Radishes, raw, Onions, spring or scallions (includes tops and bulb), raw)",
+    "gi": 73,
+    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: White rice (cooked) GI 73 on 78.0 g carbs (Atkinson 2008 (PMC2584181) Table 1: White rice, boiled, mean of multiple studies; Table 1 notes that low-GI varieties were also identified, so the type matters)",
+    "color": "#f1ece0",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": 175159,
+      "usdaFdcId": 175159,
+      "usdaDescription": "Fish, tuna, fresh, yellowfin, raw",
+      "grams": 87.5
+     },
+     {
+      "ref": "rice-white",
+      "usdaFdcId": 168878,
+      "usdaDescription": "Rice, white, long-grain, regular, enriched, cooked",
+      "grams": 281.0
+     },
+     {
+      "ref": 2709351,
+      "usdaFdcId": 2709351,
+      "usdaDescription": "Vinegar",
+      "grams": 15.0
+     },
+     {
+      "ref": "sugar",
+      "usdaFdcId": 169655,
+      "usdaDescription": "Sugars, granulated",
+      "grams": 2.1
+     },
+     {
+      "ref": 174277,
+      "usdaFdcId": 174277,
+      "usdaDescription": "Soy sauce made from soy and wheat (shoyu)",
+      "grams": 8.7
+     },
+     {
+      "ref": 171016,
+      "usdaFdcId": 171016,
+      "usdaDescription": "Oil, sesame, salad or cooking",
+      "grams": 8.5
+     },
+     {
+      "ref": 171705,
+      "usdaFdcId": 171705,
+      "usdaDescription": "Avocados, raw, all commercial varieties",
+      "grams": 34.0
+     },
+     {
+      "ref": 168411,
+      "usdaFdcId": 168411,
+      "usdaDescription": "Edamame, frozen, prepared",
+      "grams": 38.8
+     },
+     {
+      "ref": "cucumber",
+      "usdaFdcId": 168409,
+      "usdaDescription": "Cucumber, with peel, raw",
+      "grams": 75.2
+     },
+     {
+      "ref": 170393,
+      "usdaFdcId": 170393,
+      "usdaDescription": "Carrots, raw",
+      "grams": 15.2
+     },
+     {
+      "ref": 169276,
+      "usdaFdcId": 169276,
+      "usdaDescription": "Radishes, raw",
+      "grams": 6.8
+     },
+     {
+      "ref": 170005,
+      "usdaFdcId": 170005,
+      "usdaDescription": "Onions, spring or scallions (includes tops and bulb), raw",
+      "grams": 3.8
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Poke bowl: the RecipeTin Eats tuna poke bowl for 4, one bowl: 87.5 g raw tuna (USDA yellowfin), 1/2 cup sushi rice (100 g raw, as cooked USDA rice by its carbohydrate) seasoned with 1 tbsp rice vinegar and 1/2 tsp sugar, about 2 tsp soy sauce and 2 1/2 tsp sesame oil, 1/4 small avocado (34 g: a quarter of USDA's 136 g Hass avocado, values of USDA's all-varieties record), 1/4 cup edamame, 1/4 cucumber, 1/4 carrot, 1 1/2 radishes and 1/4 green onion (USDA portions). The 2 tbsp of mirin in the dressing (for 4) have no USDA record and are not counted. RecipeTin Eats' own estimate is 591 kcal a bowl; ours, from the USDA parts, is higher, mostly the rice.",
+      "cite": "Our recipe from USDA SR Legacy parts: 87.5 g Fish, tuna, fresh, yellowfin, raw (175159); 281 g Rice, white, long-grain, regular, enriched, cooked (168878); 15 g Vinegar (2709351); 2.1 g Sugars, granulated (169655); 8.7 g Soy sauce made from soy and wheat (shoyu) (174277); 8.5 g Oil, sesame, salad or cooking (171016); 34 g Avocados, raw, all commercial varieties (171705); 38.8 g Edamame, frozen, prepared (168411); 75.2 g Cucumber, with peel, raw (168409); 15.2 g Carrots, raw (170393); 6.8 g Radishes, raw (169276); 3.8 g Onions, spring or scallions (includes tops and bulb), raw (170005)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-sushi.poke"
      }
     ],
     "range": null,
@@ -30290,6 +30687,96 @@
       "cite": "USDA FoodData Central, SR Legacy 169029: Restaurant, family style, spaghetti and meatballs",
       "url": "https://fdc.nal.usda.gov/food-details/169029/nutrients",
       "claim": "DBV-spaghetti-bolognese.meatballs"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "carbonara",
+    "chip": "Carbonara",
+    "name": "Spaghetti carbonara",
+    "words": [
+     "carbonara",
+     "karbonara"
+    ],
+    "aliases": [
+     "carbonara",
+     "carbonara pasta",
+     "karbonara",
+     "pasta carbonara",
+     "pasta karbonara",
+     "spageti karbonara",
+     "spaghetti alla carbonara",
+     "spaghetti carbonara",
+     "tjestenina carbonara",
+     "špageti karbonara"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 plate",
+     "grams": 269.1,
+     "source": "our recipe: 193.6 g pasta + 37.5 g Pork, cured, bacon, unprepared + 25.5 g Egg, yolk, raw, fresh + 12.5 g Cheese, romano",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 216.9,
+     "carbs": 22.711,
+     "sugars": 0.539,
+     "freeSugars": 0.0,
+     "fiber": 1.295,
+     "fat": 9.61,
+     "satFat": 3.588,
+     "protein": 9.056,
+     "sodiumMg": 176.487,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 57.576
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (pasta, Pork, cured, bacon, unprepared, Egg, yolk, raw, fresh, Cheese, romano)",
+    "gi": 49,
+    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Pasta (cooked) GI 49 on 56.3 g carbs (Atkinson 2008 (PMC2584181) Table 1: Spaghetti, white, mean of multiple studies)",
+    "color": "#b8502a",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "pasta",
+      "usdaFdcId": 169737,
+      "usdaDescription": "Pasta, cooked, enriched, without added salt",
+      "grams": 193.6
+     },
+     {
+      "ref": 168277,
+      "usdaFdcId": 168277,
+      "usdaDescription": "Pork, cured, bacon, unprepared",
+      "grams": 37.5
+     },
+     {
+      "ref": 172184,
+      "usdaFdcId": 172184,
+      "usdaDescription": "Egg, yolk, raw, fresh",
+      "grams": 25.5
+     },
+     {
+      "ref": 171249,
+      "usdaFdcId": 171249,
+      "usdaDescription": "Cheese, romano",
+      "grams": 12.5
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Spaghetti carbonara: the Giallo Zafferano recipe for 4 (320 g spaghetti, 150 g guanciale, 6 egg yolks, 50 g Pecorino Romano, black pepper), one plate: 80 g dry spaghetti (also the Italian standard portion, ISS / CREA) as 194 g cooked (USDA pasta, by its carbohydrate), 37.5 g cured pork (USDA raw bacon: USDA has no guanciale, a fattier cut), 1.5 yolks (USDA large yolk, 17 g each) and 12.5 g pecorino (USDA Romano). The rendered fat stays in the sauce; the salt in the pasta water is not counted.",
+      "cite": "Our recipe from USDA SR Legacy parts: 193.6 g Pasta, cooked, enriched, without added salt (169737); 37.5 g Pork, cured, bacon, unprepared (168277); 25.5 g Egg, yolk, raw, fresh (172184); 12.5 g Cheese, romano (171249)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-spaghetti-bolognese.carbonara"
      }
     ],
     "range": null,
@@ -32089,6 +32576,621 @@
     ],
     "range": null,
     "overrides": null
+   },
+   {
+    "v": "rum-cola",
+    "chip": "Rum and cola",
+    "name": "Rum and cola",
+    "words": [],
+    "aliases": [
+     "cuba libre",
+     "kuba libre",
+     "rum & coke",
+     "rum and coke",
+     "rum and cola",
+     "rum coke",
+     "rum cola",
+     "rum i cola",
+     "rum s colom",
+     "rum sa colom"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (222 ml)",
+     "grams": 225.2,
+     "assumed": false,
+     "source": "volume 222 ml x USDA density 1.014 g/ml (from portion '1 fl oz' = 30.0 g)"
+    },
+    "per100g": {
+     "kcal": 89.0,
+     "carbs": 7.8,
+     "sugars": 7.48,
+     "freeSugars": 7.48,
+     "fiber": 0.0,
+     "fat": 0.19,
+     "satFat": 0.0,
+     "protein": 0.0,
+     "sodiumMg": 3.0,
+     "caffeineMg": 7.0,
+     "alcoholG": 8.3,
+     "waterG": 83.7
+    },
+    "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": 2710660,
+    "usdaDescription": "Rum and cola",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Rum and cola: values from the USDA FNDDS record 2710660 (USDA's standard recipe: rum and cola, about 7 mg caffeine per 100 g from the cola, with its alcohol); 1 drink = 222 ml.",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2710660: Rum and cola",
+      "url": "https://fdc.nal.usda.gov/food-details/2710660/nutrients",
+      "claim": "DBV-mojito.rum-cola"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "whiskey-cola",
+    "chip": "Whiskey and cola",
+    "name": "Whiskey and cola",
+    "words": [],
+    "aliases": [
+     "bourbon and coke",
+     "jack & coke",
+     "jack and coke",
+     "jack and cola",
+     "jack coke",
+     "viski cola",
+     "viski i cola",
+     "viski s colom",
+     "whiskey and coke",
+     "whiskey and cola",
+     "whiskey coke",
+     "whiskey cola",
+     "whisky and coke",
+     "whisky cola"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (222 ml)",
+     "grams": 225.2,
+     "assumed": false,
+     "source": "volume 222 ml x USDA density 1.014 g/ml (from portion '1 fl oz' = 30.0 g)"
+    },
+    "per100g": {
+     "kcal": 89.0,
+     "carbs": 7.8,
+     "sugars": 7.48,
+     "freeSugars": 7.48,
+     "fiber": 0.0,
+     "fat": 0.19,
+     "satFat": 0.0,
+     "protein": 0.0,
+     "sodiumMg": 3.0,
+     "caffeineMg": 7.0,
+     "alcoholG": 8.3,
+     "waterG": 83.7
+    },
+    "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": 2710657,
+    "usdaDescription": "Whiskey and cola",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Whiskey and cola: values from the USDA FNDDS record 2710657 (USDA's standard recipe: whiskey and cola, about 7 mg caffeine per 100 g from the cola, with its alcohol); 1 drink = 222 ml.",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2710657: Whiskey and cola",
+      "url": "https://fdc.nal.usda.gov/food-details/2710657/nutrients",
+      "claim": "DBV-mojito.whiskey-cola"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "vodka-cola",
+    "chip": "Vodka and cola",
+    "name": "Vodka and cola",
+    "words": [],
+    "aliases": [
+     "vodka & coke",
+     "vodka and coke",
+     "vodka and cola",
+     "vodka coke",
+     "vodka cola",
+     "vodka i cola",
+     "vodka s colom",
+     "votka cola"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (222 ml)",
+     "grams": 225.2,
+     "assumed": false,
+     "source": "volume 222 ml x USDA density 1.014 g/ml (from portion '1 fl oz' = 30.0 g)"
+    },
+    "per100g": {
+     "kcal": 89.0,
+     "carbs": 7.8,
+     "sugars": 7.48,
+     "freeSugars": 7.48,
+     "fiber": 0.0,
+     "fat": 0.19,
+     "satFat": 0.0,
+     "protein": 0.0,
+     "sodiumMg": 3.0,
+     "caffeineMg": 7.0,
+     "alcoholG": 8.3,
+     "waterG": 83.7
+    },
+    "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": 2710666,
+    "usdaDescription": "Vodka and cola",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Vodka and cola: values from the USDA FNDDS record 2710666 (USDA's standard recipe: vodka and cola, about 7 mg caffeine per 100 g from the cola, with its alcohol); 1 drink = 222 ml.",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2710666: Vodka and cola",
+      "url": "https://fdc.nal.usda.gov/food-details/2710666/nutrients",
+      "claim": "DBV-mojito.vodka-cola"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "vodka-energy",
+    "chip": "Vodka energy",
+    "name": "Vodka and energy drink",
+    "words": [],
+    "aliases": [
+     "vodka & red bull",
+     "vodka and energy drink",
+     "vodka and red bull",
+     "vodka bull",
+     "vodka energetsko",
+     "vodka energy",
+     "vodka energy drink",
+     "vodka i red bull",
+     "vodka red bull",
+     "vodka redbull",
+     "vodka s energetskim picem",
+     "vodka s energetskim pićem",
+     "vodka s red bullom",
+     "votka red bull"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (222 ml)",
+     "grams": 225.2,
+     "assumed": false,
+     "source": "volume 222 ml x USDA density 1.014 g/ml (from portion '1 fl oz' = 30.0 g)"
+    },
+    "per100g": {
+     "kcal": 90.0,
+     "carbs": 7.7,
+     "sugars": 7.69,
+     "freeSugars": 7.69,
+     "fiber": 0.0,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.35,
+     "sodiumMg": 30.0,
+     "caffeineMg": 22.0,
+     "alcoholG": 8.3,
+     "waterG": 83.6
+    },
+    "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": 2710668,
+    "usdaDescription": "Vodka and energy drink",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Vodka and energy drink: values from the USDA FNDDS record 2710668 (USDA's standard recipe: vodka and an energy drink, about 22 mg caffeine per 100 g from the energy drink, with its alcohol); 1 drink = 222 ml.",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2710668: Vodka and energy drink",
+      "url": "https://fdc.nal.usda.gov/food-details/2710668/nutrients",
+      "claim": "DBV-mojito.vodka-energy"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "pina-colada",
+    "chip": "Pina colada",
+    "name": "Pina colada",
+    "words": [],
+    "aliases": [
+     "pina colada",
+     "pina colada cocktail",
+     "pina kolada",
+     "pinacolada",
+     "pinja kolada",
+     "piña colada",
+     "piña colada cocktail"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (222 ml)",
+     "grams": 225.2,
+     "assumed": false,
+     "source": "volume 222 ml x USDA density 1.014 g/ml (from portion '1 fl oz' = 30.0 g)"
+    },
+    "per100g": {
+     "kcal": 151.0,
+     "carbs": 19.48,
+     "sugars": 17.58,
+     "freeSugars": 17.58,
+     "fiber": 0.1,
+     "fat": 2.14,
+     "satFat": 1.96,
+     "protein": 0.36,
+     "sodiumMg": 6.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 7.9,
+     "waterG": 70.0
+    },
+    "freeSugarsBasis": "UPPER BOUND: all total sugars assumed added (no added-sugar value in SR Legacy)",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": 2710662,
+    "usdaDescription": "Pina Colada",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Pina colada: values from the USDA FNDDS record 2710662 (USDA's standard recipe: rum, pineapple juice and cream of coconut, with its alcohol); 1 drink = 222 ml. Free sugars: an upper bound (all its sugar counted; the cream of coconut's own sugar is a small part).",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2710662: Pina Colada",
+      "url": "https://fdc.nal.usda.gov/food-details/2710662/nutrients",
+      "claim": "DBV-mojito.pina-colada"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "cosmopolitan",
+    "chip": "Cosmopolitan",
+    "name": "Cosmopolitan",
+    "words": [],
+    "aliases": [
+     "cosmo",
+     "cosmopolitan",
+     "cosmopolitan cocktail",
+     "cosmopolitan koktel",
+     "kozmopolitan"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (100 ml)",
+     "grams": 100.8,
+     "source": "our recipe: 37.9 g vodka + 15.2 g Orange liqueur (triple sec, 40%) (producer label over USDA Liqueur) + 15.6 g Lime juice, raw + 32.1 g cranberry juice drink",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 154.6,
+     "carbs": 9.326,
+     "sugars": 7.759,
+     "freeSugars": 7.759,
+     "fiber": 0.062,
+     "fat": 0.043,
+     "satFat": 0.005,
+     "protein": 0.065,
+     "sodiumMg": 1.473,
+     "caffeineMg": 0.0,
+     "alcoholG": 17.27,
+     "waterG": 73.115
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (vodka, Orange liqueur (triple sec, 40%) (producer label over USDA Liqueur), Lime juice, raw, cranberry juice drink)",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "vodka",
+      "usdaFdcId": 2710704,
+      "usdaDescription": "Vodka",
+      "grams": 37.9
+     },
+     {
+      "ref": "ingr:triple-sec",
+      "usdaFdcId": 2710623,
+      "usdaDescription": "Orange liqueur (triple sec, 40%) (producer label over USDA Liqueur)",
+      "grams": 15.2
+     },
+     {
+      "ref": 168156,
+      "usdaFdcId": 168156,
+      "usdaDescription": "Lime juice, raw",
+      "grams": 15.6
+     },
+     {
+      "ref": "cranberry-juice",
+      "usdaFdcId": 171903,
+      "usdaDescription": "Cranberry juice cocktail, bottled",
+      "grams": 32.1
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Cosmopolitan: the IBA official recipe (40 ml citrus vodka, 15 ml Cointreau, 15 ml fresh lime juice, 30 ml cranberry juice), from USDA vodka, lime juice and cranberry juice cocktail and the Cointreau label. Shaken on ice: the melt is not counted.",
+      "cite": "Our recipe from USDA SR Legacy parts: 37.9 g Vodka (2710704); 15.2 g Orange liqueur (triple sec, 40%) (producer label over USDA Liqueur) (2710623); 15.6 g Lime juice, raw (168156); 32.1 g Cranberry juice cocktail, bottled (171903)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-mojito.cosmopolitan"
+     },
+     {
+      "fields": [
+       "alcoholG",
+       "carbs",
+       "fat",
+       "kcal",
+       "protein",
+       "satFat",
+       "sugars",
+       "waterG"
+      ],
+      "level": "B",
+      "text": "Orange liqueur: values from the Cointreau label (40% alcohol; per 100 ml 313 kcal, 25 g sugar). Cointreau's own site gives 93 kcal and 6.8 g sugar per 30 ml (about 23 g per 100 ml).",
+      "cite": "Cointreau 0.5 l label (Frankfurt Airport shop listing): 40%; per 100 ml 1,307 kJ / 313 kcal, carbohydrate 25 g, of which sugars 25 g; Cointreau UK, 'What is the nutritional value of Cointreau': per 30 ml 9.5 g alcohol, 93 calories, 6.8 g carbohydrates (sugar)",
+      "url": "https://www.cointreau.com/uk/en/what-nutritional-value-cointreau",
+      "claim": "DBI-triple-sec-0"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "negroni",
+    "chip": "Negroni",
+    "name": "Negroni",
+    "words": [],
+    "aliases": [
+     "classic negroni",
+     "negroni",
+     "negroni cocktail",
+     "negroni koktel"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (90 ml)",
+     "grams": 88.7,
+     "source": "our recipe: 28.4 g Gin + 30.4 g Campari (red bitter, 25%) (producer label over USDA Liqueur) + 29.9 g Sweet red vermouth (15%) (producer label over USDA Alcoholic beverage, wine, dessert, sweet)",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 202.7,
+     "carbs": 13.833,
+     "sugars": 13.833,
+     "freeSugars": 13.833,
+     "fiber": 0.0,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.0,
+     "sodiumMg": 0.32,
+     "caffeineMg": 0.0,
+     "alcoholG": 21.348,
+     "waterG": 66.713
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Gin, Campari (red bitter, 25%) (producer label over USDA Liqueur), Sweet red vermouth (15%) (producer label over USDA Alcoholic beverage, wine, dessert, sweet))",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": 2710702,
+      "usdaFdcId": 2710702,
+      "usdaDescription": "Gin",
+      "grams": 28.4
+     },
+     {
+      "ref": "ingr:campari",
+      "usdaFdcId": 2710623,
+      "usdaDescription": "Campari (red bitter, 25%) (producer label over USDA Liqueur)",
+      "grams": 30.4
+     },
+     {
+      "ref": "ingr:sweet-vermouth",
+      "usdaFdcId": 173176,
+      "usdaDescription": "Sweet red vermouth (15%) (producer label over USDA Alcoholic beverage, wine, dessert, sweet)",
+      "grams": 29.9
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Negroni: the IBA official recipe (30 ml gin, 30 ml Campari, 30 ml sweet red vermouth), from USDA gin and the Campari and Martini Rosso labels. Built over ice: the melt is not counted.",
+      "cite": "Our recipe from USDA SR Legacy parts: 28.4 g Gin (2710702); 30.4 g Campari (red bitter, 25%) (producer label over USDA Liqueur) (2710623); 29.9 g Sweet red vermouth (15%) (producer label over USDA Alcoholic beverage, wine, dessert, sweet) (173176)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-mojito.negroni"
+     },
+     {
+      "fields": [
+       "alcoholG",
+       "carbs",
+       "fat",
+       "kcal",
+       "protein",
+       "satFat",
+       "sodiumMg",
+       "sugars",
+       "waterG"
+      ],
+      "level": "B",
+      "text": "Campari: 25% alcohol by volume; per 100 ml the label gives 235.5 kcal and 25.9 g sugar (Systembolaget lists 24.0 g). USDA has no Campari.",
+      "cite": "Campari Bitter 1 l label (Frankfurt Airport shop listing): per 100 ml 979.5 kJ / 235.5 kcal, carbohydrate 25.9 g, of which sugars 25.9 g, fat 0, protein 0, salt 0; Systembolaget (Sweden) 70104: 25% vol, sugar 24.0 g/100 ml; Campari Group USA: 25% alc./vol., 1.5 fl oz 108 kcal, 11.5 g carbohydrate",
+      "url": "https://www.systembolaget.se/produkt/vin/70104",
+      "claim": "DBI-campari-0"
+     },
+     {
+      "fields": [
+       "alcoholG",
+       "carbs",
+       "fat",
+       "kcal",
+       "protein",
+       "satFat",
+       "sodiumMg",
+       "sugars",
+       "waterG"
+      ],
+      "level": "A",
+      "text": "Sweet red vermouth: values from the producer's nutrition page for Martini Rosso (15% alcohol; per 100 ml 145 kcal, 15 g sugar). USDA has no vermouth.",
+      "cite": "Bacardi nutrition information, Martini Rosso (GB): 15% vol; per 100 ml 605 kJ / 145 kcal, carbohydrate 15 g, of which sugars 15 g, fat 0, protein 0, salt 0; Cinzano Vermouth Rosso (Campari Group): 15% vol, 43 kcal per 30 ml",
+      "url": "https://nutrition.bacardilimited.com/info/martini/5010677915007/?country=GB",
+      "claim": "DBI-sweet-vermouth-0"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "aperol-spritz",
+    "chip": "Aperol spritz",
+    "name": "Aperol spritz",
+    "words": [],
+    "aliases": [
+     "aperol spric",
+     "aperol sprits",
+     "aperol spritz",
+     "aperol spritzer",
+     "aperol spriz",
+     "aperol špric",
+     "spritz",
+     "spritz aperol",
+     "spritz veneziano"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 drink (150 ml)",
+     "grams": 152.1,
+     "source": "our recipe: 91.3 g Wine, sparkling + 60.8 g Aperol (bitter orange aperitif, 11%) (producer label over USDA Liqueur)",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 107.7,
+     "carbs": 11.683,
+     "sugars": 10.896,
+     "freeSugars": 10.296,
+     "fiber": 0.0,
+     "fat": 0.0,
+     "satFat": 0.0,
+     "protein": 0.042,
+     "sodiumMg": 10.891,
+     "caffeineMg": 0.0,
+     "alcoholG": 9.135,
+     "waterG": 81.402
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (Wine, sparkling, Aperol (bitter orange aperitif, 11%) (producer label over USDA Liqueur))",
+    "gi": null,
+    "giSource": null,
+    "color": "#cfe8b0",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": 2710687,
+      "usdaFdcId": 2710687,
+      "usdaDescription": "Wine, sparkling",
+      "grams": 91.3
+     },
+     {
+      "ref": "ingr:aperol",
+      "usdaFdcId": 2710623,
+      "usdaDescription": "Aperol (bitter orange aperitif, 11%) (producer label over USDA Liqueur)",
+      "grams": 60.8
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Aperol spritz: the IBA official recipe (90 ml prosecco, 60 ml Aperol, a splash of soda water), from the USDA sparkling-wine record and the Aperol label. The splash of soda water and the ice add no nutrients and are not counted.",
+      "cite": "Our recipe from USDA SR Legacy parts: 91.3 g Wine, sparkling (2710687); 60.8 g Aperol (bitter orange aperitif, 11%) (producer label over USDA Liqueur) (2710623)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-mojito.aperol-spritz"
+     },
+     {
+      "fields": [
+       "alcoholG",
+       "carbs",
+       "fat",
+       "kcal",
+       "protein",
+       "satFat",
+       "sodiumMg",
+       "sugars",
+       "waterG"
+      ],
+      "level": "B",
+      "text": "Aperol: 11% alcohol by volume and 50 kcal per 30 ml (Campari Group); per 100 ml the label gives 159 kcal and 26.1 g sugar. USDA has no Aperol.",
+      "cite": "Campari Group consumer information, Aperol: 11% vol, 30 ml serving 50 kcal / 210 kJ; Aperol 1 l label (Frankfurt Airport shop listing): per 100 ml 663 kJ / 159 kcal, carbohydrate 26.13 g, of which sugars 26.13 g, fat 0, protein 0, salt 0.05 g",
+      "url": "https://www.camparigroup.info/aperol/aperol-6/",
+      "claim": "DBI-aperol-0"
+     }
+    ],
+    "range": null,
+    "overrides": null
    }
   ]
  },
@@ -32665,6 +33767,10 @@
     {
      "k": "granola-bar",
      "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
     }
    ]
   }
@@ -33954,5 +35060,462 @@
   "recipe": null,
   "usdaProxy": true,
   "notes": "PROXY: no USDA record is called risotto. USDA FNDDS 2709092 'Rice, white, with cheese and/or cream based sauce' is the same kind of dish (white rice cooked creamy with cheese); 1 cup = 204 g. Risottos with mushrooms, seafood or more butter differ."
+ },
+ {
+  "id": "hard-cider",
+  "name": "Cider (hard, alcoholic)",
+  "aliases": [
+   "alcoholic cider",
+   "alkoholni cider",
+   "apple cider alcoholic",
+   "bulmers",
+   "cider",
+   "cider (hard, alcoholic)",
+   "cider jabuka",
+   "ciders",
+   "cidre",
+   "hard cider",
+   "jabucno vino",
+   "jabučno vino",
+   "magners",
+   "sidra",
+   "somersby",
+   "strongbow"
+  ],
+  "kind": "liquid",
+  "serving": {
+   "label": "1 bottle (355 ml)",
+   "grams": 360.1,
+   "assumed": false,
+   "source": "volume 355 ml x USDA density 1.014 g/ml (from portion '1 fl oz' = 30.0 g)"
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 56.0,
+   "carbs": 5.92,
+   "sugars": 5.92,
+   "freeSugars": 5.92,
+   "fiber": 0.0,
+   "fat": 0.0,
+   "satFat": 0.0,
+   "protein": 0.0,
+   "sodiumMg": 4.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 4.0,
+   "waterG": 89.0
+  },
+  "freeSugarsBasis": "all sugars counted as free (juice, honey, sugar, syrup/soft drink or jam)",
+  "gi": null,
+  "giSource": null,
+  "color": "#e9c46a",
+  "usdaFdcId": 2710621,
+  "usdaDescription": "Hard cider",
+  "usdaDataset": "FNDDS 2021-2023",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA FNDDS 2710621 'Hard cider' (4.0 g alcohol per 100 g, about 5% by volume; 5.9 g sugar); 1 bottle = 12 fl oz = 355 ml (FNDDS default amount). Free sugars: all (the sugar left from apple juice and any added sugar).",
+  "sizes": {
+   "opts": [
+    {
+     "k": "0.33l",
+     "label": "0.33 l",
+     "ml": 330
+    },
+    {
+     "k": "12oz",
+     "label": "12 fl oz",
+     "ml": 355
+    },
+    {
+     "k": "0.5l",
+     "label": "0.5 l",
+     "ml": 500
+    }
+   ],
+   "src": [
+    {
+     "fields": [
+      "serving"
+     ],
+     "level": "C",
+     "text": "Sizes are the usual bottles and cans: 0.33 l (EU bottle), 12 fl oz (355 ml, US bottle) and 0.5 l (pint can).",
+     "cite": "Common serving sizes",
+     "url": "https://fdc.nal.usda.gov/",
+     "claim": "DBS-hard-cider"
+    }
+   ]
+  }
+ },
+ {
+  "id": "trail-mix",
+  "name": "Trail mix (nuts and dried fruit)",
+  "aliases": [
+   "gorp",
+   "mjesavina orasastih plodova",
+   "mješavina orašastih plodova",
+   "nuts and raisins",
+   "orasasti plodovi i suho voce",
+   "orašasti plodovi i suho voće",
+   "scroggin",
+   "student mix",
+   "studentska hrana",
+   "studentski mix",
+   "trail mix",
+   "trail mix (nuts and dried fruit)",
+   "trail mix with fruit",
+   "trailmix"
+  ],
+  "kind": "solid",
+  "serving": {
+   "label": "1 handful (1 oz, 28 g)",
+   "grams": 28.0,
+   "source": "USDA FNDDS 2021-2023 food_portion ( Quantity not specified = 28.0 g)",
+   "assumed": false
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": null,
+  "per100g": {
+   "kcal": 454.0,
+   "carbs": 51.06,
+   "sugars": 36.48,
+   "freeSugars": null,
+   "fiber": 6.4,
+   "fat": 26.83,
+   "satFat": 3.69,
+   "protein": 10.9,
+   "sodiumMg": 134.0,
+   "caffeineMg": 0.0,
+   "alcoholG": 0.0,
+   "waterG": 8.8
+  },
+  "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+  "gi": null,
+  "giSource": null,
+  "color": "#b98b5a",
+  "usdaFdcId": 2707576,
+  "usdaDescription": "Trail mix with nuts and fruit",
+  "usdaDataset": "FNDDS 2021-2023",
+  "recipe": null,
+  "usdaProxy": false,
+  "notes": "USDA FNDDS 2707576 'Trail mix with nuts and fruit' (USDA's 'Trail mix, NFS' has the same values); 28 g = 1 oz, the FNDDS default amount. Free sugars null: dried fruit's own sugar is not a free sugar, and the share of sweetened fruit or candy is not known.",
+  "ask": "Which trail mix?",
+  "chip": "Nuts and fruit",
+  "variants": [
+   {
+    "v": "nuts",
+    "chip": "Nuts only",
+    "name": "Trail mix with nuts",
+    "words": [],
+    "aliases": [
+     "nut trail mix",
+     "salted trail mix",
+     "trail mix nuts only",
+     "trail mix with nuts"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 handful (1 oz, 28 g)",
+     "grams": 28.0,
+     "source": "USDA FNDDS 2021-2023 food_portion ( Quantity not specified = 28.0 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 604.0,
+     "carbs": 21.07,
+     "sugars": 4.1,
+     "freeSugars": null,
+     "fiber": 7.9,
+     "fat": 52.98,
+     "satFat": 7.28,
+     "protein": 20.06,
+     "sodiumMg": 252.0,
+     "caffeineMg": 0.0,
+     "alcoholG": 0.0,
+     "waterG": 1.9
+    },
+    "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+    "gi": null,
+    "giSource": null,
+    "color": "#b98b5a",
+    "usdaFdcId": 2707575,
+    "usdaDescription": "Trail mix with nuts",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Trail mix with nuts: values from the USDA FNDDS record 'Trail mix with nuts'; 28 g (1 oz).",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2707575: Trail mix with nuts",
+      "url": "https://fdc.nal.usda.gov/food-details/2707575/nutrients",
+      "claim": "DBV-trail-mix.nuts"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   },
+   {
+    "v": "chocolate",
+    "chip": "With chocolate",
+    "name": "Trail mix with chocolate",
+    "words": [
+     "cokoladom"
+    ],
+    "aliases": [
+     "chocolate trail mix",
+     "m&m trail mix",
+     "studentska hrana s cokoladom",
+     "studentska hrana s čokoladom",
+     "trail mix with chocolate",
+     "trail mix with m&ms"
+    ],
+    "kind": "solid",
+    "serving": {
+     "label": "1 handful (1 oz, 28 g)",
+     "grams": 28.0,
+     "source": "USDA FNDDS 2021-2023 food_portion ( Quantity not specified = 28.0 g)",
+     "assumed": false
+    },
+    "per100g": {
+     "kcal": 503.0,
+     "carbs": 48.27,
+     "sugars": 34.85,
+     "freeSugars": null,
+     "fiber": 5.9,
+     "fat": 32.26,
+     "satFat": 7.0,
+     "protein": 11.65,
+     "sodiumMg": 146.0,
+     "caffeineMg": 4.0,
+     "alcoholG": 0.0,
+     "waterG": 5.2
+    },
+    "freeSugarsBasis": "cannot be separated from natural sugars with the sources read",
+    "gi": null,
+    "giSource": null,
+    "color": "#b98b5a",
+    "usdaFdcId": 2707577,
+    "usdaDescription": "Trail mix with chocolate",
+    "recipe": null,
+    "usdaProxy": false,
+    "notes": "",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "A",
+      "text": "Trail mix with chocolate: values from the USDA FNDDS record 'Trail mix with chocolate'; 28 g (1 oz).",
+      "cite": "USDA FoodData Central, FNDDS 2021-2023 2707577: Trail mix with chocolate",
+      "url": "https://fdc.nal.usda.gov/food-details/2707577/nutrients",
+      "claim": "DBV-trail-mix.chocolate"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ],
+  "choose": {
+   "k": "snacks",
+   "ask": "Which snack?",
+   "words": [
+    "grickalica",
+    "grickalice",
+    "snack",
+    "snacks"
+   ],
+   "opts": [
+    {
+     "k": "potato-chips",
+     "chip": "Chips"
+    },
+    {
+     "k": "popcorn",
+     "chip": "Popcorn"
+    },
+    {
+     "k": "crackers",
+     "chip": "Crackers"
+    },
+    {
+     "k": "rice-cakes",
+     "chip": "Rice cakes"
+    },
+    {
+     "k": "tortilla-chips",
+     "chip": "Tortilla chips"
+    },
+    {
+     "k": "granola-bar",
+     "chip": "Granola bar"
+    },
+    {
+     "k": "trail-mix",
+     "chip": "Trail mix"
+    }
+   ]
+  }
+ },
+ {
+  "id": "matcha",
+  "name": "Matcha (whisked green tea)",
+  "aliases": [
+   "matcha",
+   "matcha (whisked green tea)",
+   "matcha caj",
+   "matcha green tea",
+   "matcha tea",
+   "matcha čaj",
+   "usucha"
+  ],
+  "kind": "liquid",
+  "serving": {
+   "label": "1 bowl (3 g in 100 ml)",
+   "grams": 100.1,
+   "assumed": false,
+   "source": "volume 100 ml x USDA density 1.001 g/ml (from portion 'fl oz' = 29.6 g)"
+  },
+  "piece": null,
+  "aliasServing": null,
+  "overrides": [
+   {
+    "fields": [
+     "caffeineMg"
+    ],
+    "basis": "perServing",
+    "label": {
+     "caffeineMg": 45
+    },
+    "usdaBefore": {
+     "caffeineMg": 12.0
+    },
+    "level": "B",
+    "text": "Matcha: about 45 mg caffeine in a bowl of 3 g powder. Three commercial matchas measured 14.1–16.1 mg caffeine per gram (Koláčková et al. 2022); 3 g is the Ippodo Tea recipe for a matcha latte.",
+    "source": "Koláčková T et al. 2022, Antioxidants 11(5):889, doi 10.3390/antiox11050889: caffeine 14.1–16.1 mg/g (three matchas, HPLC); Ippodo Tea, matcha latte recipe: 1.5 tsp (3 g) matcha whisked with 100 ml of 80 °C water, then 100 ml of milk",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9137484",
+    "note": "3 g x 15.1 mg/g (mean of the three) = 45 mg; range 3 x 14.1 to 3 x 16.1 = 42-48 mg. Other reviews quote wider ranges (18.9-44.4 mg/g), so a strong matcha can have more.",
+    "rangesPer100g": {
+     "caffeineMg": [
+      42,
+      48
+     ]
+    }
+   }
+  ],
+  "per100g": {
+   "kcal": 1.0,
+   "carbs": 0.0,
+   "sugars": 0.0,
+   "freeSugars": 0.0,
+   "fiber": 0.0,
+   "fat": 0.0,
+   "satFat": 0.0,
+   "protein": 0.22,
+   "sodiumMg": 1.0,
+   "caffeineMg": 44.955,
+   "alcoholG": 0.0,
+   "waterG": 99.9
+  },
+  "freeSugarsBasis": "WHO: sugars in whole fruit, vegetables, plain milk/dairy, meat etc. are not free sugars",
+  "gi": null,
+  "giSource": null,
+  "color": "#7fa43b",
+  "usdaFdcId": 171917,
+  "usdaDescription": "Beverages, tea, green, brewed, regular",
+  "usdaDataset": "SR Legacy + label override",
+  "recipe": null,
+  "usdaProxy": true,
+  "notes": "PROXY: USDA has no matcha. 3 g of matcha whisked in 100 ml of water (the Ippodo Tea recipe); the values are USDA brewed green tea (SR Legacy 171917) with the caffeine measured in matcha powder over it (override below). The few calories of the powder itself (about 3 g) are not counted.",
+  "ask": "Which matcha?",
+  "chip": "Plain",
+  "variants": [
+   {
+    "v": "latte",
+    "chip": "Matcha latte",
+    "name": "Matcha latte",
+    "words": [],
+    "aliases": [
+     "green tea latte",
+     "matcha latte",
+     "matcha latte s mlijekom",
+     "matcha milk",
+     "matcha s mlijekom",
+     "matcha tea latte"
+    ],
+    "kind": "liquid",
+    "serving": {
+     "label": "1 cup (200 ml)",
+     "grams": 203.2,
+     "source": "our recipe: 100.1 g matcha + 103.1 g milk",
+     "assumed": true
+    },
+    "per100g": {
+     "kcal": 31.4,
+     "carbs": 2.436,
+     "sugars": 2.563,
+     "freeSugars": 0.0,
+     "fiber": 0.0,
+     "fat": 1.649,
+     "satFat": 0.944,
+     "protein": 1.707,
+     "sodiumMg": 22.312,
+     "caffeineMg": 22.143,
+     "alcoholG": 0.0,
+     "waterG": 93.912
+    },
+    "freeSugarsBasis": "our recipe: the free sugars of each part by its own rule (matcha, milk)",
+    "gi": 39,
+    "giSource": "COMPUTED (level C): carbohydrate-weighted GI of the parts: Milk (whole) GI 39 on 4.9 g carbs (Atkinson 2008 (PMC2584181) Table 1: Milk, full fat, mean of multiple studies)",
+    "color": "#7fa43b",
+    "usdaFdcId": null,
+    "usdaDescription": null,
+    "recipe": [
+     {
+      "ref": "matcha",
+      "usdaFdcId": 171917,
+      "usdaDescription": "Beverages, tea, green, brewed, regular",
+      "grams": 100.1
+     },
+     {
+      "ref": "milk-whole",
+      "usdaFdcId": 171265,
+      "usdaDescription": "Milk, whole, 3.25% milkfat, with added vitamin D",
+      "grams": 103.1
+     }
+    ],
+    "usdaProxy": false,
+    "notes": "COMPUTED recipe (our assumption for the amounts, USDA for the parts). ",
+    "src": [
+     {
+      "fields": [
+       "all"
+      ],
+      "level": "C",
+      "text": "Matcha latte: the Ippodo Tea recipe (1.5 tsp, 3 g, of matcha whisked with 100 ml of water, then 100 ml of warm milk), with USDA whole milk; unsweetened. Starbucks UK/IE lists 52 mg caffeine for a Tall matcha latte.",
+      "cite": "Our recipe from USDA SR Legacy parts: 100.1 g Beverages, tea, green, brewed, regular (171917); 103.1 g Milk, whole, 3.25% milkfat, with added vitamin D (171265)",
+      "url": "https://fdc.nal.usda.gov/",
+      "claim": "DBV-matcha.latte"
+     },
+     {
+      "fields": [
+       "caffeineMg"
+      ],
+      "level": "B",
+      "text": "Matcha: about 45 mg caffeine in a bowl of 3 g powder. Three commercial matchas measured 14.1–16.1 mg caffeine per gram (Koláčková et al. 2022); 3 g is the Ippodo Tea recipe for a matcha latte.",
+      "cite": "Koláčková T et al. 2022, Antioxidants 11(5):889, doi 10.3390/antiox11050889: caffeine 14.1–16.1 mg/g (three matchas, HPLC); Ippodo Tea, matcha latte recipe: 1.5 tsp (3 g) matcha whisked with 100 ml of 80 °C water, then 100 ml of milk",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9137484",
+      "claim": "DBO-matcha-0"
+     }
+    ],
+    "range": null,
+    "overrides": null
+   }
+  ]
  }
 ]

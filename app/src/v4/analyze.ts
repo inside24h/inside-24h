@@ -274,7 +274,12 @@ export function verdictOf(a: Analysis, b: Analysis, unit: Unit = 'mmol/L', guess
   const sides = ([[a, advA], [b, advB]] as [Analysis, string[]][]).sort((p, q) => nm(p[0]).localeCompare(nm(q[0])));
   const one = (x: Analysis, adv: string[]) => (adv.length ? `${nm(x)}${differ ? ` (${portion(x)})` : ''}: ${adv.slice(0, adv.length && sides.every(([, v]) => v.length) ? 1 : 2).join(', ')}.` : '');
   const both = sides.map(([x, adv]) => one(x, adv)).filter(Boolean).join(' '), fact2 = flipped ? ` ${per100Fact(flipped[0], flipped[1])}` : '';
-  return (both + fact2).length <= 120 ? both + fact2 : both; // (phase 4j, M1: and the per-100 g fact, where it fits)
+  if ((both + fact2).length <= 120) return both + fact2; // (phase 4j, M1: and the per-100 g fact, where it fits)
+  if (both.length <= 120) return both;
+  // (2026-11-20, a new audit pair, spaghetti bolognese vs chicken curry: two sides with their servings and numbers ran
+  // to 150 characters): each side's edge without its bracketed numbers, the servings kept; the gauges show the numbers
+  const plainAdv = (adv: string[]) => adv.map((t) => t.replace(/\s*\([^)]*\)/g, ''));
+  return sides.map(([x, adv]) => one(x, plainAdv(adv))).filter(Boolean).join(' ');
 }
 
 // Slower or lighter everyday swaps, by database id. Each is checked with the model before it is shown,

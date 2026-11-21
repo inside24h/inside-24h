@@ -63,8 +63,8 @@ describe('generic words open a chooser of the foods the database has (2026-10-29
     ['meat', 'chicken-breast', 'Which meat?', MEAT],
     ['salata', 'salad-lettuce', 'Which salad?', SALAD],
     ['salad', 'salad-lettuce', 'Which salad?', SALAD],
-    ['grickalice', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes', 'Tortilla chips', 'Granola bar']],
-    ['snacks', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes', 'Tortilla chips', 'Granola bar']],
+    ['grickalice', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes', 'Tortilla chips', 'Granola bar', 'Trail mix']],
+    ['snacks', 'potato-chips', 'Which snack?', ['Chips', 'Popcorn', 'Crackers', 'Rice cakes', 'Tortilla chips', 'Granola bar', 'Trail mix']],
     ['riba', 'cod', 'Which fish?', ['White fish', 'Salmon', 'Sardines', 'Tuna', 'Mackerel', 'Calamari', 'Sea bass', 'Shrimp', 'Fish sticks']],
     ['jogurt', 'yogurt-plain', 'Which yogurt?', ['Plain', 'Low-fat', 'Greek', 'Fruit']],
   ];
@@ -577,6 +577,10 @@ describe('data round 3: every carb food has a GI or a written reason; kebab matc
     'apple-pie': 'no apple pie tested (only pastries of other kinds)', 'pudding*': 'flavored milk puddings were tested only as single brands; the app uses their median as its estimate',
     'candy-bar': 'no Snickers-type bar tested', 'candy-bar.mms': 'only peanut M&M’s were tested (2021 Suppl. Table 1 row 1613), not milk-chocolate ones', 'chili': 'no chili con carne tested',
     'falafel': 'no falafel tested in healthy people',
+    // 2026-11-20 coverage round. Checked in Atkinson 2021 Suppl. Tables 1-2 (and 2008 Table 1): none tested
+    'hard-cider': 'cider: an alcoholic drink gets no GI here (see beer), and no cider was tested',
+    'trail-mix*': 'no trail mix (nuts with dried fruit or chocolate) tested',
+    'coffee-with-milk.mocha-frappe': 'no blended mocha coffee tested, and the chocolate syrup has no tested GI',
   };
   const reason = (key: string) => NO_GI[key] ?? NO_GI[`${key.split(/[._~]/)[0]}*`];
   const all: Food[] = [];

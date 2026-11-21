@@ -1957,3 +1957,176 @@ ask("frankfurter", "In a bun?", "Sausage only")
 var("frankfurter", "bun", "In a bun", "Hot dog in a bun", usda=2707056, serving=('p', r'^1 sandwich$', "1 hot dog"), gi="white_bread",
     aliases=["hot dog in bun", "hot dog sandwich", "hotdog in bun", "hot dog s pecivom", "hot dog u pecivu", "hotdog u pecivu", "hot dog with bun"],
     text="Hot dog in a bun: values from the USDA FNDDS record 'Hot dog sandwich, NFS, on white bun'; 1 hot dog = 102 g. Its carbohydrate is the white bun, so it counts at the white-bread GI (no hot dog was tested).")
+
+# ======================= COVERAGE 2026-11-20: the foods left out on 2026-11-17 =======================
+# (A) USDA FNDDS 2021-2023 has a record for each; they waited for the video side (spirit + caffeine, a cocktail's hook,
+#     a cider comparison, a snack's sugar moment), handled in app/src/v4/video-* in the same round.
+# (B) no single USDA record: standard recipes composed from USDA ingredient records (cocktails: the IBA official
+#     specifications; coffee-shop drinks: a standard cafe build; carbonara and poke: a typical published recipe), each
+#     source named in the variant text. Values are computed by the same mixing rule as every recipe here.
+NEW_2026_11_20 = []
+def add4(id, *a, **k):
+    add(id, *a, **k); NEW_2026_11_20.append(id)
+NEW_VARS_2026_11_20 = []
+def var4(base, v, *a, **k):
+    var(base, v, *a, **k); NEW_VARS_2026_11_20.append((base, v))
+
+# ---- (A) cocktails with cola or an energy drink, and the pina colada: USDA's standard recipes ("Which cocktail?")
+_CK2 = [  # (key, chip, name, FNDDS id, ml, free rule, aliases, what)
+    ("rum-cola", "Rum and cola", "Rum and cola", 2710660, 222, "all",
+     ["rum and coke", "rum & coke", "rum and cola", "rum cola", "rum coke", "cuba libre", "kuba libre", "rum i cola", "rum s colom", "rum sa colom"],
+     "rum and cola, about 7 mg caffeine per 100 g from the cola"),
+    ("whiskey-cola", "Whiskey and cola", "Whiskey and cola", 2710657, 222, "all",
+     ["jack and coke", "jack & coke", "jack coke", "jack and cola", "whiskey and coke", "whisky and coke", "whiskey cola", "whisky cola", "whiskey coke", "bourbon and coke", "viski cola", "viski i cola", "viski s colom"],
+     "whiskey and cola, about 7 mg caffeine per 100 g from the cola"),
+    ("vodka-cola", "Vodka and cola", "Vodka and cola", 2710666, 222, "all",
+     ["vodka and coke", "vodka & coke", "vodka coke", "vodka cola", "vodka and cola", "votka cola", "vodka s colom", "vodka i cola"],
+     "vodka and cola, about 7 mg caffeine per 100 g from the cola"),
+    ("vodka-energy", "Vodka energy", "Vodka and energy drink", 2710668, 222, "all",
+     ["vodka red bull", "vodka redbull", "vodka and red bull", "vodka & red bull", "vodka energy drink", "vodka and energy drink", "vodka energy", "vodka bull",
+      "vodka s red bullom", "vodka i red bull", "votka red bull", "vodka energetsko", "vodka s energetskim pićem", "vodka s energetskim picem"],
+     "vodka and an energy drink, about 22 mg caffeine per 100 g from the energy drink"),
+    ("pina-colada", "Pina colada", "Pina colada", 2710662, 222, "upper",
+     ["pina colada", "piña colada", "pinacolada", "pina kolada", "pinja kolada", "piña colada cocktail"],
+     "rum, pineapple juice and cream of coconut"),
+]
+for _k, _chip, _nm, _id, _ml, _free, _al, _what in _CK2:
+    var4("mojito", _k, _chip, _nm, usda=_id, serving=('ml', _ml, r'^1 fl oz$', "1 drink (%d ml)" % _ml), free=_free, aliases=_al,
+         text="%s: values from the USDA FNDDS record %d (USDA's standard recipe: %s, with its alcohol); 1 drink = %d ml." % (_nm, _id, _what, _ml)
+              + (" Free sugars: an upper bound (all its sugar counted; the cream of coconut's own sugar is a small part)." if _free == "upper" else ""))
+
+# ---- (A) hard cider
+add4("hard-cider", "Cider (hard, alcoholic)", ["cider", "hard cider", "ciders", "alcoholic cider", "apple cider alcoholic", "cidre", "sidra", "strongbow", "somersby", "magners", "bulmers",
+                                             "jabučno vino", "jabucno vino", "alkoholni cider", "cider jabuka"], "liquid",
+     2710621, "#e9c46a", "all", ('ml', 355, r'^1 fl oz$', "1 bottle (355 ml)"),
+     note="USDA FNDDS 2710621 'Hard cider' (4.0 g alcohol per 100 g, about 5% by volume; 5.9 g sugar); 1 bottle = 12 fl oz = 355 ml (FNDDS default amount). Free sugars: all (the sugar left from apple juice and any added sugar).")
+size("hard-cider", [("0.33l", "0.33 l", "ml", 330), ("12oz", "12 fl oz", "ml", 355), ("0.5l", "0.5 l", "ml", 500)],
+     "Sizes are the usual bottles and cans: 0.33 l (EU bottle), 12 fl oz (355 ml, US bottle) and 0.5 l (pint can).", "Common serving sizes")
+
+# ---- (A) trail mix
+add4("trail-mix", "Trail mix (nuts and dried fruit)", ["trail mix", "trailmix", "trail mix with fruit", "nuts and raisins", "gorp", "scroggin", "student mix",
+                                                     "studentska hrana", "studentski mix", "orašasti plodovi i suho voće", "orasasti plodovi i suho voce", "mješavina orašastih plodova", "mjesavina orasastih plodova"], "solid",
+     2707576, "#b98b5a", "null", ('p', r'Quantity not specified', "1 handful (1 oz, 28 g)"),
+     note="USDA FNDDS 2707576 'Trail mix with nuts and fruit' (USDA's 'Trail mix, NFS' has the same values); 28 g = 1 oz, the FNDDS default amount. Free sugars null: dried fruit's own sugar is not a free sugar, and the share of sweetened fruit or candy is not known.")
+ask("trail-mix", "Which trail mix?", "Nuts and fruit")
+var4("trail-mix", "nuts", "Nuts only", "Trail mix with nuts", usda=2707575, serving=('p', r'Quantity not specified', "1 handful (1 oz, 28 g)"),
+     aliases=["trail mix with nuts", "nut trail mix", "trail mix nuts only", "salted trail mix"],
+     text="Trail mix with nuts: values from the USDA FNDDS record 'Trail mix with nuts'; 28 g (1 oz).")
+var4("trail-mix", "chocolate", "With chocolate", "Trail mix with chocolate", usda=2707577, serving=('p', r'Quantity not specified', "1 handful (1 oz, 28 g)"), words=["čokoladom", "cokoladom"],
+     aliases=["trail mix with chocolate", "chocolate trail mix", "trail mix with m&ms", "m&m trail mix", "studentska hrana s čokoladom", "studentska hrana s cokoladom"],
+     text="Trail mix with chocolate: values from the USDA FNDDS record 'Trail mix with chocolate'; 28 g (1 oz).")
+_chooser_add("snacks", [("trail-mix", "Trail mix")])
+for _id in NEW_2026_11_20:
+    CHANGED_ON_PURPOSE.setdefault(_id, "2026-11-20 coverage round: new food (USDA FNDDS record; research/tools/fooddb_spec.py COVERAGE 2026-11-20)")
+
+# ---- (B) cocktails from the IBA official specifications (iba-world.com, read 2026-11-20). Spirits, wine and juices are
+#      USDA records; the aperitifs and the orange liqueur USDA lacks are their own foods below: USDA's generic liqueur
+#      (or sweet dessert wine) with the producer's per-100 ml values over it (alcohol from % vol x 0.789 g/ml, ethanol's
+#      density; water: what is left of 100 ml after the alcohol and the sugar, sugar taking 0.63 ml per g: our
+#      calculation, as the labels do not give it). Ice and its melt are not counted (water, no nutrients).
+import usda_sr as U
+_ETH = 0.789
+def _water(abv, sugar_g): return round(100 - abv - 0.63 * sugar_g, 1)
+_LQ = r'^1 fl oz \(no ice\)$'
+# (2026-11-20, after the first test run: a 30 ml measure of Aperol or vermouth on its own is not a drink people have, and
+#  its 3-4 g of alcohol hardly reach the blood; they are recipe ingredients only, "ingr:<id>" in a recipe)
+INGR = {}
+def ingr(id, name, usda, free, serving, note=""):
+    INGR[id] = dict(id=id, name=name, aliases=[], kind="liquid", usda=usda, color="#888888", free=free, serving=serving, gi=None,
+                    note=note, mix=None, proxy=True, piece=None, alias_serving=None)
+ingr("aperol", "Aperol (bitter orange aperitif, 11%)", 2710623, "all", ('ml', 30, _LQ, "1 measure (30 ml)"),
+     note="PROXY: USDA has no Aperol; the record is USDA FNDDS 2710623 'Liqueur' with the producer's values over it (override below). Serving: 30 ml, the serving size Campari Group gives. Free sugars: all (added sugar).")
+override("aperol", "per100ml", {"kcal": 159, "carbs": 26.1, "sugars": 26.1, "fat": 0, "satFat": 0, "protein": 0, "sodiumMg": 20,
+                               "alcoholG": round(11 * _ETH, 1), "waterG": _water(11, 26.1)}, "B",
+    "Aperol: 11% alcohol by volume and 50 kcal per 30 ml (Campari Group); per 100 ml the label gives 159 kcal and 26.1 g sugar. USDA has no Aperol.",
+    "Campari Group consumer information, Aperol: 11% vol, 30 ml serving 50 kcal / 210 kJ; Aperol 1 l label (Frankfurt Airport shop listing): per 100 ml 663 kJ / 159 kcal, carbohydrate 26.13 g, of which sugars 26.13 g, fat 0, protein 0, salt 0.05 g",
+    "https://www.camparigroup.info/aperol/aperol-6/",
+    note="Alcohol = 11 ml x 0.789 g/ml = 8.7 g per 100 ml. Sodium = salt 0.05 g / 2.5 = 20 mg. Water: our calculation (100 ml minus 11 ml alcohol and 26.1 g sugar at 0.63 ml/g). Fiber: not on the label, the USDA liqueur value (0) is kept. Energy check: 8.7 x 7 + 26.1 x 4 = 165 kcal (label 159).",
+    ranges={"kcal": (159, 167)})
+ingr("campari", "Campari (red bitter, 25%)", 2710623, "all", ('ml', 30, _LQ, "1 measure (30 ml)"),
+     note="PROXY: USDA has no Campari; the record is USDA FNDDS 2710623 'Liqueur' with the label values over it (override below). Serving: 30 ml, the measure of the IBA Negroni. Free sugars: all (added sugar).")
+override("campari", "per100ml", {"kcal": 235.5, "carbs": 25.9, "sugars": 25.9, "fat": 0, "satFat": 0, "protein": 0, "sodiumMg": 0,
+                                "alcoholG": round(25 * _ETH, 1), "waterG": _water(25, 25.9)}, "B",
+    "Campari: 25% alcohol by volume; per 100 ml the label gives 235.5 kcal and 25.9 g sugar (Systembolaget lists 24.0 g). USDA has no Campari.",
+    "Campari Bitter 1 l label (Frankfurt Airport shop listing): per 100 ml 979.5 kJ / 235.5 kcal, carbohydrate 25.9 g, of which sugars 25.9 g, fat 0, protein 0, salt 0; Systembolaget (Sweden) 70104: 25% vol, sugar 24.0 g/100 ml; Campari Group USA: 25% alc./vol., 1.5 fl oz 108 kcal, 11.5 g carbohydrate",
+    "https://www.systembolaget.se/produkt/vin/70104",
+    note="Alcohol = 25 ml x 0.789 g/ml = 19.7 g per 100 ml. Water: our calculation (100 ml minus 25 ml alcohol and 25.9 g sugar at 0.63 ml/g). Energy check: 19.7 x 7 + 25.9 x 4 = 241 kcal (label 235.5; US page 243 per 100 ml).",
+    ranges={"sugars": (24.0, 25.9)})
+ingr("sweet-vermouth", "Sweet red vermouth (15%)", 173176, "all", ('ml', 30, r'^fl oz$', "1 measure (30 ml)"),
+     note="PROXY: USDA has no vermouth; the record is USDA SR Legacy 173176 'Alcoholic beverage, wine, dessert, sweet' with the producer's values over it (override below). Free sugars: all (sugar is added to vermouth).")
+override("sweet-vermouth", "per100ml", {"kcal": 145, "carbs": 15, "sugars": 15, "fat": 0, "satFat": 0, "protein": 0, "sodiumMg": 0,
+                                       "alcoholG": round(15 * _ETH, 1), "waterG": _water(15, 15)}, "A",
+    "Sweet red vermouth: values from the producer's nutrition page for Martini Rosso (15% alcohol; per 100 ml 145 kcal, 15 g sugar). USDA has no vermouth.",
+    "Bacardi nutrition information, Martini Rosso (GB): 15% vol; per 100 ml 605 kJ / 145 kcal, carbohydrate 15 g, of which sugars 15 g, fat 0, protein 0, salt 0; Cinzano Vermouth Rosso (Campari Group): 15% vol, 43 kcal per 30 ml",
+    "https://nutrition.bacardilimited.com/info/martini/5010677915007/?country=GB",
+    note="Alcohol = 15 ml x 0.789 g/ml = 11.8 g per 100 ml. Water: our calculation (100 ml minus 15 ml alcohol and 15 g sugar at 0.63 ml/g). Energy check: 11.8 x 7 + 15 x 4 = 143 kcal (label 145).")
+ingr("triple-sec", "Orange liqueur (triple sec, 40%)", 2710623, "all", ('ml', 30, _LQ, "1 measure (30 ml)"),
+     note="PROXY: USDA's generic liqueur is about 26% alcohol; the values are Cointreau's (40%) over it (override below). Free sugars: all (added sugar).")
+override("triple-sec", "per100ml", {"kcal": 313, "carbs": 25, "sugars": 25, "fat": 0, "satFat": 0, "protein": 0,
+                                   "alcoholG": round(40 * _ETH, 1), "waterG": _water(40, 25)}, "B",
+    "Orange liqueur: values from the Cointreau label (40% alcohol; per 100 ml 313 kcal, 25 g sugar). Cointreau's own site gives 93 kcal and 6.8 g sugar per 30 ml (about 23 g per 100 ml).",
+    "Cointreau 0.5 l label (Frankfurt Airport shop listing): 40%; per 100 ml 1,307 kJ / 313 kcal, carbohydrate 25 g, of which sugars 25 g; Cointreau UK, 'What is the nutritional value of Cointreau': per 30 ml 9.5 g alcohol, 93 calories, 6.8 g carbohydrates (sugar)",
+    "https://www.cointreau.com/uk/en/what-nutritional-value-cointreau",
+    note="Alcohol = 40 ml x 0.789 g/ml = 31.6 g per 100 ml (Cointreau: 9.5 g per 30 ml = 31.7). Water: our calculation (100 ml minus 40 ml alcohol and 25 g sugar at 0.63 ml/g). Energy check: 31.6 x 7 + 25 x 4 = 321 kcal (label 313).",
+    ranges={"sugars": (22.7, 25)})
+
+_FL = lambda ml, flg: round(ml * flg / 29.57, 1)   # grams of `ml` from the record's own 1 fl oz weight (flg grams)
+var4("mojito", "cosmopolitan", "Cosmopolitan", "Cosmopolitan",
+     recipe=[("vodka", ("ml", 40)), ("ingr:triple-sec", ("ml", 15)), ((168156, "all"), _FL(15, 30.8)), ("cranberry-juice", ("ml", 30))],
+     serving=('g', None, "1 drink (100 ml)", "our recipe"), aliases=["cosmopolitan", "cosmo", "cosmopolitan cocktail", "kozmopolitan", "cosmopolitan koktel"],
+     text="Cosmopolitan: the IBA official recipe (40 ml citrus vodka, 15 ml Cointreau, 15 ml fresh lime juice, 30 ml cranberry juice), from USDA vodka, lime juice and cranberry juice cocktail and the Cointreau label. Shaken on ice: the melt is not counted.")
+var4("mojito", "negroni", "Negroni", "Negroni",
+     recipe=[((2710702, "none"), _FL(30, 28.0)), ("ingr:campari", ("ml", 30)), ("ingr:sweet-vermouth", ("ml", 30))],
+     serving=('g', None, "1 drink (90 ml)", "our recipe"), aliases=["negroni", "negroni cocktail", "negroni koktel", "classic negroni"],
+     text="Negroni: the IBA official recipe (30 ml gin, 30 ml Campari, 30 ml sweet red vermouth), from USDA gin and the Campari and Martini Rosso labels. Built over ice: the melt is not counted.")
+var4("mojito", "aperol-spritz", "Aperol spritz", "Aperol spritz",
+     recipe=[((2710687, "none"), _FL(90, 30.0)), ("ingr:aperol", ("ml", 60))],
+     serving=('g', None, "1 drink (150 ml)", "our recipe"), aliases=["aperol spritz", "spritz", "aperol spriz", "aperol sprits", "spritz aperol", "spritz veneziano", "aperol špric", "aperol spric", "aperol spritzer"],
+     text="Aperol spritz: the IBA official recipe (90 ml prosecco, 60 ml Aperol, a splash of soda water), from the USDA sparkling-wine record and the Aperol label. The splash of soda water and the ice add no nutrients and are not counted.")
+
+# ---- (B) coffee-shop drinks: a standard cafe build from USDA espresso, tea and milk
+var4("coffee-with-milk", "flat-white", "Flat white", "Flat white", recipe=[("espresso", ("ml", 60)), ("milk-whole", ("ml", 130))],
+     serving=('g', None, "1 cup (190 ml)", "our recipe"), words=["flat"], aliases=["flat white", "flatwhite", "flat white coffee", "flet vajt", "flat white kava"],
+     text="Flat white is a standard cafe build: a double espresso (2 x 30 ml, USDA) and about 130 ml of steamed whole milk (USDA) in a small cup (Starbucks at Home flat white: 2 shots of espresso; barista guides: about 130 ml of milk). Check: Starbucks UK/IE lists a Short flat white with whole milk at 76 kcal, 5 g sugar and 89 mg caffeine (it uses smaller ristretto shots).")
+var4("coffee-with-milk", "mocha-frappe", "Mocha frappe", "Mocha frappe", recipe=[("espresso", ("ml", 30)), ("milk-whole", ("ml", 177)), ((2710276, "all"), 40.0)],
+     serving=('g', None, "1 drink", "our recipe"), words=["frappe"],
+     aliases=["frappuccino", "frapuccino", "frappucino", "mocha frappuccino", "mocha frappe", "frappe", "frappé", "frape", "frapé", "blended coffee", "blended iced coffee", "frozen coffee", "frozen blended coffee", "ice blended coffee", "kava frape"],
+     text="Mocha frappe: the Starbucks at Home recipe for a mocha frozen blended coffee (1 shot of espresso, 3/4 cup of whole milk, 2 tablespoons of chocolate sauce, 1 1/2 cups of ice), from USDA espresso (30 ml), whole milk (177 ml) and chocolate syrup (40 g). The ice adds no nutrients and is not counted. A coffee frappuccino without chocolate has less sugar.")
+ask("black-tea", "Which black tea?", "Plain")
+var4("black-tea", "chai-latte", "Chai latte", "Chai latte", recipe=[("black-tea", ("ml", 59)), ("milk-whole", ("ml", 177))],
+     serving=('g', None, "1 cup (240 ml)", "our recipe"), words=["chai"],
+     aliases=["chai latte", "chai tea latte", "chai", "chai tea", "masala chai", "chai s mlijekom", "chai latte s mlijekom", "čaj latte", "caj latte"],
+     text="Chai latte: the Stash Tea recipe (2 chai black tea bags steeped in 1/4 cup of boiling water, then 3/4 cup of whole milk; sweetener to taste), from USDA brewed black tea (59 ml) and whole milk (177 ml), unsweetened. Two bags in a quarter cup make a stronger tea than USDA's brewed tea, so the real caffeine is likely higher: Starbucks UK/IE lists 39 mg for a sweetened Tall chai latte.")
+add4("matcha", "Matcha (whisked green tea)", ["matcha", "matcha tea", "matcha čaj", "matcha caj", "matcha green tea", "usucha"], "liquid",
+     171917, "#7fa43b", "none", ('ml', 100, r'fl oz', "1 bowl (3 g in 100 ml)"), proxy=True,
+     note="PROXY: USDA has no matcha. 3 g of matcha whisked in 100 ml of water (the Ippodo Tea recipe); the values are USDA brewed green tea (SR Legacy 171917) with the caffeine measured in matcha powder over it (override below). The few calories of the powder itself (about 3 g) are not counted.")
+override("matcha", "perServing", {"caffeineMg": round(3 * 15.1)}, "B",
+    "Matcha: about 45 mg caffeine in a bowl of 3 g powder. Three commercial matchas measured 14.1–16.1 mg caffeine per gram (Koláčková et al. 2022); 3 g is the Ippodo Tea recipe for a matcha latte.",
+    "Koláčková T et al. 2022, Antioxidants 11(5):889, doi 10.3390/antiox11050889: caffeine 14.1–16.1 mg/g (three matchas, HPLC); Ippodo Tea, matcha latte recipe: 1.5 tsp (3 g) matcha whisked with 100 ml of 80 °C water, then 100 ml of milk",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC9137484",
+    note="3 g x 15.1 mg/g (mean of the three) = 45 mg; range 3 x 14.1 to 3 x 16.1 = 42-48 mg. Other reviews quote wider ranges (18.9-44.4 mg/g), so a strong matcha can have more.",
+    ranges={"caffeineMg": (42, 48)})
+ask("matcha", "Which matcha?", "Plain")
+var4("matcha", "latte", "Matcha latte", "Matcha latte", recipe=[("matcha", ("ml", 100)), ("milk-whole", ("ml", 100))],
+     serving=('g', None, "1 cup (200 ml)", "our recipe"),
+     aliases=["matcha latte", "matcha tea latte", "green tea latte", "matcha s mlijekom", "matcha latte s mlijekom", "matcha milk"],
+     text="Matcha latte: the Ippodo Tea recipe (1.5 tsp, 3 g, of matcha whisked with 100 ml of water, then 100 ml of warm milk), with USDA whole milk; unsweetened. Starbucks UK/IE lists 52 mg caffeine for a Tall matcha latte.")
+
+# ---- (B) carbonara (Giallo Zafferano) and a poke bowl (RecipeTin Eats), per serving, from USDA parts
+def _cooked(g_raw, raw, cooked):
+    """grams cooked of g_raw grams raw/dry: by USDA carbohydrate (raw record / cooked record), our conversion"""
+    return round(g_raw * U.nutrients(raw)["carbs"] / U.nutrients(cooked)["carbs"], 1)
+var4("spaghetti-bolognese", "carbonara", "Carbonara", "Spaghetti carbonara",
+     recipe=[("pasta", _cooked(80, 169736, 169737)), ((168277, "none"), 37.5), ((172184, "none"), 25.5), ((171249, "none"), 12.5)],
+     serving=('g', None, "1 plate", "our recipe"), words=["carbonara", "karbonara"],
+     aliases=["carbonara", "spaghetti carbonara", "pasta carbonara", "spaghetti alla carbonara", "carbonara pasta", "špageti karbonara", "spageti karbonara", "karbonara", "tjestenina carbonara", "pasta karbonara"],
+     text="Spaghetti carbonara: the Giallo Zafferano recipe for 4 (320 g spaghetti, 150 g guanciale, 6 egg yolks, 50 g Pecorino Romano, black pepper), one plate: 80 g dry spaghetti (also the Italian standard portion, ISS / CREA) as 194 g cooked (USDA pasta, by its carbohydrate), 37.5 g cured pork (USDA raw bacon: USDA has no guanciale, a fattier cut), 1.5 yolks (USDA large yolk, 17 g each) and 12.5 g pecorino (USDA Romano). The rendered fat stays in the sauce; the salt in the pasta water is not counted.")
+var4("sushi", "poke", "Poke bowl", "Poke bowl",
+     recipe=[((175159, "none"), 87.5), ("rice-white", _cooked(100, 168881, 168878)), ((2709351, "none"), 15.0), ("sugar", 2.1), ((174277, "none"), round((22.5 + 10) / 4 * 16 / 15, 1)),
+             ((171016, "none"), round(2.5 * 13.6 / 4, 1)), ((171705, "none"), 34.0), ((168411, "none"), round(155 / 4, 1)), ("cucumber", round(301 / 4, 1)),
+             ((170393, "none"), round(61 / 4, 1)), ((169276, "none"), round(6 * 4.5 / 4, 1)), ((170005, "none"), round(15 / 4, 1))],
+     serving=('g', None, "1 bowl", "our recipe"), words=["poke"],
+     aliases=["poke", "poke bowl", "poké", "poké bowl", "poki", "poki bowl", "tuna poke", "ahi poke", "tuna poke bowl", "poke zdjela"],
+     text="Poke bowl: the RecipeTin Eats tuna poke bowl for 4, one bowl: 87.5 g raw tuna (USDA yellowfin), 1/2 cup sushi rice (100 g raw, as cooked USDA rice by its carbohydrate) seasoned with 1 tbsp rice vinegar and 1/2 tsp sugar, about 2 tsp soy sauce and 2 1/2 tsp sesame oil, 1/4 small avocado (34 g: a quarter of USDA's 136 g Hass avocado, values of USDA's all-varieties record), 1/4 cup edamame, 1/4 cucumber, 1/4 carrot, 1 1/2 radishes and 1/4 green onion (USDA portions). The 2 tbsp of mirin in the dressing (for 4) have no USDA record and are not counted. RecipeTin Eats' own estimate is 591 kcal a bowl; ours, from the USDA parts, is higher, mostly the rice.")
+for _id in NEW_2026_11_20:
+    CHANGED_ON_PURPOSE.setdefault(_id, "2026-11-20 coverage round: new food (USDA FNDDS record or producer label over a USDA proxy; research/tools/fooddb_spec.py COVERAGE 2026-11-20)")
