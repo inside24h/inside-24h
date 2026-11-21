@@ -861,7 +861,10 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
       { ...fx, compare: true, peakMin, teaserMin: fx.teaserMin ?? peakMin ?? chosen[Math.min(1, chosen.length - 1)].min, lulls: ls, ...(use > 0 ? { glideK, glideK0: glideK } : {}) });
   };
   let lulls: number[] = [], out = layC(lulls);
-  if (mend && (out.seconds > lim.max + 0.05 || out.seconds < lim.min - 0.05)) out = layC(lulls, false); // (the length range first)
+  // (2026-11-20, full tier: sports drink vs hard seltzer Reels came out one frame over 53 s: the length range is the
+  // cut's own, to the frame; the minimum keeps its 0.05 s of frame rounding)
+  const HI = lim.max + 1e-6;
+  if (mend && (out.seconds > HI || out.seconds < lim.min - 0.05)) out = layC(lulls, false); // (the length range first)
   // Phase 4h (critique 2026-11-19, M6: lemonade vs pear kept both stomachs, then both pancreases, ~28 s on the upper
   // body, as its rendered timeline measured it; the comparison had no cap on what the viewer perceives): every stay on
   // one region, both sides' cards and the organs lit for them (fx.perceive), is held to regionMaxS like a single's. Over
@@ -875,7 +878,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
       const cap = pc.maxS(pl.seconds) - 0.3, runs = pc.runs(pl.frames.filter((f) => f.phase === 'main').map((f) => ({ t: f.t, rs: pc.seen(f) })));
       return { sum: runs.reduce((a, x) => a + Math.max(0, x.s - cap), 0), runs: runs.filter((x) => x.s > cap).sort((x, y) => x.at - y.at) };
     };
-    const hi = lim.max + 0.05;
+    const hi = HI;
     for (let guard = 0; guard < 12; guard++) {
       const o = overOf(out);
       if (o.sum <= 1e-6) break;

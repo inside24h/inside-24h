@@ -2009,9 +2009,9 @@ add4("trail-mix", "Trail mix (nuts and dried fruit)", ["trail mix", "trailmix", 
      2707576, "#b98b5a", "null", ('p', r'Quantity not specified', "1 handful (1 oz, 28 g)"),
      note="USDA FNDDS 2707576 'Trail mix with nuts and fruit' (USDA's 'Trail mix, NFS' has the same values); 28 g = 1 oz, the FNDDS default amount. Free sugars null: dried fruit's own sugar is not a free sugar, and the share of sweetened fruit or candy is not known.")
 ask("trail-mix", "Which trail mix?", "Nuts and fruit")
-var4("trail-mix", "nuts", "Nuts only", "Trail mix with nuts", usda=2707575, serving=('p', r'Quantity not specified', "1 handful (1 oz, 28 g)"),
+var4("trail-mix", "nuts", "Nuts only", "Trail mix with nuts", usda=2707575, serving=('p', r'^1 package$', "1 snack pack (50 g)"),
      aliases=["trail mix with nuts", "nut trail mix", "trail mix nuts only", "salted trail mix"],
-     text="Trail mix with nuts: values from the USDA FNDDS record 'Trail mix with nuts'; 28 g (1 oz).")
+     text="Trail mix with nuts: values from the USDA FNDDS record 'Trail mix with nuts'; 1 package = 50 g (FNDDS portion), the usual snack pack of salted nut mix.")
 var4("trail-mix", "chocolate", "With chocolate", "Trail mix with chocolate", usda=2707577, serving=('p', r'Quantity not specified', "1 handful (1 oz, 28 g)"), words=["čokoladom", "cokoladom"],
      aliases=["trail mix with chocolate", "chocolate trail mix", "trail mix with m&ms", "m&m trail mix", "studentska hrana s čokoladom", "studentska hrana s cokoladom"],
      text="Trail mix with chocolate: values from the USDA FNDDS record 'Trail mix with chocolate'; 28 g (1 oz).")

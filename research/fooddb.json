@@ -35217,9 +35217,9 @@
     ],
     "kind": "solid",
     "serving": {
-     "label": "1 handful (1 oz, 28 g)",
-     "grams": 28.0,
-     "source": "USDA FNDDS 2021-2023 food_portion ( Quantity not specified = 28.0 g)",
+     "label": "1 snack pack (50 g)",
+     "grams": 50.0,
+     "source": "USDA FNDDS 2021-2023 food_portion ( 1 package = 50.0 g)",
      "assumed": false
     },
     "per100g": {
@@ -35251,7 +35251,7 @@
        "all"
       ],
       "level": "A",
-      "text": "Trail mix with nuts: values from the USDA FNDDS record 'Trail mix with nuts'; 28 g (1 oz).",
+      "text": "Trail mix with nuts: values from the USDA FNDDS record 'Trail mix with nuts'; 1 package = 50 g (FNDDS portion), the usual snack pack of salted nut mix.",
       "cite": "USDA FoodData Central, FNDDS 2021-2023 2707575: Trail mix with nuts",
       "url": "https://fdc.nal.usda.gov/food-details/2707575/nutrients",
       "claim": "DBV-trail-mix.nuts"

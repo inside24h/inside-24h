@@ -1,4 +1,4 @@
-import{r as le,k as rt,a as E4,l as A4,n as T4,S as R4,o as C4,q as P4,t as I4,x as L4,y as D4}from"./index-v4-Dff26et9.js";import{k as Pl,a3 as N4,v as U4,I as O4,H as F4,a4 as Ic,a5 as Lc,a6 as p3,a7 as m3,A as k4}from"./share-BB-ivmzk.js";import"./fooddb-LbA90c_A.js";import"./climate-t0z6tI7h.js";import"./video-audio-DR0T5I6Y.js";function B4(r){return r&&r.__esModule&&Object.prototype.hasOwnProperty.call(r,"default")?r.default:r}/**
+import{r as le,k as rt,a as E4,l as A4,n as T4,S as R4,o as C4,q as P4,t as I4,x as L4,y as D4}from"./index-v4-DPUrL90Y.js";import{k as Pl,a3 as N4,v as U4,I as O4,H as F4,a4 as Ic,a5 as Lc,a6 as p3,a7 as m3,A as k4}from"./share-BAA_4jfj.js";import"./fooddb-BRynYKRr.js";import"./climate-t0z6tI7h.js";import"./video-audio-ChpSJGMe.js";function B4(r){return r&&r.__esModule&&Object.prototype.hasOwnProperty.call(r,"default")?r.default:r}/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
