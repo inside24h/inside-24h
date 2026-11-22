@@ -323,7 +323,9 @@ const VARY: [RegExp, string][] = [
   [/\bwhen it is finally gone\b/gi, 'when it finally clears'], [/\bThere is still alcohol in your blood\b/g, 'Some of it is still in you'],
   [/\bBlood alcohol is at its highest now\b/g, "It's at its highest now"], [/\bBlood fat is highest around now\b/g, 'Levels are highest around now'],
   [/\bThe fat joins your blood later\b/g, 'It joins your blood later'], [/\bThe fat joins your blood later\b/g, 'The fat follows later'], /* (phase 4i: a hook asking when the fat joins the blood, the climax on blood sugar: "blood" a third time) */ [/\ball the fat\b/gi, 'all of it'], [/(?<!all )\bthe fat\b(?= [a-z])/gi, 'it'], [/\bfat takes\b/gi, 'it takes'],
-  [/\bCaffeine in your blood peaks now\b/g, 'It peaks in your blood now'], [/\ball the caffeine\b/gi, 'all of it'], [/(?<!all )\bthe caffeine\b(?= [a-z])/gi, 'it'],
+  // (phase 4l: a peak card's own minute, "Blood sugar peaks 25 min in.", said another way where its words would come a third time)
+  [/\b(Blood sugar|Caffeine) peaks (?:\d+ (?:h|hours?)(?: (?:and )?\d+ (?:min|minutes))?|\d+ (?:min|minutes)) in\b/g, '$1 peaks now'],
+  [/\bCaffeine in your blood peaks now\b/g, 'It peaks in your blood now'], [/\ball the caffeine\b/gi, 'all of it'], [/(?<!all )\bthe caffeine\b(?= [a-z])(?! peak\b)/gi, 'it'] /* (phase 4l: never "Here's it peak.") */,
   [/\bteaspoons of sugar\b/gi, 'teaspoons'], [/\b(\d+) g of sugar: about\b/g, '$1 g: about'], [/\bStarch and sugar turn into blood sugar\b/g, 'Starch turns into glucose'],
   [/\bYour kidneys filter the extra water\b/g, 'The extra water gets filtered'], [/\bThe urine collects in your bladder\b/g, 'It collects in your bladder'],
   [/\bMost of the fiber is still in you\b/g, 'Most of it is still in you'], [/\bThe fiber reaches\b/g, 'It reaches'],
@@ -793,6 +795,14 @@ export function narrationFor(n: NarrIn): NarrLine[] {
       ?? [...recall, ...facts].find((y) => once(y) && !(!cmp && saysAgain(y, rest)) && qtyOf(y).length > 0 && speakS(y) <= l.slotS && fresh(rest, y, l.t, nameWords) && !rest.some((o) => o.text === shownText(y) || repeats(y, o.text)) && !(l.t < revealOf(y))
         && !rest.some((o) => Math.abs(o.t - l.t) < RECALL_S / 2 && qtyOf(o.text).some((v) => qtyOf(y).includes(v))));
     if (x) Object.assign(l, { text: shownText(x), say: speakable(x), source: x });
+  }
+  // (phase 4l: a card line that says a word a third time in VARIETY_S is said another way when one wording leaves it,
+  // "Blood sugar peaks now." for "Blood sugar peaks 30 min in.": the card still reads its minute)
+  for (let j = 0; j < out.length; j++) {
+    const o = out[j], over = o.id === 'card' || !!o.card ? [...new Set(out.flatMap((x, q) => (q >= j && x.t < o.t + VARIETY_S ? overused(out, q, nameWords) : [])))] : [];
+    if (!over.length) continue;
+    const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.includes(w)));
+    if (v) Object.assign(o, { text: shownText(v), say: speakable(v) });
   }
   // (v23: no close placed: the loop's place goes to it, the shortest number-free close that fits)
   // (else the last line after the peak gives way to it: every video has an end line)

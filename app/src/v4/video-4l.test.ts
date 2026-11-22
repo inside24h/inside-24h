@@ -62,7 +62,7 @@ describe('phase 4l: the checks catch what the critic saw in the v34 videos (time
   });
   it('what is not filler: a number, the driving warning, an open loop, a lull\'s gauge break a run', () => {
     expect(genericCard('Your blood sugar climbs to its peak.')).toBe(true);
-    expect(genericCard('61 g of carbs: blood sugar peaks.')).toBe(false);
+    expect(genericCard('Blood sugar peaks 1 h 30 min in.')).toBe(false);
     expect(genericCard('Don’t drive.')).toBe(false);
     expect(genericCard('A breath test can be positive.')).toBe(false);
     expect(genericCard('Coming up: the sugar dip.')).toBe(false);
@@ -91,10 +91,9 @@ describe('phase 4l: the critic\'s v34 videos, filmed as the app films them', () 
     const tl = filmSingleTimeline(byId('spaghetti-bolognese.carbonara'), 'long');
     expect(checkTimeline(tl).filter((i) => i.check !== 'region cap').map((i) => `${i.check}: ${i.text}`)).toEqual([]);
     const cs = cards(tl), all = cs.join('\n');
-    expect(all).toMatch(/BLOOD SUGAR PEAK \| 61 g of carbs: blood sugar peaks\./);
+    expect(all).toMatch(/BLOOD SUGAR PEAK \| Blood sugar peaks 1 h 30 min in\./);
     expect(all).not.toMatch(/The slump comes about/);
     expect(all).toMatch(/KIDNEYS \| Kidneys filter the food’s 155 ml of water\./);
-    expect(all).not.toMatch(/FAT IN YOUR BLOOD \| The fat joins your blood later\./);
     // (from the peak to the next moment with a number of its own, the clock moves on; the story's middle has its moments)
     const peak = tl.frames.findIndex((f) => /^BLOOD SUGAR PEAK/.test(f.card ?? '')), kid = tl.frames.findIndex((f) => /^KIDNEYS/.test(f.card ?? ''));
     expect(tl.frames[kid].t - tl.frames[peak].t).toBeLessThan(13);

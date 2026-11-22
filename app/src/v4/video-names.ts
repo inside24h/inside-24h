@@ -19,8 +19,9 @@ export const shortName = (n: string) => {
   const kind = /^Cheese \(([a-z]+)\)$/i.exec(plainLatin(n).trim())?.[1]; // "Cheese (cheddar)" is "Cheddar"
   if (kind && CHEESE_NAMED.test(`${kind} cheese`)) return kind.charAt(0).toUpperCase() + kind.slice(1);
   let s = plainLatin(n).replace(/\s*\([^)]*\)/g, '').replace(/\s+\/\s+[^,+]*?(?=\s+(?:with|without)\s|\s+\+\s|,|$)/g, '') /* (phase 4h, M1: "Rakija / brandy + Lemonade" is "Rakija + Lemonade", never "Rakija") */.replace(CHEESE_NAMED, '$1').trim()
-    // (phase 4l, critique minor: "1 drink of Aperol spritz" on the end card: a mixed drink is one of itself, "1 Aperol spritz")
-    .replace(/^1 drink of (?=\S)/i, '1 ');
+    // (phase 4l, critique minor: "1 drink of Aperol spritz" on the end card: one mixed drink is named by itself, "Aperol
+    // spritz", as its hook names it; never "1 Aperol spritz", whose "1" the voice would then not say again in "1–4 h")
+    .replace(/^1 drink of (\S)/i, (_m, c: string) => c.toUpperCase());
   // (round 18: "Beef wrap kebab without tomato, lettuce and mayonnaise sauce": what was left out goes when it is long)
   if (wordsOf(s.replace(AMOUNT_PREFIX, '')) > 5 && / without /.test(s)) s = s.slice(0, s.indexOf(' without '));
   if (!(wordsOf(s.replace(AMOUNT_PREFIX, '')) > 5 && / with /.test(s))) return s;

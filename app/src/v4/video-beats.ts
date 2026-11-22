@@ -43,8 +43,10 @@ export const timeOfDayOk = (c: { min: number; title: string }) => !(BED_TITLE.te
 /** (a relative forecast, "about 1.5 hours later", is its class's template time, not a number of the food's own) */
 const LATER_TIME = /\b(?:about )?\d+(?:[.,]\d+)? (?:hours?|minutes?|h) later\b/gi;
 export const genericCard = (card: string) => !!card.trim() && !/\d/.test(card.replace(LATER_TIME, '')) && !/breath test|\bdrive\b/i.test(card) && !/^(?:Coming up|Still to come):/.test(card.trim());
-/** The blood sugar peak's card; a single video says it with the food's own carbohydrate (beatLines, BeatCtx.carbsG). */
+/** The blood sugar and caffeine peaks' cards; a single video says them with their own minute, "Blood sugar peaks 1 h
+ *  30 min in." (video-story applyHook); a comparison keeps the shared card. */
 export const SUGAR_PEAK_CARD = 'Your blood sugar climbs to its peak.';
+export const CAF_PEAK_CARD = 'Caffeine in your blood peaks now.';
 /** A card is a complete thought: capital (or number / quote) first, sentence end last, short. */
 export function isCard(s: string): boolean {
   const t = s.trim();
@@ -95,7 +97,7 @@ const RULES: Rule[] = [
   [/^(\d+) mg of caffeine in total, spread over (.+?): it builds up with each \w+ and is highest now/, (m) => [`${m[1]} mg of caffeine, spread over ${m[2]}.`, 'The caffeine builds up and peaks now.']],
   [/^It reaches your brain and blocks the tiredness signal a little/, () => ['The caffeine reaches your brain.', 'Caffeine blocks the tiredness signal a little.']],
   [/^Caffeine slips into your brain and blocks adenosine/, () => ['Caffeine slips into your brain.', 'Caffeine blocks your “I’m tired” signal.']],
-  [/^Caffeine in your blood is at its highest now/, () => ['Caffeine in your blood peaks now.']],
+  [/^Caffeine in your blood is at its highest now/, () => [CAF_PEAK_CARD]],
   [/^With food the caffeine arrives later/, () => ['With food the caffeine arrives later.']],
   [/^About \d+ mg of caffeine is (?:left|still) in you/, () => ['Some caffeine is still in you.']],
   // alcohol
@@ -199,8 +201,6 @@ export interface BeatCtx {
   /** round 6: the blood alcohol peak (g/L, typical body) and its minute: "gone" is then said from the SAME range as the
    *  gauge (bodies −40 %/+50 %, BAC_SPREAD) and the livers' range (0.20 / 0.10 g/L an hour, ELIM_RANGE) */ bacPeak?: { g: number; min: number };
   /** round 6: grams of alcohol (the hangover warning is said from 40 g up) */ alcoholG?: number;
-  /** phase 4l (critique 2026-11-22, N2): the food's carbohydrate (g), so a single video's blood sugar peak says its own
-   *  number ("61 g of carbs: blood sugar peaks."); a comparison (factsFirst) keeps the shared card */ carbsG?: number;
   /** phase 4l (critique minor: "Your kidneys filter its 124 ml of water."): what it is, so the kidneys filter the
    *  drink's, the meal's or the food's water */ noun?: 'drink' | 'meal' | 'food';
   /** phase 4h (critique M1: rakija + lemonade said only "Rakija."): what was drunk, each part with its amount and a
@@ -327,15 +327,10 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
   // (round 13, critic P1-6: "Starch and sugar turn into blood sugar." next to an alcoholic drink whose end card says
   // blood sugar is not tracked): with alcohol, the small intestine's news is the alcohol
   if (ctx.alcoholG) { const k = out.indexOf('Starch and sugar turn into blood sugar.'); if (k >= 0) out.splice(k, 1, 'Alcohol passes into your blood here.'); }
-  // (phase 4l, N2: a single video's blood sugar peak says the food's own carbohydrate; minor: the kidneys filter the
+  // (phase 4l, minor: the kidneys filter the
   // drink's, the meal's or the food's water, never a bare "its")
   {
-    const k = out.indexOf(SUGAR_PEAK_CARD), c = ctx.carbsG !== undefined ? Math.round(ctx.carbsG) : 0, own = `${c} g of carbs: blood sugar peaks.`;
-    if (k >= 0 && !ctx.factsFirst && c >= 1 && isCard(own)) out[k] = own;
     for (let i = 0; i < out.length; i++) { const w = /^Your kidneys filter its (\d+) ml of water\.$/.exec(out[i]); if (w && ctx.noun) out[i] = `Kidneys filter the ${ctx.noun}’s ${w[1]} ml of water.`; }
-    // (critique minor: "The fat joins your blood later." at +3:30, under the blood fat's own peak: there it has joined)
-    const late = out.indexOf('The fat joins your blood later.');
-    if (late >= 0 && /^Fat in your blood$/i.test(title) && out.length > 1) out.splice(late, 1);
   }
   // phase 4b (critique M6: "gone after about 1–4 h", then "At 07:00, the alcohol should be gone.", while the video
   // shows only the time since the first sip): no clock time on a card; the moment's own kicker and timer say when

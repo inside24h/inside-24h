@@ -7,7 +7,7 @@
 // So we stay well under those limits: 14 characters/s (~2.5 words/s) plus 0.9 s to find the text, never less
 // than 2.4 s per caption, and the first caption of every moment gets 0.8 s more for the new stamp and number.
 
-import { beatLines } from './video-beats';
+import { beatLines, genericCard } from './video-beats';
 
 export const FPS = 30;
 export const READ = {
@@ -187,6 +187,7 @@ export interface PlanFx {
   /** phase 4h: the food's own seed (video-hook seedOf of its name), for choices that should differ between foods */ seed?: number;
   /** phase 4j (internal): seconds the first glide takes on for the hook's question (questionByS) */ openGlide?: number;
   /** phase 4k: the slowest the story's clock runs, minutes a second (PACE_FAST with alcohol or caffeine; default PACE_MEAL) */ paceMin?: number;
+  /** phase 4l: a meal's story (no alcohol, under 10 mg of caffeine): its moments close together say one card each (NEAR_STOP_MIN); unset, a story whose clock runs at PACE_MEAL */ meal?: boolean;
   /** phase 4k: the hook asks about kcal (a lull may then count kcal with alcohol too) */ kcalHook?: boolean;
   perceive?: { seen: (fr: VFrame) => string[]; runs: (seq: { t: number; rs: string[] }[]) => { s: number; r: string; at: number }[]; maxS: (seconds: number) => number; extra?: StopIn[] };
 }
@@ -216,6 +217,8 @@ export const MID_GAP_MIN = 600;
 export const NEAR_STOP_MIN = 10, NEAR_FROM_MIN = 30;
 /** Phase 4l: a moment at the day's end runs the clock into +24:00 at least a minute every this many seconds (layFrames). */
 export const DAY_LEAD_S = 2;
+/** Phase 4l (N2): the planner adds a card that makes a longer run of generic cards than this only when nothing else fits. */
+export const GENERIC_RUN_CARDS = 2;
 export const MID_FIRST = /large intestine|colon/i;
 /** Round 14: the short cut's glides take this share of the usual time (room for the peak AND the hook's answer). */
 export const SHORT_GLIDE_K = 0.55;
@@ -335,8 +338,10 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   // shows its first card(s), the long cut adds more of its cards while there is room
   // (phase 4l, N2: the moments of a meal less than NEAR_STOP_MIN apart say one card each, NEAR_STOP_MIN; a sparse
   // story keeps its cards, it has few to say)
-  const mealPace = fx.paceMin === undefined || fx.paceMin <= PACE_MEAL + 1e-9;
+  const mealPace = fx.meal ?? (fx.paceMin === undefined || fx.paceMin <= PACE_MEAL + 1e-9);
   const near = new Set(mealPace && !sparse ? story.filter((s) => s.min >= NEAR_FROM_MIN && s.min < 1440 && story.some((t) => t !== s && t.min >= NEAR_FROM_MIN && Math.abs(t.min - s.min) < NEAR_STOP_MIN)).map((s) => s.min) : []);
+  // (phase 4l, N2: the longest run of generic cards in the order they are read; a lull's gauge card breaks it)
+  const genRun = (pp: string[][], mins: number[] = chosen.map((c) => c.min)) => { let run = 0, best = 0; pp.forEach((p, i) => { if (i > 0 && lulls.has(mins[i])) run = 0; for (const c of p) { run = genericCard(c) ? run + 1 : 0; best = Math.max(best, run); } }); return best; };
   const linesOf = (s: StopIn) => { const ls = s.lines?.length ? s.lines : beatLines(s); return near.has(s.min) ? ls.slice(0, Math.max(1, mustCards(ls), s.must ?? 0)) : ls; };
   const gk = cut === 'short' ? SHORT_GLIDE_K : 1; // (round 14: the short cut travels a little faster)
   const glides = (list: StopIn[]) => gk * (list.reduce((a, s, i) => a + (i ? moveS(toU, list[i - 1].min, s.min) : 0), 0)
@@ -474,10 +479,15 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
     const order = chosen.map((_s, i) => i).filter((i) => used[i] < sents[i].length && (peakIdx() <= 0 || i >= peakIdx() || sparse || (fx.peakByS ?? PEAK_BY_S) > PEAK_BY_S))
       .sort((a, b) => Number(a === 0) - Number(b === 0) || pages[a].length - pages[b].length || val(chosen[b]) - val(chosen[a]) || chosen[b].min - chosen[a].min);
     let grew = false;
-    for (const i of order) {
-      used[i]++; const next = pagesFor();
-      if (total(next) > Math.min(lim.max, fillS(cut))) { used[i]--; continue; }
-      pages = next; grew = true; break;
+    // (phase 4l, N2: a card that would make a run of more than GENERIC_RUN_CARDS generic cards, video-beats genericCard,
+    // comes only when no other moment has room for one: the time goes to the moments with something of their own first)
+    for (const soft of [true, false]) {
+      for (const i of order) {
+        used[i]++; const next = pagesFor();
+        if (total(next) > Math.min(lim.max, fillS(cut)) || (soft && genRun(next) > Math.max(GENERIC_RUN_CARDS, genRun(pages)))) { used[i]--; continue; }
+        pages = next; grew = true; break;
+      }
+      if (grew) break;
     }
     if (!grew) break;
   }
@@ -604,11 +614,14 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
       const lenAt = (m: number, r: string) => { const ts = holdT(m); return ts.length ? Math.max(0, ...runs.filter((x) => x.r === r && x.at <= ts[ts.length - 1] + 1e-6 && x.at + x.s >= ts[0] - 1e-6).map((x) => x.s)) : 0; };
       const added = new Map<number, number>();
       for (let g = 0; g < 16 && total(pages) < lim.min + 0.3 + bump; g++) {
-        let best: { slack: number; go: () => void } | null = null;
+        // (phase 4l, N2: a card that makes a longer run of generic cards than GENERIC_RUN_CARDS only when nothing else fits)
+        let best: { slack: number; go: () => void; gen: boolean } | null = null;
+        const run0 = Math.max(GENERIC_RUN_CARDS, genRun(pages)), better = (gen: boolean, slack: number) => !best || Number(gen) < Number(best.gen) || (gen === best.gen && slack > best.slack);
         chosen.forEach((c, i) => {
           if (i === 0 || calm.has(c.min) || used[i] >= sents[i].length) return; // (phase 4h, M7: the opening stays one card)
           const r = regionAt(c), sec = readSeconds(sents[i][used[i]]), slack = cap - lenAt(c.min, r) - (added.get(c.min) ?? 0) - sec + jit(c.min);
-          if (slack - jit(c.min) > 0 && (!best || slack > best.slack)) best = { slack, go: () => { addCard(i); added.set(c.min, (added.get(c.min) ?? 0) + sec); } };
+          const gen = genRun(pages.map((q, k) => (k === i ? [...q, sents[i][used[i]]] : q))) > run0;
+          if (slack - jit(c.min) > 0 && better(gen, slack)) best = { slack, gen, go: () => { addCard(i); added.set(c.min, (added.get(c.min) ?? 0) + sec); } };
         });
         for (const c of story) {
           if (chosen.some((x) => x.min === c.min) || !linesOf(c).length) continue;
@@ -620,7 +633,8 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
           if (!r || r === 'body') continue;
           const k0 = chosen.findIndex((x) => x.min > c.min), k = k0 < 0 ? chosen.length : k0, nb = [chosen[k - 1], chosen[k]].filter((x): x is StopIn => !!x && regionAt(x) === r);
           const sec = readSeconds(linesOf(c)[0], true) + MOVE_S, room = cap - nb.reduce((a, x) => a + lenAt(x.min, r) + (added.get(x.min) ?? 0), 0) - sec, slack = room + jit(c.min);
-          if (room > 0 && (!best || slack > best.slack)) best = { slack, go: () => { insert(c); added.set(c.min, sec); } };
+          const gen = genRun([...pages.slice(0, k), linesOf(c).slice(0, 1), ...pages.slice(k)], [...chosen.slice(0, k).map((x) => x.min), c.min, ...chosen.slice(k).map((x) => x.min)]) > run0;
+          if (room > 0 && better(gen, slack)) best = { slack, gen, go: () => { insert(c); added.set(c.min, sec); } };
         }
         if (!best) {
           // (no words left that fit: a glide becomes a lull, the whole body without words, which no stay counts)

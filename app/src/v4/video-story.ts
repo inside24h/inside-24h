@@ -3,7 +3,7 @@
 import { minutesFromU, uFromMinutes } from '../time';
 import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
-import { beatLines, eventMin, isCard, MORNING_NO_FACT, timeOfDayOk, tooEarly, type BeatCtx } from './video-beats';
+import { beatLines, CAF_PEAK_CARD, eventMin, isCard, MORNING_NO_FACT, SUGAR_PEAK_CARD, timeOfDayOk, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
 import { DULL, FPS, PACE_FAST, PACE_MEAL, planCompare, planVideo, readSeconds, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
@@ -48,13 +48,13 @@ export function servingCard(parts: readonly Pick<Part, 'food' | 'amountLabel' | 
   ].map((s) => `${s.charAt(0).toUpperCase()}${s.slice(1)}.`);
   return forms.find((s) => s.trim().split(/\s+/).length <= 8);
 }
-export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string; text?: string }[] }; caffeine?: { doseMg: number; body?: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
+export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number; body?: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
   const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
   // (round 6: the blood alcohol peak, so "gone" is said from the gauge's own range)
   let pk = 0, pm = 0; if (built.bac && (built.alcoholG ?? 0) > 1) for (let m = 0; m <= Math.min(1440, built.bac.length - 1); m++) if (built.bac[m] > pk) { pk = built.bac[m]; pm = m; }
-  // (phase 4l: the food's carbohydrate, from its first chapter, and what it is, as whereCard names it)
-  const t0 = built.story.chapters[0]?.title ?? '', carbsG = macrosOf(built.story.chapters[0]?.text ?? '').carbs;
-  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined, ...(carbsG >= 1 ? { carbsG } : {}),
+  // (phase 4l: what it is, as whereCard names it)
+  const t0 = built.story.chapters[0]?.title ?? '';
+  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined,
     noun: /bite and sip/i.test(t0) ? 'meal' : /bite/i.test(t0) ? 'food' : 'drink',
     caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin,
     ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}), ...(serving ? { serving } : {}),
@@ -255,6 +255,24 @@ export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: strin
   const at = payoffMinOf(out, hook);
   const st = at === undefined ? undefined : out.find((s) => s.min === at) ?? out.find((s) => Math.abs(s.min - at) <= 5 && s.min > 0);
   if (st) { st.keep = true; if (hook.answer) st.lines = [hook.answer, ...(st.lines ?? []).filter((l) => l !== hook.answer)]; }
+  // (phase 4l, critique 2026-11-22, N2: "Your blood sugar climbs to its peak." is a card any food would show): a single
+  // video's blood sugar and caffeine peaks say their own minute, the model's, as the end card says it ("Blood sugar
+  // peaks 25 min in.", video-body inText); the one that answers the hook only when no other card and no hook line says
+  // that amount (the voice says an amount once, video-narration qtyOf: "25 min" is not "25 minutes", and a card it does
+  // not read could not answer the hook)
+  const numsOf = (x: string) => (x.match(/\d+(?:[.,]\d+)?(?:\s*(?:%|kcal|mg|ml|g|h|hours?|min|minutes?|teaspoons?)(?![a-z]))?/g) ?? []).map((q) => q.replace(/\s+/g, ' ').replace(/s$/, '').replace(/ h$/, ' hour').replace(/ min$/, ' minute')); // (as the voice says it: "1 h" is "1 hour")
+  const kcal0 = Number(/(\d+) kcal/.exec(out[0]?.text ?? '')?.[1] ?? 0), prot0 = Number(/(\d+) g protein/.exec(out[0]?.text ?? '')?.[1] ?? 0);
+  const said = [hook.line1 ?? '', hook.line2 ?? '', ...out.flatMap((s) => s.lines ?? [])].flatMap(numsOf);
+  for (const s of out) if (s.lines && s.min >= 1) s.lines = s.lines.map((l) => {
+    const own = l === SUGAR_PEAK_CARD ? `Blood sugar peaks ${inText(s.min)}.` : l === CAF_PEAK_CARD ? `Caffeine peaks ${inText(s.min)}.`
+      // (and the stomach's "its calories", the food's own kcal: never with alcohol, whose video says no kcal it is not asked for)
+      : l === 'Its calories slow your stomach down.' && !alc && kcal0 >= 1 ? `Its ${kcal0} kcal slow your stomach down.`
+      // (the small intestine's work on its own kcal, never with alcohol)
+      : l === 'In the small intestine it is taken apart.' && !alc && kcal0 >= 1 ? `Its ${kcal0} kcal are taken apart here.`
+      // (and the small intestine's protein, its own grams)
+      : l === 'Protein is broken into building blocks.' && prot0 >= 1 ? `Its ${prot0} g of protein becomes building blocks.` : null;
+    return own && isCard(own) && !(s === st && numsOf(own).some((n) => said.includes(n))) ? own : l;
+  });
   return out;
 }
 /** The minute of the hook's payoff: its own moment, or the chapter it names. */
@@ -744,7 +762,7 @@ export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { m
   };
   const perceive = chapters ? { seen, runs: perceivedRuns, maxS: regionMaxS } : undefined;
   // (phase 4k, critique 2026-11-21, M1: the clock's slowest pace by what the food does: alcohol or caffeine within minutes)
-  const alc = ((built as { alcoholG?: number } | undefined)?.alcoholG ?? 0) > 1, fx1: PlanFx = { paceMin: built && (alc || built.caffeine.doseMg > 0) ? PACE_FAST : PACE_MEAL, ...fx };
+  const alc = ((built as { alcoholG?: number } | undefined)?.alcoholG ?? 0) > 1, fx1: PlanFx = { paceMin: built && (alc || built.caffeine.doseMg > 0) ? PACE_FAST : PACE_MEAL, ...(built ? { meal: !alc && built.caffeine.doseMg < CAF_WITH_ALCOHOL_MG } : {}), ...fx }; // (phase 4l: a meal by what it holds, NEAR_STOP_MIN)
   // (phase 4k, critique M3: vodka and an energy drink never told its caffeine story: with alcohol, the caffeine moment
   // "comes where there is room", and a long video has room: it is kept there; a Short or a Reel says the caffeine at
   // the alcohol peak and the alcohol-gone moment)
