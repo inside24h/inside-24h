@@ -15,6 +15,8 @@ const arg = (k, d) => process.argv.find((a) => a.startsWith(`--${k}=`))?.slice(k
 const SITE = path.resolve(arg('site', '../site'));
 const OUT = path.resolve(arg('out', 'sample.mp4'));
 const Q = arg('q', 'beer'), RENDER = arg('render', 'reels'), VS = arg('vs', '');
+// (phase 4l: --at=22:45, the first sip's time of day, for a sample about an evening drink; default: the time now)
+const AT = arg('at', '');
 const LIMIT_MIN = Number(arg('minutes', '60'));
 // Phase 4g: the export runs on the real GPU (headless Chromium with ANGLE on D3D11). Software WebGL (SwiftShader) made a
 // long cut take 20+ minutes and run the PC out of memory, so it is refused unless --allow-swiftshader is passed.
@@ -92,7 +94,7 @@ try {
   console.log(`[render] WebGL renderer: ${gl}`);
   if (!ALLOW_SWIFTSHADER && /swiftshader|no WebGL|llvmpipe|software/i.test(gl)) throw new Error(`software WebGL (${gl}): no GPU in the headless browser; pass --allow-swiftshader to render anyway (slow, memory hungry)`);
   await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-  const hash = `#q=${encodeURIComponent(Q)}${VS ? `&vs=${encodeURIComponent(VS)}` : ''}&render=${RENDER}`;
+  const hash = `#q=${encodeURIComponent(Q)}${VS ? `&vs=${encodeURIComponent(VS)}` : ''}&render=${RENDER}${AT ? `&at=${encodeURIComponent(AT)}` : ''}`;
   await page.send('Page.navigate', { url: BASE + hash });
   const t0 = Date.now();
   if (VS) {

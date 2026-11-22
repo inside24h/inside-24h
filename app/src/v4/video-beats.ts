@@ -25,6 +25,26 @@ export const DYNAMIC = /‰|mmol\/L|mg\/dL|\bmg of caffeine is (?:left|still)\b|
  *  before; "don't drive" is on every BAC chip): a "NEXT MORNING" moment of only these is left out (video-story), and
  *  the timeline check holds such a stretch to MORNING_MAX_S (video-telemetry). */
 export const MORNING_NO_FACT = /should be gone|^Don.t drive|^Waking up\b/i;
+/** Phase 4l (critique 2026-11-22, N1: "BEDTIME / There is still alcohol in your blood." at +0:11, a first sip just before
+ *  bed, with no time of day anywhere on screen): a moment named for a time of day is in a video only when the story's
+ *  clock (the time since the first sip, the one clock on screen) is far enough on to read as that time: bedtime (or
+ *  going to bed) from TOD_MIN.bed minutes, the next morning from TOD_MIN.morning. Closer, the moment is left out of the
+ *  video (its hook, its stops, its climax and end card, a comparison's sides): at +0:11 "still alcohol in your blood"
+ *  says nothing the first sip did not. The app's own chapters are unchanged. */
+export const TOD_MIN = { bed: 60, morning: 300 } as const;
+export const BED_TITLE = /^(?:Bedtime|Going to bed)$/i, MORNING_TITLE = /^Next morning$/i;
+export const timeOfDayOk = (c: { min: number; title: string }) => !(BED_TITLE.test(c.title.trim()) && c.min < TOD_MIN.bed) && !(MORNING_TITLE.test(c.title.trim()) && c.min < TOD_MIN.morning);
+/** Phase 4l (critique 2026-11-22, N2: carbonara read "Your blood sugar climbs to its peak." / "Many people feel sleepy
+ *  after a big meal." / "The slump comes about 1.5 hours later." for 14 s): a generic card, one any food of its class
+ *  would show, has no number of its own. A safety card (the driving warning) and an open loop ("Coming up: …") are not
+ *  filler: they break a run. The timeline check holds such a run on screen to GENERIC_RUN_MAX_S, two cards
+ *  (video-telemetry); the moments that most often made one say a number of the food's own (the blood sugar peak, the
+ *  protein), and a meal's moments close together say one card each (video-plan NEAR_STOP_MIN). */
+/** (a relative forecast, "about 1.5 hours later", is its class's template time, not a number of the food's own) */
+const LATER_TIME = /\b(?:about )?\d+(?:[.,]\d+)? (?:hours?|minutes?|h) later\b/gi;
+export const genericCard = (card: string) => !!card.trim() && !/\d/.test(card.replace(LATER_TIME, '')) && !/breath test|\bdrive\b/i.test(card) && !/^(?:Coming up|Still to come):/.test(card.trim());
+/** The blood sugar peak's card; a single video says it with the food's own carbohydrate (beatLines, BeatCtx.carbsG). */
+export const SUGAR_PEAK_CARD = 'Your blood sugar climbs to its peak.';
 /** A card is a complete thought: capital (or number / quote) first, sentence end last, short. */
 export function isCard(s: string): boolean {
   const t = s.trim();
@@ -66,7 +86,7 @@ const RULES: Rule[] = [
   [/^Over the next hours your body burns about half of the fructose for energy and, mainly in the liver, turns about (\d+)% into glucose/, (_m) => ['Your body burns some sugar for energy.', `Your liver turns some into blood sugar.`]],
   [/^Your liver takes the caffeine apart: half of it is gone about every ([\d.]+) hours/, (m) => ['Your liver takes the caffeine apart.', `Half is gone every ${m[1].replace(/\.0+$/, '')} hours.`]],
   // blood sugar
-  [/^Your blood sugar (?:climbs|goes) from /, () => ['Your blood sugar climbs to its peak.']],
+  [/^Your blood sugar (?:climbs|goes) from /, () => [SUGAR_PEAK_CARD]],
   [/^Your pancreas releases insulin to bring it back down/, () => ['Insulin brings your blood sugar back down.']],
   [/^Your blood sugar drops (?:just|a little) below where you started/, () => ['Your blood sugar dips below where it started.']],
   // caffeine
@@ -93,12 +113,13 @@ const RULES: Rule[] = [
   [/^You may fall asleep faster, but the second half of the night will be a little lighter/, () => ['You may fall asleep faster, but sleep lighter.', 'Later, your sleep is a little lighter.']],
   [/^In a typical body like yours the alcohol is gone by now, about ([\d.]+ h) after the first sip/, (m) => [`The alcohol is gone after about ${m[1]}.`]],
   [/^Livers differ/, () => ['Livers differ, so for some it takes longer.']],
-  [/^Sleep, coffee, water or fresh air don’t speed it up/, () => ['Coffee or water don’t speed it up.']],
+  // (phase 4l, critique minor: "Coffee or water don’t" breaks agreement after "or"; "won’t" reads right either way)
+  [/^Sleep, coffee, water or fresh air (?:don’t|won’t) speed it up/, () => ['Coffee or water won’t speed it up.']],
   [/^Spreading the drinks lowered the peak, not the end/, () => ['Spreading the drinks lowered the peak.', 'The alcohol still leaves at the same time.']],
   [/^In all, about (\d+) teaspoons of sugar reach your blood/, (m) => [`About ${m[1]} teaspoons of sugar, from starch.`]], // (round 12)
   [/^This app can’t tell you when you’re safe to drive/, () => ['We can’t tell when you’re safe to drive.']],
   [/^A day later there is still alcohol in your blood/, () => ['After 24 h, alcohol is still in you.']],
-  [/^Your liver works at a fixed speed, asleep or awake/, () => ['Your liver works at a fixed speed.', 'Coffee or water don’t speed it up.']],
+  [/^Your liver works at a fixed speed, asleep or awake/, () => ['Your liver works at a fixed speed.', 'Coffee or water won’t speed it up.']],
   [/^(\d\d:\d\d), waking up/, (m) => [`Waking up at ${m[1]}.`]],
   [/^A typical body like yours still has about .* of alcohol in the blood: a breath test can be positive/, () => ['Some alcohol is still in your blood.', 'A breath test can be positive.']],
   [/^In a typical body the alcohol is gone, but with a slow liver/, () => ['The alcohol is gone in a typical body.', 'A breath test can still be positive.']],
@@ -117,9 +138,13 @@ const RULES: Rule[] = [
   [/^A beer does not make you lose more water than you drank/, () => ['You don’t lose more water than you drank.']],
   [/^No extra urine: a can of cola hydrates you about as well as the same amount of water/, () => ['Cola hydrates like the same amount of water.']],
   // meals
-  [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, (m) => ['Many people feel sleepy after a big meal.', `The slump comes about ${m[1]} hours later.`]],
+  // (phase 4l, critique 2026-11-22, N2: "The slump comes about 1.5 hours later." was said at +1:42, at the moment it
+  // speaks of: the chapter IS that time, so its one card says the slump; the end card's brain line says it too,
+  // video-body plainNote, never "Fine all day" under it)
+  [/^A big meal: many people feel sleepy about ([\d.]+) hours later/, () => ['Many people feel sleepy after a big meal.']],
   // the protein arrives over hours; this moment is its peak (model review 2026-10-24: not "139 g reach your blood")
-  [/^The (\d+) g of protein arrive in your blood as amino acids/, () => ['Protein pieces in your blood peak now.', 'Protein keeps arriving for hours.']],
+  // (phase 4l, N2: the moment says its own protein, the model's grams, not a card any food would show)
+  [/^The (\d+) g of protein arrive in your blood as amino acids/, (m) => [Number(m[1]) >= 1 ? `${m[1]} g of protein: its pieces peak now.` : 'Protein pieces in your blood peak now.', 'Protein keeps arriving for hours.']],
   [/^Processing protein/, () => ['Processing it uses a quarter of its calories.']],
   [/^The fat travels through your lymph into the blood/, () => ['Fat takes a slower route, via the lymph.', 'The fat joins your blood later.']],
   [/^Blood fat \(triglycerides\) is highest around now|^Blood fat is highest around now/, () => ['Blood fat is highest around now.']],
@@ -174,6 +199,10 @@ export interface BeatCtx {
   /** round 6: the blood alcohol peak (g/L, typical body) and its minute: "gone" is then said from the SAME range as the
    *  gauge (bodies −40 %/+50 %, BAC_SPREAD) and the livers' range (0.20 / 0.10 g/L an hour, ELIM_RANGE) */ bacPeak?: { g: number; min: number };
   /** round 6: grams of alcohol (the hangover warning is said from 40 g up) */ alcoholG?: number;
+  /** phase 4l (critique 2026-11-22, N2): the food's carbohydrate (g), so a single video's blood sugar peak says its own
+   *  number ("61 g of carbs: blood sugar peaks."); a comparison (factsFirst) keeps the shared card */ carbsG?: number;
+  /** phase 4l (critique minor: "Your kidneys filter its 124 ml of water."): what it is, so the kidneys filter the
+   *  drink's, the meal's or the food's water */ noun?: 'drink' | 'meal' | 'food';
   /** phase 4h (critique M1: rakija + lemonade said only "Rakija."): what was drunk, each part with its amount and a
    *  drink's strength ("40 ml of rakija (40 % ABV) + 250 ml of lemonade."), said in place of the name card */ serving?: string;
 }
@@ -298,6 +327,16 @@ export function beatLines(ch: { min: number; title: string; text: string }, ctx:
   // (round 13, critic P1-6: "Starch and sugar turn into blood sugar." next to an alcoholic drink whose end card says
   // blood sugar is not tracked): with alcohol, the small intestine's news is the alcohol
   if (ctx.alcoholG) { const k = out.indexOf('Starch and sugar turn into blood sugar.'); if (k >= 0) out.splice(k, 1, 'Alcohol passes into your blood here.'); }
+  // (phase 4l, N2: a single video's blood sugar peak says the food's own carbohydrate; minor: the kidneys filter the
+  // drink's, the meal's or the food's water, never a bare "its")
+  {
+    const k = out.indexOf(SUGAR_PEAK_CARD), c = ctx.carbsG !== undefined ? Math.round(ctx.carbsG) : 0, own = `${c} g of carbs: blood sugar peaks.`;
+    if (k >= 0 && !ctx.factsFirst && c >= 1 && isCard(own)) out[k] = own;
+    for (let i = 0; i < out.length; i++) { const w = /^Your kidneys filter its (\d+) ml of water\.$/.exec(out[i]); if (w && ctx.noun) out[i] = `Kidneys filter the ${ctx.noun}’s ${w[1]} ml of water.`; }
+    // (critique minor: "The fat joins your blood later." at +3:30, under the blood fat's own peak: there it has joined)
+    const late = out.indexOf('The fat joins your blood later.');
+    if (late >= 0 && /^Fat in your blood$/i.test(title) && out.length > 1) out.splice(late, 1);
+  }
   // phase 4b (critique M6: "gone after about 1–4 h", then "At 07:00, the alcohol should be gone.", while the video
   // shows only the time since the first sip): no clock time on a card; the moment's own kicker and timer say when
   const noClock = out.map((c) => { const m = /^At \d\d:\d\d, (.+)$/.exec(c); return m ? cap(m[1]) : /^Waking up at \d\d:\d\d\.$/.test(c) ? 'Waking up.' : c; });

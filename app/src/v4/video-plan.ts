@@ -209,6 +209,13 @@ export const WORDLESS_MAX_S = 4;
 /** Phase 3 (audit C13): a Short never jumps this many minutes of the day with nothing said, when the story has a moment
  *  in between (the large intestine: MID_FIRST). */
 export const MID_GAP_MIN = 600;
+/** Phase 4l (critique 2026-11-22, N2: carbonara's blood sugar peak at +1:29 and its after-meal slump at +1:30 took three
+ *  cards, 14 s, while the clock covered 17 minutes): in a meal's story (the clock at PACE_MEAL), moments from
+ *  NEAR_FROM_MIN on that are less than NEAR_STOP_MIN apart say one card each (or the cards they must): the time goes to
+ *  the moments further on, so the story's time spreads over the middle of the day. */
+export const NEAR_STOP_MIN = 10, NEAR_FROM_MIN = 30;
+/** Phase 4l: a moment at the day's end runs the clock into +24:00 at least a minute every this many seconds (layFrames). */
+export const DAY_LEAD_S = 2;
 export const MID_FIRST = /large intestine|colon/i;
 /** Round 14: the short cut's glides take this share of the usual time (room for the peak AND the hook's answer). */
 export const SHORT_GLIDE_K = 0.55;
@@ -326,7 +333,11 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const lim = LENGTH[cut];
   // 2026-10-24 BEATS: every caption card is one short complete thought (video-beats.ts), one card per page; a moment
   // shows its first card(s), the long cut adds more of its cards while there is room
-  const linesOf = (s: StopIn) => (s.lines?.length ? s.lines : beatLines(s));
+  // (phase 4l, N2: the moments of a meal less than NEAR_STOP_MIN apart say one card each, NEAR_STOP_MIN; a sparse
+  // story keeps its cards, it has few to say)
+  const mealPace = fx.paceMin === undefined || fx.paceMin <= PACE_MEAL + 1e-9;
+  const near = new Set(mealPace && !sparse ? story.filter((s) => s.min >= NEAR_FROM_MIN && s.min < 1440 && story.some((t) => t !== s && t.min >= NEAR_FROM_MIN && Math.abs(t.min - s.min) < NEAR_STOP_MIN)).map((s) => s.min) : []);
+  const linesOf = (s: StopIn) => { const ls = s.lines?.length ? s.lines : beatLines(s); return near.has(s.min) ? ls.slice(0, Math.max(1, mustCards(ls), s.must ?? 0)) : ls; };
   const gk = cut === 'short' ? SHORT_GLIDE_K : 1; // (round 14: the short cut travels a little faster)
   const glides = (list: StopIn[]) => gk * (list.reduce((a, s, i) => a + (i ? moveS(toU, list[i - 1].min, s.min) : 0), 0)
     + (list[list.length - 1].min < 1440 ? moveS(toU, list[list.length - 1].min, 1440) : 0));
@@ -964,7 +975,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const effM: number[] = [], driftM: number[] = [];
   const driftOf = (i: number, from: number) => {
     const s = stops[i], next = Math.max(from, stops[i + 1]?.min ?? 1440);
-    if (s.min >= 1440) return from;
+    if (s.min >= 1440) return 1440; // (phase 4l: a moment at the day's end runs into +24:00 under its cards, dayLead)
     // (phase 4h, M7: a comparison's first moment says the servings and both first numbers: its clock runs a little
     // further, so it never stands at +0:00 for long)
     // (phase 4j, critique M5: not three minutes in 7-13 s: OPEN_RATE minutes a second, up to EARLY_MIN, or OPEN_SHARE of
@@ -979,7 +990,12 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
     const h = holdN(i) / FPS;
     return Math.max(share, from + (from < EARLY_MIN ? Math.min(h, Math.max(0.5 * (next - from), EARLY_MIN - from)) : Math.min(0.5 * (next - from), h / 4.5)));
   };
-  stops.forEach((s, i) => { effM[i] = i ? Math.max(s.min, driftM[i - 1]) : s.min; driftM[i] = driftOf(i, effM[i]); });
+  // phase 4l (critique 2026-11-22, minor: carbonara's clock stood at +24:00 for 6.4 s, its "24 HOURS LATER" card and
+  // then the day-done beat): a moment at the day's end shows its cards while the clock runs its last minutes into
+  // +24:00, at least a minute every DAY_LEAD_S seconds (and the clock's least pace), so only the day-done beat, labelled
+  // "AFTER 24 HOURS", holds +24:00 (video-telemetry "clock pace")
+  const dayLead = (i: number) => { const h = holdN(i) / FPS; return Math.ceil(Math.max(h / DAY_LEAD_S, h * (fx.paceMin ?? PACE_MEAL))); };
+  stops.forEach((s, i) => { effM[i] = i ? Math.max(s.min >= 1440 ? 1440 - dayLead(i) : s.min, driftM[i - 1]) : s.min; driftM[i] = driftOf(i, effM[i]); });
   const driftTo = (i: number) => driftM[i];
   // (phase 4j: a glide lasts as long as before the clock ran ahead in the opening: its time comes from where the clock
   // would have stood then, `legacyDrift`, so every cut keeps the length its planner laid out)
@@ -1033,7 +1049,7 @@ function layFrames(stops: { min: number; title?: string; titleB?: string; chip?:
   const peakIdx = fx.peakMin === undefined ? -1 : nearestStop(stops.map((s) => s.min), fx.peakMin, toU);
   let pg = 0; const PG_N = F(2.6);
   stops.forEach((s, i) => {
-    if (i > 0) glide(prevMin, effM[i], s, effM[i], legacyDrift(i - 1), s.min);
+    if (i > 0) glide(prevMin, effM[i], s, s.min >= 1440 ? 1440 : effM[i], legacyDrift(i - 1), s.min); // (phase 4l: the day's end is named +24:00)
     if (i === peakIdx && i > 0) { const t = tNow(); cues.push({ t: Math.max(nPre / FPS + 0.2, t - RISER_S), kind: 'riser' }, { t, kind: 'peak', data: { v: s.min } }); }
     let k = i === 0 ? nIntro - nPre : 0;
     s.pages.forEach((p, j) => {
@@ -1195,7 +1211,7 @@ export const LULL_TITLE = 'Taken up so far';
  *  (`fa`; `fb` the comparison's second food), a counter that runs with the clock. It names no organ and no place, so
  *  the stay it breaks is not resumed; it fades in over 0.2 s and out over 0.15 s, before the NEXT chip. The plan's
  *  timing is unchanged. */
-export function withLullCards(plan: Plan, fa: (m: number) => string | null, fb?: (m: number) => string | null): Plan {
+export function withLullCards(plan: Plan, fa: (m: number) => string | null, fb?: (m: number) => string | null, title: string = LULL_TITLE /* (phase 4l: with alcohol, BAC_LULL_TITLE) */): Plan {
   const fs = plan.frames, nIn = Math.max(1, Math.round(0.2 * FPS)), nOut = Math.max(1, Math.round(0.15 * FPS));
   for (let i = 0; i < fs.length;) {
     if (!fs[i].lull) { i++; continue; }
@@ -1203,7 +1219,7 @@ export function withLullCards(plan: Plan, fa: (m: number) => string | null, fb?:
     for (let k = i; k < j; k++) {
       const f = fs[k], a = fa(f.m), b = fb ? fb(f.m) : null;
       if (!a && !b) continue;
-      f.gtitle = LULL_TITLE; if (a) f.gcap = a; if (b) f.gcapB = b; f.gA = Math.min(1, (k - i + 1) / nIn, (j - k) / nOut);
+      f.gtitle = title; if (a) f.gcap = a; if (b) f.gcapB = b; f.gA = Math.min(1, (k - i + 1) / nIn, (j - k) / nOut);
     }
     i = j;
   }

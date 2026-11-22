@@ -39,7 +39,11 @@ describe('hooks', () => {
     expect(hookFor(cases[0][1]).payoff).toBe('The liver finishes'); // round 6: "Watch where it goes" is paid off where the sugar ends up
   });
   it('round 5: espresso says how much is still in you at bedtime, and that moment pays it off', () => {
-    const k = hookFor({ ...cases[1][1], caffeineMg: 63 });
+    // (phase 4l, critique 2026-11-22, N1: a bedtime moment only from TOD_MIN.bed minutes after the first sip, where the
+    // clock reads as bedtime: the fixture's bed, 30 minutes after it, is left out of the video and its hook; an hour and
+    // a half after the espresso it is the hook's payoff, as before)
+    expect(hookFor({ ...cases[1][1], caffeineMg: 63 }).payoff).not.toBe('Going to bed');
+    const k = hookFor({ ...cases[1][1], caffeineMg: 63, chapters: FIX.espresso.map((c) => (c.title === 'Going to bed' ? { ...c, min: 90 } : c)).sort((a, b) => a.min - b.min) });
     expect(k.line2).toMatch(/^(Almost all of its (?:caffeine|63 mg) (is left at|lasts until|is still there at) bedtime|At bedtime, almost all of its (?:caffeine|63 mg) (remains|is still in you)|By bedtime, almost all of its (?:caffeine|63 mg) is left)\.$/); // (round 18 / phase 4: rotating phrasings, "its caffeine"; phase 4e: or its own dose)
     expect(k.payoff).toBe('Going to bed');
   });

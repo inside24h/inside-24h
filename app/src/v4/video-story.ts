@@ -3,11 +3,11 @@
 import { minutesFromU, uFromMinutes } from '../time';
 import type { Profile } from '../science/profile';
 import { chapterText } from './stories';
-import { beatLines, eventMin, isCard, MORNING_NO_FACT, tooEarly, type BeatCtx } from './video-beats';
+import { beatLines, eventMin, isCard, MORNING_NO_FACT, timeOfDayOk, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
 import { DULL, FPS, PACE_FAST, PACE_MEAL, planCompare, planVideo, readSeconds, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
-import { bacPlain, cardNamed, DEFAULT_BAC_BODY, dominantAt, placeOfCard, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, SUGAR_CLAIM, sugarClaimTrue, takenUpAt, urinePeak, whereCard, whereGauge, type BuiltLike } from './video-body';
+import { BAC_LULL_TITLE, bacTrendAt, bacPlain, cardNamed, DEFAULT_BAC_BODY, dominantAt, placeOfCard, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, SUGAR_CLAIM, sugarClaimTrue, takenUpAt, urinePeak, whereCard, whereGauge, type BuiltLike } from './video-body';
 import { perceivedRuns, quietFrame, REGION, regionMaxS, seenOf } from './video-cam';
 import { perceivedOf, sceneOf } from './video-telemetry';
 import { at as atMin } from '../science/espressoSim';
@@ -48,11 +48,14 @@ export function servingCard(parts: readonly Pick<Part, 'food' | 'amountLabel' | 
   ].map((s) => `${s.charAt(0).toUpperCase()}${s.slice(1)}.`);
   return forms.find((s) => s.trim().split(/\s+/).length <= 8);
 }
-export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string }[] }; caffeine?: { doseMg: number; body?: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
+export function beatCtx(name: string, built: { pace?: { doses: number; overMin: number; everyMin: number }; story: { chapters: { title: string; text?: string }[] }; caffeine?: { doseMg: number; body?: ArrayLike<number> }; bac?: ArrayLike<number>; alcoholG?: number }, drinkAtMin?: number, serving?: string): BeatCtx {
   const last = built.story.chapters.find((c) => /^Last (drink|serving|round)$/.test(c.title));
   // (round 6: the blood alcohol peak, so "gone" is said from the gauge's own range)
   let pk = 0, pm = 0; if (built.bac && (built.alcoholG ?? 0) > 1) for (let m = 0; m <= Math.min(1440, built.bac.length - 1); m++) if (built.bac[m] > pk) { pk = built.bac[m]; pm = m; }
-  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined,
+  // (phase 4l: the food's carbohydrate, from its first chapter, and what it is, as whereCard names it)
+  const t0 = built.story.chapters[0]?.title ?? '', carbsG = macrosOf(built.story.chapters[0]?.text ?? '').carbs;
+  return { name, pace: built.pace ? { ...built.pace, round: last ? last.title.split(' ')[1] : 'round' } : undefined, ...(carbsG >= 1 ? { carbsG } : {}),
+    noun: /bite and sip/i.test(t0) ? 'meal' : /bite/i.test(t0) ? 'food' : 'drink',
     caffeineMg: built.caffeine && built.caffeine.doseMg >= 10 ? built.caffeine.doseMg : undefined, drinkAtMin,
     ...(pk > 0.01 ? { bacPeak: { g: pk, min: pm }, alcoholG: built.alcoholG } : {}), ...(serving ? { serving } : {}),
     // (phase 4k, M3: alcohol with caffeine says what caffeine is left when the alcohol is gone, from the model)
@@ -75,7 +78,8 @@ export function peakOf(b: PeakIn, sugarKnown: boolean): number | undefined {
  *  one; else the story's most telling later moment, so every video has its impact and a clock that goes somewhere:
  *  a peak, the blood fat high, a dip, the large intestine, bedtime, then the most telling moment left. */
 export const CLIMAX_TITLES = /peak|highest|Fat in your blood|dip|large intestine|Alcohol gone|Bedtime|Going to bed/i;
-export function climaxOf(b: PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[]): number | undefined {
+export function climaxOf(b: PeakIn, sugarKnown: boolean, chapters0: { min: number; title: string; text?: string }[]): number | undefined {
+  const chapters = chapters0.filter(timeOfDayOk); // (phase 4l, N1: only the moments the video can show)
   const p = peakOf(b, sugarKnown);
   if (p !== undefined) return p;
   const later = chapters.filter((c) => c.min >= 5 && c.min < 1440 && !DULL.test(c.title.trim()));
@@ -119,7 +123,7 @@ export const CAF_WITH_ALCOHOL_MG = 10;
 /** Phase 4k, M3: the card at the alcohol-gone moment ("Alcohol: gone. 37 mg caffeine: still in you."). */
 export const ALC_GONE_CAF = 'Alcohol: gone.';
 /** Phase 4k: the kidney card with the drink's own water (video-beats), and its form when that is the whole drink. */
-export const KIDNEY_ML = /^Your kidneys filter its (\d+) ml of water\.$/, KIDNEY_ALL = 'Your kidneys filter all of it.';
+export const KIDNEY_ML = /^(?:Your kidneys filter its|Kidneys filter the (?:drink|meal|food)’s) (\d+) ml of water\.$/, KIDNEY_ALL = 'Your kidneys filter all of it.'; // (phase 4l: whose water, video-beats)
 /** A US standard drink: 14 g of alcohol (NIAAA). */
 export const US_STD_DRINK_G = 14;
 /** Phase 4k (M1): a where-card no place fits all the while it is on screen gives way to this (placesOnScreen). */
@@ -262,7 +266,8 @@ export function payoffMinOf(stops: { min: number; title: string }[], hook: { pay
 /** Round 13 (critic P0-2: salmon kept 3 cards for 40 s): a story-moment climax (no model peak) is not pulled to the
  *  first 15 s, which would leave out every moment before it; it lands by CLIMAX_BY_S. */
 export const CLIMAX_BY_S = 40;
-export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[], hook?: { extra?: { min: number } }) => {
+export const climaxFx = (b: PeakIn, sugarKnown: boolean, chapters0: { min: number; title: string; text?: string }[], hook?: { extra?: { min: number } }) => {
+  const chapters = chapters0.filter(timeOfDayOk); // (phase 4l, N1)
   // (round 15, critic D-1: decaf's climax was the urine): the hook's own moment (decaf's caffeine) is the climax
   if (hook?.extra) return { peakMin: hook.extra.min, peakByS: CLIMAX_BY_S };
   // (round 15, critic N-1: cola's hero said 26 min, its lamp and its PEAK moment 20 min): a sugar climax is the
@@ -306,6 +311,7 @@ export function bacPeakText(b: BuiltLike & { alcoholG?: number }): string | unde
  *  the blood: that moment; how long the alcohol stays: the gone range under "back to zero"; its protein: its grams. The
  *  hero and the 24 h line are otherwise heroOf and after24Of. */
 export function endCardOf(b: BuiltLike & PeakIn, sugarKnown: boolean, chapters: { min: number; title: string; text?: string }[], unit: Profile['glucoseUnit'], hook: Hook): { hero?: { big: string; small: string; peak?: boolean }; after24: { big: string; small: string } } {
+  chapters = chapters.filter(timeOfDayOk); // (phase 4l, N1: only the moments the video can show)
   let hero = heroOf(b, sugarKnown, chapters, unit, hook), after24 = after24Of(b, sugarKnown);
   const cls = hookClassOf(hook), atCh = (t: string | undefined) => (t ? chapters.find((c) => c.title === t && c.min > 0) : undefined);
   if (cls === 'day' || cls === 'dayN' || cls === 'fiberDay') {
@@ -436,6 +442,8 @@ export function singleStops(story: { chapters: ChapterLike[] }, ctx: BeatCtx, wh
   // (round 9: a card is said once per video; "Fat takes a slower route, via the lymph." ended one moment and began
   // the next, 9 s in a row, for every fatty food)
   const seen = new Set<string>();
+  // (phase 4l, N1: a time-of-day moment the story's clock cannot show as that time is not in the video: timeOfDayOk)
+  story = { chapters: story.chapters.filter(timeOfDayOk) };
   // (round 14: the swallow, "Down the food pipe", adds its card to the first moment, used when there is room)
   const pipe = story.chapters.find((c) => c.min > 0 && c.min < 1);
   // (round 15, critic P2-K: never its bare title "Down the food pipe" as a card, only a sentence)
@@ -531,7 +539,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // (round 11: a cut, or the old flag: true = short)
   const cut: Cut = typeof cutIn === 'boolean' ? (cutIn ? 'short' : 'long') : cutIn, shortVid = cut === 'short';
   // each side's words at each moment (as on screen); planCompare sets the reading times and the length
-  const chap = (x: Analysis, at: number) => x.built.story.chapters.reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), x.built.story.chapters[0]);
+  // (phase 4l, N1: each side's moments the video can show, timeOfDayOk: no "Bedtime" 11 minutes after the first sip)
+  const vch = (x: Analysis) => x.built.story.chapters.filter(timeOfDayOk);
+  const chap = (x: Analysis, at: number) => vch(x).reduce((acc, c) => (at + 1e-6 >= c.min ? c : acc), vch(x)[0]);
   // (phase 4j, critique M3: a card about blood sugar only for a side whose model has a blood sugar rise, so "Both · …"
   // is never said for a food whose end card has no blood sugar curve; video-body SUGAR_CLAIM)
   // (phase 4j, critique M5: "FIRST BITE / Soft pretzel." repeated the name over its body: a card that only says the
@@ -564,7 +574,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // peak moment (its story's peak chapter, as in its single video) is a moment of the comparison, kept by the planner;
   // the regular moments within 8 minutes of a peak make room for it
   // (round 13, critic P1-3: wine vs beer skipped "Alcohol gone", the one moment that answers which clears first)
-  const peaksOf = (x: Analysis) => x.built.story.chapters.filter((c) => c.min > 0 && /peak|Alcohol gone/i.test(c.title)).map((c) => c.min);
+  const peaksOf = (x: Analysis) => vch(x).filter((c) => c.min > 0 && /peak|Alcohol gone/i.test(c.title)).map((c) => c.min);
   const sidePeaks = [...new Set([...peaksOf(a), ...peaksOf(b)])].filter((m) => m < 1440);
   const base = (shortVid ? CMP_SHORT : CMP_STOPS).filter((m) => m === 0 || m >= 1440 || !sidePeaks.some((p) => Math.abs(p - m) <= 8));
   const cmpMins0 = [...new Set([...base, ...sidePeaks, ...(hit !== undefined && hit > 0 ? [hit] : [])])].sort((x, y) => x - y);
@@ -575,7 +585,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   const sideCards = (x: Analysis, mins: number[]) => {
     let prev = -1, seen = 0, lastLines: string[] = [], lastCh: unknown = null;
     return mins.map((at) => {
-      const fresh0 = x.built.story.chapters.filter((c) => c.min > prev && c.min <= at && (c.min === 0 || c.min >= 1));
+      const fresh0 = vch(x).filter((c) => c.min > prev && c.min <= at && (c.min === 0 || c.min >= 1));
       // the chapter of this moment first (what is true NOW), then the ones passed on the way; in a stomach race
       // the stomach chapter leads (it is the game's fact)
       const rank = (c: typeof fresh0[number]) => (gq?.kind === 'stomach' && /stomach/i.test(c.title) ? 0 : c === fresh0[fresh0.length - 1] ? 1 : 2);
@@ -744,5 +754,9 @@ export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { m
   // (phase 4j, critique M6: a lull says how much the body has taken up so far, never 3-4 s without a card)
   // (phase 4k, critique M2: "TAKEN UP SO FAR / 28 of 164 kcal" in a video about alcohol: with alcohol the lull counts the
   // drink taken up, in ml, from the route model; kcal only when the hook asks about them)
+  // (phase 4l, critique 2026-11-22, minor: "TAKEN UP SO FAR / 2 of 150 ml" of the drink's water said nothing: with
+  // alcohol the lull says where the blood alcohol is going, video-body bacTrendAt; kcal only when the hook asks about them)
+  const bac = (built as { bac?: ArrayLike<number> } | undefined)?.bac;
+  if (built && alc && !fx.kcalHook && bacTrendAt(bac, 0) !== null) return withLullCards(placesOnScreen(plan, built), (m) => bacTrendAt(bac, m), undefined, BAC_LULL_TITLE);
   return built ? withLullCards(placesOnScreen(plan, built), (m) => takenUpAt(alc && !fx.kcalHook ? { ...built, energy: undefined } as BuiltLike : built, m)) : plan;
 }

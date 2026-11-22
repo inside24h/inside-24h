@@ -7,11 +7,13 @@ import { AUDIT_PROFILE, auditCompare, auditSingle, type AuditItem } from './text
 import { drawCmpFrame, drawFrame, type CmpOverlay, type Light, type Overlay } from './share';
 import { after24Of, bacPeakText, cmpName, gaugesAt, servingAmount } from './video-story';
 import { beatChapter, beatOrgans, camPlanOf, camSeedOf, camStyle, classOf, nextLead, shotOf, splitPlanOf, splitShot } from './video-cam';
-import { plainSugar, presentAt, SEG_FOCUS_V } from './video-body';
+import { inText, plainNote, plainSugar, presentAt, SEG_FOCUS_V } from './video-body';
+import { worstMoment } from './status';
 import { seedOf } from './video-hook';
 import { FPS, type Cut, type Plan } from './video-plan';
 import { sceneOf, teleScene, teleStart, teleStop, type Timeline } from './video-telemetry';
 import type { Analysis } from './analyze';
+import type { Profile } from '../science/profile';
 import type { SegId } from '../scene/segments';
 
 /** A 2D canvas stand-in: text widths at `w` × the font size per character (Geist averages ~0.56). */
@@ -32,8 +34,9 @@ const LIGHTS: Light[] = [{ icon: '⚡', label: 'Blood sugar', level: 0 }, { icon
 const at = (p: Plan, i: number) => p.frames[i];
 
 /** A single video's timeline, filmed as AppV4 films it (startShare: camPlanOf, cue → shotOf, the lead). */
-export function filmSingleTimeline(it: AuditItem, cut: Cut): Timeline {
-  const x = it.x, b = x.built, o = auditSingle(x, cut, 'A', AUDIT_PROFILE, it.vname), plan = o.plan, chapters = b.story.chapters;
+/** (phase 4l: `p`, the profile the item was analyzed with: a first sip just before bedtime, as a render at 22:50 has it) */
+export function filmSingleTimeline(it: AuditItem, cut: Cut, p: Profile = AUDIT_PROFILE): Timeline {
+  const x = it.x, b = x.built, o = auditSingle(x, cut, 'A', p, it.vname), plan = o.plan, chapters = b.story.chapters;
   const cam = camPlanOf(plan.frames, camStyle(classOf(b), camSeedOf(seedOf(o.name), b.energy.total)), chapters);
   const hook = `${o.hook.line1}\n${o.hook.line2}`, ctx = fakeCtx();
   let lead: SegId | null = null, leadM = -1;
@@ -48,7 +51,7 @@ export function filmSingleTimeline(it: AuditItem, cut: Cut): Timeline {
       const recChapter = chapters.reduce((acc, c) => ((fr.stop ?? fr.m) + 1e-6 >= c.min ? c : acc), chapters[0]);
       const gs = gaugesAt(b, m, 'mmol/L', x.glucose !== undefined, /caffeine/i.test(recChapter.title), fr.beat === 'hold' && (fr.stop ?? 0) > 0 ? bo.organs : undefined);
       const ov = { hook, title: o.name, sub: 'Man, 35 · 175 cm · 70 kg', clock: '22:00', step: recChapter.title, caption: fr.cap ?? '', progress: fr.u ?? 0, focus: recChapter.focus,
-        lights: LIGHTS, summary: x.systems.slice(0, 4).map((s) => ({ icon: '•', label: s.label, level: 0 as const, note: 'Fine all day' })), handle: '@inside24h', hero: o.hero, after24: o.after24 ?? after24Of(b, x.glucose !== undefined),
+        lights: LIGHTS, summary: x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return { icon: '•', label: s.label, level: l, unknown: !!s.unknown, note: plainNote(s.key as Parameters<typeof plainNote>[0], l, w, b, inText(w), !!s.unknown) }; }) /* (phase 4l: the end card's lines as AppV4 says them, video-body plainNote) */, handle: '@inside24h', hero: o.hero, after24: o.after24 ?? after24Of(b, x.glucose !== undefined),
         gauges: gs.map((g) => ({ ...g, at: null })), alcohol: (b.alcoholG ?? 0) > 1, solid: /bite/i.test(chapters[0]?.title ?? '') } as Overlay;
       drawFrame(ctx, 1080, 1920, SRC, ov, 'reel', fr, plan, null);
     }

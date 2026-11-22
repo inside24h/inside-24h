@@ -283,6 +283,20 @@ export function takenUpAt(b: BuiltLike & { energy?: { total: number; absorbed?: 
   return pct ? `${Math.round((100 * up) / serving)} % of it` : `${Math.round(up)} of ${Math.round(serving)} ${r.unit}`;
 }
 
+/** Phase 4l (critique 2026-11-22, minor: "TAKEN UP SO FAR / 2 of 150 ml" of an Aperol spritz's water said nothing): a lull
+ *  in a video about alcohol says where the blood alcohol is going, from the model's curve at minute m (the BAC chip
+ *  beside it says how much): still rising before its peak, at its highest near it, coming down after it, back to zero.
+ *  No number: a BAC number is said only with both driving limits, on the gauge. */
+export const BAC_LULL_TITLE = 'Blood alcohol';
+export function bacTrendAt(bac: ArrayLike<number> | undefined, m: number): string | null {
+  if (!bac || !bac.length) return null;
+  const end = Math.min(1440, bac.length - 1), i = Math.max(0, Math.min(end, Math.round(m)));
+  let pm = 0; for (let k = 1; k <= end; k++) if (bac[k] > bac[pm]) pm = k;
+  const v = bac[i], pk = bac[pm];
+  if (!(pk > 0.005)) return null;
+  if (v <= 0.005) return i < pm ? 'Still rising' : 'Back to zero';
+  return v >= 0.97 * pk ? 'At its highest' : i < pm ? 'Still rising' : 'Coming down slowly';
+}
 /** Phase 4k: the place a where-card says ("… is mostly in your stomach." → 'stomach', "… has been absorbed now." →
  *  'absorbed'), as dominantAt names it; null for a card that says no place. */
 export function placeOfCard(card: string): ReturnType<typeof dominantAt> {
@@ -331,6 +345,8 @@ export function paletteAt(b: BuiltLike, m: number): Record<string, string> {
   return { brain: `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}` };
 }
 
+/** Phase 4l: the after-meal slump's chapter (food/foodProduct, FC1), named on the end card's brain line (plainNote). */
+export const SLUMP_TITLE = 'Sleepy after eating';
 /** The end card's line for one light, in plain words (round 4, owner: "Mild stress at 13:13" was cryptic): what
  *  happened and when, from the same model numbers that set the light. `t` is the clock time of that minute. */
 export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 | 1 | 2, m: number, b: BuiltLike, t: string, sugarUnknown = false): string {
@@ -350,6 +366,10 @@ export function plainNote(key: 'energy' | 'heart' | 'water' | 'brain', level: 0 
   }
   if (key === 'heart') return level === 0 ? 'Normal all day' : level === 2 ? `Pulse clearly up ${t}` : `Pulse a little up ${t}`;
   if (key === 'water') return level === 0 ? 'Fine all day' : level === 2 ? `Short of water ${t}` : `A bit short of water ${t}`;
+  // (phase 4l, critique 2026-11-22, N2: "Many people feel sleepy after a big meal." in the story, "Brain & sleep · Fine
+  // all day" on its end card): a meal whose story has the after-meal slump says it here, at its minute
+  const slump = level === 0 ? b.story?.chapters.find((c) => c.title === SLUMP_TITLE) : undefined;
+  if (slump) return `Maybe sleepy ${inText(slump.min)}`;
   if (level === 0) return 'Fine all day';
   // (round 12: with alcohol the light is yellow from the first minutes; the note names its peak, "… 41 min in", not "2 min in")
   let pm = mi; if (b.bac) for (let k = 0; k <= Math.min(1440, b.bac.length - 1); k++) if (b.bac[k] > b.bac[pm]) pm = k;

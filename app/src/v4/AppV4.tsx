@@ -280,7 +280,11 @@ export default function AppV4() {
     // daily use: your body and city are remembered in this browser; the meal time defaults to right now
     let base = DEFAULT_PROFILE;
     try { const raw = localStorage.getItem(PROFILE_KEY); if (raw) base = { ...DEFAULT_PROFILE, ...JSON.parse(raw) }; } catch { /* storage blocked */ }
-    if (HASH_T === null) { const d = new Date(); base = { ...base, drinkAtMin: Math.floor((d.getHours() * 60 + d.getMinutes()) / 5) * 5 }; }
+    // (phase 4l, QA only: the render harness may set the first sip's time of day, #render=…&at=22:45, so a sample is
+    // made at the time it is about, whatever the clock of the machine that renders it says)
+    const qaAt = HASH.get('render') ? /^(\d{1,2}):(\d{2})$/.exec(HASH.get('at') ?? '') : null;
+    if (qaAt && Number(qaAt[1]) < 24 && Number(qaAt[2]) < 60) base = { ...base, drinkAtMin: Number(qaAt[1]) * 60 + Number(qaAt[2]) };
+    else if (HASH_T === null) { const d = new Date(); base = { ...base, drinkAtMin: Math.floor((d.getHours() * 60 + d.getMinutes()) / 5) * 5 }; }
     const c = HASH.get('city') ? findCity(HASH.get('city')!) : undefined;
     return c ? { ...base, city: cityLabel(c) } : base;
   });

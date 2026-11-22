@@ -4,6 +4,7 @@
 // scrolling past (owner, 2026-10-24). Alcohol is a warning, never a celebration: no "best", "wins", "cure".
 
 import { AMOUNT_PREFIX, lowerName } from './video-names';
+import { timeOfDayOk } from './video-beats';
 export interface HookIn {
   /** the video's short name ("One can of cola", "3 × 500 ml of beer over 2 h", "A whole pizza") */ name: string;
   chapters: { min: number; title: string; text: string }[];
@@ -77,11 +78,11 @@ export const HOOK_POOL = {
   /** (phase 4f, full tier: "Red wine: how long until 150 ml are out of you?" takes 5.0 s to say, a Short's hook has
    *  4.5 s before its first impact, so the question went unsaid: every line here is at most 7 words, about 4.2 s with
    *  its name and "one hundred fifty milliliters") */
-  alcoholGoneN: ['How long do {n} ml stay?', 'When has your liver cleared {n} ml?', 'When are {n} ml out of you?', 'How long until {n} ml clear?', 'When does your liver finish {n} ml?', 'How long do {n} ml last?', 'When are those {n} ml gone?'],
+  alcoholGoneN: ['How long do {n} ml stay?', 'When has your liver cleared {n} ml?', 'How soon are {n} ml gone?', 'How long until {n} ml clear?', 'When does your liver finish {n} ml?', 'How long do {n} ml last?', 'When are those {n} ml gone?'],
   proteinN: ['Watch your body use {n} g of protein.', 'Watch where {n} g of protein go.', 'Watch your body take {n} g apart.', 'Follow {n} g of protein through you.', 'See what your body builds with {n} g.', 'Watch {n} g become building blocks.', 'Watch your gut break down {n} g.', 'See where {n} g of protein end up.', 'Watch your body sort out {n} g.', 'Follow those {n} g of protein.'],
   /** phase 4j (full tier: sangria and whiskey, vodka and a margarita asked the same "When is the alcohol gone?"): a drink
    *  served without its ml in its name asks with its own grams of alcohol, {n}, as its other line says them */
-  alcoholGoneG: ['When are those {n} g gone?', 'How long do {n} g stay in you?', 'When has your liver cleared {n} g?', 'How long until {n} g clear?', 'When does your liver finish {n} g?', 'How long do those {n} g last?', 'When are {n} g out of you?'],
+  alcoholGoneG: ['When are those {n} g gone?', 'How long do {n} g stay in you?', 'When has your liver cleared {n} g?', 'How long until {n} g clear?', 'When does your liver finish {n} g?', 'How long do those {n} g last?', 'How soon are {n} g gone?'],
   alcoholWhere: ['Where does the alcohol go?', 'What does your liver do with it?', 'How does your body clear it?', 'How does your liver deal with it?', 'Where does all that alcohol go?', 'What does your body do with the alcohol?'],
 } as const satisfies Record<string, readonly string[]>;
 export type HookClass = keyof typeof HOOK_POOL;
@@ -129,7 +130,9 @@ const bedLines = (fw: string, mg?: number) => { const of = mg ? `its ${Math.roun
 
 /** The hook for a single video. Phase 4e: a pool line's own number is one a card of the video says (the first card's
  *  lead, the first line, the name); else the line the same pool says without a number. */
-export function hookFor(h: HookIn): Hook {
+export function hookFor(h0: HookIn): Hook {
+  // (phase 4l, N1: a hook never asks about a time-of-day moment the video leaves out: video-beats timeOfDayOk)
+  const h = { ...h0, chapters: h0.chapters.filter(timeOfDayOk) };
   const k = hookForRaw(h), cls = hookClassOf(k);
   if (!cls || !HOOK_POOL[cls][0].includes('{n}')) return k;
   const sugarLead = !!k.lead && /g of sugar: about \d+ teaspoons/.test(k.lead);
@@ -334,7 +337,8 @@ export const GUESS_LINE = 'Guess before the answer.';
 
 /** Round 11 (research R2): the second hook, from another formula: the question first, the fact second (A leads
  *  with the number). It only reuses A's own words and numbers, so it is as honest as A. */
-export function hookB(h: HookIn, a: Hook): Hook {
+export function hookB(h0: HookIn, a: Hook): Hook {
+  const h = { ...h0, chapters: h0.chapters.filter(timeOfDayOk) }; // (phase 4l, N1)
   // (phase 4e: B says only A's numbers: a pool line with another number of the food says its pool's plain line)
   const b = hookBRaw(h, a), ok = new Set([...numbersIn(`${a.line1} ${a.line2}`), '24']);
   const fixLine = (l: string) => {

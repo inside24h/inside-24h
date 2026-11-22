@@ -10,7 +10,7 @@
 import { perceivedRuns, regionMaxS, REGION, regionOf, topicRegion, type Shot } from './video-cam';
 import { cardNamed, SEG_FOCUS_V } from './video-body';
 import { hookAnswerIssue } from './video-hook';
-import { MORNING_NO_FACT } from './video-beats';
+import { BED_TITLE, genericCard, MORNING_NO_FACT, MORNING_TITLE, TOD_MIN } from './video-beats';
 import { alikeCards, nearSame, plainLatin, sameWords } from './video-names';
 
 /** One word block drawn on a frame (share.ts text(): one line of words), in video pixels. */
@@ -129,6 +129,7 @@ export function checkTimeline(tl: Timeline): TeleIssue[] {
   if (h) out.push({ check: 'hook answered', text: h });
   out.push(...checkTimeline4j(tl));
   out.push(...checkTimeline4k(tl));
+  out.push(...checkTimeline4l(tl));
   return out;
 }
 // ---- Phase 4j (critique 2026-11-17, v31 samples: never-tested foods). What the critic saw, checked on what is drawn ----
@@ -231,7 +232,7 @@ const cardBody = (c: string) => (c.includes(' | ') ? c.slice(c.indexOf(' | ') + 
 const cardHead = (c: string) => (c.includes(' | ') ? c.slice(0, c.indexOf(' | ')) : '');
 /** A live counter, its number running with the clock (the lull's "TAKEN UP SO FAR | 28 of 164 kcal"): not a card that
  *  repeats, a gauge. */
-const LIVE_CARD = /^TAKEN UP SO FAR/i;
+const LIVE_CARD = /^(?:TAKEN UP SO FAR|BLOOD ALCOHOL)$/i; // (phase 4l: with alcohol the lull's gauge is the blood alcohol's way, video-body bacTrendAt)
 /** The phase 4k checks: the clock's pace all through (M1), no card that nearly repeats a title or another card, no
  *  filler (a kcal card with alcohol, a NEXT chip naming the present, a kidney card without its number, a long empty
  *  "NEXT MORNING") (M2), alcohol with caffeine says the dose and what is left when the alcohol is gone (M3). */
@@ -256,7 +257,9 @@ export function checkTimeline4k(tl: Timeline): TeleIssue[] {
     for (let i = 0, j = 0; i < story.length; i = j) {
       for (j = i + 1; j < story.length && story[j].clock === story[i].clock && story[j].t - story[j - 1].t < 2 * dt + 1e-6; j++);
       const s = story[j - 1].t - story[i].t + dt;
-      if (story[i].clock !== PAUSE_CLOCK && s > CLOCK_HOLD_MAX_S + dt + 1e-6) { out.push({ check: 'clock pace', text: `${story[i].clock} held ${fmt(s)} s from ${fmt(story[i].t)} s (at most ${CLOCK_HOLD_MAX_S} s)` }); break; }
+      // (phase 4l, critique 2026-11-22, minor: carbonara held +24:00 for 6.4 s, its "24 HOURS LATER" card and then the
+      // day-done beat: +24:00 too is held at most CLOCK_HOLD_MAX_S outside that beat, the one labelled "AFTER 24 HOURS")
+      if (s > CLOCK_HOLD_MAX_S + dt + 1e-6) { out.push({ check: 'clock pace', text: `${story[i].clock} held ${fmt(s)} s from ${fmt(story[i].t)} s (at most ${CLOCK_HOLD_MAX_S} s)` }); break; }
     }
   }
   // M2: no card that (nearly) says a title on screen (the hook's lines; a comparison's side names) or, in a single
@@ -301,6 +304,68 @@ export function checkTimeline4k(tl: Timeline): TeleIssue[] {
     const main = fs.filter((f) => f.phase === 'main').map((f) => f.card ?? '').join(' ');
     if (!/\b\d+ mg of caffeine\b/.test(main)) out.push({ check: 'caffeine and alcohol', text: 'no card says the caffeine dose ("N mg of caffeine")' });
     if (!/\b\d+ mg (?:of )?caffeine: still in you/i.test(`${main} ${allWords(tl, 'outro')}`)) out.push({ check: 'caffeine and alcohol', text: 'nothing says the caffeine still in you when the alcohol is gone' });
+  }
+  return out;
+}
+
+// ---- Phase 4l (critique 2026-11-22, v34 samples: aperol spritz, spaghetti carbonara, vodka and energy drink) ----
+/** N2: a run of generic cards on screen (video-beats genericCard: no number of its own; safety cards, open loops, a
+ *  lull's gauge and the NEXT chip break it) at most this long: two cards at their longest (a card holds up to about
+ *  6.5 s when a sparse story is stretched to its length), never three: the v34 carbonara read three, 13.3 s. */
+export const GENERIC_RUN_MAX_S = 13;
+/** N2: a card that says the viewer feels sleepy, and the end card lines it contradicts. */
+export const SLEEPY_CLAIM = /\b(?:feels?|gets?|become|becomes)\s+(?:sleepy|drowsy|tired)\b|\bslump\b|\bsleepy after\b/i;
+export const AWAKE_CLAIM = /\bwide awake\b|\bmore alert\b|\benergy boost\b|\bfull of energy\b|\bno slump\b/i;
+const ALL_FINE = /^(?:Fine|Normal|Steady) all day$/i;
+/** The end card's line for one of the day's lights ("Brain & sleep" → "Fine all day"): the word block after its label. */
+export function endCardNote(tl: Timeline, label: RegExp): string | null {
+  for (const f of tl.frames) if (f.phase === 'outro' && f.end >= 0.98 && f.texts) {
+    const i = f.texts.findIndex((b) => label.test(b.text.trim()));
+    if (i >= 0 && f.texts[i + 1]) return f.texts[i + 1].text.trim();
+  }
+  return null;
+}
+/** The phase 4l checks: a time-of-day moment only where the story's clock reads as that time (N1; what it says holds at
+ *  the minute shown, against the model: video-4l.test); no card that contradicts another or the end card, no long run
+ *  of generic cards (N2). */
+export function checkTimeline4l(tl: Timeline): TeleIssue[] {
+  const out: TeleIssue[] = [], dt = 1 / tl.fps, fs = tl.frames;
+  const main = fs.filter((f) => f.phase === 'main' && f.beat !== 'teaser' && f.beat !== 'rewind');
+  // N1: "BEDTIME" / "GOING TO BED" from TOD_MIN.bed minutes on the clock, "NEXT MORNING" from TOD_MIN.morning; a NEXT
+  // chip that names one of them, too
+  const todMin = (t: string) => (BED_TITLE.test(t.trim()) ? TOD_MIN.bed : MORNING_TITLE.test(t.trim()) ? TOD_MIN.morning : null);
+  let tod: string | null = null, todChip: string | null = null;
+  for (const f of main) {
+    for (const c of (f.card ?? '').split(' || ')) {
+      const need = c ? todMin(cardHead(c)) : null;
+      if (!tod && need !== null && f.clock && clockMinutes(f.clock) < need) tod = `"${c}" at ${f.clock} (${fmt(f.t)} s): the clock does not read as ${cardHead(c).toLowerCase()} before +${Math.floor(need / 60)}:${String(need % 60).padStart(2, '0')}`;
+    }
+    const chip = (f.texts ?? []).map((b) => b.text).find((x) => /^NEXT · \+\d+:\d\d · /.test(x));
+    if (!todChip && chip) { const m = /^NEXT · (\+\d+:\d\d) · (.+)$/.exec(chip)!, need = todMin(m[2]); if (need !== null && clockMinutes(m[1]) < need) todChip = `"${chip}" (${fmt(f.t)} s) names ${m[2].toLowerCase()} at ${m[1]}`; }
+  }
+  if (tod) out.push({ check: 'time of day', text: tod });
+  if (todChip) out.push({ check: 'time of day', text: todChip });
+  // N2: cards that contradict each other or the end card (a single video's: sleepy vs a brain line "Fine all day")
+  const cards = [...new Set(main.flatMap((f) => (f.card ?? '').split(' || ').filter(Boolean).filter((c) => !LIVE_CARD.test(cardHead(c))).map(cardBody)))];
+  const sleepy = cards.find((c) => SLEEPY_CLAIM.test(c)), awake = cards.find((c) => AWAKE_CLAIM.test(c));
+  if (sleepy && awake) out.push({ check: 'card contradiction', text: `"${sleepy}" and "${awake}"` });
+  const brain = tl.kind === 'single' ? endCardNote(tl, /^Brain & sleep$/i) : null;
+  if (sleepy && brain && ALL_FINE.test(brain)) out.push({ check: 'card contradiction', text: `"${sleepy}" in the story, "Brain & sleep · ${brain}" on the end card` });
+  // N2: generic cards back to back at most GENERIC_RUN_MAX_S on screen (a single video's: a comparison's split cards say
+  // each side's fact under its name, laid out by planCompare, not by the single video's planner)
+  if (tl.kind === 'single') {
+    let run = 0, best = 0, at = 0, a0 = 0, said: string[] = [], bestSaid: string[] = [];
+    for (const f of main) {
+      if (f.beat === 'end') { run = 0; said = []; continue; }
+      const c = f.card ?? '';
+      if (!c) { if (f.next) { run = 0; said = []; } continue; }
+      const gen = !LIVE_CARD.test(cardHead(c)) && c.split(' || ').every((x) => genericCard(cardBody(x)));
+      if (!gen) { run = 0; said = []; continue; }
+      if (run === 0) a0 = f.t;
+      run += dt; if (!said.includes(c)) said.push(c);
+      if (run > best) { best = run; at = a0; bestSaid = [...said]; }
+    }
+    if (best > GENERIC_RUN_MAX_S + dt + 1e-6) out.push({ check: 'generic cards', text: `${fmt(best)} s of cards with no number of their own from ${fmt(at)} s (at most ${GENERIC_RUN_MAX_S} s): ${bestSaid.join(' / ')}` });
   }
   return out;
 }
