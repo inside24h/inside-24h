@@ -801,7 +801,9 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   for (let j = 0; j < out.length; j++) {
     const o = out[j], over = o.id === 'card' || !!o.card ? [...new Set(out.flatMap((x, q) => (q >= j && x.t < o.t + VARIETY_S ? overused(out, q, nameWords) : [])))] : [];
     if (!over.length) continue;
-    const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.includes(w)));
+    // (never one that drops a time a "how fast" hook asks for)
+    const keepQty = FAST_Q.test(`${n.hook?.line1 ?? ''} ${n.hook?.line2 ?? ''}`);
+    const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.includes(w)) && !(keepQty && qtyOf(y).length < qtyOf(o.text).length));
     if (v) Object.assign(o, { text: shownText(v), say: speakable(v) });
   }
   // (v23: no close placed: the loop's place goes to it, the shortest number-free close that fits)

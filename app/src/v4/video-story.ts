@@ -261,14 +261,16 @@ export function applyHook(stops: StopIn[], hook: { line1?: string; line2?: strin
   // that amount (the voice says an amount once, video-narration qtyOf: "25 min" is not "25 minutes", and a card it does
   // not read could not answer the hook)
   const numsOf = (x: string) => (x.match(/\d+(?:[.,]\d+)?(?:\s*(?:%|kcal|mg|ml|g|h|hours?|min|minutes?|teaspoons?)(?![a-z]))?/g) ?? []).map((q) => q.replace(/\s+/g, ' ').replace(/s$/, '').replace(/ h$/, ' hour').replace(/ min$/, ' minute')); // (as the voice says it: "1 h" is "1 hour")
-  const kcal0 = Number(/(\d+) kcal/.exec(out[0]?.text ?? '')?.[1] ?? 0), prot0 = Number(/(\d+) g protein/.exec(out[0]?.text ?? '')?.[1] ?? 0);
+  const kcal0 = Number(/(\d+) kcal/.exec(out[0]?.text ?? '')?.[1] ?? 0), prot0 = Number(/(\d+) g protein/.exec(out[0]?.text ?? '')?.[1] ?? 0), fat0 = Number(/(\d+) g fat/.exec(out[0]?.text ?? '')?.[1] ?? 0), carb0 = Number(/(\d+) g carbohydrate/.exec(out[0]?.text ?? '')?.[1] ?? 0);
   const said = [hook.line1 ?? '', hook.line2 ?? '', ...out.flatMap((s) => s.lines ?? [])].flatMap(numsOf);
   for (const s of out) if (s.lines && s.min >= 1) s.lines = s.lines.map((l) => {
     const own = l === SUGAR_PEAK_CARD ? `Blood sugar peaks ${inText(s.min)}.` : l === CAF_PEAK_CARD ? `Caffeine peaks ${inText(s.min)}.`
       // (and the stomach's "its calories", the food's own kcal: never with alcohol, whose video says no kcal it is not asked for)
       : l === 'Its calories slow your stomach down.' && !alc && kcal0 >= 1 ? `Its ${kcal0} kcal slow your stomach down.`
-      // (the small intestine's work on its own kcal, never with alcohol)
-      : l === 'In the small intestine it is taken apart.' && !alc && kcal0 >= 1 ? `Its ${kcal0} kcal are taken apart here.`
+      // (the blood fat's own peak, from its own fat)
+      : l === 'Blood fat is highest around now.' && fat0 >= 1 ? `Blood fat from its ${fat0} g peaks now.`
+      // (the small intestine's carbohydrate, its own grams)
+      : l === 'Starch and sugar turn into blood sugar.' && carb0 >= 1 ? `Its ${carb0} g of carbs become blood sugar.`
       // (and the small intestine's protein, its own grams)
       : l === 'Protein is broken into building blocks.' && prot0 >= 1 ? `Its ${prot0} g of protein becomes building blocks.` : null;
     return own && isCard(own) && !(s === st && numsOf(own).some((n) => said.includes(n))) ? own : l;

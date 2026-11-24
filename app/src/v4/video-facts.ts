@@ -80,10 +80,10 @@ export const FACT_WORDINGS = {
   flatSugar: ['Your glucose barely moves.', 'Glucose stays nearly flat.', 'Barely a blip in glucose.', 'Your glucose line stays almost flat.', 'No real glucose spike from this.', 'Glucose hardly rises at all.'],
   // (phase 4f, full tier: the longest wording was said on 18 % of the videos, the limit is 10 %, a pause taking the
   // longest fact that fits: four wordings of one length, so the one picked for the food is the one said)
-  dvKcal: ['That is {n} % of a day’s calories.', 'It covers {n} % of your daily calories.', 'Of a day’s energy, that is {n} %.', 'That is roughly {n} % of daily energy.'],
+  dvKcal: ['That is {n} % of a day’s calories.', 'It covers {n} % of your daily calories.', 'Of a day’s energy, that is {n} %.', 'That is roughly {n} % of daily energy.', 'This alone is {n} % of a day’s energy.'], // (phase 4l: a fifth wording, no filler on over 10 % of the videos)
   dvSodium: ['That is {n} % of a day’s sodium limit.', 'It uses up {n} % of your daily sodium.', 'Salt check: {n} % of a day’s sodium.'],
   dvFiber: ['{n} % of the fiber you need in a day.', 'It covers {n} % of a day’s fiber.', 'A day’s fiber? This is {n} % of it.'],
-  dvProtein: ['{n} % of the protein you need in a day.', 'It covers {n} % of your daily protein.', 'Protein for the day: {n} % done.'],
+  dvProtein: ['{n} % of the protein you need in a day.', 'It covers {n} % of your daily protein.', 'Protein for the day: {n} % done.', 'That is {n} % of a day’s protein need.'], // (phase 4l: a fourth wording)
   dvSatFat: ['{n} % of a day’s saturated fat limit.', 'It uses {n} % of your daily saturated fat.', 'Saturated fat: {n} % of the daily limit.'],
   waterPct: ['{n} % of it is water.', 'It is {n} % water by weight.', 'Mostly water: {n} %.', 'Water makes up {n} % of it.', 'By weight, it is {n} % water.', 'Nearly all water: {n} %.'],
   gi: ['Its glycemic index: {n}, out of 100.', 'On the glycemic index, it scores {n}.', 'Glycemic index: {n} of 100.'],
