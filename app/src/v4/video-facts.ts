@@ -73,7 +73,8 @@ export const FACT_WORDINGS = {
   zeroKcal: ['Zero kcal: no fuel for your body at all.', 'No energy at all: zero kcal.', 'Not a single kcal in it.'],
   absent: ['No {a}.', 'It has no {a}.', 'Inside: no {a}.'],
   // (phase 4f: as dvKcal, wordings of one length; the longest was said on 11 % of the videos)
-  density: ['There are {n} kcal per 100 g.', 'Per 100 g, that is {n} kcal.', 'Energy density: {n} kcal per 100 g.', 'In 100 g, you get {n} kcal.'],
+  density: ['There are {n} kcal per 100 g.', 'Per 100 g, that is {n} kcal.', 'Energy density: {n} kcal per 100 g.', 'In 100 g, you get {n} kcal.',
+    'Every 100 g holds {n} kcal.', 'Each 100 g brings {n} kcal.'], // (phase P1: with the walking fact retired, more pauses take this one: two more wordings)
   bodyWater: ['Your body already holds about {n} liters of water.', 'You carry about {n} liters of water already.', 'About {n} liters of water are in you already.'],
   waterShare: ['It tops up your body water by {n} %.', 'That adds {n} % to the water in you.', 'Your body water rises by just {n} %.'],
   // phase P1 (owner: kcal only as a number, never minutes of walking or exercise): no wording, and derivedFacts never emits it
@@ -84,7 +85,8 @@ export const FACT_WORDINGS = {
   dvKcal: ['That is {n} % of a day’s calories.', 'It covers {n} % of your daily calories.', 'Of a day’s energy, that is {n} %.', 'That is roughly {n} % of daily energy.', 'This alone is {n} % of a day’s energy.'], // (phase 4l: a fifth wording, no filler on over 10 % of the videos)
   dvSodium: ['That is {n} % of a day’s sodium limit.', 'It uses up {n} % of your daily sodium.', 'Salt check: {n} % of a day’s sodium.'],
   dvFiber: ['{n} % of the fiber you need in a day.', 'It covers {n} % of a day’s fiber.', 'A day’s fiber? This is {n} % of it.'],
-  dvProtein: ['{n} % of the protein you need in a day.', 'It covers {n} % of your daily protein.', 'Protein for the day: {n} % done.', 'That is {n} % of a day’s protein need.'], // (phase 4l: a fourth wording)
+  dvProtein: ['{n} % of the protein you need in a day.', 'It covers {n} % of your daily protein.', 'Protein for the day: {n} % done.', 'That is {n} % of a day’s protein need.',
+    'It gives {n} % of a day’s protein.', 'Daily protein covered: {n} %.'], // (phase 4l: a fourth wording; phase P1: two more, see density)
   dvSatFat: ['{n} % of a day’s saturated fat limit.', 'It uses {n} % of your daily saturated fat.', 'Saturated fat: {n} % of the daily limit.'],
   waterPct: ['{n} % of it is water.', 'It is {n} % water by weight.', 'Mostly water: {n} %.', 'Water makes up {n} % of it.', 'By weight, it is {n} % water.', 'Nearly all water: {n} %.'],
   gi: ['Its glycemic index: {n}, out of 100.', 'On the glycemic index, it scores {n}.', 'Glycemic index: {n} of 100.'],
@@ -427,6 +429,8 @@ export function arcFor(f: FactIn, seed: number): Arc {
   // (phase 4f, full tier: a green salad, 8 kcal, long, had a 4.8 s silence: every fact said, every other line here
   // said or saying "stomach" a third time)
   if (f.kcal >= 1 && f.kcal < 30 && (f.alcoholG ?? 0) < 1) extra.push('Almost no energy here for your body.');
+  // (phase P1, full tier: a green salad's long cut lost the walking line and had a 4.4 s silence)
+  if (!f.drink && m && m.grams >= 30 && m.waterG / m.grams >= 0.8 && f.kcal < 60) extra.push('Mostly water, so there is little to digest.');
   if (m && m.sugars >= 3 && (f.alcoholG ?? 0) < 1) extra.push('Your cells can burn this sugar right away.');
   const fastShort = pk?.n !== undefined ? `About ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
   return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}), ...(d('sugarDip') ? { dip: true } : {}), ...(extra.length ? { extra } : {}) };

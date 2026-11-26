@@ -1,4 +1,4 @@
-import{r as le,k as rt,a as E4,o as A4,q as T4,S as R4,t as C4,x as P4,y as I4,z as L4,B as D4}from"./index-v4-Cier2yrK.js";import{o as Pl,a7 as N4,z as U4,M as O4,L as F4,a8 as Ic,a9 as Lc,aa as p3,ab as m3,F as k4}from"./share-DOGtYXPG.js";import"./fooddb-BRynYKRr.js";import"./climate-t0z6tI7h.js";import"./video-audio-LL3rSeaa.js";import"./video-beats-Dq4giAAu.js";import"./video-facts-ts5V-O9U.js";function B4(r){return r&&r.__esModule&&Object.prototype.hasOwnProperty.call(r,"default")?r.default:r}/**
+import{r as le,k as rt,a as E4,o as A4,q as T4,S as R4,t as C4,x as P4,y as I4,z as L4,B as D4}from"./index-v4-TFMXiAyU.js";import{o as Pl,a7 as N4,z as U4,M as O4,L as F4,a8 as Ic,a9 as Lc,aa as p3,ab as m3,F as k4}from"./share-Cwhk3OJu.js";import"./fooddb-BRynYKRr.js";import"./climate-t0z6tI7h.js";import"./video-audio-C26e-rNg.js";import"./video-beats-mBDyD0Gt.js";import"./video-facts-eWFpbuoj.js";function B4(r){return r&&r.__esModule&&Object.prototype.hasOwnProperty.call(r,"default")?r.default:r}/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
