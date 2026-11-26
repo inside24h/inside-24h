@@ -7,6 +7,7 @@ import { SOURCES } from '../content/sources';
 import { LEVEL_LABEL, type Claim } from '../content/types';
 import { TIPS, tipSource } from '../content/tips';
 import { ClaimRow } from '../ui/ClaimRow';
+import { BodyScoreMethod } from './lazyUi'; // (phase P1: the rubric, in its own small chunk)
 import './safety.css';
 
 export const DISCLAIMER = 'Estimates for a typical healthy adult — not medical advice.';
@@ -60,6 +61,9 @@ export function HowWeKnow() {
       <h3>Ranges, not single numbers</h3>
       <p>Where people differ a lot, we show a range. Blood sugar: about 40% lower or higher than the typical curve (one standard deviation in the studies; the same meal can raise blood sugar twice as much in one person as in another). Blood alcohol: from 40% below to 50% above our estimate (Widmark estimates are off by 20–40%, and peaks in some people run higher still), shown in ‰, which is grams of alcohol per liter of blood. We never show a time when you are “safe to drive”.</p>
       <p>The traffic lights and health bars are our own simple scales (level C), built on the official categories that each panel names.</p>
+
+      <h3>Body Score method</h3>
+      <BodyScoreMethod />
 
       <h3>Next-step tips</h3>
       <ul className="tiplist">

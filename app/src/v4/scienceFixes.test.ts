@@ -78,13 +78,18 @@ describe('4. walking minutes: fall as weight rises, sane at the extremes', () =>
     expect(walkingMinutes(139, 5)).toBe(walkingMinutes(139, 35));
     expect(walkingMinutes(139, NaN)).toBe(walkingMinutes(139, 70));
   });
-  it('one can for 70 kg ≈ 48 min (≈ 4 km, activity.md D3); 200 kg is far quicker than 35 kg', () => {
+  it('one can for 70 kg ≈ 48 min (≈ 4 km, activity.md D3): the model itself, kept on disk', () => {
     expect(Math.round(walkingMinutes(139, 70))).toBe(48);
-    const ans = (weightKg: number) => quickAnswers({ systems: [], drinkAt: 16 * 60, bedtimeMin: 23 * 60, weightKg, kcal: 139, extraSleepMin: 0, caffeineAtBedMg: 0, waterMl: 0 })
+  });
+  // phase P1 (owner decision 2026-11-24): the answer says kcal and its share of a 2,000 kcal day, the same for every
+  // body, and never minutes or km of walking
+  it('the energy answer: kcal and % of a 2,000 kcal day, never walking', () => {
+    const ans = (weightKg: number, kcal = 139) => quickAnswers({ systems: [], drinkAt: 16 * 60, bedtimeMin: 23 * 60, weightKg, kcal, extraSleepMin: 0, caffeineAtBedMg: 0, waterMl: 0 })
       .find((x) => x.q === 'How much energy is that?')!.a;
-    expect(ans(70)).toMatch(/≈ 48 min .*about 4 km/);
-    expect(ans(200)).toMatch(/≈ 17 min/);
-    expect(ans(35)).toMatch(/≈ 1 h 35 min/);
+    expect(ans(70)).toBe('139 kcal · 7% of a 2,000 kcal day.');
+    expect(ans(200)).toBe(ans(35));
+    expect(ans(70, 945)).toBe('945 kcal · 47% of a 2,000 kcal day.');
+    for (const kg of [35, 70, 200]) expect(ans(kg)).not.toMatch(/walk|min|km|burn/i);
   });
 });
 

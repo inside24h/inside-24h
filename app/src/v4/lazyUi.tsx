@@ -10,6 +10,8 @@ import type { Pro as ProT } from './Pro';
 import type { VideoFallback as VideoFallbackT } from './VideoFallback';
 import type { Browse as BrowseT } from './Browse';
 import type { MomentShare as MomentShareT } from './MomentShare';
+import type { StoryCard as StoryCardT } from './story/StoryCard';
+import type { BodyScoreMethod as BodyScoreMethodT } from './story/BodyScoreMethod';
 
 const loaders = {
   Compare: () => import('./Compare').then((m) => ({ default: m.Compare })),
@@ -19,6 +21,9 @@ const loaders = {
   VideoFallback: () => import('./VideoFallback').then((m) => ({ default: m.VideoFallback })),
   Browse: () => import('./Browse').then((m) => ({ default: m.Browse })),
   MomentShare: () => import('./MomentShare').then((m) => ({ default: m.MomentShare })), // (audit C3: with share.ts)
+  // phase P1: the Food Story (the calm view's Story card) and the Body Score method in "How we know"
+  StoryCard: () => import('./story/StoryCard').then((m) => ({ default: m.StoryCard })),
+  BodyScoreMethod: () => import('./story/BodyScoreMethod').then((m) => ({ default: m.BodyScoreMethod })),
 };
 
 function onDemand<C extends (props: never) => unknown>(load: () => Promise<{ default: C }>) {
@@ -34,6 +39,8 @@ export const Pro = onDemand<typeof ProT>(loaders.Pro);
 export const VideoFallback = onDemand<typeof VideoFallbackT>(loaders.VideoFallback);
 export const Browse = onDemand<typeof BrowseT>(loaders.Browse);
 export const MomentShare = onDemand<typeof MomentShareT>(loaders.MomentShare);
+export const StoryCard = onDemand<typeof StoryCardT>(loaders.StoryCard);
+export const BodyScoreMethod = onDemand<typeof BodyScoreMethodT>(loaders.BodyScoreMethod);
 
 /** Fetch every on-demand part in the background (call when idle). */
 export function prefetchUi() {

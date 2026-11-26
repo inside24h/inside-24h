@@ -24,8 +24,9 @@ export interface Captions { tiktok: string; reels: string; facebook: string; sho
 export const DISCLAIMER = 'Simulation for a typical body · not medical advice.';
 export const SOURCES_LINE = 'Sources: USDA FoodData Central and the published studies linked in the Inside 24h app (“How we know”).';
 export const ALCOHOL_LINE = 'Educational simulation · 18+ · Don’t drink and drive.';
-/** Words a health caption never uses (diet framing, cures, superlatives; research §5). */
-export const BANNED = /\b(cure[sd]?|detox|burn (it|them) off|weight loss|fat[- ]burning|best|miracle|toxins?|heal(s|ing)?)\b/i;
+/** Words a health caption never uses (diet framing, cures, superlatives; research §5). Phase P1: it lives in the shared
+ *  compliance lexicon (story/compliance.ts) and is re-exported here for the caption code and its tests. */
+export { BANNED } from './story/compliance';
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const STOP = new Set(['one', 'a', 'an', 'can', 'cup', 'glass', 'glasses', 'bottle', 'of', 'whole', 'small', 'large', 'big', 'portion', 'slice', 'slices', 'serving', 'ml', 'g', 'l', 'cl', 'with', 'and', 'the', 'shot', 'mug', 'pint']);

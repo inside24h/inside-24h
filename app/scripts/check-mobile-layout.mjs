@@ -5,7 +5,9 @@
 //   - canvas share: visible canvas area / viewport area, and the share NOT covered by overlays (a grid of
 //     elementFromPoint samples over the canvas); the body must get >= 55 % of the screen;
 //   - horizontal overflow: the page must not scroll sideways and no visible element may stick out on the right;
-//   - primary controls (search, play, timeline, quick answers, menu, ...) must be on screen, not covered, >= 44 px.
+//   - primary controls (search, play, timeline, quick answers, menu, ...) must be on screen, not covered, >= 44 px;
+//   - phase P1: the food's own numbers above the fold: at least 4 item-specific numbers ([data-sn], the Story card's
+//     line) fully on screen, not clipped and not covered, without scrolling or tapping.
 // Then the same page with WebGL switched off must show the 2D body (C11) with a friendly message, and the first
 // screen (nothing chosen yet) must not overflow and must keep its search, tiles and menu reachable.
 // Screenshots go to --out (default: a temp folder). One headless browser at a time (Playwright's chrome-headless-shell,
@@ -22,7 +24,7 @@ const SITE = path.resolve(arg('site', '../site'));
 const OUT = path.resolve(arg('out', path.join(os.tmpdir(), 'i24-mobile-check')));
 const FOOD = arg('food', 'cola');
 const STRICT = !process.argv.includes('--no-strict');
-const MIN_SHARE = 0.55, MIN_TAP = 44;
+const MIN_SHARE = 0.55, MIN_TAP = 44, MIN_NUMS = 4;
 const SIZES = [[360, 740], [390, 844], [430, 932]];
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -150,7 +152,21 @@ const MEASURE = (mode) => `(() => {
     return { label, req, found: true, w: Math.round(r.width), h: Math.round(h), onScreen, reachable, big: r.width >= ${MIN_TAP} - 0.5 && h >= ${MIN_TAP} - 0.5 };
   });
   const msg = document.querySelector('.body2d .b2msg')?.textContent ?? null;
-  return { W, H, share, clear, covered, docW, wide, controls, msg, started: !!document.querySelector('.calmbar, .moments') };
+  // phase P1: item-specific numbers above the fold (fully inside the viewport and every clipping ancestor, not covered)
+  const nums = [...document.querySelectorAll('[data-sn]')].filter((e) => {
+    if (!vis(e)) return false;
+    const r = e.getBoundingClientRect();
+    if (r.width === 0 || r.top < -0.5 || r.left < -0.5 || r.bottom > H + 0.5 || r.right > W + 0.5) return false;
+    for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) {
+      const s = getComputedStyle(p);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const q = p.getBoundingClientRect();
+      if (r.left < q.left - 0.5 || r.right > q.right + 0.5 || r.top < q.top - 0.5 || r.bottom > q.bottom + 0.5) return false;
+    }
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !!hit && (hit === e || e.contains(hit) || hit.contains(e));
+  }).map((e) => e.dataset.sn + '=' + e.textContent);
+  return { W, H, share, clear, covered, docW, wide, controls, msg, nums, started: !!document.querySelector('.calmbar, .moments') };
 })()`;
 
 async function shot(page, file) {
@@ -172,6 +188,8 @@ async function run(w, h, mode) {
   let okSel = false;
   for (let i = 0; i < 120 && !okSel; i++) { await wait(250); okSel = await page.evaluate(`!!document.querySelector(${JSON.stringify(sel)})`).catch(() => false); }
   await wait(mode === 'gl' ? 4500 : 1500); // the camera flight and the first frames
+  // phase P1: the Story card's numbers line is a lazy chunk computed when the page is idle: give it up to 5 s more to arrive
+  if (mode !== 'cold') for (let i = 0; i < 20 && !(await page.evaluate("!!document.querySelector('[data-sn]')").catch(() => false)); i++) await wait(250);
   if (process.env.I24_EVAL) console.log(`[${w}x${h} ${mode}]`, await page.evaluate(process.env.I24_EVAL).catch((e) => e.message)); // debugging aid
   const m = await page.evaluate(MEASURE(mode));
   await shot(page, `${w}x${h}-${mode}.png`);
@@ -188,6 +206,7 @@ try {
       const m = await run(w, h, mode);
       const tag = `${w}x${h} ${mode}`;
       console.log(`${tag}${w > 720 ? ' (desktop, information only: mouse-sized controls are fine here)' : ''}: body ${pct(m.share)} of the screen, uncovered ${pct(m.clear)}${m.covered.length ? ` (covered by: ${m.covered.join(', ')})` : ''}; page width ${m.docW}${m.msg ? `; message: "${m.msg}"` : ''}`);
+      if (mode !== 'cold') console.log(`    numbers above the fold: ${m.nums.length} (${m.nums.join(', ')})`);
       for (const c of m.controls) console.log(`    ${c.found ? `${c.big ? 'ok ' : 'SMALL'} ${c.label} ${c.w}x${c.h}${c.onScreen ? '' : ' OFF-SCREEN'}${c.reachable ? '' : ' COVERED'}` : `${c.req ? 'MISSING' : '(none)'} ${c.label}`}`);
       if (w > 720) continue; // desktop: information only
       if (mode !== 'cold' && !m.started) fails.push(`${tag}: the simulation did not start`);
@@ -202,6 +221,7 @@ try {
         if (!c.big) fails.push(`${tag}: ${c.label} is ${c.w}x${c.h} (< ${MIN_TAP} px)`);
       }
       if (mode === 'nogl' && !m.msg) fails.push(`${tag}: no friendly 2D-fallback message`);
+      if (mode !== 'cold' && m.nums.length < MIN_NUMS) fails.push(`${tag}: only ${m.nums.length} of the food's own numbers above the fold (< ${MIN_NUMS})`);
     }
   }
 } finally { cleanup(); }

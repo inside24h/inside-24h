@@ -10,6 +10,7 @@ import { CompareBodies } from './CompareBodies';
 import { parseMeal, type Part } from './food/parse';
 import { worstMoment } from './status';
 import { PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, type Platform } from './video-caption';
+import { CompareAxes } from './story/CompareAxes'; // (phase P1: the Body Score's five axes, side by side)
 
 const DOT = ['#3ddc84', '#ffc83d', '#ff5a5a'];
 const WORD = ['fine all day', 'mild stress', 'high stress'];
@@ -127,6 +128,7 @@ export function Compare({ current, profile, initial, onClose, onVideo, short, se
           {/* Phase 3 (C17): the two bodies, the same minute side by side, as in the comparison video */}
           <CompareBodies a={a} b={b} />
           <SugarChart a={a} b={b} unit={profile.glucoseUnit} />
+          <CompareAxes a={a} b={b} profile={profile} />
           <div className="cmpcols"><Column a={a} k={0} unit={profile.glucoseUnit} /><Column a={b} k={1} unit={profile.glucoseUnit} /></div>
         </>) : <p className="note big">Choose something for the right side, or tap one of the popular pairs above.</p>}
       </div>

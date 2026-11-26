@@ -128,4 +128,16 @@ export const SOURCES: Record<string, Source> = {
   killer2014: { id: 'killer2014', cite: 'Killer SC et al. 2014, PLoS One (coffee vs water over 3 days, 50 men)', url: pubmed('24416202') },
   seal2017: { id: 'seal2017', cite: 'Seal AD et al. 2017, Front Nutr (coffee with 3 vs 6 mg/kg caffeine and urine, n=10)', url: pubmed('28868290') },
   maughanGriffin2003: { id: 'maughanGriffin2003', cite: 'Maughan RJ, Griffin J 2003, J Hum Nutr Diet (review: caffeine and fluid balance)', url: pubmed('19774754') },
+  // Phase P1 (2026-11-24): the Body Score (Fullness rubric, Nutrients % DV), everyday anchors and "What we don't know"
+  rolls2009: { id: 'rolls2009', cite: 'Rolls BJ 2009, Physiol Behav (dietary energy density and energy intake, review)', url: pubmed('19303887') },
+  dimeglio2000: { id: 'dimeglio2000', cite: 'DiMeglio DP, Mattes RD 2000, Int J Obes (liquid vs solid carbohydrate, 15 adults)', url: pubmed('10878689') },
+  dhillon2016: { id: 'dhillon2016', cite: 'Dhillon J et al. 2016, J Acad Nutr Diet (protein intake and fullness, meta-analysis)', url: pubmed('26947338') },
+  clark2013: { id: 'clark2013', cite: 'Clark MJ, Slavin JL 2013, J Am Coll Nutr (fiber, satiety and food intake, systematic review)', url: pubmed('23885994') },
+  holt1995: { id: 'holt1995', cite: 'Holt SH et al. 1995, Eur J Clin Nutr (a satiety index of 38 common foods)', url: pubmed('7498104') },
+  tucker2017: { id: 'tucker2017', cite: 'Tucker RM, Tan SY 2017, Physiol Behav (non-nutritive sweeteners and acute glucose control, systematic review)', url: pubmed('28939430') },
+  pepino2015: { id: 'pepino2015', cite: 'Pepino MY 2015, Physiol Behav (metabolic effects of non-nutritive sweeteners, review)', url: pubmed('26095119') },
+  jones2016: { id: 'jones2016', cite: 'Jones AW 2016, Acad Forensic Pathol (blood alcohol and the rate of ethanol metabolism: 0.10–0.25 g/L per hour)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC6474506/' },
+  fdaDV: { id: 'fdaDV', cite: 'US FDA, Daily Value on the Nutrition and Supplement Facts Labels (5% DV or less is low, 20% or more is high)', url: 'https://www.fda.gov/food/nutrition-facts-label/daily-value-nutrition-and-supplement-facts-labels' },
+  niaaaStdDrink: { id: 'niaaaStdDrink', cite: 'NIAAA, What is a standard drink? (14 g of pure alcohol in the US)', url: 'https://www.niaaa.nih.gov/alcohols-effects-health/what-standard-drink' },
+  whoSalt: { id: 'whoSalt', cite: 'WHO, Salt reduction fact sheet (under 5 g of salt, 2,000 mg of sodium, a day for adults)', url: 'https://www.who.int/news-room/fact-sheets/detail/salt-reduction' },
 };

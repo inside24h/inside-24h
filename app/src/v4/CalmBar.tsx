@@ -5,7 +5,7 @@
 // Audit C4 (2026-11-12), phones: a peeking sheet. The slider lies on the line between the body and the sheet (as a
 // video player's scrubber), the title and the clock share one line, the sentence shows two or three lines with
 // "More" for the rest (and "Right now: …"), so the body gets well over half of the screen (mobile.css).
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { MAX_MIN, minutesFromU } from '../time';
 import { SHORT_LABEL, type Level, type System } from './status';
 import { TIPS } from '../content/tips';
@@ -15,13 +15,15 @@ const SHORT: Record<System['key'], string> = SHORT_LABEL; // "Blood sugar", not 
 const WORD = ['fine', 'mild stress', 'high stress'];
 const PORTIONS = [0.5, 1, 2, 3].map((f) => ({ k: String(f), label: `${f === 0.5 ? '½' : f}×`, mult: f, aria: `${f === 0.5 ? 'Half' : f === 1 ? 'One' : f === 2 ? 'Two' : 'Three'} ${f === 1 ? 'serving' : f === 0.5 ? 'a serving' : 'servings'}` }));
 
-export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, systems, minute, where, onMore, eatenAt, setEatenAt, noun, portion, onPortion, onRules, sizes }: {
+export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, systems, minute, where, onMore, eatenAt, setEatenAt, noun, portion, onPortion, onRules, sizes, story }: {
   title: string; text: string; clock: string; since: string; playing: boolean; onPlay: () => void;
   u: number; setU: (v: number) => void; systems: System[]; minute: number; where?: string; onMore: () => void;
   eatenAt: number; setEatenAt: (min: number) => void; noun: string;
   portion: number; onPortion: (f: number) => void;
   /** named sizes of this food (Slice · Half · Whole, 0.3 · 0.33 · 0.5 l); else ½ · 1 · 2 · 3× */ sizes?: { k: string; label: string; mult: number }[] | null;
   /** opens "How the colours work" */ onRules?: () => void;
+  /** phase P1: the Story card (lazy): its numbers line under the title, and the whole card while "More" is open */
+  story?: (part: 'strip' | 'card', open: boolean, toggle: () => void) => ReactNode;
 }) {
   const [open, setOpen] = useState<System['key'] | null>(null);
   const [more, setMore] = useState(false); // phones: the whole sentence and "Right now" (the sheet grows, the body shrinks)
@@ -39,9 +41,10 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
   const tipKey = sys && !sys.unknown && sys.tip ? sys.tip(lvl, m) : null;
   return (
     <div className={`calmbar ${more ? 'more' : ''}`}>
-      <div className="calmtext">
+      <div className={`calmtext${story ? ' hasstory' : ''}`}>
         <div className="calmclock"><b>{clock}</b><span>{since}</span></div>
         <h2>{title}</h2>
+        {story && <div className="storyrow">{story('strip', more, () => setMore(!more))}</div>}
         {/* phones: "Just now ·" leads the sentence (the clock sits next to the title) */}
         <p><span className="calmsince" aria-hidden="true">{since} · </span>{text}</p>
         <button className="calmmore" aria-expanded={more} onClick={() => setMore(!more)}>{more ? 'Less' : 'More'}<span aria-hidden="true">{more ? ' ▾' : ' ▴'}</span></button>
@@ -49,6 +52,7 @@ export function CalmBar({ title, text, clock, since, playing, onPlay, u, setU, s
         <p className="sr" aria-live="polite">{title}. {text}</p>
         {where && <div className="calmwhere">Right now: <b>{where}</b></div>}
       </div>
+      {story && more && <div className="storyfull">{story('card', more, () => setMore(false))}</div>}
       <div className="calmctl">
         <button className="play" onClick={onPlay} aria-label={playing ? 'Pause' : 'Play the day'}>{playing ? '❚❚' : '▶'}</button>
         <div className="calmtrack">

@@ -523,3 +523,25 @@
 @media (max-width: 720px) and (min-height: 800px) {
   .v4.calmlay .calmtext > p:not(.sr) { -webkit-line-clamp: 3; }
 }
+
+/* ---- phase P1: the Story card (story/StoryCard.tsx, story/story.css) ----
+   The numbers line sits under the title. On phones it takes the place of one line of the sentence (2 → 1 lines, 3 → 2
+   on taller phones), so the sheet is no taller and the body keeps its share of the screen; "More" opens the rest of
+   the sentence (3 lines) and the whole card (Body Score, cheat sheet, what we don't know), which scrolls on its own. */
+.storyrow { min-height: 18px; line-height: 18px; overflow: hidden; }
+.storyfull { max-width: 920px; width: 100%; margin: 0 auto; max-height: 40vh; overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 720px) {
+  .v4.calmlay .calmtext .storyrow { grid-column: 1 / -1; grid-row: 2; }
+  .v4.calmlay .calmtext.hasstory > p:not(.sr) { grid-row: 3; -webkit-line-clamp: 1; }
+  /* open: the sentence keeps 3 lines (its "Less" in the corner, as when closed), "Right now" waits, the card scrolls */
+  .v4.calmlay .calmbar.more .calmtext.hasstory { max-height: none; overflow: visible; }
+  .v4.calmlay .calmbar.more .calmtext.hasstory > p:not(.sr) { display: -webkit-box; -webkit-line-clamp: 3; }
+  .v4.calmlay .calmbar.more .calmtext.hasstory .calmwhere { display: none; }
+  .v4.calmlay .calmbar.more .calmtext.hasstory .calmmore { position: absolute; grid-row: auto; grid-column: auto; align-items: flex-end; min-width: 76px; padding: 0 0 1px 26px;
+    background: linear-gradient(to right, transparent, var(--bg) 24px) bottom / 100% 21px no-repeat; }
+  .v4.calmlay .storyfull { max-height: 25dvh; }
+}
+@media (max-width: 720px) and (min-height: 800px) {
+  .v4.calmlay .calmtext.hasstory > p:not(.sr) { -webkit-line-clamp: 2; }
+  .v4.calmlay .storyfull { max-height: 30dvh; }
+}

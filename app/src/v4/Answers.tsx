@@ -1,5 +1,5 @@
 // Quick answers: the everyday questions people actually have, answered in a few words from the same model.
-// Sugar · Sleep · Driving (alcohol only) · Hunger (after a dip) · Energy as walking minutes · one next step.
+// Sugar · Sleep · Driving (alcohol only) · Hunger (after a dip) · Energy (kcal and % of a 2,000 kcal day) · one next step.
 // Where people differ we show a range (science/ranges.ts); blood alcohol is never a single number or a "safe" time.
 import type { System } from './status';
 import { worstMoment } from './status';
@@ -10,7 +10,6 @@ import { LEVEL_LABEL } from '../content/types';
 import { Disclaimer } from './HowWeKnow';
 import { FACTORS, FED_PEAK_RATIO, type PersonalNotes } from '../science/personal';
 import { simulateFood } from '../science/foodSim';
-import { walkingKm, walkingMinutes } from '../science/walking';
 import { alcoholClock, clockLabel, GONE_GL, poisonRisk } from '../science/alcoholClock';
 import { alcoholSleepSentence, alcoholSleepTier, caffeineAlsoSentence, minutesToBed, SLEEP_WINDOW_MIN, type SleepRisk } from '../science/daily';
 import type { Profile } from '../science/profile';
@@ -58,6 +57,8 @@ export interface Answer { icon: string; q: string; a: string; tone: 0 | 1 | 2; /
   /** 'you' = computed for this person's body and settings; 'typical' = the same for everyone */
   tag?: 'you' | 'typical' }
 
+/** The reference day on food labels (FDA Daily Value for energy). */
+export const KCAL_DAY = 2000;
 const hh = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(Math.floor(m) % 60).padStart(2, '0')}`;
 
 export function quickAnswers(x: AnswerInput): Answer[] {
@@ -205,14 +206,14 @@ export function quickAnswers(x: AnswerInput): Answer[] {
     out.push({ icon: '🤰', q: 'And in pregnancy?', a: `${mg > 200 ? `This is ${mg} mg, more than` : `This is ${mg} mg. Keep the whole day under`} the 200 mg of caffeine a day that EFSA considers safe in pregnancy${mg > 200 ? '.' : ' (all coffee, tea, cola and chocolate together).'} Late in pregnancy caffeine also stays in you about 2.6–3.5 times longer.`,
       tone: mg > 200 ? 2 : 1, tag: 'you', note: 'Evidence A: EFSA 2015 (safety of caffeine); Parsons 1982, Knutti 1982 (half-life)' });
   }
-  // Energy as walking: ACSM walking equation, net of rest, at 5 km/h (science/walking.ts; activity.md E1–E2).
-  // One formula everywhere; it falls as body weight rises and ignores age and height (they are not in the equation).
+  // Energy (phase P1, owner decision 2026-11-24): kcal only as a number and as a share of the 2,000 kcal reference day
+  // used on food labels (FDA Daily Value); never minutes of walking or any other exercise (science/walking.ts is kept,
+  // unused by the UI: story/compliance.test.ts checks no screen imports it).
   if (x.kcal >= 5) {
-    const min = Math.round(walkingMinutes(x.kcal, x.weightKg));
-    const km = walkingKm(x.kcal, x.weightKg);
-    out.push({ icon: '🚶', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal ≈ ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`} of brisk walking for you${km >= 1 ? ` (about ${km >= 10 ? Math.round(km) : km.toFixed(1).replace(/\.0$/, '')} km)` : ''}.`, tone: 0, tag: pn ? 'you' : undefined,
-      note: pn ? 'Energy used on top of sitting still, at 5 km/h, for your weight' : undefined });
-  } else out.push({ icon: '🚶', q: 'How much energy is that?', a: 'Almost none.', tone: 0 });
+    const pct = Math.round((100 * x.kcal) / KCAL_DAY);
+    out.push({ icon: '🔋', q: 'How much energy is that?', a: `${Math.round(x.kcal)} kcal · ${pct < 1 ? 'under 1' : pct}% of a 2,000 kcal day.`, tone: 0,
+      note: 'The 2,000 kcal day is the reference on food labels (FDA Daily Value), not a target for you' });
+  } else out.push({ icon: '🔋', q: 'How much energy is that?', a: `Almost none: ${Math.max(0, Math.round(x.kcal))} kcal.`, tone: 0 });
   // alcohol: beer with ≤ ≈ 40 g of alcohol was tested (no extra urine); wine and spirits give a little more urine for
   // 4 h; more than that was never tested, so no plain "Yes" [AL7, AL13: Maughan 2016, Polhuis 2017]
   const aG = x.bac ? x.alcoholG ?? 0 : 0;

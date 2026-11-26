@@ -28,7 +28,7 @@ const r = (x: number) => Math.round(x);
 export const FACT_WORDINGS = {
   kcal: ['That is {n} kcal of energy.', '{n} kcal on board.', 'Energy in: {n} kcal.', '{n} kcal for your body to use.', 'All told, {n} kcal.',
     '{n} kcal, put to work slowly.', 'Your body gets {n} kcal from it.', 'In energy terms: {n} kcal.', '{n} kcal, heading for your cells.', 'Fuel count: {n} kcal.',
-    '{n} kcal to burn or store.', 'Calories in it: {n} kcal.'],
+    '{n} kcal to use or store.', 'Calories in it: {n} kcal.'],
   sugar: ['{n} g of sugar, about {t} teaspoons.', 'Sugar in it: {n} g.', '{t} teaspoons of sugar in there.', '{n} g of sugar reaches your gut.', 'The sugar: {n} g.',
     'Sugar count: {n} g.', '{n} g of it is sugar.', 'About {t} teaspoons of sugar, all told.', 'Inside: {n} g of sugar.', 'Sweet part: {n} g of sugar.'],
   protein: ['{n} g of protein to take apart.', 'Protein: {n} g, in building blocks.', '{n} g of protein, arriving slowly.', '{n} g of protein on its way.', 'Protein count: {n} g.',
@@ -54,7 +54,7 @@ export const FACT_WORDINGS = {
   // v22: facts computed from the model runs (alcoholClock, the glucose, blood fat and caffeine curves), never typed in
   stdDrinks: ['That counts as {n} standard drink{s}.', 'In US terms: {n} standard drink{s}.', 'It adds up to {n} standard drink{s}.', 'By US math, {n} standard drink{s}.'],
   bacPeak: ['Blood alcohol tops out about {n} {u} in.', 'The highest level hits about {n} {u} in.', 'It crests about {n} {u} after the drink.', 'Peak level: about {n} {u} in.'],
-  clearH: ['Your liver needs about {n} hours to clear it.', 'Clearing it takes your liver about {n} hours.', 'Your liver burns it off in about {n} hours.', 'About {n} hours of liver work to break it down.'],
+  clearH: ['Your liver needs about {n} hours to clear it.', 'Clearing it takes your liver about {n} hours.', 'Your liver works on it for about {n} hours.', 'About {n} hours of liver work to break it down.'],
   liverRate: ['Your liver handles about {n} g an hour, no faster.', 'Liver speed: roughly {n} g an hour.', 'About {n} g an hour: your liver will not rush.', 'Your liver works through about {n} g an hour.'],
   limitUS: ['At the top of its range, it passes the US limit of 0.08.', 'It can push past the US driving limit, 0.08.'],
   limitEU: ['At its peak, it can top the 0.05 limit used in much of Europe.', 'Its peak can pass Europe’s common 0.05 limit.'],
@@ -70,13 +70,14 @@ export const FACT_WORDINGS = {
   tgPeak: ['Blood fat peaks about {n} hours in.', 'The fat wave crests about {n} hours in.', 'Fat in your blood is highest about {n} hours in.'],
   fatKcal: ['{n} % of its kcal come from fat.', 'Fat brings {n} % of the energy.', 'By energy, it is {n} % fat.'],
   protKcal: ['{n} % of its energy is protein.', 'Protein makes up {n} % of its kcal.', 'By energy, {n} % protein.'],
-  zeroKcal: ['Zero kcal: nothing for your body to burn.', 'No energy at all: zero kcal.', 'Not a single kcal to burn.'],
+  zeroKcal: ['Zero kcal: no fuel for your body at all.', 'No energy at all: zero kcal.', 'Not a single kcal in it.'],
   absent: ['No {a}.', 'It has no {a}.', 'Inside: no {a}.'],
   // (phase 4f: as dvKcal, wordings of one length; the longest was said on 11 % of the videos)
   density: ['There are {n} kcal per 100 g.', 'Per 100 g, that is {n} kcal.', 'Energy density: {n} kcal per 100 g.', 'In 100 g, you get {n} kcal.'],
   bodyWater: ['Your body already holds about {n} liters of water.', 'You carry about {n} liters of water already.', 'About {n} liters of water are in you already.'],
   waterShare: ['It tops up your body water by {n} %.', 'That adds {n} % to the water in you.', 'Your body water rises by just {n} %.'],
-  walk: ['About {n} minutes of brisk walking would burn it.', 'Walking it off takes about {n} minutes.', 'To burn it: roughly {n} minutes of brisk walking.'],
+  // phase P1 (owner: kcal only as a number, never minutes of walking or exercise): no wording, and derivedFacts never emits it
+  walk: [],
   flatSugar: ['Your glucose barely moves.', 'Glucose stays nearly flat.', 'Barely a blip in glucose.', 'Your glucose line stays almost flat.', 'No real glucose spike from this.', 'Glucose hardly rises at all.'],
   // (phase 4f, full tier: the longest wording was said on 18 % of the videos, the limit is 10 %, a pause taking the
   // longest fact that fits: four wordings of one length, so the one picked for the food is the one said)
@@ -111,7 +112,7 @@ export const FACT_SHORT: Record<FactKind, readonly string[]> = {
   tgPeak: ['Fat peaks at {n} hours.', 'Blood fat high: {n} hours.'], fatKcal: ['{n} % of the kcal: fat.', 'Fat: {n} % of the kcal.'], protKcal: ['{n} % of the kcal: protein.', 'Protein: {n} % of the kcal.'],
   zeroKcal: ['Zero kcal.'], absent: ['No {a}.'], density: ['{n} kcal per 100 g.', 'Per 100 g: {n} kcal.'],
   bodyWater: ['You hold {n} liters of water.'], waterShare: ['Plus {n} % body water.'],
-  walk: ['{n} minutes of walking.', 'Walk {n} minutes to burn it.', 'Just walking {n} minutes burns it.', 'Burned in a {n}-minute walk.', '{n} minutes on foot to burn it.', 'Walking time: {n} minutes.'],
+  walk: [], // (phase P1: retired, see FACT_WORDINGS.walk)
   flatSugar: ['Glucose stays flat.', 'No glucose spike.', 'Glucose: barely a bump.', 'A flat glucose line.', 'Hardly any glucose rise.'],
   dvKcal: ['{n} % of a day’s calories.', '{n} % of your daily calories.', 'Daily calories: {n} % used.', 'That is {n} % of a day’s energy.'], dvSodium: ['{n} % of a day’s sodium.', 'Daily sodium: {n} %.', '{n} % of your sodium for the day.'], dvFiber: ['{n} % of a day’s fiber.', 'Daily fiber: {n} %.', '{n} % of your daily fiber.'], dvProtein: ['{n} % of a day’s protein.', 'Daily protein: {n} %.', '{n} % of your daily protein.', 'Protein for the day: {n} %.'], dvSatFat: ['{n} % of the saturated fat limit.'],
   waterPct: ['{n} % water.', 'It is {n} % water.', 'Water makes up {n} %.', '{n} % of it: water.', 'Mainly water, {n} %.', 'By weight, {n} % water.'], gi: ['Glycemic index {n}.', 'A glycemic index of {n}.'],
@@ -172,8 +173,9 @@ export function derivedFacts(f: FactIn) {
   const dv = (kind: FactKind, v: number, ref: number, min: number) => { const p = Math.round((100 * v) / ref); if (p >= min && p <= 300) out.push({ kind, n: p }); };
   dv('dvKcal', kcal, DV.kcal, 1);
   if (m) { dv('dvSodium', m.sodiumMg, DV.sodiumMg, 5); dv('dvFiber', m.fiber, DV.fiber, 5); dv('dvProtein', m.protein, DV.protein, 5); dv('dvSatFat', m.satFat, DV.satFat, 5); }
-  // brisk walking, 3.5 MET (Compendium of Physical Activities), kcal/min = MET × 3.5 × kg / 200 (ACSM); not for alcohol
-  if (kcal >= 5 && (f.weightKg ?? 0) > 20 && (f.alcoholG ?? 0) < 0.5) out.push({ kind: 'walk', n: roundMin(kcal / ((WALK_MET * 3.5 * f.weightKg!) / 200)) });
+  // brisk walking, 3.5 MET (Compendium of Physical Activities), kcal/min = MET × 3.5 × kg / 200 (ACSM); not for alcohol.
+  // Phase P1 (owner decision 2026-11-24): retired. The code path stays for reference, the guard keeps anything from saying it.
+  if (WALK_FACT && kcal >= 5 && (f.weightKg ?? 0) > 20 && (f.alcoholG ?? 0) < 0.5) out.push({ kind: 'walk', n: roundMin(kcal / ((WALK_MET * 3.5 * f.weightKg!) / 200)) });
   if (f.glucose && f.glucose.length > 60 && m && m.availCarbs < 5 && argmaxV(f.glucose, 600) < 5) out.push({ kind: 'flatSugar' });
   if (f.drink && (f.waterMl ?? 0) >= 100 && (f.bodyWaterL ?? 0) > 10 && (f.alcoholG ?? 0) < 0.5 && kcal < 60) {
     out.push({ kind: 'bodyWater', n: Math.round(f.bodyWaterL!) });
@@ -192,6 +194,8 @@ export function derivedFacts(f: FactIn) {
 /** US standard drink: 14 g of pure alcohol (NIAAA); driving limits as blood alcohol in g/L: US 0.08 %, much of Europe 0.05 %. */
 export const DV = { kcal: 2000, sodiumMg: 2300, fiber: 28, protein: 50, satFat: 20 } as const;
 export const STD_DRINK_G = 14, US_LIMIT_GL = 0.8, EU_LIMIT_GL = 0.5, WALK_MET = 3.5;
+/** Phase P1: the walking-minutes fact is off for good (owner: kcal only as a number); story/compliance.test.ts checks it stays off. */
+export const WALK_FACT = false as boolean;
 
 /** The facts of one food, one wording each (by seed), most telling first; `name` prefixes them (a comparison). */
 export function factLines(f: FactIn, seed: number, name = ''): string[] {
@@ -346,7 +350,7 @@ export function arcFor(f: FactIn, seed: number): Arc {
   const rot = (xs: string[], salt: number) => { if (xs.length < 2) return xs; const k = pick(xs.map((_, i) => i), seed, salt); return [...xs.slice(k), ...xs.slice(0, k)]; };
   const at = (x?: { n?: number; u?: string }) => (x?.n !== undefined ? `about ${x.n} ${x.u ?? 'hours'} in` : '');
   const hook: string[] = [], setup: string[] = [], twist: string[] = [], answer: string[] = [];
-  const g = r(f.alcoholG ?? 0), sd = d('stdDrinks'), rate = d('liverRate'), walk = d('walk'), gi = d('gi');
+  const g = r(f.alcoholG ?? 0), sd = d('stdDrinks'), rate = d('liverRate'), gi = d('gi');
   if (cls === 'alcohol') {
     // (no number here: the setup right after says it, "1 standard drink: 16 g, 127 kcal.")
     hook.push("Your liver can't rush it.", 'Feeling fine? Your blood may disagree.', "You'll feel sober before you are.");
@@ -366,7 +370,6 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
       hook.push('No chewing, no waiting: it hits fast.');
       if (sug >= 1) setup.push(m?.sugarSource ? `${sug} g of ${sugarWord(m.sugarSource)}.` : `${sug} g of sugar, about ${tsp} teaspoons.`);
-      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`, `Walking it off: about ${walk.n} minutes.`);
       if (dip) twist.push(`The twist: ${at(dip)}, it dips below where it started.`);
       if (cb?.n && (f.caffeineMg ?? 0) >= 10) twist.push(`At bedtime, ${cb.n} % of its caffeine is still in you.`, `${cb.n} % of its caffeine lasts until bedtime.`);
       if (sug >= 8 && !m?.sugarSource) answer.push('Your blood felt every teaspoon.');
@@ -376,7 +379,6 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
       setup.push(`${carbs} g of carbs, most of it turned into glucose.`);
       if (gi?.n) twist.push(`Not sweet at all, yet its glycemic index is ${gi.n}.`);
-      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
     } else if (cls === 'caffeine') {
       if (cp) hook.push(`You'll feel it ${at(cp)}.`);
       if (ch?.n) hook.push(`Half is still in you after ${ch.n} hours.`);
@@ -390,13 +392,11 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (m && m.fat >= 5) setup.push(`${r(m.fat)} g of fat, the slowest part.`);
       if (m && m.protein >= 5) setup.push(`${r(m.protein)} g of protein to take apart.`);
       if (tg?.n) twist.push(`The fat arrives late: blood fat peaks about ${tg.n} hours in.`);
-      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
     } else if (cls === 'meal') {
       if ((f.t50 ?? 0) >= 30) hook.push(`Your stomach needs ${minWords(f.t50!)} for just half.`);
       hook.push('Your gut has hours of work ahead.');
       // (phase 4f, full tier: one wording was on 18 % of the videos, the limit is 10 %: one of three, per food)
       const dk = d('dvKcal'); if (dk?.n) setup.push(pick([`That's ${dk.n} % of a whole day of calories.`, `One meal, ${dk.n} % of a day’s calories.`, `That alone is ${dk.n} % of your daily calories.`], seed, 59));
-      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
       if (tg?.n) twist.push(`The fat arrives late: blood fat peaks about ${tg.n} hours in.`);
     } else if (cls === 'water') {
       if (bw?.n) hook.push(`You already hold about ${bw.n} liters of water.`);
@@ -407,7 +407,6 @@ export function arcFor(f: FactIn, seed: number): Arc {
       if (d('flatSugar')) hook.push('Your glucose barely moves.');
       if (sp) hook.push(`Watch your blood sugar ${at(sp)}.`);
       if (sug >= 3) setup.push(m?.sugarSource ? `${sug} g of ${sugarWord(m.sugarSource)}.` : `${sug} g of sugar, about ${tsp} teaspoons.`);
-      if (walk?.n) twist.push(`Burning it off takes about ${walk.n} minutes of brisk walking.`);
     }
     answer.push(f.drink ? 'Every sip, accounted for.' : 'Every bite, accounted for.');
   }
@@ -427,7 +426,7 @@ export function arcFor(f: FactIn, seed: number): Arc {
   if ((f.alcoholG ?? 0) < 1) extra.push('Your blood carries it to every cell.');
   // (phase 4f, full tier: a green salad, 8 kcal, long, had a 4.8 s silence: every fact said, every other line here
   // said or saying "stomach" a third time)
-  if (f.kcal >= 1 && f.kcal < 30 && (f.alcoholG ?? 0) < 1) extra.push('Almost nothing here for your body to burn.');
+  if (f.kcal >= 1 && f.kcal < 30 && (f.alcoholG ?? 0) < 1) extra.push('Almost no energy here for your body.');
   if (m && m.sugars >= 3 && (f.alcoholG ?? 0) < 1) extra.push('Your cells can burn this sugar right away.');
   const fastShort = pk?.n !== undefined ? `About ${pk.n} ${pk.u} after the first ${f.drink ? 'sip' : 'bite'}.` : undefined;
   return { cls, hook: rot(hook, 201), setup, twist: cls === 'alcohol' ? twist : rot(twist, 203), answer, loop: rot([...ARC_LOOP[cls]], 205), ...(fast ? { fast, fastShort } : {}), ...(d('sugarDip') ? { dip: true } : {}), ...(extra.length ? { extra } : {}) };

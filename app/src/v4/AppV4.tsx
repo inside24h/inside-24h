@@ -89,7 +89,7 @@ import { Answers, mealLinesFor, quickAnswers } from './Answers';
 import { personalNotes } from '../science/personal';
 import { Disclaimer, HowWeKnow } from './HowWeKnow';
 import { bacRangeText, glucoseRangeTextIn } from '../science/ranges';
-import { Compare, EveryDay, Pro, VideoFallback, YourBody } from './lazyUi'; // loaded on first use
+import { Compare, EveryDay, Pro, StoryCard, VideoFallback, YourBody } from './lazyUi'; // loaded on first use
 import { isTouch } from './perf/device';
 import { analyze, sugarDeltaText, sugarPeakText, verdictOf, type Analysis } from './analyze';
 import { SwapCard, useSwap } from './Swap';
@@ -1204,7 +1204,8 @@ export default function AppV4() {
           playing={playing} onPlay={togglePlay} u={u} setU={(v) => { setU(v); setPlaying(false); }} systems={systems} minute={minute}
           where={overlayRef.current?.where} onMore={() => setCalm(false)}
           eatenAt={profile.drinkAtMin} setEatenAt={(m) => setProfile({ ...profile, drinkAtMin: m })} noun={lower}
-          portion={portion} onPortion={applyPortion} sizes={sizes} onRules={() => setPanel('colours')} />
+          portion={portion} onPortion={applyPortion} sizes={sizes} onRules={() => setPanel('colours')}
+          story={currentParts.length ? (part, open, toggle) => <StoryCard part={part} parts={currentParts} profile={profile} overMin={overEff} open={open} onToggle={toggle} onPersonalize={() => setPanel('you')} /> : undefined} />
       )}
       {started && mode === 'simple' && !calmNow && <StatusStrips systems={systems} minute={minute} onSeek={jump} clock={(m) => hhmm(profile.drinkAtMin + m)} />}
       {started && mode === 'simple' && !calmNow && (

@@ -25,6 +25,7 @@ import { worstMoment } from './status';
 import { lintNarration, narrationFor, questionImpactS, type NarrIn } from './video-narration';
 import { arcFor, compareDiffs, compareFacts, factInOf, factLines } from './video-facts';
 import { seedOf } from './video-hook';
+import { complianceHits } from './story/compliance';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
 const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
@@ -209,6 +210,8 @@ export function lintText(s: string, where: string, kind: 'card' | 'hook' | 'verd
   if (truncatedName(s)) bad('truncated name');
   if (/\bcrash(?:es|ing)?\b/i.test(s)) bad('sugar crash wording'); // ("dip", and only when the model dips: SUGAR_DIP_MGDL)
   if (/\bYour stomach fills up\b/i.test(s)) bad('stomach fills up');
+  // phase P1: the shared compliance lexicon (story/compliance.ts): no exercise-minutes kcal, no "safe to drive", no medical claims
+  for (const e of complianceHits(s)) bad(`compliance: ${e.id}`);
   return out;
 }
 
