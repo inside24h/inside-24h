@@ -283,13 +283,18 @@ export const HUSH_S = 0.3;
 export function musicShape(cues: Cue[], seconds: number): [number, number][] {
   const at = (k: Cue['kind']) => cues.filter((c) => c.kind === k).map((c) => c.t);
   const sip = at('sip')[0] ?? 1, outro = at('outro')[0] ?? seconds - 6;
-  const impacts = [...at('peak'), ...at('verdict')].sort((a, b) => a - b), risers = at('riser');
+  const impacts = [...at('peak'), ...at('verdict')].sort((a, b) => a - b), risers = at('riser'), reveals = at('reveal');
   const nights: [number, number][] = [];
   cues.filter((c) => c.kind === 'night').forEach((c) => { if (c.data?.v === 1) nights.push([c.t, outro]); else if (nights.length) nights[nights.length - 1][1] = c.t; });
   const level = (t: number) => {
     let v = t < sip + 1 ? 1 - 0.45 * Math.max(0, Math.min(1, (t - sip) / 1)) : impacts.some((p) => p < t) ? 0.8 : 0.55;
     if (nights.some(([a, b]) => t >= a && t < b)) v = Math.min(v, 0.5);
     if (t >= outro) v = 0.7;
+    // (phase P2: the reveal: the music falls away over the second before it, and 0.3 s of hush after the big number)
+    for (const p of reveals) {
+      if (t >= p - 1 && t < p) v *= 1 - 0.6 * (t - (p - 1));
+      else if (t >= p && t < p + HUSH_S) v = Math.min(v, 0.05);
+    }
     for (const p of impacts) {
       const r = risers.filter((x) => x < p && x > p - 3).pop() ?? p - 1.2;
       if (t >= r && t < p - HUSH_S) v *= 1 - 0.65 * ((t - r) / Math.max(0.1, p - HUSH_S - r)); // falls away under the riser
@@ -500,6 +505,14 @@ export async function renderSoundtrack2(seconds: number, cues: Cue[], o: SoundOp
             const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
             const p = ctx.createStereoPanner(); p.pan.value = det < 0 ? -0.3 : 0.3; o2.connect(f); f.connect(g); g.connect(p); p.connect(sfx); o2.start(t); o2.stop(t + 1.15); }
         }
+        break;
+      }
+      // phase P2: the spine's surprising number lands (a soft two-tone hit), and the guess's reveal (a riser over the second
+      // before it, then a bright hit; musicShape keeps 0.3 s of hush after it)
+      case 'graph': osc('sine', 659.25, 987.77, t, 0.22, 0.06, sfx, -0.2); osc('triangle', 1318.5, null, t + 0.06, 0.25, 0.03, sfx, 0.2); break;
+      case 'reveal': {
+        nz(Math.max(0, t - 1), Math.min(1, t), 0.07, sfx, { type: 'bandpass', f: 400, f1: 5000, q: 2 }, 0, 0.8);
+        [76, 81, 85].forEach((n, i) => osc('sine', midi(n), null, t + i * 0.05, 0.9, 0.06, sfx, (i - 1) * 0.3));
         break;
       }
       case 'page': osc('sine', 987.8, null, t, 0.16, 0.035, sfx); break;

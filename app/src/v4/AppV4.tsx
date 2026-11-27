@@ -53,6 +53,7 @@ let quietFrame!: VideoKit['quietFrame'], camSeedOf!: VideoKit['camSeedOf'], beat
 let bodyGlowAt!: VideoKit['bodyGlowAt'], cardNamed!: VideoKit['cardNamed'], riseOf!: VideoKit['riseOf'], inText!: VideoKit['inText'], isLightDrink!: VideoKit['isLightDrink'], paletteAt!: VideoKit['paletteAt'], plainNote!: VideoKit['plainNote'], plainSugar!: VideoKit['plainSugar'], SEG_FOCUS_V!: VideoKit['SEG_FOCUS_V'], whereCard!: VideoKit['whereCard'];
 let drawMomentCard!: VideoKit['drawMomentCard'], srtOf!: VideoKit['srtOf'], questionImpactS!: VideoKit['questionImpactS'];
 // (phase 4h: the video's timeline, recorded only for the QA render harness, #render=; and the serving card)
+let spineFor!: VideoKit['spineFor'], spineStops!: VideoKit['spineStops'];
 let teleScene!: VideoKit['teleScene'], teleStart!: VideoKit['teleStart'], teleStop!: VideoKit['teleStop'], sceneOf!: VideoKit['sceneOf'], servingCard!: VideoKit['servingCard'];
 let SPLIT_OPENING!: Shot; // (needs splitPose: set when the kit arrives)
 let kitP: Promise<void> | null = null;
@@ -61,7 +62,7 @@ const loadVideoKit = (): Promise<void> => (kitP ??= import('./video-kit').then((
   ({ narrationFor, arcFor, compareDiffs, compareFacts, factInOf, factLines, canEncode, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere,
     endCardOf, bacPeakText, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf,
     compareHookB, hookB, hookFor, hookForCompare, seedOf, captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS, ORGAN_AT, project, SIDE_X, splitPose, quietFrame, camSeedOf, beatChapter, beatOrgans, camPlanOf, camStyle, classOf, shotOf, splitShot, splitPlanOf,
-    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf, teleScene, teleStart, teleStop, sceneOf, servingCard, questionImpactS } = k);
+    bodyGlowAt, cardNamed, riseOf, inText, isLightDrink, paletteAt, plainNote, plainSugar, SEG_FOCUS_V, whereCard, drawMomentCard, srtOf, teleScene, teleStart, teleStop, sceneOf, servingCard, questionImpactS, spineFor, spineStops } = k);
   SPLIT_OPENING = { focus: [], zoom: 'wide', pose: splitPose(1.62) };
 }, (e) => { kitP = null; throw e; }));
 const NO_HOOK: Hook = { line1: '', line2: '' };
@@ -639,9 +640,15 @@ export default function AppV4() {
     surprise: productId === 'food' && foodParts.length === 1 ? surpriseOf(videoName, peakNow, profile) : undefined,
     decaf: productId === 'food' && foodParts.length === 1 ? decafOf(videoName, built, profile) : undefined, sugarRise: peakNow !== null ? riseOf(built.effects.glucoseMgDl) : undefined, alcoholG: built.alcoholG };
   const vSeed = hookIn ? seedOf(shortName(videoName)) : 0, hookPair = hookIn ? hookPairOf(hookIn, vSeed) : [NO_HOOK, NO_HOOK];
-  const hookNow = hookVar === 'A' ? hookPair[0] : hookPair[1];
+  const hook4 = hookVar === 'A' ? hookPair[0] : hookPair[1];
+  // phase P2: the v5 spine (video-story spineFor, the same call as the text audit): the hook asks its question, the guess
+  // and its reveal, the cards' budget and the end frame. Made once per item, body, hook and cut.
+  const chaptersNow = useMemo(() => story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), [story]);
+  const x5 = useMemo(() => (kitReady && currentParts.length ? analyze(currentParts, profile, overEff) : null), [kitReady, currentParts, profile, overEff]);
+  const v5 = useMemo(() => (x5 && kitReady ? spineFor(x5, hook4, shortName(videoName), profile, vidCut, chaptersNow) : null), [x5, kitReady, hook4.line1, hook4.line2, videoName, profile, vidCut, chaptersNow]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hookNow = v5 ? v5.sp.hook : hook4;
   // (round 12: the story's own signal: espresso is #caffeine; round 18: a pljeskavica is #protein, not #bloodsugar)
-  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, ...captionFlags({ alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, decaf: /\bdecaf/i.test(videoName), sugarPeak: peakNow, solid: /bite/i.test(story.chapters[0]?.title ?? ''), macros: currentParts.length ? macros(currentParts) : undefined }) });
+  const captionsNow = (): Captions => captionsFor({ name: shortName(videoName), hook: hookNow, question: [hookNow.line1, hookNow.line2].find((l) => /\?\s*$/.test(l)), sources: v5?.sp.end.sources, ...captionFlags({ alcoholG: built.alcoholG, caffeineMg: built.caffeine.doseMg, decaf: /\bdecaf/i.test(videoName), sugarPeak: peakNow, solid: /bite/i.test(story.chapters[0]?.title ?? ''), macros: currentParts.length ? macros(currentParts) : undefined }) });
   overlayRef.current = !kitReady ? null : {
     // short (2026-10-23): the body is the hook. No grams in brackets; a long name keeps its first part ("A whole
     // pizza with extra cheese, ham and mushrooms" → "A whole pizza"); the end card has the full name
@@ -740,7 +747,8 @@ export default function AppV4() {
     vcue.current = { shot: OPENING, start: OPENING, seed: vSeed, style: camPlan.style };
     // (phase 4h: QA renders record what every frame draws, scripts/render-sample.mjs writes it next to the video)
     const tele = !!HASH.get('render');
-    if (tele) teleStart({ kind: 'single', cut: vidCut, seconds: plan.seconds, fps: 30, hook: `${hookNow.line1}\n${hookNow.line2}`, name: shortName(videoName) });
+    if (tele) teleStart({ kind: 'single', cut: vidCut, seconds: plan.seconds, fps: 30, hook: `${hookNow.line1}\n${hookNow.line2}`, name: shortName(videoName),
+      ...(v5 ? { nums: v5.sp.nums, story: { guess: !!v5.sp.guess, cheat: v5.sp.end.cheat.length, alcohol: v5.base.alcohol } } : {}) }); // (phase P2: the story's numbers, for the density checks)
     const opts = { sound: vidSound !== 'none', soundMode: vidSound === 'sfx' ? 'sfx' as const : 'music' as const,
       soundFx: { fizzy: isFizzy(PRODUCT.name), solid: /bite/i.test(story.chapters[0]?.title ?? ''), seed: vSeed }, onTick: recTick,
       // the camera starts on the cold open's shot (the peak's organ), already set by the warm-up frames
@@ -872,7 +880,7 @@ export default function AppV4() {
         // (phase 4d: paired close-ups, both halves on one region of the body, each stay under the region cap)
         const split = splitPlanOf(plan.frames, sideOrgans);
         const tele = !!HASH.get('render'); // (phase 4h: the QA render's timeline)
-        if (tele) teleStart({ kind: 'compare', cut: vidCut, seconds: plan.seconds, fps: 30, hook: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, name: `${cmpName(a.label)} vs ${cmpName(b.label)}` });
+        if (tele) teleStart({ kind: 'compare', cut: vidCut, seconds: plan.seconds, fps: 30, hook: gq ? (hookVar === 'B' ? compareHookB(gq.question, cmpName(a.label), cmpName(b.label)) : gq.question) : hookForCompare(cmpName(a.label), cmpName(b.label), false).line1, name: `${cmpName(a.label)} vs ${cmpName(b.label)}`, nums: plan.cmp5?.nums }); // (phase P2: both sides' numbers)
         // each body's gauge, pinned to its organ in its own half (the cameras of CompareScene)
         const pinned = (): CmpOverlay => {
           const o = cmpOverlayRef.current!, cc = cmpCams.current;
@@ -933,12 +941,12 @@ export default function AppV4() {
   const reelPlan = (): Plan => {
     // 2026-10-24: each moment's caption cards are short complete thoughts (video-beats.ts)
     const ctx = beatCtx(shortName(videoName), built, profile.drinkAtMin, servingCard(currentParts)); // (phase 4h, M1: a drink with alcohol says its amount and strength)
-    const stops = applyHook(singleStops(story, ctx, (m, u) => whereCard(built, m, u)), hookNow, built.caffeine.doseMg, built.alcoholG ?? 0); // (phase 4k: with alcohol too, M3) (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
+    const stops0 = applyHook(singleStops(story, ctx, (m, u) => whereCard(built, m, u)), hookNow, built.caffeine.doseMg, built.alcoholG ?? 0), stops = v5 ? spineStops(stops0, v5.sp, v5.base) : stops0; // (phase P2: the v5 spine's cards) // (phase 4k: with alcohol too, M3) (round 9: video-story.ts, the same code the all-foods test runs; round 14: the hook's answer)
     // round 5: the moment that pays the hook off is in every cut (and ends the short's story)
     const payoff = payoffMinOf(stops, hookNow);
     const fx: PlanFx = { ...climaxFx(built, peakNow !== null, story.chapters.map((c) => ({ min: c.min, title: c.title, text: chapterText(c, c.min) })), hookNow), payoffMin: payoff, kcalHook: /kcal/.test(`${hookNow.line1} ${hookNow.line2}`), seed: vSeed, drinkAtMin: profile.drinkAtMin, wakeMin: profile.wakeMin, questionByS: questionImpactS(hookNow, shortName(videoName)),
       lights: systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(built, peakNow !== null), calmDay: (built.alcoholG ?? 0) > 1 };
-    const plan = singlePlan(stops, vidCut, fx, story.chapters, built); // (phase 4e: the same planner call as the audit, perceived stays capped)
+    const plan = singlePlan(stops, vidCut, fx, story.chapters, built, v5?.sp); // (phase 4e: the same planner call as the audit, perceived stays capped; phase P2: with the spine)
     reelStops.current = plan.stops;
     if (HASH.get('vqa')) console.log('[vqa] plan', JSON.stringify({ chapters: stops.map((s) => [s.min, s.title, s.text]), seconds: plan.seconds, stops: plan.stops, pages: plan.pages.map((p) => [p.stop, Math.round(p.s * 10) / 10, p.text]), cues: plan.cues.map((c) => [Math.round(c.t * 1000) / 1000, c.kind, c.data?.label ?? c.data?.v ?? '']) }));
     return plan;

@@ -18,6 +18,9 @@ export interface CaptionIn {
   hook: { line1: string; line2: string };
   alcohol?: boolean; caffeine?: boolean; sugar?: boolean; solid?: boolean; /** round 18: protein-led (meat, fish) */ protein?: boolean;
   /** a comparison: the two names ("Cola", "Water") */ compare?: { a: string; b: string };
+  /** phase P2: the video's question (its hook's, the guess: TikTok and YouTube search what people ask) and its sources
+   *  line ("Sources: Inside 24h · Cola", with the food's page once the site has its address, video-segments sourcesLine) */
+  question?: string; sources?: string;
 }
 export interface Captions { tiktok: string; reels: string; facebook: string; shorts: { title: string; description: string } }
 
@@ -68,7 +71,8 @@ export function captionsFor(c: CaptionIn): Captions {
   const hook = `${c.hook.line1} ${c.hook.line2}`.replace(/\s+/g, ' ').trim();
   const food = cmp ? [foodTag(cmp.a), foodTag(cmp.b), ...extraTags(`${cmp.a} ${cmp.b}`)] : [foodTag(c.name), ...extraTags(c.name)];
   const safety = c.alcohol ? `\n${ALCOHOL_LINE}` : '';
-  const foot = `${DISCLAIMER} ${SOURCES_LINE}${safety}`;
+  const foot = `${DISCLAIMER} ${SOURCES_LINE}${c.sources ? `
+${c.sources}` : ''}${safety}`;
   // TikTok: the search phrase, the hook, ONE question for the comments, 5 specific hashtags
   const ask = cmp ? `${commentLine(cmp.a, cmp.b)} 👇` : 'What surprised you most? 👇';
   const tiktok = `${search} · ${hook}\n${ask}\n${foot}\n${tags([...food, topicTag(c), 'whathappensinyourbody', 'foodscience'], 5)}`;
@@ -77,7 +81,9 @@ export function captionsFor(c: CaptionIn): Captions {
   const facebook = `${search}\n${hook}\n${foot}`;
   // YouTube Shorts: a title of at most 60 characters, a one-sentence description with the sources, 3 hashtags
   const titles = [cmp ? `${subject}: inside your body in 24 h` : `${c.name}: what ${pluralName(c.name) ? 'they do' : 'it does'} inside you in 24 h`, `${subject}: inside your body in 24 h`, `${subject} in 24 hours`];
-  const title = titles.find((t) => t.length <= 60) ?? `${subject}`.slice(0, 60);
+  // (phase P2: the question first, the way people search: "Cola: how much caffeine is left at bedtime?")
+  const q = c.question ? `${subject}: ${lower(c.question.replace(/^(?:Guess|Guess first|Can you guess|What would you guess)\s*:?\s*/i, '').replace(/^\w/, (ch) => ch.toUpperCase()))}` : '';
+  const title = [q, ...titles].filter(Boolean).find((t) => t.length <= 60) ?? `${subject}`.slice(0, 60);
   const description = `${hook} Hour by hour, in a simulated typical body.\n${foot}\n${tags([...food, topicTag(c)], 3)}`;
   return { tiktok, reels, facebook, shorts: { title, description } };
 }

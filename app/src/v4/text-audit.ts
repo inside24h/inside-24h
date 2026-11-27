@@ -29,7 +29,8 @@ import { complianceHits } from './story/compliance';
 import { sameAmountOffer, sameAs } from './Compare';
 /** AppV4 HOOK_OF: the curated products' own names. */
 const CURATED_NAME: Record<string, string> = { cola: 'One can of cola', espresso: 'One espresso', water: 'One glass of water' };
-import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, servingCard, decafOf, endCardOf, payoffMinOf, shortName, singlePlan, singleStops, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
+import { applyHook, beatCtx, climaxFx, cmpName, comparePlan, servingAmount, servingCard, decafOf, payoffMinOf, shortName, singlePlan, singleStops, spineFor, staleAt, surgeOf, surpriseOf, REVEAL_FROM, type ComparePlan } from './video-story';
+import { spineStops } from './video-segments';
 
 export const AUDIT_PROFILE: Profile = { ...DEFAULT_PROFILE, drinkAtMin: 22 * 60 };
 export const AUDIT_CUTS: Cut[] = ['long', 'medium', 'short'];
@@ -89,14 +90,17 @@ function makeSingle(x: Analysis, cut: Cut, v: 'A' | 'B', p: Profile, vname: stri
   const solid = /bite/i.test(story.chapters[0]?.title ?? '');
   const hin = { name, chapters, alcohol: (b.alcoholG ?? 0) > 1, caffeine: b.caffeine.doseMg >= 10, solid, kcal: b.energy.total, grams: x.macros.grams,
     pace: b.pace ? { doses: b.pace.doses, round: 'drink' } : undefined, caffeineMg: b.caffeine.doseMg, surprise: surpriseOf(x.label, x.sugarPeak, p), decaf: decafOf(x.label, b, p), sugarRise: x.glucose !== undefined ? riseOf(b.effects.glucoseMgDl) : undefined, alcoholG: b.alcoholG };
-  const hookA = hookFor(hin), hook = v === 'A' ? hookA : hookB(hin, hookA);
-  const stops = applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin, servingCard(x.parts)), (m, u) => whereCard(b, m, u)), hook, b.caffeine.doseMg, b.alcoholG ?? 0);
+  const hookA = hookFor(hin), hook4 = v === 'A' ? hookA : hookB(hin, hookA);
+  // (phase P2: the v5 spine, as the app's reelPlan builds it: the hook asks its question, the cards say this food's
+  // numbers, the guess is revealed at the end)
+  const { sp, base, end } = spineFor(x, hook4, name, p, cut, chapters), hook = sp.hook;
+  const stops = spineStops(applyHook(singleStops(story, beatCtx(name, b, p.drinkAtMin, servingCard(x.parts)), (m, u) => whereCard(b, m, u)), hook, b.caffeine.doseMg, b.alcoholG ?? 0), sp, base);
   const fx: PlanFx = { ...climaxFx(b, x.glucose !== undefined, chapters, hook), payoffMin: payoffMinOf(stops, hook), kcalHook: /kcal/.test(`${hook.line1} ${hook.line2}`), seed: seedOf(name), drinkAtMin: p.drinkAtMin, wakeMin: p.wakeMin, questionByS: questionImpactS(hook, name),
     lights: x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2), heart: x.systems.find((s) => s.key === 'heart')?.levels, surge: surgeOf(b, x.glucose !== undefined) };
-  const plan = singlePlan(stops, cut, fx, story.chapters, b), payoff = fx.payoffMin;
+  const plan = singlePlan(stops, cut, fx, story.chapters, b, sp), payoff = fx.payoffMin;
   const notes = x.systems.map((s) => { const w = worstMoment(s), l = s.levels[w] as 0 | 1 | 2; return `${s.label}: ${plainNote(s.key as typeof SYS[number], l, w, b, inText(w), !!s.unknown)}`; });
-  const caps = captionsFor({ name, hook, ...captionFlags({ alcoholG: b.alcoholG, caffeineMg: b.caffeine.doseMg, decaf: /\bdecaf/i.test(x.label), sugarPeak: x.sugarPeak, solid, macros: x.macros }) });
-  const end = endCardOf(b, x.glucose !== undefined, chapters, p.glucoseUnit, hook); // (phase 4e: the end card answers the hook)
+  const caps = captionsFor({ name, hook, question: [hook.line1, hook.line2].find((l) => /\?\s*$/.test(l)), sources: sp.end.sources, ...captionFlags({ alcoholG: b.alcoholG, caffeineMg: b.caffeine.doseMg, decaf: /\bdecaf/i.test(x.label), sugarPeak: x.sugarPeak, solid, macros: x.macros }) });
+  // (phase 4e: the end card answers the hook; phase P2: spineFor made it, for the v5 hook)
   return { hook, plan, stops, payoff, name, hero: end.hero, after24: end.after24, notes, caps };
 }
 

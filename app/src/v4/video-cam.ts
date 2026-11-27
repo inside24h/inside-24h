@@ -269,7 +269,10 @@ export const PIPE_TO = [0.7, 0.8, 0.86, 0.92, 1] as const;
 /** With `pipe` 1 the first moment never reaches the stomach (the glide does) and stays a little longer in the mouth. */
 export const PIPE_HEAD_S = 0.36;
 export const SAFETY_CARD = /breath test|\bdrive\b/i;
-export const quietFrame = (fr: { beat?: string; cap?: string; lull?: boolean } | null | undefined) => !!fr && (!!fr.lull || ((fr.beat === 'hold' || fr.beat === 'hook') && !!fr.cap && SAFETY_CARD.test(fr.cap)));
+/** Phase P2: the v5 spine's action ("Try this") and what it means for you ("For a 70 kg adult", video-segments
+ *  spineStops) are about the whole person, no organ: their cards are quiet, the camera shows the whole body. */
+export const SPINE_TITLE = /^(?:Try this|For an? \d+ kg [a-z]+)$/; // (the number keeps its moment's organ: same-class videos are not filmed alike)
+export const quietFrame = (fr: { beat?: string; cap?: string; lull?: boolean; title?: string } | null | undefined) => !!fr && (!!fr.lull || ((fr.beat === 'hold' || fr.beat === 'hook') && !!fr.cap && (SAFETY_CARD.test(fr.cap) || SPINE_TITLE.test(fr.title ?? ''))));
 /** In a glide the card has left and the NEXT chip names the moment ahead: that moment is the topic. */
 export function topicRegion(fr: ShotFrame & { hk?: number; pipe?: number; next?: { min: number; title: string } }, chapters: { min: number; title: string; focus?: string | null }[]): string {
   if (fr.phase !== 'main' || fr.beat === 'teaser' || fr.beat === 'rewind' || fr.beat === 'end') return ''; // (the 24 h beat draws no card: plateA 0)

@@ -131,7 +131,8 @@ function chooseGuess0(a: GuessSide, b: GuessSide, opts: { bedMin?: number } = {}
     const rel = (s: ArrayLike<number>, mx: number) => Float32Array.from({ length: N }, (_, m) => Math.max(0, Math.min(1, (s[m] ?? 0) / (mx || 1))));
     const top = Math.max(pk[0].mx, pk[1].mx);
     return { kind: 'sugar', question: 'Guess: which raises your blood sugar more?', winner: w, decidedMin: pk[w]!.at,
-      answer1: `Bigger rise: ${the(sides[w].name)}.`, answer2: 'Its blood sugar goes up more.',
+      // (phase P2: the answer says both rises, against your usual level, as the gauges do)
+      answer1: `Bigger rise: ${the(sides[w].name)}.`, answer2: `Up about ${Math.round((100 * pk[w]!.mx) / 5)} % vs ${Math.round((100 * pk[1 - w]!.mx) / 5)} % over usual.`,
       recap: `Answer: ${sides[w].name} raised blood sugar more.`, progress: [rel(a.sugar!, top), rel(b.sugar!, top)] };
   }
   // 3b) round 15 (critic J-1: cola vs orange juice, the same amount, asked nothing): which has more sugar (the model's

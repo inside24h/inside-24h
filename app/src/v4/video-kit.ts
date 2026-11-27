@@ -7,7 +7,8 @@ export { arcFor, compareDiffs, compareFacts, factInOf, factLines } from './video
 export { canEncode, captionOf, composeCmpFrame, composeCover, composeFrame, recordCompare, stampFor, record, recordFrames, saveFile, SIZE, VIDEO_COPY, videoSupportHere } from './share';
 export { planVideo } from './video-plan';
 export { teleScene, teleStart, teleStop, sceneOf } from './video-telemetry';
-export { servingCard, after24Of, bacPeakText, endCardOf, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, surgeOf, surpriseOf } from './video-story';
+export { servingCard, after24Of, bacPeakText, endCardOf, beatCtx, CMP_SHORT, CMP_STOPS, cmpName, applyHook, climaxFx, heroOf, servingAmount, comparePlan, decafOf, gaugesAt, payoffMinOf, plainLatin, shortName, singlePlan, singleStops, spineFor, surgeOf, surpriseOf } from './video-story';
+export { spineStops } from './video-segments'; // (phase P2: the v5 spine)
 export { compareHookB, hookB, hookFor, hookForCompare, seedOf } from './video-hook';
 export { captionFlags, captionsFor, PLATFORM_CUT, PLATFORM_LABEL, PLATFORM_LENGTH, PLATFORMS } from './video-caption';
 export { beatChapter, beatOrgans, camPlanOf, camSeedOf, camStyle, classOf, idleDrift, ORGAN_AT, project, quietFrame, shotOf, SIDE_X, splitPlanOf, splitPose, splitShot } from './video-cam';

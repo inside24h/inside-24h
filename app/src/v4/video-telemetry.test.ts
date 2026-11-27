@@ -12,7 +12,8 @@ import { AUDIT_CUTS, AUDIT_PROFILE, auditItems, auditPairs, type AuditItem } fro
 import { analyze } from './analyze';
 import { parseMeal } from './food/parse';
 import { filmCompareTimeline, filmSingleTimeline } from './telemetry.testutil';
-import { checkTimeline, teleSummary, type TeleFrame, type Timeline } from './video-telemetry';
+import { checkTimeline, density5, SPINE, teleSummary, type TeleFrame, type Timeline } from './video-telemetry';
+const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[s.length >> 1] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
 import { sweep } from './sweep.testutil';
 
 const item = (q: string): AuditItem => { const parts = parseMeal(q), x = analyze(parts, AUDIT_PROFILE); return { id: q, x, parts, vname: x.label }; };
@@ -57,21 +58,28 @@ describe('phase 4h: what the video draws passes the render checks', () => {
   it('every item × cut: the timeline passes every check (perceived stays, end card, no text over text, BAC limits, the clock, the hook answered)', () => {
     const bad: string[] = [];
     let n = 0;
-    for (const it of sweep(auditItems())) for (const cut of AUDIT_CUTS) { n++; bad.push(...show(filmSingleTimeline(it, cut))); }
-    console.log(`[timeline singles] ${n} videos, ${bad.length} issues`, JSON.stringify(bad.slice(0, 8)));
+    // (phase P2: and the v5 density, checkTimeline5, every video at least SPINE.FACTS_PER_10S, the median FACTS_MEDIAN)
+    const per10: number[] = [];
+    for (const it of sweep(auditItems())) for (const cut of AUDIT_CUTS) { n++; const tl = filmSingleTimeline(it, cut); per10.push(density5(tl).factsPer10); bad.push(...show(tl)); }
+    console.log(`[timeline singles] ${n} videos, ${bad.length} issues, facts/10 s median ${median(per10).toFixed(2)}, min ${Math.min(...per10).toFixed(2)}`, JSON.stringify(bad.slice(0, 8)));
     expect(bad.slice(0, 20)).toEqual([]);
+    expect(median(per10)).toBeGreaterThanOrEqual(SPINE.FACTS_MEDIAN);
   }, 900_000);
 
   it('comparisons × cut: the timeline passes every check but the stays; the stays are held to the cap where the planner can (counted, never more)', () => {
-    const bad: string[] = [], over: string[] = [];
+    const bad: string[] = [], over: string[] = [], per10: number[] = [];
     let n = 0;
     for (const pr of sweep(auditPairs(auditItems(), 120))) for (const cut of AUDIT_CUTS) {
       n++;
-      for (const s of show(filmCompareTimeline(pr.a, pr.b, cut))) (/: region cap: /.test(s) ? over : bad).push(s);
+      const tl = filmCompareTimeline(pr.a, pr.b, cut);
+      per10.push(density5(tl).factsPer10);
+      for (const s of show(tl)) (/: region cap: /.test(s) ? over : bad).push(s);
     }
     console.log(`[timeline compare] ${n} videos, ${bad.length} issues, ${over.length} stays over the cap`, JSON.stringify([...bad, ...over].slice(0, 8)));
     expect(bad.slice(0, 20)).toEqual([]);
     expect(over.length / n).toBeLessThanOrEqual(CMP_OVER_MAX);
+    console.log(`[timeline compare] facts/10 s median ${median(per10).toFixed(2)}, min ${Math.min(...per10).toFixed(2)}`);
+    expect(median(per10)).toBeGreaterThanOrEqual(SPINE.FACTS_MEDIAN);
   }, 900_000);
 });
 /** Phase 4h: comparisons whose perceived stays the planner could not bring under the cap (lulls, one card a side, a

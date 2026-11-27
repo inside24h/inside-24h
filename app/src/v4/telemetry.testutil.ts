@@ -15,6 +15,8 @@ import { sceneOf, teleScene, teleStart, teleStop, type Timeline } from './video-
 import type { Analysis } from './analyze';
 import type { Profile } from '../science/profile';
 import type { SegId } from '../scene/segments';
+import { numbersOf, storyOf } from './story/foodStory';
+import { teleNumsOf } from './video-telemetry';
 
 /** A 2D canvas stand-in: text widths at `w` × the font size per character (Geist averages ~0.56). */
 // (phase 4i: the same widths; the font size parsed once per font, and a drawing call makes no new function each time)
@@ -40,7 +42,8 @@ export function filmSingleTimeline(it: AuditItem, cut: Cut, p: Profile = AUDIT_P
   const cam = camPlanOf(plan.frames, camStyle(classOf(b), camSeedOf(seedOf(o.name), b.energy.total)), chapters);
   const hook = `${o.hook.line1}\n${o.hook.line2}`, ctx = fakeCtx();
   let lead: SegId | null = null, leadM = -1;
-  teleStart({ kind: 'single', cut, seconds: plan.seconds, fps: FPS, hook, name: o.name });
+  const st = storyOf(x, it.parts, p); // (phase P2: the story's numbers, to tell the item's own numbers on screen)
+  teleStart({ kind: 'single', cut, seconds: plan.seconds, fps: FPS, hook, name: o.name, nums: teleNumsOf(st.numbers), story: { guess: !!plan.spine?.guess, cheat: [st.cheat.bestTime, st.cheat.pairWith, st.cheat.swapFor].filter(Boolean).length, alcohol: st.safety.alcohol } });
   try {
     for (let i = 0; i < plan.frames.length; i++) {
       const fr = at(plan, i), m = Math.min(1440, fr.m);
@@ -64,7 +67,7 @@ export function filmCompareTimeline(a: Analysis, b: Analysis, cut: Cut): Timelin
   const c = auditCompare(a, b, cut), plan = c.cp.plan, g = c.cp.guess, ctx = fakeCtx();
   const sides = (fr: Plan['frames'][number]) => ([[a, fr.title], [b, fr.titleB]] as const).map(([x, title]) => beatOrgans(title, beatChapter(x.built.story.chapters, { ...fr, title }).focus).organs) as [string[], string[]];
   const split = splitPlanOf(plan.frames, sides);
-  teleStart({ kind: 'compare', cut, seconds: plan.seconds, fps: FPS, hook: c.hook, name: `${c.an} vs ${c.bn}` });
+  teleStart({ kind: 'compare', cut, seconds: plan.seconds, fps: FPS, hook: c.hook, name: `${c.an} vs ${c.bn}`, nums: [...teleNumsOf(numbersOf(a, AUDIT_PROFILE)), ...teleNumsOf(numbersOf(b, AUDIT_PROFILE), 'b:')] });
   for (const fr of plan.frames) {
     const m = Math.min(1440, fr.m), card = fr.beat === 'hold' || fr.beat === 'hook';
     const shot = splitShot(fr, card ? sides(fr).flat() : [], split);

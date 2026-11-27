@@ -96,7 +96,8 @@ export type Cut = 'long' | 'medium' | 'short';
 export const isLongish = (cut: Cut) => cut !== 'short';
 /** One key moment of the day: the minute, the chapter title and its words at that minute. */
 /** `lines`: the moment's caption cards (video-beats.ts beatLines; computed from title + text when absent). */
-export interface StopIn { min: number; title: string; text: string; lines?: string[]; /** never left out (round 5) */ keep?: boolean; /** round 16: its first cards that must be shown */ must?: number }
+export interface StopIn { min: number; title: string; text: string; lines?: string[]; /** never left out (round 5) */ keep?: boolean; /** round 16: its first cards that must be shown */ must?: number;
+  /** phase P2: a moment of the v5 spine (video-segments.ts spineStops): the surprising number, what it means for you, one action; laid out as a card */ kind?: 'number' | 'forYou' | 'action' }
 /** Safety cards (round 5, critic P0): with alcohol, "a breath test can be positive" and "Don't drive." are shown in
  *  EVERY cut, together, and their moment is never left out. */
 export const SAFETY = /breath test|\bdrive\b/i;
@@ -130,6 +131,7 @@ export interface VFrame {
   /** phase 4e: a wordless whole-body stretch of a glide (no card, no NEXT chip, no organ lit for a card): the viewer
    *  leaves the region the moments before were on */
   lull?: boolean;
+  /** phase P2: the item-specific numbers a lull's card says (each side's, comma-joined; side B's keys "b:…") */ gk?: string; gkB?: string;
   /** phase 4j (critique 2026-11-17, M6: 3-4 s of whole-body glide with no card): a lull's card, about the whole body
    *  (no organ, no place: the stay it breaks is not resumed), its words from the model at this frame's minute; `gA` its
    *  opacity; `gcapB` the comparison's second food (withLullCards) */
@@ -142,9 +144,15 @@ export interface VFrame {
  *  from these cues, so they always land on the same frame. */
 export type CueKind = 'start' | 'move' | 'stop' | 'page' | 'outro' | 'end'
   | 'teaser' | 'rewind' | 'sip' | 'riser' | 'peak' | 'next' | 'night' | 'lights' | 'verdict' | 'guess' | 'race' | 'micro' | 'heart' | 'surge' | 'day'
-  /** v20: a spoken key word (video-captions punchTimes): a camera punch-in and a soft accent; side 2 = both */ | 'punch';
+  /** v20: a spoken key word (video-captions punchTimes): a camera punch-in and a soft accent; side 2 = both */ | 'punch'
+  /** phase P2: the spine's surprising number lands (a hit), and the guess's reveal (a riser 1 s before it, a hush after) */ | 'graph' | 'reveal';
 export interface Cue { t: number; kind: CueKind; data?: { level?: 0 | 1 | 2; side?: 0 | 1 | 2; v?: number; label?: string } }
-export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number; peakT?: number }
+export interface Plan { frames: VFrame[]; stops: number[]; stopsU: number[]; pages: Page[]; cues: Cue[]; seconds: number; introS: number; outroS: number; peakT?: number;
+  /** phase P2: the v5 spine laid on this plan (video-plan withSpine): its guess, its cards' kinds and numbers, the end frame, and when the reveal starts */ spine?: SpinePlan;
+  /** phase P2, a comparison: each side's card numbers (side B's keys "b:…"), its 5 axes for the end frame, the sources line */ cmp5?: CmpSpine }
+export interface CmpSpine { /** both sides' story numbers for the timeline (side B's keys "b:…") */ nums: import('./video-telemetry').TeleNum[];
+  /** one action for the end frame (a side's cheat sheet, the one with a number of its own first) */ action?: { line: string; grade: string }; lines: [Record<string, string[]>, Record<string, string[]>]; axes: [{ label: string; word: string; tier: 0 | 1 | 2 | 3 | null }[], { label: string; word: string; tier: 0 | 1 | 2 | 3 | null }[]]; sources: string }
+export type SpinePlan = import('./video-segments').Spine & { revealT: number; /** the end frame starts (the outro) */ endT: number };
 /** What the effects need from the model (all optional; the plan works without). */
 export interface PlanFx {
   teaserMin?: number;     // the cold open (frame 0): the story's most dramatic minute (the main gauge's peak)
@@ -184,6 +192,8 @@ export interface PlanFx {
    *  story's own moments the planner may bring in to break a stay. Without it, stays are not checked. */
   /** phase 4e (internal): the minutes whose glide in is a lull; `pipe`: the first moment stays on the food pipe */
   lulls?: number[]; pipe?: number;
+  /** phase P2: glides into these moments are lulls from the start (the v5 spine: a video about alcohol says the blood
+   *  alcohol's way on one, phase 4l, when the layout made none) */ lullsAt?: number[];
   /** phase 4h: the food's own seed (video-hook seedOf of its name), for choices that should differ between foods */ seed?: number;
   /** phase 4j (internal): seconds the first glide takes on for the hook's question (questionByS) */ openGlide?: number;
   /** phase 4k: the slowest the story's clock runs, minutes a second (PACE_FAST with alcohol or caffeine; default PACE_MEAL) */ paceMin?: number;
@@ -411,7 +421,7 @@ export function planVideo(stopsIn: StopIn[], cut: Cut, toU: (m: number) => numbe
   const pagesFor = () => chosen.map((_s, i) => sents[i].slice(0, Math.max(1, used[i])));
   const stopS = (pp: string[]) => pp.reduce((a, p, j) => a + readSeconds(p, j === 0), 0);
   // (phase 4e: the glides made lulls, by the minute they lead to: they last at least LULL_S)
-  const lulls = new Set<number>();
+  const lulls = new Set<number>(fx.lullsAt ?? []);
   let pipe = 0;
   const lullX = () => { let x = 0; for (let i = 0; i <= chosen.length; i++) { const to = i < chosen.length ? chosen[i].min : 1440; if (i > 0 && lulls.has(to) && (i < chosen.length || chosen[i - 1].min < 1440)) x += Math.max(0, LULL_S - gk * moveS(toU, chosen[i - 1].min, to)); } return x; };
   // (phase 4h: the opening card has no new-moment bonus, see lay)
@@ -857,6 +867,10 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
           }
           if (fa) cb = ''; else ca = '';
         }
+        // (phase P2: never a page with no words on either side after the moment's first: a wordless stretch, not a card;
+        // nor one that only shows again what was just read: nothing new to read)
+        if (!ca && !cb && (out.length || k < n - 1)) continue;
+        if (out.length && !(ca && ca !== pa) && !(cb && cb !== pb && cb !== ca)) continue;
         const s1 = readChars((ca !== pa ? ca.length : 0) + (cb !== pb && cb !== ca ? cb.length : 0), k === 0) || s;
         ra = ca && ca === pa ? ra + s1 : ca ? s1 : 0; rb = cb && cb === pb ? rb + s1 : cb ? s1 : 0;
         out.push({ cap: ca, capB: cb, s: s1 });
@@ -1239,9 +1253,65 @@ export function withLullCards(plan: Plan, fa: (m: number) => string | null, fb?:
   }
   return plan;
 }
+/** Phase P2: a comparison's lulls (withLullCards) say each side's own numbers (`ca`, `cb`: one fact per lull and side), in
+ *  place of the v4 "TAKEN UP SO FAR" counters; a side with none left keeps its `fa` / `fb` line. */
+export function withCmpLulls(plan: Plan, ca: { title: string; text: string; keys?: string[] }[], cb: { title: string; text: string; keys?: string[] }[], fa: (m: number) => string | null, fb: (m: number) => string | null): Plan {
+  const fs = plan.frames, nIn = Math.max(1, Math.round(0.2 * FPS)), nOut = Math.max(1, Math.round(0.15 * FPS));
+  let n = 0;
+  for (let i = 0; i < fs.length;) {
+    if (!fs[i].lull) { i++; continue; }
+    let j = i; while (j < fs.length && fs[j].lull) j++;
+    const xa = ca[n], xb = cb[n]; n++;
+    for (let k = i; k < j; k++) {
+      const f = fs[k], a = xa ? `${xa.title}: ${xa.text}` : fa(f.m), b = xb ? `${xb.title}: ${xb.text}` : fb(f.m);
+      if (!a && !b) continue;
+      f.gtitle = xa || xb ? 'Each one' : LULL_TITLE; if (a) f.gcap = a; if (b) f.gcapB = b; f.gA = Math.min(1, (k - i + 1) / nIn, (j - k) / nOut);
+      if (xa && 'keys' in xa) f.gk = (xa as { keys: string[] }).keys.join(','); if (xb && 'keys' in xb) f.gkB = (xb as { keys: string[] }).keys.map((x) => `b:${x}`).join(',');
+    }
+    i = j;
+  }
+  return plan;
+}
 /** Index of the stop nearest `min` on the day axis (within 6 % of the day), or -1. */
 function nearestStop(mins: number[], min: number, toU: (m: number) => number): number {
   let best = -1, d = 0.06;
   mins.forEach((m, i) => { const x = Math.abs(toU(m) - toU(min)); if (x <= d) { d = x; best = i; } });
   return best;
+}
+/** Phase P2: the reveal of the guess starts this long before the end frame (the outro): inside the last
+ *  SPINE.REVEAL_WINDOW_S before it is fully on screen, with time to read it. */
+export const REVEAL_LEAD_S = 2.4;
+/** Phase P2 (roadmap 2026-11-24): the v5 spine laid on a laid-out single video (a separate path: the card path above
+ *  is unchanged). The reveal starts REVEAL_LEAD_S before the end frame (cue 'reveal': a riser 1 s before it, a hush
+ *  after), the surprising number lands with a hit (cue 'graph'), and each lull (the wordless whole-body stretch,
+ *  phase 4e) shows one of the item's own numbers (spine.chips) in place of the v4 "TAKEN UP SO FAR" counter; with none
+ *  left, `live` (the live curve's value at that minute), else nothing (the lull then stays wordless, as before 4j). */
+export function withSpine(plan: Plan, sp: import('./video-segments').Spine, live?: (m: number) => { title: string; text: string } | null, first?: (m: number) => { title: string; text: string } | null): Plan {
+  const tOut = plan.cues.find((c) => c.kind === 'outro')?.t ?? plan.seconds - plan.outroS;
+  const revealT = Math.max(plan.introS + 1, tOut - REVEAL_LEAD_S);
+  if (sp.guess) plan.cues.push({ t: revealT, kind: 'reveal', data: { label: sp.guess.letter } });
+  let prev = '';
+  for (const f of plan.frames) {
+    if (f.phase === 'main' && f.beat === 'hold' && f.cap && f.cap !== prev && sp.lines[f.cap]?.kind === 'number') plan.cues.push({ t: f.t, kind: 'graph', data: { label: 'number' } });
+    prev = f.phase === 'main' ? f.cap ?? '' : prev;
+  }
+  const fs = plan.frames, nIn = Math.max(1, Math.round(0.2 * FPS)), nOut = Math.max(1, Math.round(0.15 * FPS));
+  let chip = 0;
+  for (let i = 0; i < fs.length;) {
+    if (!fs[i].lull) { i++; continue; }
+    let j = i; while (j < fs.length && fs[j].lull) j++;
+    // (`first`: the first lull's own live gauge, the blood alcohol's way with alcohol, as phase 4l has it)
+    const own = i === fs.findIndex((f) => f.lull) && first ? first : null;
+    const c = own ? null : sp.chips[chip];
+    if (c) chip++;
+    for (let k = i; k < j; k++) {
+      const x = (own ? own(fs[k].m) : null) ?? c ?? live?.(fs[k].m) ?? null;
+      if (!x) continue;
+      fs[k].gtitle = x.title; fs[k].gcap = x.text; fs[k].gA = Math.min(1, (k - i + 1) / nIn, (j - k) / nOut);
+    }
+    i = j;
+  }
+  plan.cues.sort((a, b) => a.t - b.t);
+  plan.spine = { ...sp, revealT, endT: tOut };
+  return plan;
 }

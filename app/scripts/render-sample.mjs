@@ -4,7 +4,7 @@
 // "Make this a Reel" button), waits for the finished file (window.__i24render) and writes it to --out.
 //   node scripts/render-sample.mjs --q=beer --render=reels --out=<file.mp4> [--vs=croissant] [--site=../site]
 // Phase 4h: also writes <out>.timeline.json, what every frame drew (video-telemetry.ts), for npm run qc:render.
-// No voiceover (a fresh profile has it off: nothing is downloaded), music on. One headless browser, killed at the end;
+// No voiceover by default (a fresh profile has it off: nothing is downloaded; --voice turns it on), music on. One headless browser, killed at the end;
 // nothing leaves the machine (a local static server on 127.0.0.1).
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -18,6 +18,9 @@ const Q = arg('q', 'beer'), RENDER = arg('render', 'reels'), VS = arg('vs', '');
 // (phase 4l: --at=22:45, the first sip's time of day, for a sample about an evening drink; default: the time now)
 const AT = arg('at', '');
 const LIMIT_MIN = Number(arg('minutes', '60'));
+// (phase P2: --voice turns the voiceover on, as a viewer would in the video dialog: the app's own 'i24-voice' setting in
+// this browser's temp profile; the voice model is fetched by the page itself, as the app does, and made on this machine)
+const VOICE = process.argv.includes('--voice');
 // Phase 4g: the export runs on the real GPU (headless Chromium with ANGLE on D3D11). Software WebGL (SwiftShader) made a
 // long cut take 20+ minutes and run the PC out of memory, so it is refused unless --allow-swiftshader is passed.
 const ALLOW_SWIFTSHADER = process.argv.includes('--allow-swiftshader');
@@ -95,6 +98,12 @@ try {
   if (!ALLOW_SWIFTSHADER && /swiftshader|no WebGL|llvmpipe|software/i.test(gl)) throw new Error(`software WebGL (${gl}): no GPU in the headless browser; pass --allow-swiftshader to render anyway (slow, memory hungry)`);
   await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   const hash = `#q=${encodeURIComponent(Q)}${VS ? `&vs=${encodeURIComponent(VS)}` : ''}&render=${RENDER}${AT ? `&at=${encodeURIComponent(AT)}` : ''}`;
+  if (VOICE) {
+    await page.send('Page.navigate', { url: `${BASE}?voice-setup` });
+    await wait(3000);
+    await page.evaluate("localStorage.setItem('i24-voice', '1'), true");
+    console.log('[render] voiceover on');
+  }
   await page.send('Page.navigate', { url: BASE + hash });
   const t0 = Date.now();
   if (VS) {

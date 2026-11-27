@@ -6,10 +6,16 @@ import { chapterText } from './stories';
 import { beatLines, CAF_PEAK_CARD, eventMin, isCard, MORNING_NO_FACT, SUGAR_PEAK_CARD, timeOfDayOk, tooEarly, type BeatCtx } from './video-beats';
 import { chooseGuess, guessSideOf, type Guess } from './video-guess';
 import { hookClassOf, macrosOf, seedOf, type Hook } from './video-hook';
-import { DULL, FPS, PACE_FAST, PACE_MEAL, planCompare, planVideo, readSeconds, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withLullCards, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
+import { DULL, FPS, LENGTH, PACE_FAST, PACE_MEAL, planCompare, planVideo, readSeconds, SAFETY, sentences, stopValue, SURGE_FROM, TEASE_HUMAN, withCmpLulls, withLullCards, withSpine, type Cut, type Plan, type PlanFx, type StopIn, type SurgeKind, type VFrame } from './video-plan';
+import { CmpSide, guessOf, sourcesLine, spineOf, type Spine, type SpineIn } from './video-segments';
+import { AXIS_KEYS } from './story/types';
+import { RUBRIC } from './story/axes';
+import { storyOf } from './story/foodStory';
+/** Phase P2: a lull's title when it shows the live curve's value (no number of the story was left for it). */
+export const LIVE_TITLE = 'Right now';
 import { BAC_LULL_TITLE, bacTrendAt, bacPlain, cardNamed, DEFAULT_BAC_BODY, dominantAt, placeOfCard, SEG_FOCUS_V, inText, mainGauge, presentAt, sugarPlain, TG_GAUGE, SUGAR_CLAIM, sugarClaimTrue, takenUpAt, urinePeak, whereCard, whereGauge, type BuiltLike } from './video-body';
 import { perceivedRuns, quietFrame, REGION, regionMaxS, seenOf } from './video-cam';
-import { perceivedOf, sceneOf } from './video-telemetry';
+import { perceivedOf, sceneOf, teleNumsOf } from './video-telemetry';
 import { at as atMin } from '../science/espressoSim';
 import { ANY_GL } from '../science/alcoholClock';
 import { worstMoment } from './status';
@@ -566,7 +572,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // is never said for a food whose end card has no blood sugar curve; video-body SUGAR_CLAIM)
   // (phase 4j, critique M5: "FIRST BITE / Soft pretzel." repeated the name over its body: a card that only says the
   // side's name, its title on screen, is not said)
-  const cards = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(cmpName(x.label), x.built, profile.drinkAtMin), factsFirst: true } /* (round 17: "Orange juice.", its amount is on the servings card) */)
+  // (phase P2: each side's generic cards become numbered ones, within its budget: video-segments CmpSide)
+  const cards = (x: Analysis, at: number) => cardsV5(x, cards4(x, at), chap(x, at).min);
+  const cards4 = (x: Analysis, at: number) => { const c = chap(x, at); return beatLines({ min: c.min, title: c.title, text: chapterText(c, c.min) }, { ...beatCtx(cmpName(x.label), x.built, profile.drinkAtMin), factsFirst: true } /* (round 17: "Orange juice.", its amount is on the servings card) */)
     .filter((l) => (!SUGAR_CLAIM.test(l) || sugarClaimTrue(x.sugarPeak)) && !sameWords(l, c.title)).map((l, _i, all) => (!sameWords(l, cmpName(x.label)) ? l : x.kcal >= 1 && !all.some((y) => /\d+ kcal/.test(y)) ? `${Math.round(x.kcal)} kcal in total.` : '')).filter(Boolean)
     // (phase 4k, critique M2: no kcal card for a drink with alcohol unless the question is about calories: its US standard drinks)
     .map((l) => ((x.built.alcoholG ?? 0) > 1 && gq?.kind !== 'kcal' && /\bkcal\b/.test(l) ? stdDrinksCard(x.built.alcoholG ?? 0) : l)).filter((l, i, all) => all.indexOf(l) === i); }; // (its name's place: its kcal, from the model)
@@ -577,7 +585,12 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // round 4: the question this pair answers clearly (out of the stomach / out of the blood / bigger sugar rise),
   // or none; its race bars and its answer come from the same model
   const bedMin = ((((profile.bedtimeMin - profile.drinkAtMin) % 1440) + 1440) % 1440);
+  const bedClock = `${String(Math.floor((((profile.bedtimeMin % 1440) + 1440) % 1440) / 60)).padStart(2, '0')}:${String(((profile.bedtimeMin % 60) + 60) % 60).padStart(2, '0')}`;
   const gq = chooseGuess(guessSideOf(a, cmpName(a.label)), guessSideOf(b, cmpName(b.label)), { bedMin, seed: seedOf(`${a.label} vs ${b.label}`) }); // (phase 4b, M5: the question in its own words)
+  // (phase P2: the guessed number is said by neither side before the answer: their budgets keep it for the answer)
+  const hidden = gq?.kind === 'sugarG' ? ['sugarG', 'sugarCubes'] : gq?.kind === 'kcal' ? ['kcal', 'energyDensity'] : gq?.kind === 'alcohol' ? ['alcoholG'] : [];
+  const v5 = [a, b].map((x) => { const st = storyOf(x, x.parts, profile); return new CmpSide({ story: st, hook: { line1: '', line2: '' }, name: cmpName(x.label), cut, endLines: [], built: x.built as SpineIn['built'], chapters: x.built.story.chapters, alcohol: (x.built.alcoholG ?? 0) > 1, caffeineMg: x.built.caffeine.doseMg, bed: bedClock }, [`${Math.round(x.kcal)} kcal`], hidden); });
+  const cardsV5 = (x: Analysis, ls: string[], min: number) => ls.map((l) => v5[x === a ? 0 : 1].card(l, min)).filter(Boolean); // (a quiet card leaves the side quiet: no line)
   const race = gq && gq.kind !== 'bedtime' ? { a: gq.progress[0], b: gq.progress[1] } : null; // (no race for "still in you at bedtime")
   const worst = (x: Analysis) => x.systems.map((s) => s.levels[worstMoment(s)] as 0 | 1 | 2);
   const wa = worst(a), wb = worst(b), verdictNow = verdictOf(a, b, profile.glucoseUnit, gq && { tie: /^Almost the same/.test(gq.answer1) });
@@ -625,7 +638,7 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
       const c = chap(x, at);
       // round 17 (critic G-2: "INTO THE SMALL INTESTINE · Protein is broken into building blocks." under +24:00): a
       // chapter long past is never shown as this moment's; the side says where it is now, under the moment's own time
-      if (staleAt(c, at)) { const wl = whereCard(x.built, at); return { lines: [wl ?? ''], title: at >= 1440 ? '24 hours later' : `${Math.round(at / 60)} hours later`, text: wl ?? '', isNew: false }; }
+      if (staleAt(c, at)) { const wl0 = whereCard(x.built, at), wl = wl0 ? v5[x === a ? 0 : 1].card(wl0, at) : wl0; /* (phase P2: numbered too) */ return { lines: [wl ?? ''], title: at >= 1440 ? '24 hours later' : `${Math.round(at / 60)} hours later`, text: wl ?? '', isNew: false }; }
       // (phase 4h, critique M3: lemonade's "Your blood sugar climbs to its peak." was said at +1:30, an hour after its
       // peak, merged with the pear's into "Both · Blood sugar peak": a card about a moment, its peak or "now", is said
       // only near its own minute)
@@ -641,7 +654,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // nothing a left-out moment would have said is lost; twice is enough)
   // (phase 4j: where most of it is, else how much the body has taken up so far: a moment of the day's middle always says
   // something from the model; full tier, four Shorts went from the first bite straight to +24:00)
-  const whereOrUp = (b0: Analysis['built'], at: number) => { const w = whereCard(b0, at), u = takenUpAt(b0, at, true); return w ?? (u ? `Taken up so far: ${u}.` : null); };
+  const whereOrUp0 = (b0: Analysis['built'], at: number) => { const w = whereCard(b0, at), u = takenUpAt(b0, at, true); return w ?? (u ? `Taken up so far: ${u}.` : null); };
+  // (phase P2: numbered, as the side's own cards are)
+  const whereOrUp = (b0: Analysis['built'], at: number) => { const w = whereOrUp0(b0, at), k = b0 === a.built ? 0 : 1; return w ? v5[k].card(w, at) : w; };
   let midForce: number | null = null;
   const build = (mins0: number[]) => {
     const sa = sideCards(a, mins0), sb = sideCards(b, mins0);
@@ -656,6 +671,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     const hide = gq?.kind === 'sugarG' ? /\d+ g of sugar|teaspoons? of sugar/ : gq?.kind === 'kcal' ? /\d+ kcal/ : gq?.kind === 'alcohol' ? /\d+ g of alcohol/ : null;
     const revealMin = fx.peakMin ?? hit ?? 0;
     if (hide) for (const side of [sa, sb]) side.forEach((c, i) => { if (mins0[i] < revealMin) { const ls = c.lines.filter((l) => !hide.test(l)); c.lines = ls.length ? ls : ['']; } });
+    // (phase P2: a moment the hiding left with no words on either side says where each one is, as above; never a page
+    // with no words on both sides)
+    mins0.forEach((at, i) => { if (i > 0 && at < 1440 && blank(sa[i]) && blank(sb[i])) { const wa = whereOrUp(a.built, at), wb = whereOrUp(b.built, at); if (wa || wb) { sa[i].lines = [wa ?? '']; sb[i].lines = [wb ?? '']; } } });
     let midKeep = -1;
     const keepAt = mins0.map((at, i) => i === 0 || at === hit || sa[i].isNew || sb[i].isNew);
     // round 18 (critic V-3: almonds vs chips jumped from +0:31 to +24:00): the day always has a middle; when no moment
@@ -730,7 +748,13 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     }
   }
   // (phase 4j, critique M6: a lull says how much each body has taken up so far, as a share: a kcal guess keeps its number)
-  plan = withLullCards(plan, (m) => takenUpAt(a.built, m, true), (m) => takenUpAt(b.built, m, true));
+  // (phase P2: each side's own numbers first, video-segments CmpSide chips; the share taken up only when none are left)
+  plan = withCmpLulls(plan, v5[0].chips(), v5[1].chips(), (m) => takenUpAt(a.built, m, true), (m) => takenUpAt(b.built, m, true));
+  const st5 = v5.map((s) => s.c.story), axesOf = (st: typeof st5[number]) => AXIS_KEYS.map((k) => ({ label: RUBRIC[k].label, word: st.axes[k].word.replace(/\bsat fat\b/g, 'saturated fat'), tier: st.axes[k].tier }));
+  // (one action on the end frame: the side whose action says a number of its own, else the left one)
+  const acts = v5.map((s, k) => { const x = s.action(); return x ? { ...x, who: cmpName((k ? b : a).label) } : null; }), act = acts.find((x) => x && /\d/.test(x.line)) ?? acts.find(Boolean);
+  plan.cmp5 = { ...(act ? { action: { line: `${act.who} · ${act.line}`, grade: act.grade } } : {}), nums: [...teleNumsOf(st5[0].numbers), ...teleNumsOf(st5[1].numbers, 'b:')], lines: [v5[0].lines, Object.fromEntries(Object.entries(v5[1].lines).map(([l, ks]) => [l, ks.map((k) => `b:${k}`)]))], axes: [axesOf(st5[0]), axesOf(st5[1])],
+    sources: sourcesLine(`${cmpName(a.label)} vs ${cmpName(b.label)}`, `${st5[0].slug}-vs-${st5[1].slug}`) };
   return { plan, guess: gq, race, fx, verdict: verdictNow };
 }
 
@@ -743,7 +767,21 @@ export function litRegion(organs: readonly string[]): string {
 }
 /** The single video's plan inputs (AppV4 reelPlan) from a model run. Phase 4e: with the story's chapters, every stay
  *  on one region of the body as the viewer perceives it (video-cam seenOf) is held to regionMaxS. */
-export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { min: number; title: string; focus?: string | null }[], built?: BuiltLike): Plan {
+/** Phase P2: the v5 spine of a single video (the app's reelPlan and the text audit build it the same way): the Food
+ *  Story (story/foodStory storyOf), the hook with its question and the guess (video-segments guessOf), the end card
+ *  that answers that hook (endCardOf), and the spine with its budget, whose cards spineStops then writes. */
+export function spineFor(x: Analysis, hook: Hook, name: string, p: Profile, cut: Cut, chapters: { min: number; title: string; text?: string }[]): { sp: Spine; base: SpineIn; end: ReturnType<typeof endCardOf> } {
+  const story = storyOf(x, x.parts, p), b = x.built;
+  const bed = `${String(Math.floor((((p.bedtimeMin % 1440) + 1440) % 1440) / 60)).padStart(2, '0')}:${String(((p.bedtimeMin % 60) + 60) % 60).padStart(2, '0')}`;
+  const base: SpineIn = { story, hook, name, cut, seed: seedOf(name), endLines: [], built: b as SpineIn['built'], chapters, alcohol: (b.alcoholG ?? 0) > 1, caffeineMg: b.caffeine.doseMg, bed, bodyWaterL: x.bodyWaterL };
+  const g = guessOf(base);
+  const end = endCardOf(b, x.glucose !== undefined, chapters, p.glucoseUnit, g.hook);
+  const sp = spineOf({ ...base, endLines: [end.after24.big, end.after24.small, end.hero?.big ?? '', end.hero?.small ?? ''] });
+  return { sp, base: { ...base, hook: sp.hook }, end };
+}
+/** Phase P2: `spine` (video-segments spineOf / spineStops): the v5 spine is laid on the plan (video-plan withSpine): the
+ *  reveal, the number's hit, and the item's own numbers on the lulls in place of the v4 counters. */
+export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { min: number; title: string; focus?: string | null }[], built?: BuiltLike, spine?: Spine): Plan {
   // (a card about no organ is filmed where the food or drink is: shotOf's `lead`, the part of the route with most of it)
   const lead = (m: number) => { const p = built ? presentAt(built, m)[0] : undefined; return p ? REGION[SEG_FOCUS_V[p[0]]] ?? '' : ''; };
   // (phase 4i: the region a card lights, once per card's words: the planner asks it for every frame it lays out)
@@ -770,13 +808,29 @@ export function singlePlan(stops: StopIn[], cut: Cut, fx: PlanFx, chapters?: { m
   // the alcohol peak and the alcohol-gone moment)
   const cafKeep = alc && cut === 'long' && (built?.caffeine.doseMg ?? 0) >= CAF_WITH_ALCOHOL_MG;
   const stops1 = cafKeep ? stops.map((s) => (s.min > 0 && /caffeine/i.test(s.title) ? { ...s, keep: true } : s)) : stops;
-  const plan = planVideo(stops1, cut, uFromMinutes, minutesFromU, perceive ? { ...fx1, perceive } : fx1);
+  let plan = planVideo(stops1, cut, uFromMinutes, minutesFromU, perceive ? { ...fx1, perceive } : fx1);
+  // (phase P2: a video about alcohol always has one lull that says the blood alcohol's way, phase 4l: when the layout
+  // made none, the glide into the first moment after the peak becomes one, if the cut still fits)
+  const bac0 = (built as { bac?: ArrayLike<number> } | undefined)?.bac;
+  if (spine && built && alc && !fx.kcalHook && bacTrendAt(bac0, 0) !== null && !plan.frames.some((f) => f.lull)) {
+    const pk = fx1.peakMin ?? 0, ms = [...plan.stops.filter((x) => x > pk && x < 1440), ...plan.stops.filter((x) => x > 0 && x <= pk)];
+    for (const m of ms.slice(0, 4)) { const alt = planVideo(stops1, cut, uFromMinutes, minutesFromU, { ...(perceive ? { ...fx1, perceive } : fx1), lullsAt: [m] }); if (alt.frames.some((f) => f.lull) && alt.seconds <= LENGTH[cut].max + 1e-6 && alt.seconds >= LENGTH[cut].min - 0.05) { plan = alt; break; } }
+  }
   // (phase 4j, critique M6: a lull says how much the body has taken up so far, never 3-4 s without a card)
   // (phase 4k, critique M2: "TAKEN UP SO FAR / 28 of 164 kcal" in a video about alcohol: with alcohol the lull counts the
   // drink taken up, in ml, from the route model; kcal only when the hook asks about them)
   // (phase 4l, critique 2026-11-22, minor: "TAKEN UP SO FAR / 2 of 150 ml" of the drink's water said nothing: with
   // alcohol the lull says where the blood alcohol is going, video-body bacTrendAt; kcal only when the hook asks about them)
   const bac = (built as { bac?: ArrayLike<number> } | undefined)?.bac;
+  // (phase P2: the v5 spine: a lull says one of the item's own numbers, else the live curve's value, never a counter)
+  if (built && spine) return withSpine(placesOnScreen(plan, built), spine, (m) => { const g = mainGauge(built, Math.min(1440, m), 0, 'mmol/L', !!built.effects.glucoseMgDl); if (g && !g.warn && /\d/.test(`${g.big} ${g.small}`)) return { title: LIVE_TITLE, text: `${g.big} · ${g.small}` };
+    // (no blood curve: what is still in the gut, as the panel shows it)
+    const cv = spine.gut?.curve, uu = uFromMinutes(Math.min(1440, m)) * 63, v = cv ? cv[Math.min(63, Math.round(uu))] : 0;
+    if (cv && v >= 1) return { title: LIVE_TITLE, text: `${v >= 10 ? Math.round(v) : v.toFixed(1)} ${spine.gut!.unit} still in your gut` };
+    // (else where the rest of it is now, from the route model; never a BAC: that is said with both limits, on the panel)
+    const w = whereGauge(built, Math.min(1440, m));
+    return w && !w.warn && /\d/.test(w.big) ? { title: LIVE_TITLE, text: `${w.big} · ${w.small}` } : null; },
+    alc && !fx.kcalHook && bacTrendAt(bac, 0) !== null ? (m) => { const x = bacTrendAt(bac, m); return x ? { title: BAC_LULL_TITLE, text: x } : null; } : undefined);
   if (built && alc && !fx.kcalHook && bacTrendAt(bac, 0) !== null) return withLullCards(placesOnScreen(plan, built), (m) => bacTrendAt(bac, m), undefined, BAC_LULL_TITLE);
   return built ? withLullCards(placesOnScreen(plan, built), (m) => takenUpAt(alc && !fx.kcalHook ? { ...built, energy: undefined } as BuiltLike : built, m)) : plan;
 }
