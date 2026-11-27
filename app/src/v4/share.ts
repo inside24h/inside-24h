@@ -981,6 +981,15 @@ function drawOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: Overl
   ctx.restore(); ctx.textAlign = 'left';
 }
 
+/** Phase P2: an axis word that fits its row at `min` px without a cut ("High in protein, fiber, sodium…" never): the
+ *  long nutrient names said short, then the list's last items left out (each word still true of the food). */
+function axisWord(ctx: CanvasRenderingContext2D, word: string, w: number, min: number): string {
+  const f0 = ctx.font, at = (t: string) => { ctx.font = f0.replace(/\d+(?:\.\d+)?px/, `${min}px`); const ok = ctx.measureText(t).width <= w; ctx.font = f0; return ok; };
+  if (at(word)) return word;
+  let t = word.replace(/\bfree sugars\b/g, 'sugars');
+  while (!at(t)) { const k = Math.max(t.lastIndexOf(', '), t.lastIndexOf(' and ')); if (k <= 0) break; t = t.slice(0, k); }
+  return t;
+}
 /** Phase 4b (M3): a one-line text that shrinks (to `min` px) before it is ever cut (the small print, names). */
 export function shrink(ctx: CanvasRenderingContext2D, t: string, w: number, min = 14) {
   let px = fontPx(ctx);
@@ -1472,14 +1481,17 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
       const isMain = g === main, pk = isMain ? (fr.beat === 'teaser' ? 0.6 : peak.age) : Infinity;
       const flash = isMain && micro.cue?.data?.v === 2 && micro.age < 0.5 ? 1 - micro.age / 0.5 : 0;
       const counting = isMain && (vignetteAlpha(cues, t) > 0.01 && peak.age > 0.5 || peak.age < 0.4);
-      withTag(spv && g !== main && /\d/.test(g.big) ? { k: 'live:where', v: 'gauge:where' } : spv && /\d/.test(`${g.big} ${g.small}`) ? { k: 'live:curve', v: 'gauge:main' } : null,
+      withTag(spv && g !== main && /\d/.test(g.big) ? { k: `live:where@${fr.stop ?? 0}`, v: `gauge:where:${fr.stop ?? 0}` } : spv && /\d/.test(`${g.big} ${g.small}`) ? { k: `live:curve@g${fr.stop ?? 0}`, v: `gauge:main:${fr.stop ?? 0}` } : null, /* (a gauge's reading at each moment of the story is the model's value then: a number of its own) */
         () => drawGauge(ctx, g, x, y, gw, reel, { bounce: pk < 0.35 ? Math.sin(Math.PI * pk / 0.35) : 0, flash, count: counting }));
       if (pk <= 1.4) drawStamp2(ctx, 'PEAK', x + (right ? gw - 10 : 10), y + h + 8, LIGHT[g.level], right, Math.min(1, (1.4 - pk) / 0.25));
     });
     if (spv && panelG && !revealOn && !guessBig) {
       const flash = micro.cue?.data?.v === 2 && micro.age < 0.5 ? 1 - micro.age / 0.5 : 0;
       const kind = curveKind(panelG, panelG === gutG), grade = kind === 'glucose' || kind === 'tg' ? 'C' : 'B';
-      drawCurvePanel(ctx, panelG, pr, reel, spv.body, grade, !!panelG.warn && bacFull, flash, spv.pins.filter((p) => p.curve === kind));
+      // (the panel's title never the first words of the card on screen, or of the caption reading it: "Blood sugar dip"
+      // over "Blood sugar dips about 17% below usual." reads twice; video-captions "the card and its caption at once")
+      const echo = !!capNow && capNow.toLowerCase().startsWith(panelG.big.toLowerCase());
+      drawCurvePanel(ctx, echo ? { ...panelG, big: `${panelG.big} now` } : panelG, pr, reel, spv.body, grade, !!panelG.warn && bacFull, flash, spv.pins.filter((p) => p.curve === kind));
       if (peak.age <= 1.4 && panelG === main) drawStamp2(ctx, 'PEAK', pr.x1 - 10, pr.y0 - 44, LIGHT[main.level], true, Math.min(1, (1.4 - peak.age) / 0.25));
     }
     if (spv?.guess && guessBig) drawGuessBig(ctx, Lo, spv.guess.options, Lo.topBot + (pr.y0 - Lo.topBot) * 0.42, smooth((t - GUESS_FROM_S) / 0.2) * (1 - smooth((t - (GUESS_CORNER_S - 0.2)) / 0.2)));
@@ -1498,6 +1510,14 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
     const title = (fr.title ?? o.step ?? '').trim(), cap = (fr.phase === 'intro' || isHushed(fr.cap, 0) ? '' : fr.cap ?? '').trim();
     const titleOnly = !!cap && cap.replace(/\.$/, '').toLowerCase() === title.toLowerCase();
     if (cap && E.main * plate * fr.capA >= 0.5) teleCard = titleOnly ? cap : `${fr.tease ? 'STILL TO COME' : title.toUpperCase()} | ${cap}`;
+    // (phase P2: a card the voice is saying steps aside for its word-by-word caption, which shows its words: the timeline
+    // keeps the card, with its numbers and its kind, as a block of no size, so it is never "over" a word)
+    const hushedCap = fr.phase !== 'intro' && fr.cap && isHushed(fr.cap, 0) ? fr.cap.trim() : '';
+    if (hushedCap && teleOn() && E.main * plate * fr.capA >= 0.5) {
+      teleCard = `${title.toUpperCase()} | ${hushedCap}`;
+      const li = spv?.lines[hushedCap];
+      logBox({ x0: L, x1: L, y0: S.bottom - 40, y1: S.bottom - 40, text: hushedCap, deco: false, a: 1, ...(li?.keys.length ? { k: li.keys.join(',') } : {}), ...(li ? { v: `card:${hushedCap}`, r: li.kind } : {}) });
+    }
     const capFit = balanced(ctx, fitWrap(ctx, cap, RL - L, 2, Lo.capFs, 42, (px) => `${titleOnly ? 700 : 600} ${px}px ${SANS}`), cap, RL - L);
     const capBot = S.bottom - 4, capY0 = capBot - (capFit.lines.length - 1) * Lo.capLH - capFit.px * 0.22;
     shade(ctx, true);
@@ -1527,7 +1547,7 @@ export function drawBodyFrame(ctx: CanvasRenderingContext2D, W: number, H: numbe
       ctx.font = `700 ${Lo.kickFs}px ${SANS}`; ctx.fillStyle = ACCENT; text(ctx, fit(ctx, (fr.gtitle ?? '').toUpperCase(), RL - L), L, gy0 - gc.px * 0.86 - 16);
       const chip = spv?.chips.find((c) => c.text === fr.gcap && c.title === fr.gtitle);
       ctx.fillStyle = '#ffffff'; ctx.font = `600 ${gc.px}px ${SANS}`;
-      withTag(spv ? { k: chip ? chip.keys.join(',') : /\d/.test(fr.gcap) ? 'live:curve' : undefined, v: chip ? `lull:${fr.gcap}` : 'lull:live' } : null, () => gc.lines.forEach((ln, i) => text(ctx, ln, L, gy0 + i * Lo.capLH)));
+      withTag(spv ? { k: chip ? chip.keys.join(',') : /\d/.test(fr.gcap) ? `live:curve@${fr.stop ?? 0}` : undefined, v: chip ? `lull:${fr.gcap}` : `lull:live:${fr.stop ?? 0}` } : null, /* (each lull's live reading is the model's value at that moment: a number of its own) */ () => gc.lines.forEach((ln, i) => text(ctx, ln, L, gy0 + i * Lo.capLH)));
       shade(ctx, false); ctx.restore();
       if (ga >= 0.5) teleCard = `${(fr.gtitle ?? '').toUpperCase()} | ${fr.gcap}`;
     }
@@ -2315,7 +2335,7 @@ function drawSplitOutro(ctx: CanvasRenderingContext2D, W: number, H: number, o: 
         ctx.font = `700 21px ${SANS}`; ctx.fillStyle = '#9fb0c4'; withTag({ r: 'score' }, () => text(ctx, a.label, x + 20, ry));
         ctx.font = `700 21px ${SANS}`; const lw = Math.max(...ax.map((q) => ctx.measureText(q.label).width)) + 14;
         ctx.font = `600 21px ${SANS}`; ctx.fillStyle = a.tier === null ? '#8292a7' : ['#9ff0c0', '#ffe28a', '#ffc07a', '#ff9f9f'][a.tier];
-        text(ctx, shrink(ctx, a.word, cw - 40 - lw, 12), x + 20 + lw, ry);
+        text(ctx, shrink(ctx, axisWord(ctx, a.word, cw - 40 - lw, 12), cw - 40 - lw, 12), x + 20 + lw, ry);
       });
       return;
     }

@@ -464,6 +464,12 @@ export function density5(tl: Timeline): Density5 {
   const keys = new Set<string>(), visOf = new Map<string, Set<string>>(), visuals = new Set<string>();
   // (the serving's own size, "115 g" under a name, is what is compared, like the name: not a fact of its own)
   const SERVING = new Set(['grams', 'b:grams']);
+  // (a drink whose water is its serving, "250 ml" of water in 250 ml of water: that number is the serving's size)
+  // (and any number of either side as large as a serving in its unit, "14 g" of sugar beside a 14 g serving of oil: a
+  // "14 g" on screen cannot tell them apart, and the serving is on screen all through)
+  for (const p of ['', 'b:']) { const g = nums.find((n) => n.key === `${p}grams`), w = nums.find((n) => n.key === `${p}waterMl`); if (g && w && Math.abs(g.value - w.value) <= 0.06 * g.value) SERVING.add(`${p}waterMl`); }
+  const servings = nums.filter((n) => n.key === 'grams' || n.key === 'b:grams');
+  for (const n of nums) if (!SERVING.has(n.key) && servings.some((g) => g.unit === n.unit && Math.abs(g.value - n.value) <= 0.03 * g.value)) SERVING.add(n.key);
   const use = (k: string, v: string) => { if (SERVING.has(k)) return; keys.add(k); visuals.add(v); let s = visOf.get(k); if (!s) visOf.set(k, (s = new Set())); s.add(v); };
   /** a sampled frame's item-specific numbers (and the visuals that carry them are counted) */
   // (a label that stands all through the story, the same words in nine of ten frames, e.g. a comparison's servings

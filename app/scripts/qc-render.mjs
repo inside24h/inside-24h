@@ -113,6 +113,13 @@ async function qc(file) {
       ['BAC limits', `${s.bacFrames} frames with a BAC`, 'every BAC with US 0.08 % and EU 0.05 % and the warning'], ['clock', `moves after ${s.clockMovesAfterS ?? '-'} s`, 'the clock moves within 3 s of the story'],
       ['hook answered', tl.hook.replace(/\n/g, ' / '), 'the hook\'s question answered on screen']];
     for (const [k, v, rule] of KINDS) { const bad = issues.filter((i) => i.check === k); add(`timeline: ${k}`, !bad.length, bad.length ? bad.map((i) => i.text).join('; ') : v, rule); }
+    // (phase P2: the v5 spine's density, checkTimeline5, and every other check of checkTimeline (4j-4l), never left out)
+    const { density5, SPINE } = await telemetry(), d = density5(tl), v5 = ['density', 'item number', 'generic text', 'question', 'guess', 'reveal', 'end frame', 'action', 'number repeats', 'visual events', 'BAC row'];
+    const bad5 = issues.filter((i) => v5.includes(i.check));
+    add('timeline: v5 spine', !bad5.length, bad5.length ? bad5.map((i) => `${i.check}: ${i.text}`).join('; ') : `${d.factsPer10.toFixed(2)} facts/10 s, item number ${Math.round(100 * d.itemShare)} %, generic ${Math.round(100 * d.genericShare)} %, question ${d.questionT} s, reveal ${Number.isFinite(d.revealT) ? d.revealT.toFixed(1) : '-'} s, actions ${d.actions}, legal block ${Math.round(100 * d.legalShare)} %`,
+      `facts/10 s ≥ ${SPINE.FACTS_PER_10S}, item number ≥ ${100 * SPINE.ITEM_SHARE} %, generic ≤ ${100 * SPINE.GENERIC_MAX} %, question by ${SPINE.QUESTION_BY_S} s, reveal in the last ${SPINE.REVEAL_WINDOW_S} s, ≥ 1 action`);
+    const known = new Set([...KINDS.map((x) => x[0]), ...v5]), other = issues.filter((i) => !known.has(i.check));
+    add('timeline: other checks', !other.length, other.length ? other.map((i) => `${i.check}: ${i.text}`).join('; ') : 'none', 'every other check of checkTimeline (clock pace, cards, time of day, …)');
   } else add('timeline', false, `no ${path.basename(tlFile)}`, 'a timeline from scripts/render-sample.mjs', 'warn');
   const fails = checks.filter((c) => c.status === 'fail').length, warns = checks.filter((c) => c.status === 'warn').length;
   return { file: path.resolve(file), checkedAt: new Date().toISOString(), cut, duration: dur, verdict: fails ? 'FAIL' : warns ? 'PASS with warnings' : 'PASS', fails, warns, checks,

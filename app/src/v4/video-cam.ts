@@ -167,6 +167,8 @@ export function beatOrgans(title: string | undefined, chapterFocus: string | nul
 }
 const BEAT_MEMO = new Map<string, Map<string, { organs: string[]; named: boolean }>>();
 function beatOrgans0(title: string | undefined, chapterFocus: string | null | undefined): { organs: string[]; named: boolean } {
+  // (phase P2: "For a 70 kg adult" and "Try this" are about you, not an organ: no organ to frame, the whole body)
+  if (title && SPINE_TITLE.test(title)) return { organs: [], named: false };
   const hits = title ? NAMED.filter((n) => n.re.test(title)) : [];
   if (!hits.length) return { organs: chapterFocus && ORGAN_AT[chapterFocus] ? [chapterFocus] : [], named: false };
   const out = hits.flatMap((n) => (n.all ? n.organs : [chapterFocus && n.organs.includes(chapterFocus) ? chapterFocus : n.organs[0]]));

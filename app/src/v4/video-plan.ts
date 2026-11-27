@@ -844,7 +844,7 @@ export function planCompare(stopsIn: CmpStopIn[], cut: Cut, toU: (m: number) => 
     return list.map((s) => {
       // 2026-10-24 BEATS: each side shows its own short complete cards (video-beats.ts): one per moment in the
       // short cut, up to two in the long cut (the start: two in both)
-      const side = (t: string, title: string | undefined, lines: string[] | undefined) => (lines?.length ? lines : beatLines({ min: s.min, title: title ?? '', text: t })).slice(0, Math.min(cut === 'short' && !shortTwo ? 1 : 2, perMin.get(s.min) ?? 2));
+      const side = (t: string, title: string | undefined, lines: string[] | undefined) => (lines ? (lines.length ? lines : ['']) : beatLines({ min: s.min, title: title ?? '', text: t })) /* (phase P2: a side given its lines, none of them, stays quiet: never its moment's raw text again) */.slice(0, Math.min(cut === 'short' && !shortTwo ? 1 : 2, perMin.get(s.min) ?? 2));
       const A = side(s.a, s.titleA, s.linesA), B = side(s.b, s.titleB, s.linesB);
       const n = Math.max(A.length, B.length, 1), out: { cap: string; capB: string; s: number }[] = [];
       for (let k = 0; k < n; k++) {

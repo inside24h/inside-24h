@@ -343,7 +343,9 @@ export function auditSingles(items: AuditItem[], res: AuditResult, p: Profile = 
       for (const f of o.plan.frames) if (f.stop !== undefined && f.title && f.beat === 'hold' && !titleAt.has(f.stop)) titleAt.set(f.stop, f.title);
       if (v === 'A') res.dump.push(`  ${cut} (${o.plan.seconds.toFixed(1)} s):`);
       // a question is answered in every cut: its moment is in the video
-      if (/\?/.test(`${o.hook.line1} ${o.hook.line2}`) && (o.payoff === undefined || !o.plan.stops.some((m) => Math.abs(m - o.payoff!) <= 1))) res.issues.push({ cls: 'question never answered', where: `${id} ${cut} ${v}`, text: `${o.hook.line1} ${o.hook.line2} (answer at ${o.payoff ?? 'none'})` });
+      // (phase P2: a guess is answered by its reveal, on screen before the end frame, video-segments.test "the reveal claims it")
+      const revealed = !!o.plan.spine?.guess && o.plan.spine.revealT < o.plan.spine.endT;
+      if (/\?/.test(`${o.hook.line1} ${o.hook.line2}`) && !revealed && (o.payoff === undefined || !o.plan.stops.some((m) => Math.abs(m - o.payoff!) <= 1))) res.issues.push({ cls: 'question never answered', where: `${id} ${cut} ${v}`, text: `${o.hook.line1} ${o.hook.line2} (answer at ${o.payoff ?? 'none'})` });
       let prevStop = -1;
       for (const pg of o.plan.pages) {
         if (!pg.text) continue;

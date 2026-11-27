@@ -656,7 +656,8 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
   // something from the model; full tier, four Shorts went from the first bite straight to +24:00)
   const whereOrUp0 = (b0: Analysis['built'], at: number) => { const w = whereCard(b0, at), u = takenUpAt(b0, at, true); return w ?? (u ? `Taken up so far: ${u}.` : null); };
   // (phase P2: numbered, as the side's own cards are)
-  const whereOrUp = (b0: Analysis['built'], at: number) => { const w = whereOrUp0(b0, at), k = b0 === a.built ? 0 : 1; return w ? v5[k].card(w, at) : w; };
+  // (a where card no number replaces says how much is taken up so far instead, a number of the model's: never a blank moment)
+  const whereOrUp = (b0: Analysis['built'], at: number) => { const w = whereOrUp0(b0, at), k = b0 === a.built ? 0 : 1; if (!w) return w; const c = v5[k].card(w, at); if (c) return c; const u = takenUpAt(b0, at, true); return u ? `Taken up so far: ${u}.` : w; };
   let midForce: number | null = null;
   const build = (mins0: number[]) => {
     const sa = sideCards(a, mins0), sb = sideCards(b, mins0);
@@ -699,7 +700,9 @@ export function comparePlan(a: Analysis, b: Analysis, profile: Profile, cutIn: b
     };
     // (phase 4h, M6: the comparison's perceived stays, both sides' cards and the organs lit for them, video-telemetry)
     const seen = (fr: VFrame) => { const W = { focus: [], zoom: 'wide' as const }, sa = sceneOf(fr, a.built.story.chapters, W, null), sb = sceneOf({ ...fr, title: fr.titleB, cap: fr.capB }, b.built.story.chapters, W, null); return [...new Set([...perceivedOf(sa), ...perceivedOf(sb)])]; };
-    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at) || at === midKeep, mid: at === midKeep, chip: chipOf(i) })),
+    // (phase P2: a moment where both sides are quiet is not a moment of the video: a stretch with no card)
+    const quiet = (x: { lines: string[] }) => !x.lines.some((l) => l.trim());
+    return planCompare(mins.map((at, i) => ({ min: at, a: SA[i].text, b: SB[i].text, titleA: SA[i].title, titleB: SB[i].title, linesA: SA[i].lines, linesB: SB[i].lines, keep: sidePeaks.includes(at) || at === midKeep, mid: at === midKeep, chip: chipOf(i) })).filter((_x, i) => i === 0 || !quiet(SA[i]) || !quiet(SB[i]) || mins[i] === midKeep),
       cut, uFromMinutes, minutesFromU, { ...fx, perceive: { seen, runs: perceivedRuns, maxS: regionMaxS } });
   };
   let used = cmpMins0, plan = build(used);

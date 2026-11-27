@@ -22,6 +22,7 @@ import { genericCard, isCard } from './video-beats';
 import { SAFETY, type Cut, type StopIn } from './video-plan';
 import { hookNamesFood, numbersShown, SPINE, teleNumsOf, type TeleNum } from './video-telemetry';
 import { inText, urinePeak, type BuiltLike } from './video-body';
+import { nearSame } from './video-names';
 import { minutesFromU, uFromMinutes } from '../time';
 
 /** The kinds of segment (roadmap P2). Card-like kinds (ladder, number, forYou, action) are read: the planner times
@@ -107,14 +108,14 @@ const GFORM: Record<string, GForm> = {
 export const QUESTION_POOL: Record<string, readonly string[]> = {
   kcal: ['Guess: how many kcal?', 'Guess first: how many kcal is it?', 'How many kcal, do you think?', 'Can you guess its kcal?', 'Guess: how many kcal does it bring?', 'What would you guess: how many kcal?'],
   sugarG: ['Guess: how much sugar?', 'Guess first: how much sugar is in it?', 'How many grams of sugar, do you think?', 'Can you guess its sugar?', 'Guess: how much sugar does it hold?', 'What would you guess: how much sugar?'],
-  caffeineMg: ['Guess: how much caffeine?', 'Guess first: how much caffeine is in it?', 'How much caffeine, do you think?', 'Can you guess its caffeine?', 'Guess: how many mg of caffeine?', 'What would you guess: how much caffeine?'],
+  caffeineMg: ['Guess: how much caffeine?', 'Guess first: how much caffeine is in it?', 'How much caffeine, do you think?', 'Can you guess its caffeine?', 'Guess: how many milligrams of caffeine?', 'What would you guess: how much caffeine?'],
   caffeineAtBedMg: ['Guess: how much caffeine is left at bedtime?', 'How much caffeine is left at bedtime?', 'Guess first: what is left at bedtime?', 'Can you guess what is left at bedtime?', 'What would you guess is left at bedtime?'],
   alcoholG: ['Guess: how much pure alcohol?', 'Guess first: how much alcohol is in it?', 'How much pure alcohol, do you think?', 'Can you guess its alcohol?', 'Guess: how many grams of alcohol?'],
   alcoholGoneMin: ['Guess: when is the alcohol gone?', 'Guess first: how long does the alcohol stay?', 'How long until it is gone, do you think?', 'Can you guess when it is gone?'],
   proteinG: ['Guess: how much protein?', 'Guess first: how much protein is in it?', 'How much protein, do you think?', 'Can you guess its protein?', 'Guess: how many grams of protein?', 'What would you guess: how much protein?'],
   fiberG: ['Guess: how much fiber?', 'Guess first: how much fiber is in it?', 'How much fiber, do you think?', 'Can you guess its fiber?', 'Guess: how many grams of fiber?', 'What would you guess: how much fiber?'],
   satFatG: ['Guess: how much saturated fat?', 'Guess first: how much saturated fat?', 'How much saturated fat, do you think?', 'Can you guess its saturated fat?', 'What would you guess: how much saturated fat?'],
-  sodiumMg: ['Guess: how much sodium?', 'Guess first: how much sodium is in it?', 'How much sodium, do you think?', 'Can you guess its sodium?', 'Guess: how many mg of sodium?', 'What would you guess: how much sodium?'],
+  sodiumMg: ['Guess: how much sodium?', 'Guess first: how much sodium is in it?', 'How much sodium, do you think?', 'Can you guess its sodium?', 'Guess: how many milligrams of sodium?', 'What would you guess: how much sodium?'],
   energyDensity: ['Guess: how many kcal in 100 g?', 'Guess first: how many kcal per 100 g?', 'How many kcal in 100 g, do you think?', 'Can you guess its kcal per 100 g?', 'What would you guess: kcal in 100 g?'],
   stomachHalfMin: ['Guess: when has half left your stomach?', 'Guess first: when is your stomach half empty?', 'How soon is half out of your stomach?', 'Can you guess when half leaves your stomach?'],
   waterMl: ['Guess: how much water does it bring?', 'Guess first: how much water is in it?', 'How much water, do you think?', 'Can you guess its water?', 'What would you guess: how much water?'],
@@ -123,7 +124,16 @@ export const QUESTION_POOL: Record<string, readonly string[]> = {
 // ---- the budget: each item-specific number in at most PER_NUMBER_MAX visuals ----
 class Budget {
   uses = new Map<string, number>();
-  constructor(readonly nums: TeleNum[], readonly reserved: Set<string>) {}
+  /** a line whose nutrient another card says with another number ("4.7 g of carbs" beside "5 g of carbs"): spineStops */
+  clash: (line: string) => boolean = () => false;
+  /** the number card's keys: the "for you" line says another number (never "41 kcal: 2% of a day" and "2% of a day" both) */
+  numberKeys = new Set<string>();
+  constructor(readonly nums: TeleNum[], readonly reserved: Set<string>) {
+    // (a drink whose water is its serving, "250 ml of decaf filter coffee" with its 248 ml of water: the serving's own
+    // name and first card already say that number twice)
+    const g = nums.find((n) => n.key === 'grams'), w = nums.find((n) => n.key === 'waterMl');
+    if (g && w && Math.abs(g.value - w.value) <= 0.06 * g.value) this.uses.set('waterMl', SPINE.PER_NUMBER_MAX);
+  }
   keysOf(text: string, extra: readonly string[] = []) { return [...new Set([...numbersShown(text, this.nums), ...extra])]; }
   /** true when a visual saying these keys fits (and counts it) */
   take(keys: readonly string[]): boolean {
@@ -189,12 +199,37 @@ function guessFor(c: SpineIn, key: string, question: string, seed: number): Spin
  *  number is the guess; a hook that only promises ("Watch where those 9 teaspoons go.") asks the story's most surprising
  *  number instead (story.surprises, never one the hook's other line already says). The hook's own answer card is not
  *  said in the story any more: the reveal answers it, in the last seconds. */
+/** Which of the food's own numbers a question opens with, by the number it asks about ("40 mg of caffeine: what is left
+ *  at bedtime?"): two foods of a class that ask the same never ask it alike (video-sameness.test, phase 4e M5). */
+const Q_CONTEXT: Record<string, readonly string[]> = {
+  caffeineAtBedMg: ['caffeineMg'], stomachHalfMin: ['kcal', 'sugarG', 'fatG', 'proteinG'], kcal: ['proteinG', 'fatG', 'carbsG', 'sugarG'],
+  sugarG: ['kcal', 'carbsG', 'fiberG'], proteinG: ['kcal', 'fatG', 'carbsG'], fiberG: ['kcal', 'carbsG'], satFatG: ['fatG', 'kcal'], sodiumMg: ['kcal', 'fatG', 'proteinG'],
+  caffeineMg: ['kcal', 'sugarG'], energyDensity: ['proteinG', 'fatG'], waterMl: ['kcal', 'sugarG'], leftPct: ['kcal', 'fatG'], bloodMin: ['kcal', 'sugarG'],
+};
+const Q_NOUN: Record<string, string> = { caffeineMg: 'of caffeine', alcoholG: 'of alcohol', kcal: '', sugarG: 'of sugar', fatG: 'of fat', carbsG: 'of carbs', proteinG: 'of protein', fiberG: 'of fiber' };
+const words = (x: string) => x.replace(/\s*\([^)]*\)/g, '').split(/\s+/).filter(Boolean).length;
+/** The question with one of the food's own numbers first, one the headline does not say and that does not give the answer away. */
+function ownQuestion(c: SpineIn, key: string, q: string, stmt: string): string {
+  if (/\d/.test(q.replace(/\b100 g\b/g, ''))) return q;
+  const shown = new Set(numbersShown(stmt, teleNumsOf(c.story.numbers))), away = new Set([key, ...(GIVES_AWAY[key] ?? [])]);
+  // (short enough for the voice to say with the food's name in the hook's slot: the question at most 48 characters)
+  const body = q.replace(/^Guess(?: first)?:\s*/i, ''), say = (x: string) => `${N_(c.story, x)!.text}${Q_NOUN[x] && !(key === 'caffeineAtBedMg' && x === 'caffeineMg') ? ` ${Q_NOUN[x]}` : ''}: ${body.charAt(0).toLowerCase()}${body.slice(1)}`;
+  // (which of them: the food's own seed, among those that fit, so two foods of a class open on different ones)
+  const inStory = (x: string) => c.chapters.some((ch) => (ch.text ?? '').includes(N_(c.story, x)!.text));
+  const ks = (Q_CONTEXT[key] ?? ['kcal', 'fatG']).filter((x) => !away.has(x) && !shown.has(x) && !!N_(c.story, x)?.text && !inStory(x) && !(c.alcohol && x === 'kcal') && (N_(c.story, x)?.value ?? 0) >= (x === 'kcal' ? 5 : 1) && !!N_(c.story, x)?.text && say(x).length <= 48 && say(x).split(/\s+/).length <= 10);
+  // (never with alcohol: its hooks say their grams and its questions are the liver's, and the voice says the grams first)
+  if (c.alcohol) return q;
+  const k = ks.length ? ks[((c.seed ?? seedOf(c.name)) >>> 5) % ks.length] : undefined;
+  return k ? say(k) : q;
+}
 export function guessOf(c: SpineIn): { hook: Hook; guess: SpineGuess | null } {
   const h = c.hook, seed = c.seed ?? seedOf(c.name), lines = [h.line1, h.line2];
   const qi = lines.findIndex((l) => /\?\s*$/.test(l.trim())), cls = hookClassOf(h);
-  if (qi >= 0) {
-    const key = cls ? CLASS_KEY[cls] : undefined, g = key ? guessFor(c, key, lines[qi].trim(), seed) : null;
-    if (g) return { hook: { ...h, answer: undefined }, guess: g };
+  // (never a guess the headline already answers by a sum: "4 teaspoons of sugar" says its grams)
+  const away = (key: string, stmt: string) => { const sh = numbersShown(stmt, teleNumsOf(c.story.numbers)); return sh.includes(key) || (GIVES_AWAY[key] ?? []).some((k) => sh.includes(k)) || (key === 'sugarG' && /teaspoon|sugar cube/i.test(stmt)); };
+  if (qi >= 0 && !(cls && CLASS_KEY[cls] && away(CLASS_KEY[cls]!, lines[1 - qi] ?? ''))) {
+    const key = cls ? CLASS_KEY[cls] : undefined, q1 = key ? ownQuestion(c, key, lines[qi].trim(), lines[1 - qi] ?? '') : '', q = q1 && words(c.name) + words(q1) <= 14 ? q1 : lines[qi].trim(), g = key ? guessFor(c, key, q, seed) : null;
+    if (g) return { hook: { ...h, ...(qi === 0 ? { line1: q } : { line2: q }), answer: undefined }, guess: g };
   }
   // the line that names the food stays (the headline says what it is, video-telemetry hookNamesFood); the other one, a
   // promise or a claim ("At bedtime, almost all of its 63 mg remains."), becomes the question
@@ -205,15 +240,25 @@ export function guessOf(c: SpineIn): { hook: Hook; guess: SpineGuess | null } {
   const si = qi >= 0 ? 1 - qi : names(h.line1) || !h.line2 ? 0 : names(h.line2) ? 1 : /\d/.test(h.line1) ? 0 : 1;
   const shown = new Set(numbersShown(lines[si] ?? '', teleNumsOf(c.story.numbers)));
   const obvious = (k: string) => k === 'waterMl' && (N_(c.story, 'waterMl')?.value ?? 0) >= 0.9 * (N_(c.story, 'grams')?.value ?? Infinity); // (a glass of water's water: its name says it)
-  const cands: Surprise[] = c.story.surprises.filter((s) => !shown.has(s.numberKey) && s.numberKey !== 'sugarPeak' && !obvious(s.numberKey) && GFORM[s.numberKey] && QUESTION_POOL[s.numberKey]);
+  // (a sugar-led drink's end card is its blood sugar: no bedtime caffeine question for it, round 18 category matrix)
+  const sugarLed = (N_(c.story, 'sugarG')?.value ?? 0) >= 10 && (N_(c.story, 'sugarPeak')?.value ?? 0) >= 0.5 && c.caffeineMg < 100;
+  const cands: Surprise[] = c.story.surprises.filter((s) => !shown.has(s.numberKey) && !away(s.numberKey, lines[si] ?? '') && !(sugarLed && s.numberKey === 'caffeineAtBedMg') && !(c.caffeineMg >= 20 && s.numberKey === 'caffeineMg') /* (a caffeine drink says its mg on a card, round 18: never kept back as a guess) */ && s.numberKey !== 'sugarPeak' && !obvious(s.numberKey) && GFORM[s.numberKey] && QUESTION_POOL[s.numberKey]);
   // (a fallback for a story with no surprise left: its kcal, else its water, as long as they exist)
-  const keys = [...cands.map((s) => s.numberKey), ...['stomachHalfMin', 'kcal', 'waterMl', 'sugarG'].filter((k) => !shown.has(k) && !obvious(k) && (N_(c.story, k)?.value ?? 0) > 0), ...(obvious('waterMl') && !shown.has('waterMl') ? ['waterMl'] : [])];
+  const keys = [...cands.map((s) => s.numberKey), ...['stomachHalfMin', 'kcal', 'waterMl', 'sugarG'].filter((k) => !shown.has(k) && !away(k, lines[si] ?? '') && !obvious(k) && (N_(c.story, k)?.value ?? 0) > 0), ...(obvious('waterMl') && !shown.has('waterMl') ? ['waterMl'] : [])];
   for (const key of keys) {
-    const pool = QUESTION_POOL[key], q = pool[(seed >>> 3) % pool.length].replace('{bed}', c.bed);
+    // (short enough that the voice says the food's name and the whole question in the hook's slot, video-variety)
+    const pool = QUESTION_POOL[key], k0 = (seed >>> 3) % pool.length, fits = (x: string) => words(c.name) + words(x) <= 14;
+    const q0 = [...pool.slice(k0), ...pool.slice(0, k0)].map((x) => x.replace('{bed}', c.bed)).find(fits) ?? pool[k0].replace('{bed}', c.bed);
+    const q1 = ownQuestion(c, key, q0, lines[si] ?? ''), q = fits(q1) ? q1 : q0;
     const g = guessFor(c, key, q, seed);
     if (!g) continue;
     const hook: Hook = si === 0 ? { ...h, line2: q } : { ...h, line1: q };
-    return { hook: { ...hook, answer: undefined, payoff: undefined, payoffMin: undefined }, guess: g };
+    // (the moment that answers the new question, as the hook pools name theirs: the end card answers it there too,
+    // video-story endCardOf, video-endcard.test)
+    const PAY: Record<string, RegExp> = { caffeineAtBedMg: /^Bedtime$/, bloodMin: /blood|^Everywhere in you$/i, alcoholGoneMin: /^Alcohol gone$/, tgPeakH: /blood fat/i, waterMl: /^Kidneys$/ };
+    const payCh = PAY[key] ? c.chapters.find((ch) => PAY[key].test(ch.title) && ch.min > 0) : undefined;
+    const payMin = key === 'stomachHalfMin' ? N_(c.story, 'stomachHalfMin')?.value : undefined;
+    return { hook: { ...hook, answer: undefined, payoff: payCh?.title, payoffMin: payMin }, guess: g };
   }
   return { hook: h, guess: null };
 }
@@ -226,9 +271,16 @@ const t = (x: RuleCtx, k: string) => x.N[k]?.text;
  *  on the food's own numbers, keyed 'rule:…'. */
 const share = (x: RuleCtx, k: 'fatG' | 'carbsG' | 'proteinG') => { const kc = x.N.kcal?.value ?? 0, g = x.N[k]?.value ?? 0; return kc >= 30 && g > 0 ? Math.round((100 * g * (k === 'fatG' ? 9 : 4)) / kc) : 0; };
 const shareCand = (x: RuleCtx, k: 'fatG' | 'carbsG' | 'proteinG', say: string): Cand | null => { const v = share(x, k); return v >= 5 && v <= 100 ? [`${say} ${/carbs$/.test(say) ? 'give' : 'gives'} ${v}% of its energy.`, [`rule:${k}Pct`]] : null; };
+/** A blood sugar card only for a food whose model has a blood sugar rise (video-4j M3: carrots' 4 g of carbs do not). */
+const sugarOk = (x: RuleCtx, line: string) => (x.N.sugarPeak?.value ?? 0) >= 0.5 || !/blood sugar|insulin|glucose/i.test(line);
 const pos = (x: RuleCtx, k: string, min = 1) => (x.N[k]?.value ?? 0) >= min;
 /** A card for each generic card the beats make (video-beats): the same moment, with a number of this food. */
 const NUMBERED: [RegExp, (x: RuleCtx) => (Cand | null)[]][] = [
+  // (phase P2, full tier: the last generic cards of the sweep, each with a number of this food)
+  [/^Many people feel sleepy after a big meal\.$/, (x) => [!x.c.alcohol && pos(x, 'kcal', 100) && x.N.kcalPct ? [`${t(x, 'kcal')}: ${t(x, 'kcalPct')} of a 2,000 kcal day.`, ['kcal', 'kcalPct']] : null, !x.c.alcohol && pos(x, 'kcal', 300) ? [`${t(x, 'kcal')} in one meal.`, ['kcal']] : null, pos(x, 'fatG', 5) ? [`${t(x, 'fatG')} of fat, the slowest part.`, ['fatG']] : null]],
+  [/^About (half|three quarters|a quarter|a third|two thirds) of the caffeine remains\.$/, (x) => [pos(x, 'caffeineAtBedMg', 1) ? [`${t(x, 'caffeineAtBedMg')} of caffeine still in you.`, ['caffeineAtBedMg']] : null]],
+  [/^The urine collects in your bladder for hours\.$/, (x) => { const up = urinePeak(x.c.built); return [up && up.ml >= 20 ? [`Up to ${Math.round(up.ml)} ml of urine collects there.`, ['live:urinePeak']] : null, pos(x, 'waterMl', 50) ? [`Your kidneys filter its ${t(x, 'waterMl')} of water.`, ['waterMl']] : null]; }],
+  [/^Most of the drink has been absorbed now\.$/, (x) => [pos(x, 'sodiumMg', 5) ? [`Its ${t(x, 'sodiumMg')} of sodium are in your blood.`, ['sodiumMg']] : null]],
   [/^Your stomach churns it into a paste\.$/, (x) => [pos(x, 'grams', 30) ? [`Your stomach churns ${t(x, 'grams')} into a paste.`, ['grams']] : null, pos(x, 'stomachHalfMin') ? [`Half of it leaves after about ${t(x, 'stomachHalfMin')}.`, ['stomachHalfMin']] : null, !x.c.alcohol && pos(x, 'kcal', 30) ? [`Its ${t(x, 'kcal')} slow your stomach down.`, ['kcal']] : null]],
   [/^The (?:food|drink) is mostly in your stomach\.$/, (x) => [pos(x, 'stomachHalfMin') ? [`Half of it leaves after about ${t(x, 'stomachHalfMin')}.`, ['stomachHalfMin']] : null, pos(x, 'fatG', 3) ? [`Its ${t(x, 'fatG')} of fat leave last.`, ['fatG']] : null, !x.c.alcohol && pos(x, 'kcal', 30) ? [`Its ${t(x, 'kcal')} slow your stomach down.`, ['kcal']] : null, pos(x, 'grams', 30) ? [`Your stomach holds ${t(x, 'grams')} of it now.`, ['grams']] : null]],
   [/^The fat leaves last\.$/, (x) => [pos(x, 'fatG', 1) ? [`Its ${t(x, 'fatG')} of fat leave last.`, ['fatG']] : null]],
@@ -281,16 +333,16 @@ const FALLBACK: [RegExp, string[]][] = [
 ];
 const NOUN: Record<string, string> = { fiberG: 'fiber', waterMl: 'water', sodiumMg: 'sodium', fatG: 'fat', proteinG: 'protein', carbsG: 'carbs', sugarG: 'sugar' };
 /** A myth-buster about alcohol ("Coffee or water won't speed it up."): a safety card, never swapped for a number. */
-export const ALCOHOL_MYTH = /won[’']t speed it up|sober/i;
-function fallbackCard(x: RuleCtx, l: string, left: (k: string) => number): Cand | null {
+export const ALCOHOL_MYTH = /won[’']t speed it up|\bsober/i;
+function fallbackCard(x: RuleCtx, l: string, left: (k: string) => number, has: (line: string) => boolean = () => false): Cand | null {
   if (ALCOHOL_MYTH.test(l)) return null;
   for (const [re, keys] of FALLBACK) {
     if (!re.test(l)) continue;
     for (const k of keys) {
       const n = x.N[k];
       if (!n || !(n.value > 0) || left(k) < 1) continue;
-      const line = k === 'fiberDv' ? `${n.text} of a day's fiber is in it.` : `It has ${n.text} of ${NOUN[k]}.`;
-      if (okCard(line)) return [line, [k]];
+      const line = k === 'fiberDv' ? `${n.text} of a day's fiber is in it.` : `${n.text} of ${NOUN[k]} per serving.`;
+      if (okCard(line) && !has(line)) return [line, [k]]; // (never the same card twice in one video)
     }
   }
   return null;
@@ -310,7 +362,7 @@ const QUIET = /^(?:The glass has passed through you|Your body water is back in b
 /** Generic cards that give the guess's answer away in words ("Almost all the caffeine is still in you." before the
  *  reveal of how much is left at bedtime): never said before the reveal. */
 const SPOILS: Record<string, RegExp> = {
-  caffeineAtBedMg: /caffeine is still in you|still in you at bedtime|caffeine left/i, alcoholGoneMin: /alcohol is gone|still alcohol in your blood/i,
+  caffeineAtBedMg: /caffeine is still in you|still in you at bedtime|caffeine left|of the caffeine remains/i, alcoholGoneMin: /alcohol is gone|still alcohol in your blood/i,
   stomachHalfMin: /half (?:has )?(?:moved on|left|leaves)|mostly in your stomach/i, bloodMin: /reaches your blood within|in your blood within|absorbs it within minutes/i, leftPct: /still in you|has left your body/i, sugarPct: /blood sugar (?:climbs|peaks|is highest)/i,
 };
 /** Which numbered card a generic one becomes: one no longer than it first (a moment's reading time, and a stay on one
@@ -331,6 +383,9 @@ const okCard = (l: string) => isCard(l) && complianceHits(l).length === 0;
 function numberCard(c: SpineIn, b: Budget, guessKey?: string): Cand & { 2?: string } | null {
   // (with alcohol, never its kcal: a video about alcohol says no kcal it is not asked for, video-telemetry "filler card")
   const s = c.story, order = [...s.surprises.filter((x) => x.anchor), ...s.surprises.filter((x) => !x.anchor)].filter((x) => x.numberKey !== guessKey && x.numberKey !== 'sugarPeak' && !(c.alcohol && (x.numberKey === 'kcal' || x.numberKey === 'energyDensity')));
+  // (a food with no surprise left, sparkling water: any of its numbers with an everyday anchor or a Daily Value)
+  const seen = new Set(order.map((x) => x.numberKey));
+  for (const k of ['waterMl', 'sodiumMg', 'proteinG', 'fiberG', 'satFatG', 'sugarG', 'caffeineMg']) if (!seen.has(k) && k !== guessKey && s.numbers[k] && s.numbers[k].value > 0) order.push({ numberKey: k } as typeof order[number]);
   for (const sp of order) {
     const n = s.numbers[sp.numberKey];
     if (!n) continue;
@@ -338,10 +393,10 @@ function numberCard(c: SpineIn, b: Budget, guessKey?: string): Cand & { 2?: stri
     const tries: Cand[] = [];
     if (n.anchor && what[sp.numberKey]) tries.push([`${n.text} ${what[sp.numberKey]} ${n.anchor}.`, [sp.numberKey]]);
     const dv: Record<string, string> = { proteinG: 'proteinDv', fiberG: 'fiberDv', satFatG: 'satFatDv', sodiumMg: 'sodiumDv' };
-    if (dv[sp.numberKey] && s.numbers[dv[sp.numberKey]] && what[sp.numberKey]) tries.push([`${n.text} ${what[sp.numberKey].replace(/^of /, '')}: ${s.numbers[dv[sp.numberKey]].text} of the Daily Value.`, [sp.numberKey, dv[sp.numberKey]]]);
+    if (dv[sp.numberKey] && s.numbers[dv[sp.numberKey]] && s.numbers[dv[sp.numberKey]].value >= 1 && what[sp.numberKey]) tries.push([`${n.text} ${what[sp.numberKey].replace(/^of /, '')}: ${s.numbers[dv[sp.numberKey]].text} of the Daily Value.`, [sp.numberKey, dv[sp.numberKey]]]);
     if (sp.numberKey === 'kcal' && s.numbers.kcalPct) tries.push([`${n.text}: ${s.numbers.kcalPct.text} of a 2,000 kcal day.`, ['kcal', 'kcalPct']]);
     if (sp.numberKey === 'energyDensity') tries.push([`${Math.round(n.value * 100)} kcal in every 100 g.`, ['energyDensity']]);
-    for (const [line, keys] of tries) if (okCard(line) && b.left(keys[0]) >= 1 && keys.every((k) => b.left(k) >= 1)) return [line, keys];
+    for (const [line, keys] of tries) if (okCard(line) && !b.clash(line) && b.left(keys[0]) >= 1 && keys.every((k) => b.left(k) >= 1)) return [line, keys];
   }
   return null;
 }
@@ -350,18 +405,95 @@ function forYouCard(c: SpineIn, b: Budget): Cand | null {
   const s = c.story, N = s.numbers, tries: Cand[] = [];
   if (c.alcohol && N.alcoholGoneMin && N.alcoholGoneMin.value <= 1440) tries.push([`Your liver needs about ${N.alcoholGoneMin.text} for it.`, ['alcoholGoneMin']]);
   if (N.sleepDelayMin && N.sleepDelayMin.value >= 1) tries.push([`Falling asleep may take ${N.sleepDelayMin.text} longer.`, ['sleepDelayMin']]);
-  if (N.caffeineAtBedMg && N.caffeineAtBedMg.value >= 1) tries.push([`${N.caffeineAtBedMg.text} of caffeine left at ${c.bed}.`, ['caffeineAtBedMg']]);
+  if (N.caffeineAtBedMg && N.caffeineAtBedMg.value >= 1) tries.push([`${N.caffeineAtBedMg.text} of caffeine left at bedtime.`, ['caffeineAtBedMg']]);
   if (N.sugarBackMin && (N.sugarPeak?.value ?? 0) >= 0.5) tries.push([`Your usual level is back after ${N.sugarBackMin.text}.`, ['sugarBackMin']]);
   if (!c.alcohol && N.kcal && N.kcal.value >= 20 && N.kcalPct) tries.push([`${N.kcalPct.text} of a 2,000 kcal day.`, ['kcalPct']]);
   if (N.proteinDv && N.proteinDv.value >= 5) tries.push([`${N.proteinDv.text} of a day's protein, by the label.`, ['proteinDv']]);
-  if (N.waterMl && c.bodyWaterL && c.bodyWaterL > 5) { const p = Math.round((1000 * N.waterMl.value) / (c.bodyWaterL * 1000)) / 10; if (p >= 0.1) tries.push([`${N.waterMl.text}: ${p}% of your body's water.`, ['live:bodyWater']]); }
+  if (N.waterMl && c.bodyWaterL && c.bodyWaterL > 5) { const p = Math.round((1000 * N.waterMl.value) / (c.bodyWaterL * 1000)) / 10; if (p >= 0.1) tries.push([`${N.waterMl.text}: ${p}% of your body's water.`, ['live:bodyWater', ...(Math.abs((N.grams?.value ?? 0) - N.waterMl.value) <= 0.06 * N.waterMl.value ? [] : ['waterMl'])]]); /* (a water that is its serving says the serving) */ }
   if (N.waterMl) tries.push([`Its ${N.waterMl.text} count toward your water.`, ['waterMl']]);
   // (a fact no card has said: never the same number twice in a row of cards)
   // (two foods of a class do not say the same "for you": the food's own seed picks among the ones that fit, the more
   // telling first: the alcohol's and the caffeine's before the day's share)
-  const ok = tries.filter(([line, keys]) => okCard(line) && keys.every((k) => b.left(k) >= SPINE.PER_NUMBER_MAX));
+  // (a number said once may be said here a second time: each number in at most PER_NUMBER_MAX visuals)
+  // (a number no card has said yet first: "Your usual level is back after 3.5 h." after "Back to your usual level after
+  // 3.5 h." says nothing new)
+  const fits = tries.filter(([line, keys]) => okCard(line) && !b.clash(line) && !keys.some((k) => b.numberKeys.has(k)) && keys.every((k) => b.left(k) >= 1)), fresh = fits.filter(([, keys]) => keys.every((k) => !b.uses.get(k)));
+  const ok = fresh.length ? fresh : fits.filter(([, keys]) => !keys.includes('kcalPct')); // (never a second card of the day's share)
   const firstTwo = ok.slice(0, Math.min(4, ok.length));
   return firstTwo.length ? firstTwo[((c.seed ?? seedOf(c.name)) >>> 11) % firstTwo.length] : null;
+}
+/** Numbers that say the guess's answer by a sum ("6% of a 2,000 kcal day" is 120 kcal): kept back until the reveal too. */
+const GIVES_AWAY: Record<string, readonly string[]> = { kcal: ['kcalPct', 'energyDensity'], kcalPct: ['kcal'], sugarG: ['sugarCubes'], sugarCubes: ['sugarG'] };
+/** What a "for you" line means, said by the voice after its card: no number, nothing beyond the card's own fact. */
+function forYouSoWhat(line: string): string | undefined {
+  if (/^Your liver needs/.test(line)) return 'Coffee or a shower won’t speed it up.';
+  if (/^Falling asleep may take/.test(line)) return 'Sleep may come later.';
+  if (/of caffeine left at bedtime\.$/.test(line)) return 'Some of it stays the night.';
+  if (/^Your usual level is back/.test(line)) return 'Back where it started.';
+  if (/of a 2,000 kcal day\.$/.test(line)) return 'The rest comes from other food.';
+  if (/of a day's protein/.test(line)) return 'The rest comes from other meals.';
+  if (/of your body's water\.$/.test(line)) return 'Your kidneys keep the balance.';
+  if (/count toward your water\.$/.test(line)) return 'It all adds up.';
+  return undefined;
+}
+/** What an action means, said by the voice after its card: no number, no claim beyond the tip's own (owner 2026-11-27:
+ *  the walk lowers the sugar rise, never calories or burning). */
+function actionSoWhat(line: string): string | undefined {
+  if (/^Try half/.test(line)) return 'A smaller portion, the same moment.';
+  if (/^Swap for/.test(line)) return 'A smaller rise.';
+  if (/before bed\.$/.test(line)) return 'Time for it to fade.';
+  if (/^A 10-minute walk/.test(line)) return 'A smaller sugar rise.';
+  if (/^Any time/.test(line)) return 'No timing needed.';
+  if (/^Never drive/.test(line)) return 'Plan your ride home first.';
+  if (/with a meal\.$/.test(line)) return 'Food slows the sugar down.';
+  if (/vegetables or whole grains/.test(line)) return 'More fiber, a slower rise.';
+  return undefined;
+}
+/** The same fact in other words, numbers and organs kept: one wording per food, by its seed (0: as written). */
+const REPHRASE: [RegExp, string[]][] = [
+  [/^Blood alcohol peaks (.+) in\.$/, ['Blood alcohol is highest about $1 in.', 'Its blood alcohol tops out $1 in.', 'Peak blood alcohol: $1 in.', 'Blood alcohol reaches its top $1 in.', 'Its alcohol peaks in your blood $1 in.', 'Blood alcohol hits its high $1 in.', 'The blood alcohol high: $1 in.', 'Highest blood alcohol: $1 in.', '$1 in, blood alcohol is at its highest.']],
+  [/^Up to (\d+) ml of urine collects there\.$/, ['Your bladder fills with up to $1 ml.', 'Up to $1 ml of urine builds up there.', 'Up to $1 ml of urine wait there.', 'Your bladder holds up to $1 ml.', 'Up to $1 ml end up in your bladder.', 'Bladder: up to $1 ml.']],
+  [/^Try half: (.+)\.$/, ['Half a serving: $1.', 'Have half: $1.', 'Halve it: $1.', 'Half the amount: $1.', 'A half serving means $1.', 'Go for half: $1.', 'Just half: $1.', 'Half as much: $1.', 'Try a smaller one: half is $1.']],
+  [/^A 10-minute walk after eating lowers the rise\.$/, ['After eating, a 10-minute walk lowers the rise.', 'A 10-minute walk after it lowers the sugar rise.', 'Walk 10 minutes after eating: a lower rise.', 'A lower rise: walk 10 minutes after eating.', '10 minutes of walking after eating: a lower rise.', 'Tip: a 10-minute walk after eating lowers the rise.']],
+  [/^Any time: (?:it has|only) (.+) of caffeine\.$/, ['Any time of day: $1 of caffeine.', 'No bad time for it: $1 of caffeine.', 'Fine at any hour: $1 of caffeine.', 'Any hour works: $1 of caffeine.', 'Morning or night: $1 of caffeine.', 'Day or night: $1 of caffeine.']],
+  [/^(\d+)% of a day's (fiber|saturated fat|protein|sodium) (arrives here|is here|still in you|keeps arriving)\.$/, ["Of a day's $2: $1% $3.", "$1% of a day's $2 — $3.", "$3: $1% of a day's $2.", "Of a day's worth of $2, $1% $3."]],
+  [/^Its (\d+(?:\.\d+)? g) of saturated fat arrive too\.$/, ['Its $1 of saturated fat come along.', '$1 of saturated fat arrive with it.', 'With it: $1 of saturated fat.', 'Along with it: $1 of saturated fat.', '$1 of saturated fat come too.', 'Also on the way: $1 of saturated fat.']],
+  [/^(\d+(?:\.\d+)? mg) sodium: (\d+)% of the Daily Value\.$/, ['$1 of sodium: $2% of the Daily Value.', 'Sodium: $1, $2% of the Daily Value.', '$2% of the Daily Value: $1 of sodium.', '$1 sodium, $2% of a day by the label.', 'Sodium, $1: $2% of the Daily Value.', '$2% of a day of sodium: $1.', 'By the label, $1 of sodium is $2% of a day.', 'Its sodium: $1, $2% of a day.']],
+  [/^(\d+(?:\.\d+)? g) protein: (\d+)% of the Daily Value\.$/, ['$1 of protein: $2% of the Daily Value.', 'Protein: $1, $2% of the Daily Value.', '$2% of the Daily Value: $1 of protein.', '$1 protein, $2% of a day by the label.', 'Protein, $1: $2% of the Daily Value.']],
+  [/^Its (carbs|fat|protein) gives? (\d+)% of its energy\.$/, ['$2% of its energy comes from $1.', 'By energy, it is $2% $1.', 'Of its energy, $2% is $1.', '$2% of its kcal come from $1.', 'Its energy: $2% from $1.']],
+  [/^Its (\d+) kcal slow your stomach down\.$/, ['Its $1 kcal keep your stomach busy.', '$1 kcal: your stomach slows down.', 'With $1 kcal, your stomach takes its time.', '$1 kcal make your stomach go slower.', 'Your stomach slows for its $1 kcal.']],
+  [/^Half had left your stomach by (.+)\.$/, ['By $1, half had left your stomach.', 'Half was out of your stomach by $1.', 'Your stomach had passed on half by $1.']],
+  [/^(\d+ ml) of water ≈ (.+)\.$/, ['Water: $1 ≈ $2.']],
+  [/^Blood sugar dips about (\d+)% below usual\.$/, ['Blood sugar falls about $1% below usual.', 'A dip follows: about $1% below usual.']],
+  [/^(\d+) kcal in every 100 g\.$/, ['Every 100 g: $1 kcal.', '$1 kcal per 100 g.', 'In 100 g of it: $1 kcal.']],
+  [/^(.+) of sugar ≈ (.+) (sugar cubes?)\.$/, ['$1 of sugar, like $2 $3.', 'Sugar: $1 ≈ $2 $3.', '$1 of sugar: about $2 $3.']],
+  [/^(\d+ ml): ([\d.]+)% of your body's water\.$/, ["$1 is $2% of the water in you.", "$1 adds $2% to your body's water."]],
+  [/^All (\d+ g) of it are absorbed fast\.$/, ['All $1 are taken up fast.', 'Your gut takes up all $1 fast.', '$1, absorbed fast.', 'Fast: all $1 are taken up.', 'All $1 get absorbed fast.']],
+  [/^Your stomach holds (\d+ g) of it now\.$/, ['Right now $1 sit in your stomach.', 'Your stomach has all $1 now.', '$1 in your stomach now.', 'Your stomach: $1 right now.']],
+  [/^Your stomach churns (\d+ g) into a paste\.$/, ['$1 get churned into a paste.', 'Your stomach mashes $1 into a paste.', 'Your stomach grinds $1 into a paste.', '$1 turn into a paste in your stomach.', 'A paste: your stomach churns $1.', 'Your stomach makes a paste of $1.']],
+  [/^Kidneys filter the (drink|food)’s (\d+ ml) of water\.$/, ['Your kidneys filter its $2 of water.', 'Its $2 of water pass your kidneys.']],
+  [/^Its (\d+(?:\.\d+)? g) of (carbs|protein|fat) (?:are|is) taken apart\.$/, ['Its $1 of $2 get taken apart.', '$1 of $2 taken apart here.', 'Here its $1 of $2 are split up.', 'Your gut takes apart its $1 of $2.']],
+  [/^(\d+) kcal in one meal\.$/, ['One meal: $1 kcal.', '$1 kcal at one sitting.', 'All at once: $1 kcal.', 'In one go: $1 kcal.']],
+  [/^(.+) of (fat|carbs|protein|fiber|sugar) per serving\.$/, ['Each serving: $1 of $2.', '$1 of $2 in one serving.', 'Per serving: $1 of $2.', '$2 per serving: $1.']],
+  [/^Half of it leaves after about (.+)\.$/, ['Half is on its way after about $1.', 'About $1 in, half has left.']],
+  [/^Half moves on within (.+)\.$/, ['Half is gone on within $1.', 'Within $1, half moves on.', 'Half has left within $1.']],
+  [/^Back to your usual level after (.+)\.$/, ['Your usual level again after $1.', 'After $1, back to your usual level.', 'Usual level again after $1.', '$1 later: back to your usual level.', 'Your usual level returns after $1.', 'Your usual level is back $1 in.']],
+  [/^(\d+)% of a 2,000 kcal day\.$/, ['$1% of a 2,000 kcal day, in one serving.', 'One serving: $1% of a 2,000 kcal day.', '$1% of a day of 2,000 kcal.', 'Of a 2,000 kcal day: $1%.', 'A 2,000 kcal day: $1% of it here.', 'In a 2,000 kcal day, this is $1%.']],
+  [/^Its (\d+(?:\.\d+)? g) of carbs become blood sugar\.$/, ['Its $1 of carbs turn into blood sugar.', '$1 of carbs end up as blood sugar.']],
+  [/^It has (\d+ mg) of sodium\.$/, ['Sodium in it: $1.', '$1 of sodium in it.']],
+  [/^(.+) of sodium per serving\.$/, ['Sodium per serving: $1.', '$1 of sodium in one serving.', 'Each serving: $1 of sodium.']],
+];
+function rephrase(l: string, seed: number, ok: (y: string) => boolean = () => true): string {
+  for (const [re, alts] of REPHRASE) {
+    if (!re.test(l)) continue;
+    let h = seed >>> 0; for (let i = 0; i < re.source.length; i++) h = Math.imul(h ^ re.source.charCodeAt(i), 16777619) >>> 0;
+    for (let i = 0; i < l.length; i++) h = Math.imul(h ^ l.charCodeAt(i), 16777619) >>> 0; // (and its own numbers)
+    // (the food's own wording, else the next one that fits a card)
+    const all = [l, ...alts.map((a) => l.replace(re, a)).map((y) => y.charAt(0).toUpperCase() + y.slice(1))], k = h % all.length;
+    for (let i = 0; i < all.length; i++) { const y = all[(k + i) % all.length]; if (y === l || ok(y)) return y; }
+    return l;
+  }
+  return l;
 }
 /** One action from the cheat sheet, as a card ("Try half: 32 mg of caffeine."), with its grade. */
 function actionCard(c: SpineIn, b: Budget): { line: string; keys: string[]; grade: Level } | null {
@@ -369,7 +501,9 @@ function actionCard(c: SpineIn, b: Budget): { line: string; keys: string[]; grad
   const sw = ch.swapFor;
   if (sw) {
     const half = /^Half (?:the amount|a serving): (\d+(?:\.\d+)?) (mg of caffeine|g of alcohol|kcal) instead of/.exec(sw.text);
-    if (half) tries.push({ line: `Try half: ${half[1]} ${half[2]}.`, keys: ['act:swap'], grade: sw.grade });
+    // (never half of the guess's number before its reveal: "Try half: 58 kcal." gives 116 kcal away)
+    const halfOf = half ? ({ 'mg of caffeine': 'caffeineMg', 'g of alcohol': 'alcoholG', kcal: 'kcal' } as Record<string, string>)[half[2]] : '';
+    if (half && !b.reserved.has(halfOf)) tries.push({ line: `Try half: ${half[1]} ${half[2]}.`, keys: ['act:swap'], grade: sw.grade });
     const food = /^([^:]+): blood sugar (?:up about ([\d.]+) instead of ([\d.]+)|barely rises)/.exec(sw.text);
     if (food) {
       const pct = food[2] ? Math.round(100 * (1 - Number(food[2]) / Number(food[3]))) : 90;
@@ -388,11 +522,14 @@ function actionCard(c: SpineIn, b: Budget): { line: string; keys: string[]; grad
   if (pw && /vegetables or whole grains/.test(pw.text)) tries.push({ line: 'Add vegetables or whole grains to it.', keys: [], grade: pw.grade });
   // (any time of day: with its own caffeine, so the action still says a number of this food)
   const caf = Math.round(c.caffeineMg);
-  if (bt && /^Any time/.test(bt.text)) tries.push({ line: caf >= 1 ? `Any time: only ${caf} mg of caffeine.` : 'Any time: it has 0 mg of caffeine.', keys: [caf >= 1 ? 'caffeineMg' : 'act:time'], grade: bt.grade }, { line: 'Any time of day suits it.', keys: [], grade: bt.grade });
+  // (the caffeine as its card says it: "about 1 mg" for a decaf, never "0 mg" beside it)
+  const cafN = c.story.numbers.caffeineMg;
+  if (bt && /^Any time/.test(bt.text)) tries.push({ line: cafN && cafN.value > 0 ? `Any time: only ${cafN.text} of caffeine.` : caf >= 1 ? `Any time: only ${caf} mg of caffeine.` : c.caffeineMg >= 0.3 ? 'Any time: only about 1 mg of caffeine.' : 'Any time: it has 0 mg of caffeine.', keys: [cafN && cafN.value > 0 || caf >= 1 ? 'caffeineMg' : 'act:time'], grade: bt.grade }, { line: 'Any time of day suits it.', keys: [], grade: bt.grade });
   // (one with a number of its own first; between two such, the food's own seed: same-class videos part)
   const ok = tries.filter((x) => okCard(x.line) && x.keys.every((k) => b.left(k) >= 1)), withNum = ok.filter((x) => /\d/.test(x.line));
   // (a longer cut may say an action without a number: its cards have numbers enough; a Short's must count every second)
-  const pool = c.alcohol ? (withNum.length ? withNum : ok).slice(0, 1) : withNum.length >= 2 ? withNum.slice(0, 2) : c.cut !== 'short' && ok.length >= 2 ? ok.slice(0, 2) : (withNum.length ? withNum : ok).slice(0, 1);
+  // (one with a number when there is one: a card without one is generic text, video-telemetry checkTimeline5)
+  const pool = c.alcohol ? (withNum.length ? withNum : ok).slice(0, 1) : withNum.length >= 2 ? withNum.slice(0, 2) : (withNum.length ? withNum : ok).slice(0, 1);
   return pool.length ? pool[((c.seed ?? seedOf(c.name)) >>> 13) % pool.length] : null;
 }
 /** The end frame's three cheat lines, short ("Best time · Before 15:30, so its caffeine is low by your 23:00 bedtime."):
@@ -413,7 +550,7 @@ export function spineOf(c: SpineIn): Spine {
   const fixed: Record<string, number> = {};
   const add = (keys: readonly string[]) => { for (const k of keys) fixed[k] = (fixed[k] ?? 0) + 1; };
   // the headline (one visual all through) and each end card line (one visual each)
-  add(numbersShown([hook.line1, hook.line2].filter((l) => !/\?\s*$/.test(l.trim())).join(' '), nums)); // (the question line says no number of the food)
+  add(numbersShown([hook.line1, hook.line2].join(' '), nums)); // (the question's own number too: "40 mg of caffeine: what is left at bedtime?")
   for (const l of c.endLines) add(numbersShown(l, nums));
   const cheat = cheatLines(c);
   for (const ch of cheat) { ch.keys = numbersShown(ch.text, nums); add(ch.keys); }
@@ -436,14 +573,26 @@ function gutCurve(b: SpineIn['built']): Spine['gut'] {
  *  never said before its reveal, and the spine's own moments come in: the surprising number, what it means for you
  *  (not in a Short: its 30 s go to the story) and one action, each kept in every cut it is in. */
 export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
-  const s = c.story, reserved = new Set<string>(sp.guess ? [sp.guess.key] : []);
+  // (the guess's number, and the numbers that give it away by a sum: the day's share of its kcal, its sugar in cubes)
+  const s = c.story, reserved = new Set<string>(sp.guess ? [sp.guess.key, ...(GIVES_AWAY[sp.guess.key] ?? [])] : []);
   const gn = sp.guess && !sp.nums.some((n) => n.key === sp.guess!.key) ? guessNumber(c, sp.guess.key) : undefined;
   const b = new Budget(gn ? [{ key: gn.key, value: gn.value, unit: gn.unit, ...(gn.range ? { range: gn.range } : {}) }, ...sp.nums] : sp.nums, reserved);
-  for (const [k, n] of Object.entries(sp.fixed)) b.uses.set(k, n);
+  for (const [k, n] of Object.entries(sp.fixed)) b.uses.set(k, Math.max(n, b.uses.get(k) ?? 0));
   const lines: Spine['lines'] = {};
   const safety = (l: string) => SAFETY.test(l);
   // 1) the stops' own cards, in time order: numbered where generic, within the budget
   const out = stops.map((st) => ({ ...st, lines: [...(st.lines ?? [])] }));
+  // (the numbers the story's own cards say, wherever they are: a numbered card says another one first)
+  const said = new Set(out.flatMap((o) => o.lines.filter((l) => !genericCard(l)).flatMap((l) => b.keysOf(l))));
+  const heads = [sp.hook.line1, sp.hook.line2].filter(Boolean);
+  // (a story whose own card says the range of bodies, "The alcohol is gone after about 1–4 hours.", hears no single
+  // time of this body beside it: one time reference, video-narration lint "inconsistent time reference")
+  // (one number per nutrient in one video: a card never says "4.7 g of carbs" where another says "5 g of carbs")
+  const NUT = /(\d+(?:\.\d+)?) ?(g|mg) of (?:natural (?:fruit |milk )?)?(carbs|fat|protein|sugar|fiber|sodium|caffeine|saturated fat|alcohol)\b/g;
+  const nutsOf = (l: string) => Array.from(l.matchAll(NUT)).map((m) => [m[3], m[1]] as const);
+  const shownNuts = () => { const m = new Map<string, Set<string>>(); for (const l of [...heads, ...out.flatMap((o) => o.lines)]) for (const [k, v] of nutsOf(l)) { if (!m.has(k)) m.set(k, new Set()); m.get(k)!.add(v); } return m; };
+  b.clash = (l: string) => { const m = shownNuts(); return nutsOf(l).some(([k, v]) => !!m.get(k) && !m.get(k)!.has(v)); };
+  const rangeGone = out.some((o) => o.lines.some((l2) => /gone after about \d+(?:\.\d+)?[–-]/.test(l2)));
   for (const st of out) {
     const x: RuleCtx = { s, N: s.numbers, c, min: st.min };
     const must = st.must ?? 0, keep: string[] = [], gen: string[] = [];
@@ -453,7 +602,12 @@ export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
         const rule = NUMBERED.find(([re]) => re.test(l.trim()));
         // (a numbered card no longer than the card it replaces first, so a moment's reading time, and a stay on one region
         // of the body, does not grow: the planner's caps were met with the old cards)
-        const cand = rule ? pickCand(rule[1](x).filter((y): y is Cand => !!y).filter(([line, keys]) => okCard(line) && !keep.includes(line) && !out.some((o) => o !== st && o.lines.includes(line)) && keys.every((k) => b.left(k) >= 1)), l, c) : undefined;
+        // (one "peaks" card per story: two read as the same card, "Blood fat peaks about 3.5 h in." and "Caffeine peaks 3 h in.")
+        const peaks = (y: string) => /^Blood fat peaks/.test(y) && out.some((o) => o.lines.some((l2) => l2 !== l && /\bpeaks (?:about )?\d/i.test(l2)));
+        const fits = rule ? rule[1](x).filter((y): y is Cand => !!y).filter(([line, keys]) => okCard(line) && !peaks(line) && sugarOk(x, line) && !b.clash(line) && !(keys.includes('alcoholGoneMin') && rangeGone) && !keep.includes(line) && !out.some((o) => o !== st && o.lines.includes(line)) && keys.every((k) => b.left(k) >= 1)) : [];
+        // (a number no card has said yet first: "Half moves on within 15 min." right after "Half leaves your stomach
+        // within 15 minutes." says nothing new)
+        const fresh = fits.filter(([, keys]) => keys.every((k) => k === 'grams' || (!b.uses.get(k) && !said.has(k)))), cand = rule ? pickCand(fresh.length ? fresh : fits, l, c) : undefined;
         if (cand) { b.take(cand[1]); keep.push(cand[0]); lines[cand[0]] = { kind: 'ladder', keys: cand[1], grade: gradeOf(s, cand[1]), own: true }; return; }
         // (a generic card that found no number of its own is left out when the moment has another card; a moment with
         // nothing else keeps it: the planner then decides whether it is shown)
@@ -462,9 +616,18 @@ export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
       // a card that says a number: within the budget, and never the guess's number before the reveal (a card that must
       // be said, a safety card aside, loses its part over the budget: "36 g protein, 211 kcal." → "211 kcal.")
       const keys = b.keysOf(l);
+      // (no "fruit sugar" card for a food whose sugar is all added, a cola's: round 17 critic G-9)
+      if (!isMust && /fruit sugar/i.test(l) && (s.numbers.sugarG?.value ?? 0) > 0 && (s.numbers.freeSugarG?.value ?? 0) >= 0.9 * s.numbers.sugarG.value) return;
+      // (never a card that says the headline again, "14 g natural sugar." under "Melon: 14 g of natural fruit sugar.")
+      if (!safety(l) && heads.some((h) => nearSame(l, h))) {
+        if (!isMust) return;
+        const fb = fallbackCard(x, `${st.title} ${l}`, (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2)) ?? fallbackCard(x, 'stomach intestine fiber kidney', (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2));
+        if (fb) { b.take(fb[1]); keep.push(fb[0]); lines[fb[0]] = { kind: 'ladder', keys: fb[1], grade: gradeOf(s, fb[1]), own: true }; }
+        return;
+      }
       // (a card that must be said but says the guess's number: another of the food's numbers in its place, or none)
       if (isMust && !safety(l) && !l.includes(', ') && keys.some((k) => reserved.has(k))) {
-        const fb = fallbackCard(x, `${st.title} ${l}`, (k) => b.left(k)) ?? fallbackCard(x, 'stomach intestine', (k) => b.left(k));
+        const fb = fallbackCard(x, `${st.title} ${l}`, (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2)) ?? fallbackCard(x, 'stomach intestine fiber kidney', (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2));
         if (fb) { b.take(fb[1]); keep.push(fb[0]); lines[fb[0]] = { kind: 'ladder', keys: fb[1], grade: gradeOf(s, fb[1]), own: true }; }
         return;
       }
@@ -472,8 +635,14 @@ export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
         // (a joined card keeps its other part: "584 kcal, 61 g carbs." → "61 g carbs.")
         const parts = l.replace(/[.!?]$/, '').split(', '), rest = parts.filter((p) => !b.keysOf(p).some((k) => reserved.has(k) || b.left(k) < 1));
         const alt = rest.length && rest.length < parts.length ? `${rest.join(', ').replace(/^\w/, (ch) => ch.toUpperCase())}.` : '';
-        if (alt && okCard(alt) && /\d/.test(alt)) { b.take(b.keysOf(alt)); keep.push(alt); lines[alt] = { kind: 'ladder', keys: b.keysOf(alt), grade: gradeOf(s, b.keysOf(alt)) }; return; }
+        if (alt && okCard(alt) && /\d/.test(alt) && !heads.some((h) => nearSame(alt, h))) { b.take(b.keysOf(alt)); keep.push(alt); lines[alt] = { kind: 'ladder', keys: b.keysOf(alt), grade: gradeOf(s, b.keysOf(alt)) }; return; }
         if (!isMust) return;
+        // (a card that must be said never keeps the guess's number either: another of the food's numbers, or none)
+        if (keys.some((k) => reserved.has(k))) {
+          const fb = fallbackCard(x, `${st.title} ${l}`, (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2)) ?? fallbackCard(x, 'stomach intestine fiber kidney', (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2));
+          if (fb) { b.take(fb[1]); keep.push(fb[0]); lines[fb[0]] = { kind: 'ladder', keys: fb[1], grade: gradeOf(s, fb[1]), own: true }; }
+          return;
+        }
       }
       // (a card of the model's own story with its number, "Half moves on within 15 minutes.", is this food's too)
       const own = !keys.length && MODEL_LINE.test(l) ? [`ch:${l.replace(/[^\d.]+/g, '-')}`] : keys;
@@ -482,11 +651,15 @@ export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
     });
     // (a moment left with no card keeps its first generic one, never a quiet one or one about the guess's number)
     const spoil = (l: string) => b.keysOf(l).some((k) => reserved.has(k)) || (!!sp.guess && SPOILS[sp.guess.key]?.test(l));
-    const g0 = gen.filter((l) => !QUIET.test(l.trim()) && !spoil(l))[0], fb = !keep.length && g0 ? fallbackCard(x, g0, (k) => b.left(k)) : null;
+    const g0 = gen.filter((l) => !QUIET.test(l.trim()) && !spoil(l))[0], fb = !keep.length && g0 ? fallbackCard(x, g0, (k) => b.left(k), (l2) => !!lines[l2] || b.clash(l2)) : null;
     if (fb) { b.take(fb[1]); lines[fb[0]] = { kind: 'ladder', keys: fb[1], grade: gradeOf(s, fb[1]), own: true }; }
     st.lines = keep.length ? keep : fb ? [fb[0]] : g0 ? [g0] : [];
+    // (the first moment never left with no card: the planner would read its text again, the very words just left out)
+    if (!st.lines.length && st.min === 0) { const k0 = ['kcal', 'grams'].find((k) => (s.numbers[k]?.value ?? 0) > 0 && b.left(k) >= 1); if (k0) { const l0 = k0 === 'kcal' ? `${s.numbers.kcal.text} in total.` : `${s.numbers.grams.text} in one serving.`; b.take([k0]); st.lines = [l0]; lines[l0] = { kind: 'ladder', keys: [k0], grade: gradeOf(s, [k0]), own: true }; } }
     if (st.must) st.must = Math.min(st.must, st.lines.length) || undefined;
   }
+  // (never two cards of one moment with the same numbers: "Each serving: 36 g of carbs." and "36 g carbs.")
+  for (const st of out) { const ls = st.lines.filter((l, i) => { const a = b.keysOf(l).filter((k) => k !== 'grams'); return !(a.length && st.lines.slice(0, i).some((p) => { const q = b.keysOf(p); return a.every((k) => q.includes(k)); })); }); if (ls.length < st.lines.length) { st.lines = ls; if (st.must) st.must = Math.min(st.must, ls.length) || undefined; } }
   let res = out.filter((st) => st.lines.length || st.min === 0);
   // 2) the spine's own moments: the number (near the peak, else the middle of the day), for you, one action (late)
   const at = (m: number) => { const taken = new Set(res.map((x) => Math.round(x.min * 10))); let k = Math.round(m * 10); while (taken.has(k)) k++; return k / 10; };
@@ -499,7 +672,7 @@ export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
   const after = (q: number) => { const m = mins.length ? mins[Math.min(mins.length - 1, Math.floor(q * mins.length))] : 60; const nx = mins.find((x) => x > m) ?? Math.min(1439, m + 60); return Math.min(1439, m + Math.max(0.5, Math.min(20, (nx - m) / 3))); };
   const nc = numberCard(c, b, sp.guess?.key);
   if (nc) {
-    b.take(nc[1]); const n = s.numbers[nc[1][0]];
+    b.take(nc[1]); for (const k of nc[1]) b.numberKeys.add(k); const n = s.numbers[nc[1][0]];
     lines[nc[0]] = { kind: 'number', keys: nc[1], grade: n?.grade, big: n?.text, anchor: n?.anchor, own: true };
     // (a Short keeps its 30 s for its story and the action: there the number is the first moment's last card, said
     // where the planner has room, never a moment of its own that would lengthen a stay on one region)
@@ -508,18 +681,30 @@ export function spineStops(stops: StopIn[], sp: Spine, c: SpineIn): StopIn[] {
   }
   if (c.cut !== 'short') {
     const fy = forYouCard(c, b);
-    if (fy) { b.take(fy[1]); lines[fy[0]] = { kind: 'forYou', keys: fy[1], grade: gradeOf(s, fy[1]), own: true }; res.push({ min: at(after(q2)), title: `For ${s.body.label}`, text: fy[0], lines: [fy[0]], keep: true, must: 1, kind: 'forYou' }); }
+    if (fy) { b.take(fy[1]); lines[fy[0]] = { kind: 'forYou', keys: fy[1], grade: gradeOf(s, fy[1]), own: true, ...(forYouSoWhat(fy[0]) ? { soWhat: forYouSoWhat(fy[0]) } : {}) }; res.push({ min: at(after(q2)), title: `For ${s.body.label}`, text: fy[0], lines: [fy[0]], keep: true, must: 1, kind: 'forYou' }); }
   }
   const ac = actionCard(c, b);
   if (ac) {
-    b.take(ac.keys); lines[ac.line] = { kind: 'action', keys: ac.keys, grade: ac.grade, own: true };
+    b.take(ac.keys); lines[ac.line] = { kind: 'action', keys: ac.keys, grade: ac.grade, own: true, ...(actionSoWhat(ac.line) ? { soWhat: actionSoWhat(ac.line) } : {}) };
     const last = mins.filter((m) => m <= 1200), m = last.length ? last[last.length - 1] : mid;
     res.push({ min: at(Math.min(1390, m + Math.max(5, (1440 - m) * 0.25))), title: ACTION_TITLE, text: ac.line, lines: [ac.line], keep: true, must: 1, kind: 'action' });
   }
   res = res.sort((p, q) => p.min - q.min);
   // (the voice's "so what" for a card: the story's ladder rung whose number the card says)
-  const RUNG: Record<string, string> = { sugarPeakMin: 'sugarPeak', sugarBackMin: 'sugarPeak', bacPeakMin: 'bacPeak', caffeinePeakMin: 'caffeineMg' };
-  for (const li of Object.values(lines)) { const r = s.ladders.find((x) => li.keys.some((k) => x.effectKey === k || x.effectKey === RUNG[k])); if (r && !/\d/.test(r.soWhat)) li.soWhat = r.soWhat; }
+  const RUNG: Record<string, string> = { sugarPeakMin: 'sugarPeak', sugarBackMin: 'sugarPeak', bacPeakMin: 'bacPeak', caffeinePeakMin: 'caffeineMg', kcalPct: 'kcal', proteinDv: 'proteinG', fiberDv: 'fiberG', sodiumDv: 'sodiumMg', satFatDv: 'satFatG', 'live:bodyWater': 'waterMl' };
+  for (const li of Object.values(lines)) if (!li.soWhat) { const r = s.ladders.find((x) => li.keys.some((k) => x.effectKey === k || x.effectKey === RUNG[k])); if (r && !/\d/.test(r.soWhat)) li.soWhat = r.soWhat; }
+  // (two foods of a class word their own cards differently: the food's own seed picks one of the same fact's wordings,
+  // its numbers and organs kept; video-segments.test "segment texts")
+  const seed0 = (c.seed ?? seedOf(c.name)) >>> 0;
+  for (const st of res) st.lines = (st.lines ?? []).map((l) => {
+    const li = lines[l];
+    if (!li?.own) return l;
+    const y = rephrase(l, seed0, (z) => okCard(z) && !lines[z] && z.length <= l.length + 2); // (its numbers are the card's own: no new clash; never longer to read, the planner's stays were met with it)
+    if (y === l) return l;
+    lines[y] = li; delete lines[l];
+    if (st.text === l) st.text = y;
+    return y;
+  });
   sp.lines = lines;
   sp.pins = pinsOf(c, b);
   sp.chips = chipsOf(c, b);
@@ -571,10 +756,13 @@ export class CmpSide {
     if (genericCard(l) && !SAFETY.test(l)) {
       const rule = NUMBERED.find(([re]) => re.test(l.trim())), x: RuleCtx = { s: this.c.story, N: this.c.story.numbers, c: this.c, min };
       // (never a number a gauge beside it shows otherwise: the caffeine left at bedtime, the urine's peak, video-beats numberConflict)
-      const cand = rule ? pickCand(rule[1](x).filter((y): y is Cand => !!y).filter(([line, keys]) => okCard(line) && !keys.some((kk) => kk === 'caffeineAtBedMg' || kk === 'live:urinePeak') && keys.every((kk) => this.b.left(kk) >= 1)), l, this.c) : undefined;
-      const fb = cand ? null : fallbackCard(x, l, (kk) => this.b.left(kk));
+      const cand = rule ? pickCand(rule[1](x).filter((y): y is Cand => !!y).filter(([line, keys]) => okCard(line) && sugarOk(x, line) && !this.lines[line] && !keys.some((kk) => kk === 'caffeineAtBedMg' || kk === 'live:urinePeak' || kk === 'alcoholGoneMin') && keys.every((kk) => this.b.left(kk) >= 1)), l, this.c) : undefined;
+      const fb = cand ? null : fallbackCard(x, l, (kk) => this.b.left(kk), (y) => !!this.lines[y]); // (never one this side said)
       const got = cand ?? fb;
       if (got) { this.b.take(got[1]); out = got[0]; this.lines[out] = got[1]; }
+      // (a generic card no number of this side can replace leaves the side quiet: the other side's card, or the body,
+      // says something; what the alcohol does to you is kept)
+      else if (!/attention|reaction|impair|driv|sober|speed it up/i.test(l)) out = '';
     } else {
       const keys = this.b.keysOf(l);
       if (keys.length) { this.b.count(keys); this.lines[l] = keys; }
@@ -593,8 +781,9 @@ function chipsOf(c: SpineIn, b: Budget): Spine['chips'] {
   const N = c.story.numbers, out: Spine['chips'] = [];
   // (never a chip whose number the headline says: "13 g" under "250 ml of skim milk: 13 g of natural milk sugar.")
   const head = `${c.hook.line1} ${c.hook.line2}`;
-  const add = (title: string, text: string | undefined, keys: string[]) => { if (text && keys.every((k) => N[k] && (N[k].value > 0 || k === 'kcal') && b.left(k) >= SPINE.PER_NUMBER_MAX) && !keys.some((k) => ` ${head.replace(/[:(]/g, ' ')} `.includes(` ${N[k].text} `))) { b.take(keys); out.push({ title, text, keys }); } };
-  const dv = (k: string, d: string, label: string) => add(label, N[k] && N[d] ? `${N[k].text} · ${N[d].text} of the Daily Value` : undefined, [k, d]);
+  const add = (title: string, text: string | undefined, keys: string[]) => { if (text && !b.clash(text) && keys.every((k) => N[k] && (N[k].value > 0 || k === 'kcal') && b.left(k) >= SPINE.PER_NUMBER_MAX) && !keys.some((k) => ` ${head.replace(/[:(]/g, ' ')} `.includes(` ${N[k].text} `))) { b.take(keys); out.push({ title, text, keys }); } };
+  // (its noun said, and at least 2 % of a day: "0.1 g · 1% of the Daily Value" twice is two cards alike and says little)
+  const dv = (k: string, d: string, label: string) => add(label, N[k] && N[d] && N[d].value >= 2 ? `${N[k].text} ${label.toLowerCase()} · ${N[d].text} of the Daily Value` : undefined, [k, d]);
   dv('sodiumMg', 'sodiumDv', 'Sodium'); dv('satFatG', 'satFatDv', 'Saturated fat'); dv('fiberG', 'fiberDv', 'Fiber'); dv('proteinG', 'proteinDv', 'Protein');
   if ((N.sugarG?.value ?? 0) >= 0.5) add('Sugar', N.sugarCubes ? `${N.sugarG.text} of sugar · ≈ ${N.sugarCubes.text}` : `${N.sugarG.text} of sugar`, N.sugarCubes ? ['sugarG', 'sugarCubes'] : ['sugarG']);
   if (!c.alcohol && (N.kcal?.value ?? 0) >= 1) add('Energy', N.kcalPct ? `${N.kcal.text} · ${N.kcalPct.text} of a 2,000 kcal day` : N.kcal.text, N.kcalPct ? ['kcal', 'kcalPct'] : ['kcal']);

@@ -328,6 +328,18 @@ const VARY: [RegExp, string][] = [
   [/\bThe fat joins your blood later\b/g, 'It joins your blood later'], [/\bThe fat joins your blood later\b/g, 'The fat follows later'], /* (phase 4i: a hook asking when the fat joins the blood, the climax on blood sugar: "blood" a third time) */ [/\ball the fat\b/gi, 'all of it'], [/(?<!all )\bthe fat\b(?= [a-z])/gi, 'it'], [/\bfat takes\b/gi, 'it takes'],
   // (phase 4l: a peak card's own minute, "Blood sugar peaks 25 min in.", said another way where its words would come a third time)
   [/\b(Blood sugar|Caffeine) peaks (?:\d+ (?:h|hours?)(?: (?:and )?\d+ (?:min|minutes))?|\d+ (?:min|minutes)) in\b/g, '$1 peaks now'],
+  // (phase P2: the spine's numbered cards and a comparison's two sides say "minutes" and the nutrient often: the same
+  // fact in other words, always true of the number on the card, which still reads it)
+  [/\b(caffeine) peaks (?:[1-9]|[1-5]\d) (?:min|minutes) in\b/gi, '$1 peaks within the hour'],
+  [/\bhalf leaves your stomach within (?:[1-9]|[12]\d|30) (?:min|minutes)\b/gi, 'half moves on within half an hour'],
+  [/\bInsulin handles its (\d+(?:\.\d+)?) g of carbs\b/g, 'Insulin handles all $1 g'],
+  [/\bIts (?:fat|carbs|protein) gives? (\d+) ?% of its energy\b/g, 'That is $1% of its energy'],
+  // (a comparison reads a side's card after its name: the same card a little shorter fits the slot)
+  [/\byour stomach holds (\d+(?:\.\d+)? g) of it now\b/gi, 'your stomach holds $1'], [/\ball (\d+(?:\.\d+)? g) of it are absorbed fast\b/gi, 'all $1 absorbed fast'],
+  [/\bits (\d+(?:\.\d+)? g) of carbs are taken apart\b/gi, '$1 of carbs taken apart'], [/\b(\d+(?:\.\d+)? g) of (carbs|fat|protein|fiber|sugar) per serving\b/g, '$1 of $2'],
+  [/\bits (\d+(?:\.\d+)? g) of (fat|protein|carbs) (?:is|are) taken apart\b/gi, '$1 of $2 taken apart'],
+  [/\b(\d+) ?% of a day[’']s (saturated fat|protein|fiber|sodium) (?:is here|keeps arriving|arrives here)\b/g, "$1% of a day's $2"], [/\bkidneys filter the (?:drink|food)[’']s (\d+ ml) of water\b/gi, 'kidneys filter $1 of water'],
+  [/\bat bedtime, almost all the caffeine is still in you\b/gi, 'at bedtime, almost all is still in you'],
   [/\bCaffeine in your blood peaks now\b/g, 'It peaks in your blood now'], [/\ball the caffeine\b/gi, 'all of it'], [/(?<!all )\bthe caffeine\b(?= [a-z])(?! peak\b)/gi, 'it'] /* (phase 4l: never "Here's it peak.") */,
   [/\bteaspoons of sugar\b/gi, 'teaspoons'], [/\b(\d+) g of sugar: about\b/g, '$1 g: about'], [/\bStarch and sugar turn into blood sugar\b/g, 'Starch turns into glucose'],
   [/\bYour kidneys filter the extra water\b/g, 'The extra water gets filtered'], [/\bThe urine collects in your bladder\b/g, 'It collects in your bladder'],
@@ -499,7 +511,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const t = hit !== undefined ? hit + IMPACT_POST_S + 0.1 : sp.t0 + CARD_LEAD_S, late = hit !== undefined ? 99 : CARD_DELAY_S;
     // (phase P2: a numbered card of the spine gets its "so what" after it, no number of its own, never a "Boom.")
     const sw = !cmp && sp.a ? n.plan.spine?.lines[sp.a]?.soWhat : undefined;
-    if (sw && sp.t1 - sp.t0 >= 3.4) cands.push({ id: 'seg', t: Math.max(t, sp.t0 + 2.4), until: sp.t1 - 0.2, delay: 99, options: [sw], source: '' });
+    if (sw && sp.t1 - sp.t0 >= 3.4) cands.push({ id: 'seg', t: Math.max(t, sp.t0 + 2.4), until: nx ? nx.t0 - GAP_S : sp.t1 + 0.3, delay: 99, options: [sw], source: '' }); // (it may run on after its card: it says no number)
     // a long moment gets a short beat after its card
     else if (sp.t1 - sp.t0 >= BEAT_MIN_SPAN_S) cands.push({ id: 'beat', t: Math.max(t, sp.t0 + 3.2), until: sp.t1 - 0.2, delay: 99, options: beats(`${sp.title} ${sp.a} ${sp.b}`), source: '' });
     // v21: a stretch with no card after this one (the bodies just move on) gets a short beat, not silence
@@ -652,6 +664,9 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   }
   // v21b: no silence over GAP_FILL_S (but the hush before an impact): a short beat in the middle of it
   const hushed = (a: number, b: number) => impacts.some((p) => a < p + IMPACT_POST_S + 0.6 && b > p - IMPACT_PRE_S);
+  // (phase P2: a line said another way, shorter, never opens a silence the voice had filled: "Blood sugar peaks now."
+  // for "Blood sugar peaks 1 hour 15 minutes in." left 3.4 s before the next card)
+  const flows = (o: NarrLine, y: string) => { const j = out.indexOf(o), nx = Math.min(out[j + 1]?.t ?? outro, outro), e = o.t + speakS(y); return nx - e <= 2.8 || hushed(e, nx) || e >= o.t + speakS(o.text) - 0.05; };
   // (the end card's number is said at the end: no callback to it just before)
   let recalled = 0;
   // (phase 4i) the lines near `t` that say a word of `x` twice already, said another way where one wording leaves that
@@ -672,7 +687,12 @@ export function narrationFor(n: NarrIn): NarrLine[] {
   };
   const heroSaid = new Set(out.filter((o) => o.id === 'answer').flatMap((o) => qtyOf(o.text)));
   for (let i = 0, guard = 0; i < out.length && guard < 40; i++) {
-    const e = out[i].t + speakS(out[i].text), nx = Math.min(out[i + 1]?.t ?? outro, outro);
+    let e = out[i].t + speakS(out[i].text);
+    const nx = Math.min(out[i + 1]?.t ?? outro, outro);
+    // (phase P2: a pause that runs on past the hush after an impact is filled after that hush: "Blood sugar peaks now."
+    // is short, and the card after it came 3.5 s later)
+    const hs = impacts.filter((p) => e < p + IMPACT_POST_S + 0.6 && nx > p - IMPACT_PRE_S && p <= e + 0.05);
+    if (hs.length) e = Math.max(e, ...hs.map((p) => p + IMPACT_POST_S + 0.6));
     // (a single: only a longer silence; a third fact in a row only for a pause the voice could not bridge otherwise)
     // v22: the threshold leaves room for a voice a little faster than WPS (the sweeps: no silence over 3 s)
     const pool = (l?: NarrLine) => !!l && filler(l.text);
@@ -793,7 +813,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     // (first: a card line nearby said another way, "Insulin brings it back down.", the card still read)
     const over = new Set([...overused(out, j, nameWords), ...out.flatMap((o, q) => (q > j && o.t < l.t + VARIETY_S ? overused(out, q, nameWords) : []))]);
     for (const o of out) if (o !== l && o.id === 'card' && Math.abs(o.t - l.t) < VARIETY_S && [...stems(o.text)].some((w) => over.has(w))) {
-      const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.has(w)));
+      const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && flows(o, y) && ![...stems(y)].some((w) => over.has(w)));
       if (v) { Object.assign(o, { text: shownText(v), say: speakable(v) }); break; }
     }
     if (!overused(out, j, nameWords).length && !out.some((o, q) => q > j && o.t < l.t + VARIETY_S && overused(out, q, nameWords).length)) continue;
@@ -812,7 +832,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     if (!over.length) continue;
     // (never one that drops a time a "how fast" hook asks for)
     const keepQty = FAST_Q.test(`${n.hook?.line1 ?? ''} ${n.hook?.line2 ?? ''}`);
-    const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.includes(w)) && !(keepQty && qtyOf(y).length < qtyOf(o.text).length));
+    const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && flows(o, y) && ![...stems(y)].some((w) => over.includes(w)) && !(keepQty && qtyOf(y).length < qtyOf(o.text).length));
     if (v) Object.assign(o, { text: shownText(v), say: speakable(v) });
   }
   // (v23: no close placed: the loop's place goes to it, the shortest number-free close that fits)
@@ -836,7 +856,7 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     let over = l ? overAt() : [];
     if (over.length) {
       for (const o of out) if (o !== l && o.id !== 'hook' && o.t < l.t && l.t - o.t < VARIETY_S && [...stems(o.text)].some((w) => over.includes(w))) {
-        const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && ![...stems(y)].some((w) => over.includes(w)));
+        const v = variants(o.text).slice(1).find((y) => speakS(y) <= o.slotS && flows(o, y) && ![...stems(y)].some((w) => over.includes(w)));
         if (v) { Object.assign(o, { text: shownText(v), say: speakable(v) }); over = overAt(); if (!over.length) break; }
       }
       const nums = qtyOf(l.text);
@@ -855,6 +875,8 @@ export function narrationFor(n: NarrIn): NarrLine[] {
     const sh = Math.min((after - before) / 2, after - GAP_S - 0.05);
     if (after > 2.2 && sh > 0.05 && (pv.id === 'answer' || pv.id === 'day')) { pv.t += sh; pv.slotS = loop.t - GAP_S - pv.t; }
   }
+  // (phase P2: a close that is no reveal's answer comes a little earlier when a long pause stands before it)
+  if (!cmp) { const k = out.findIndex((o) => o.id === 'answer' && !/^(?:The answer|It's [A-C]\.)/.test(o.text)); if (k > 0) { const l = out[k], pe = out[k - 1].t + speakS(out[k - 1].text), gap = l.t - pe; const after = (out[k + 1]?.t ?? outro) - l.t - speakS(l.text); if (gap > 2.0 && gap > after && !/\d/.test(l.text) && !hushed(pe, l.t)) { const sh = (gap - Math.max(0, after)) / 2; l.t -= sh; l.slotS += sh; } } }
   for (let i = 0; i < out.length; i++) { const nx = out[i + 1]; if (nx) out[i].slotS = Math.min(out[i].slotS, nx.t - GAP_S - out[i].t); }
   return out;
 }
